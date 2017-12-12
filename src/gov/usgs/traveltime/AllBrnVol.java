@@ -49,6 +49,15 @@ public class AllBrnVol {
 			branches[j] = new BrnDataVol(ref.branches[j], pUp, sUp, cvt);
 		}
 	}
+	 
+		/**
+		 * Get the earth model name.
+		 * 
+		 * @return Earth model name
+		 */
+	  public String getEarthModel() {
+	  	return ref.modelName;
+	  }
 	
 	/**
 	 * Set up a new session.  Note that this just sets up the 
@@ -693,4 +702,9 @@ public class AllBrnVol {
 			sUp.dumpDecUp(full);
 		}
 	}
+	
+	@Override
+  public String toString() {
+    return ref.modelName+" "+eqDepth+" cmplx="+complex+" eqcoord="+eqLat+" "+eqLon;
+  }
 }
