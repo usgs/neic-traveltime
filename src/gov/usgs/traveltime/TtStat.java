@@ -64,9 +64,10 @@ public class TtStat {
 	 * Get the phase spread.
 	 * 
 	 * @param delta Distance in degrees
+	 * @param upGoing True if the phase is an up-going P or S
 	 * @return Spread in seconds at distance delta
 	 */
-	public double getSpread(double delta) {
+	public double getSpread(double delta, boolean upGoing) {
 		TtStatSeg seg;
 		
 		for(int k=0; k<spread.size(); k++) {
@@ -75,6 +76,9 @@ public class TtStat {
 				return Math.min(seg.interp(delta), TauUtil.DEFSPREAD);
 			}
 		}
+		if(upGoing) {
+			return Math.min(spread.get(0).interp(delta), TauUtil.DEFSPREAD);
+		}
 		return TauUtil.DEFSPREAD;
 	}
 	
@@ -82,9 +86,10 @@ public class TtStat {
 	 * Get the phase observability.
 	 * 
 	 * @param delta Distance in degrees
+	 * @param upGoing True if the phase is an up-going P or S
 	 * @return Relative observability at distance delta
 	 */
-	public double getObserv(double delta) {
+	public double getObserv(double delta, boolean upGoing) {
 		TtStatSeg seg;
 		
 		for(int k=0; k<observ.size(); k++) {
@@ -92,6 +97,9 @@ public class TtStat {
 			if(delta >= seg.minDelta && delta <= seg.maxDelta) {
 				return Math.max(seg.interp(delta), TauUtil.DEFOBSERV);
 			}
+		}
+		if(upGoing) {
+			return Math.max(observ.get(0).interp(delta), TauUtil.DEFOBSERV);
 		}
 		return TauUtil.DEFOBSERV;
 	}

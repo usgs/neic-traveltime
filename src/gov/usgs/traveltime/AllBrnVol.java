@@ -209,6 +209,7 @@ public class AllBrnVol {
 	 */
 	private TTime doTT(double elev, boolean useful, boolean tectonic, 
 			boolean noBackBrn, boolean rstt) {
+		boolean upGoing;
 		int lastTT, delTT = -1;
 		double delCorUp, delCorDn, retDelta = Double.NaN, 
 				retAzim = Double.NaN, reflCorr = Double.NaN;
@@ -250,17 +251,22 @@ public class AllBrnVol {
 			// Loop over possible distances.
 			for(int i=0; i<3; i++) {
 				branches[j].getTT(i, xs[i], dSource, useful, ttList);
-				// We have to add the phase statistics at this level.
+				// We have to add the phase statistics and other corrections at this level.
 				if(ttList.size() > lastTT) {
 					for(int k=lastTT; k<ttList.size(); k++) {
 						tTime = ttList.get(k);
 						flags = ref.auxtt.findFlags(tTime.phCode);
+						// There's a special case for up-going P and S.
+						if(tTime.dTdZ > 0d && (flags.phGroup.equals("P") || 
+								flags.phGroup.equals("S"))) upGoing = true;
+						else upGoing = false;
+						// Set the correction to surface focus.
 						if(tTime.phCode.charAt(0) == 'L') {
 							// Travel-time corrections and correction to surface focus 
 							// don't make sense for surface waves.
 							delCorUp = 0d;
 						} else {
-							// Get the correction to surface focus.
+							// Get the correction.
 							try {
 								delCorUp = upRay(tTime.phCode, tTime.dTdD);
 							} catch (Exception e) {
@@ -274,7 +280,7 @@ public class AllBrnVol {
 							// point corrections.
 							if(complex) {
 								// The ellipticity correction is straightforward.
-								tTime.tt += ellipCorr(eqLat, dSource, staDelta, staAzim);
+								tTime.tt += ellipCorr(eqLat, dSource, staDelta, staAzim, upGoing);
 								
 								// The bounce point correction is not.  See if there is a bounce.
 								if(branches[j].ref.phRefl != null) {
@@ -315,7 +321,7 @@ public class AllBrnVol {
 							}
 						}
 						// Add auxiliary information.
-						addAux(tTime.phCode, xs[i], delCorUp, tTime);
+						addAux(tTime.phCode, xs[i], delCorUp, tTime, upGoing);
 					}
 					if(delTT >= 0) {
 						ttList.remove(delTT);
@@ -367,15 +373,23 @@ public class AllBrnVol {
 	 * @param depth Hypocenter depth in kilometers
 	 * @param delta Source-receiver distance in degrees
 	 * @param azimuth Receiver azimuth from the source in degrees
+	 * @param upGoing True if the phase is an up-going P or S
 	 * @return Ellipticity correction in seconds
 	 */
 	public double ellipCorr(double eqLat, double depth, double delta, 
-			double azimuth) {
+			double azimuth, boolean upGoing) {
 		// Do the interpolation.
 		if(flags.ellip == null) {
 			return 0d;
 		} else {
-			return flags.ellip.getEllipCorr(eqLat, depth, delta, azimuth);
+			// There's a special case for the ellipticity of up-going P 
+			//and S waves.
+			if(upGoing) {
+				return flags.upEllip.getEllipCorr(eqLat, depth, delta, azimuth);
+			// Otherwise, it's business as usual.
+			} else {
+				return flags.ellip.getEllipCorr(eqLat, depth, delta, azimuth);
+			}
 		}
 	}
 	
@@ -407,7 +421,7 @@ public class AllBrnVol {
 		
 		// Get the distance to the bounce point by type.
 		switch(brnRef.phRefl) {
-			// For pP etc., we just need to tract the initial up-going ray.
+			// For pP etc., we just need to trace the initial up-going ray.
 			case "pP": case "sP": case "pS": case "sS":
 				refDelta = delCorUp;
 				break;
@@ -475,9 +489,10 @@ public class AllBrnVol {
 	 * @param xs Source-receiver distance in radians
 	 * @param delCorUp Surface focus correction in degrees
 	 * @param tTime Travel-time object to update
+	 * @param upGoing True if the phase is an up-going P or S
 	 */
 	protected void addAux(String phCode, double xs, double delCorUp, 
-			TTimeData tTime) {		
+			TTimeData tTime, boolean upGoing) {		
 		double del, spd, obs;
 		
 		// Add the phase statistics.  First, convert distance to degrees
@@ -500,8 +515,8 @@ public class AllBrnVol {
 			if(del > 180d) del = 360d-del;
 			// Do the interpolation.
 			if(tTime.corrTt) tTime.tt += flags.ttStat.getBias(del);
-			spd = flags.ttStat.getSpread(del);
-			obs = flags.ttStat.getObserv(del);
+			spd = flags.ttStat.getSpread(del, upGoing);
+			obs = flags.ttStat.getObserv(del, upGoing);
 		}
 		// Add statistics.
 		tTime.addStats(spd, obs);
