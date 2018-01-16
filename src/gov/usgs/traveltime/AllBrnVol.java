@@ -60,8 +60,8 @@ public class AllBrnVol {
 	  }
 	
 	/**
-	 * Set up a new session.  Note that this just sets up the 
-	 * simple session parameters of use to the travel-time package.
+	 * Set up a new session.  Note that this sets up the complex 
+	 * session parameters of use to the travel-time package.
 	 * 
 	 * @param latitude Source geographical latitude in degrees
 	 * @param longitude Source longitude in degrees
@@ -75,6 +75,19 @@ public class AllBrnVol {
 		eqLat = latitude;
 		eqLon = longitude;
 		setSession(depth, phList);
+	}
+	
+	/**
+	 * If the current depth is still good, just update the epicentral 
+	 * parameters for the travel-time corrections.
+	 * 
+	 * @param latitude Source geographical latitude in degrees
+	 * @param longitude Source longitude in degrees
+	 */
+	public void newEpicenter(double latitude, double longitude) {
+		complex = true;
+		eqLat = latitude;
+		eqLon = longitude;
 	}
 		
 		/**
