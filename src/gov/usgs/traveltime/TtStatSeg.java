@@ -30,14 +30,18 @@ public class TtStatSeg {
 	}
 	
 	/**
-	 * Interpolate the linear fit at one distance.
+	 * Interpolate the linear fit at one distance.  Note that the 
+	 * interpolation will be done for distances less than the minimum, 
+	 * but fixed at the minimum distance.  This is a hack needed for 
+	 * up-going P and S at short distances from deep sources.
 	 * 
 	 * @param delta Distance in degrees where statistics are desired
 	 * @return Interpolated parameter
 	 */
 	protected double interp(double delta) {
-		if(delta >= minDelta && delta <= maxDelta) {
-			return offset+delta*slope;
-		} else return(Double.NaN);
+		if(delta < maxDelta) {
+			return offset+Math.max(delta, minDelta)*slope;
+		}
+		return Double.NaN;
 	}
 }

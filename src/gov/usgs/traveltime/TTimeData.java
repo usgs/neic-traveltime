@@ -4,28 +4,27 @@ package gov.usgs.traveltime;
  * Holds everything known about one seismic phase at a particular 
  * source depth and source-receiver distance.
  * 
- * NOTE: TODO DCK - none of these variables should be public unless they are final - getters()
  * @author Ray Buland
  *
  */
 public class TTimeData implements Comparable<TTimeData> {
-	public String phCode;					// Phase code
-	public double tt;							// Travel time (s)
-	double dTdD;						// Derivative of time with respect to 
-													// distance (s/degree)
-	double dTdZ;						// Derivative of time with respect to depth
-													// (s/km)
-	double dXdP;						// Derivative of distance with respect to 
-													// ray parameter (degree-s)
-	public double spread;					// Statistical spread (s)
-	public double observ;					// Relative statistical observability
-	public double window;					// Association window in seconds
-	public String phGroup;					// Teleseismic phase group
-	public String auxGroup;				// Auxiliary phase group
-	public boolean isRegional;			// If true, phase is regional
+	String phCode;					// Phase code
+	double tt;						// Travel time (s)
+	double dTdD;					// Derivative of time with respect to 
+									// distance (s/degree)
+	double dTdZ;					// Derivative of time with respect to depth
+									// (s/km)
+	double dXdP;					// Derivative of distance with respect to 
+									// ray parameter (degree-s)
+	double spread;					// Statistical spread (s)
+	double observ;					// Relative statistical observability
+	double window;					// Association window in seconds
+	String phGroup;					// Teleseismic phase group
+	String auxGroup;				// Auxiliary phase group
+	boolean isRegional;				// If true, phase is regional
 	boolean isDepth;				// If true, phase is depth sensitive
 	boolean canUse;					// If true, can use the phase for location
-	public boolean dis;						// Disrespect (down weight) this phase
+	boolean dis;					// Disrespect (down weight) this phase
 	boolean corrTt;					// If true, get the arrival time from the phase statistics
 	
 	/**
@@ -82,6 +81,98 @@ public class TTimeData implements Comparable<TTimeData> {
 		this.canUse = canUse;
 		this.dis = dis;
 	}
+	
+	/**
+	 * Getter for phase code.
+	 * 
+	 * @return Phase code
+	 */
+	public String getPhCode() {return phCode;}
+	
+	/**
+	 * Getter for travel time.
+	 * 
+	 * @return Travel time in seconds
+	 */
+	public double getTT() {return tt;}
+	
+	/**
+	 * Getter for the tangential derivative.
+	 * 
+	 * @return Derivative of travel time with distance
+	 */
+	public double getDTdD() {return dTdD;}
+	
+	/**
+	 * Getter for the vertical derivative.
+	 * 
+	 * @return Derivative of travel time with source depth
+	 */
+	public double getDTdZ() {return dTdZ;}
+	
+	/**
+	 * Getter for spread.
+	 * 
+	 * @return Spread (scatter) of travel times in seconds
+	 */
+	public double getSpread() {return spread;}
+	
+	/**
+	 * Getter for observability.
+	 * 
+	 * @return Relative number of observations
+	 */
+	public double getObserv() {return observ;}
+	
+	/**
+	 * Getter for association window.
+	 * 
+	 * @return Association window in seconds
+	 */
+	public double getWindow() {return window;}
+	
+	/**
+	 * Getter for phase group.
+	 * 
+	 * @return Phase group
+	 */
+	public String getPhGroup() {return phGroup;}
+	
+	/**
+	 * Getter for the auxiliary phase group.
+	 * 
+	 * @return Auxiliary phase group
+	 */
+	public String getAuxGroup() {return auxGroup;}
+	
+	/**
+	 * Getter for the regional flag.
+	 * 
+	 * @return True if the phase is regional
+	 */
+	public boolean isRegional() {return isRegional;}
+	
+	/**
+	 * Getter for the deph flag.
+	 * 
+	 * @return True if the phase is depth sensitive
+	 */
+	public boolean isDepth() {return isDepth;}
+	
+	/**
+	 * Getter for the phase use flag.
+	 * 
+	 * @return True if the phase can be used in an earthquake 
+	 * location
+	 */
+	public boolean canUse() {return canUse;}
+	
+	/**
+	 * Getter for the disrespect flag.
+	 * 
+	 * @return True if this phase should be down weighted
+	 */
+	public boolean getDis() {return dis;}
 	
 	/**
 	 * Make arrival times sortable into time order.

@@ -40,11 +40,11 @@ public class AuxTtRef {
 	// Topography.
 	final Topography topoMap;									// Topography for bounce points
 	TtStat ttStat;					// Phase statistics
-	Ellip ellip;						// Ellipticity correction
+	Ellip ellip, upEllip;		// Ellipticity correction(s)
 	// Set up the reader.
-	final String phGroupPath = "../../../Documents/Work/Models/phgrp.dat";
-	final String ttStatsPath = "../../../Documents/Work/Models/ttstats.lis";
-	final String ellipPath = "../../../Documents/Work/Models/tau.table";
+	final String phGroupPath = "../../Documents/Work/Models/phgrp.dat";
+	final String ttStatsPath = "../../Documents/Work/Models/ttstats.lis";
+	final String ellipPath = "../../Documents/Work/Models/tau.table";
 	Scanner scan;
 	boolean priGroup = false;
 	int nDepth;
@@ -448,11 +448,13 @@ public class AuxTtRef {
 	 * 
 	 * @param ttStat Pointer to the associated phase statistics
 	 * @param delta Distance in degrees
+	 * @param upGoing True if the phase is an up-going P or S
 	 * @return Spread in seconds at distance delta
 	 */
-	public double getSpread(TtStat ttStat, double delta) {
+	public double getSpread(TtStat ttStat, double delta, 
+			boolean upGoing) {
 		if(ttStat == null) return TauUtil.DEFSPREAD;
-		else return ttStat.getSpread(delta);
+		else return ttStat.getSpread(delta, upGoing);
 	}
 	
 	/**
@@ -460,11 +462,13 @@ public class AuxTtRef {
 	 * 
 	 * @param ttStat Pointer to the associated phase statistics
 	 * @param delta Distance in degrees
+	 * @param upGoing True if the phase is an up-going P or S
 	 * @return Relative observability at distance delta
 	 */
-	public double getObserv(TtStat ttStat, double delta) {
+	public double getObserv(TtStat ttStat, double delta, 
+			boolean upGoing) {
 		if(ttStat == null) return TauUtil.DEFOBSERV;
-		else return ttStat.getObserv(delta);
+		else return ttStat.getObserv(delta, upGoing);
 	}
 	
 	/**
@@ -529,7 +533,7 @@ public class AuxTtRef {
 				unTangle(phCode, phGroup);
 				phFlags.put(phCode, new TtFlags(phGroup, compGroup(phGroup), 
 						isRegional(phCode), isDepthPh(phCode), canUse(phCode), 
-						isDisPh(phCode), ttStat, ellip));
+						isDisPh(phCode), ttStat, ellip, upEllip));
 			}
 		}
 		// Search the auxiliary phase groups for phases.
@@ -541,7 +545,7 @@ public class AuxTtRef {
 					unTangle(phCode, phGroup);
 					phFlags.put(phCode, new TtFlags(phGroup, compGroup(phGroup), 
 							isRegional(phCode), isDepthPh(phCode), canUse(phCode), 
-							isDisPh(phCode), ttStat, ellip));
+							isDisPh(phCode), ttStat, ellip, upEllip));
 				}
 			}
 		}
@@ -556,8 +560,10 @@ public class AuxTtRef {
 						flags.isRegional, flags.isDepth, flags.dis);
 				if(flags.ttStat == null) System.out.print("   stats = null    ");
 				else System.out.format("   stats = %-8s", flags.ttStat.phCode);
-				if(flags.ellip == null) System.out.println(" ellip = null");
-				else System.out.format(" ellip = %s\n", flags.ellip.phCode);
+				if(flags.ellip == null) System.out.print(" ellip = null    ");
+				else System.out.format(" ellip = %-8s", flags.ellip.phCode);
+				if(flags.upEllip == null) System.out.println(" upEllip = null");
+				else System.out.format(" upEllip = %-8s\n", flags.upEllip.phCode);
 			}
 		}
 	}
@@ -578,6 +584,13 @@ public class AuxTtRef {
 			if(phCode.equals("pwP")) ellip = findEllip("pP");
 			else if(phCode.equals("PKPpre")) ellip = findEllip("PKPdf");
 			else if(phGroup.contains("PKP")) ellip = findEllip(phGroup+"bc");
+		}
+		// Add up-going ellipticity corrections.
+		if((phGroup.equals("P") || phGroup.equals("S")) && 
+				!phCode.contains("dif")) {
+			upEllip = findEllip(phCode+"up");
+		} else {
+			upEllip = null;
 		}
 	}
 	

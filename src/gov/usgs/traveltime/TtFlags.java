@@ -15,6 +15,7 @@ public class TtFlags {
 	final boolean dis;					// True if phase is to be down weighted
 	final TtStat ttStat;				// Phase statistics
 	final Ellip ellip;					// Ellipticity correction
+	final Ellip upEllip;				// Ellipticity correction for up-going P and S
 	
 	/**
 	 * Each phase is created all at once.
@@ -33,7 +34,7 @@ public class TtFlags {
 	 */
 	public TtFlags(String phGroup, String auxGroup, boolean isRegional, 
 			boolean isDepth, boolean canUse, boolean dis, TtStat ttStat, 
-			Ellip ellip) {
+			Ellip ellip, Ellip upEllip) {
 		this.phGroup = phGroup;
 		this.auxGroup = auxGroup;
 		this.isRegional = isRegional;
@@ -42,5 +43,6 @@ public class TtFlags {
 		this.dis = dis;
 		this.ttStat = ttStat;
 		this.ellip = ellip;
+		this.upEllip = upEllip;
 	}
 }

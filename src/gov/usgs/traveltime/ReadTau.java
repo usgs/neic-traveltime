@@ -39,7 +39,7 @@ public class ReadTau {
 	public final int JTSM = 500;
 	
 	// Set up the reader.
-	final String modelPath = "../../../Documents/Work/Models/";
+	final String modelPath = "../../Documents/Work/Models/";
 	String modelName;
 	final int bufLen = 100020;
 	byte[] byteArray;
