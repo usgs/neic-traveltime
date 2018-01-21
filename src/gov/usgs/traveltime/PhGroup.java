@@ -21,7 +21,6 @@ import java.util.ArrayList;
 public class PhGroup {
 	String groupName;							// Name of the phase group
 	ArrayList<String> phases;			// List of phases in the group
-// boolean useInLoc;							// True if can be used in a location
 	
 	/**
 	 * Initialize the phase group.
@@ -30,10 +29,7 @@ public class PhGroup {
 	 * @param useInLoc May be used in an earthquale location if true
 	 */
 	protected PhGroup(String groupName) {
-// protected PhGroup(String groupName, boolean useInLoc) {
 		this.groupName = groupName;
-//	this.groupName = groupName.trim();
-//	this.useInLoc = useInLoc;
 		phases = new ArrayList<String>();
 	}
 	
@@ -44,7 +40,6 @@ public class PhGroup {
 	 */
 	protected void addPhase(String phase) {
 		phases.add(phase);
-//	phases.add(phase.trim());
 	}
 	
 	/**
@@ -57,6 +52,5 @@ public class PhGroup {
 			System.out.print(phases.get(j)+" ");
 		}
 		System.out.println();
-//	System.out.println(" "+useInLoc);
 	}
 }
