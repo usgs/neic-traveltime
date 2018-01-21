@@ -53,11 +53,7 @@ public class BrnDataVol {
 		// Do branch summary information.
 		compute = true;
 		exists = true;
-		phCode = ref.phCode;
-		pRange = Arrays.copyOf(ref.pRange, ref.pRange.length);
-		xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
 		xDiff = new double[2];
-		pCaustic = pRange[1];
 	}
 	
 	/**
@@ -75,13 +71,19 @@ public class BrnDataVol {
 		int i, len = 0;
 		double[][] basisTmp;
 		
-		Spline spline = new Spline();
-		flags = ref.auxtt.findFlags(phCode);
 		this.dTdDepth = dTdDepth;
 		
 		// Skip branches we aren't computing.
 		if(compute) {
 			exists = true;
+			// Re-initialize ranges, etc.
+			phCode = ref.phCode;
+			pRange = Arrays.copyOf(ref.pRange, ref.pRange.length);
+			xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
+			pCaustic = pRange[1];
+			pEnd = Double.NaN;
+			flags = ref.auxtt.findFlags(phCode);
+			Spline spline = new Spline();
 			
 			// Do phases that start as P.
 			if(ref.typeSeg[0] == 'P') {
@@ -148,12 +150,6 @@ public class BrnDataVol {
 					len = pBrn.length;
 					basisTmp = new double[5][len];
 					spline.basisSet(pBrn, basisTmp);
-			/*	System.out.println("\nNew Basis Set: "+len);
-					for(int j=0; j<len; j++) {
-						System.out.format(" %13.6e %13.6e %13.6e %13.6e %13.6e %13.6e\n", 
-								pBrn[j], basisTmp[0][j], basisTmp[1][j], basisTmp[2][j], 
-								basisTmp[3][j], basisTmp[4][j]);
-					} */
 					poly = new double[4][len];
 					xBrn = new double[len];
 					spline.tauSpline(tauBrn, xRange, basisTmp, poly, xBrn);
@@ -336,7 +332,6 @@ public class BrnDataVol {
 					} else {
 						basisTmp = new double[5][len];
 						spline.basisSet(pBrn, basisTmp);
-				//	System.out.println("\nNew Basis Set: "+phCode+" "+len);
 						spline.tauSpline(tauBrn, xRange, basisTmp, poly, xBrn);
 					}
 				}
