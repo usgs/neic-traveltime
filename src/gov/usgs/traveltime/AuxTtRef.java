@@ -588,7 +588,7 @@ public class AuxTtRef {
 		// Add up-going ellipticity corrections.
 		if((phGroup.equals("P") || phGroup.equals("S")) && 
 				!phCode.contains("dif")) {
-			upEllip = findEllip(phCode+"up");
+			upEllip = findEllip(phGroup+"up");
 		} else {
 			upEllip = null;
 		}
