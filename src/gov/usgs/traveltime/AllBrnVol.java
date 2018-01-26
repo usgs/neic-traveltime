@@ -269,6 +269,7 @@ public class AllBrnVol {
 					for(int k=lastTT; k<ttList.size(); k++) {
 						tTime = ttList.get(k);
 						flags = ref.auxtt.findFlags(tTime.phCode);
+						if(tTime.phCode.equals("pwP")) delTT = k;
 						// There's a special case for up-going P and S.
 						if(tTime.dTdZ > 0d && (flags.phGroup.equals("P") || 
 								flags.phGroup.equals("S"))) upGoing = true;
@@ -288,54 +289,60 @@ public class AllBrnVol {
 								delCorUp = 0d;
 							}
 							// This is the normal case.  Do various travel-time corrections.
-							tTime.tt += elevCorr(tTime.phCode, elev, tTime.dTdD, rstt);
-							// If this was a complex request, do the ellipticity and bounce 
-							// point corrections.
-							if(complex) {
-								// The ellipticity correction is straightforward.
-								tTime.tt += ellipCorr(eqLat, dSource, staDelta, staAzim, upGoing);
-								
-								// The bounce point correction is not.  See if there is a bounce.
-								if(branches[j].ref.phRefl != null) {
-									// If so, we may need to do some preliminary work.
-									if(branches[j].ref.phRefl.equals("SP")) {
-										tmpCode = "S";
-									} else if(branches[j].ref.phRefl.equals("PS")) {
-										tmpCode = tTime.phCode.substring(0, 
-												tTime.phCode.indexOf('S')-1);
-									} else {
-										tmpCode = null;
-									}
-									// If we had an SP or PS, get the distance of the first part.
-									if(tmpCode != null) {
-										try {
-											delCorDn = oneRay(tmpCode, tTime.dTdD);
-										} catch (Exception e) {
-											// This should never happen.
-											e.printStackTrace();
-											delCorDn = 0.5d*staDelta;
+							if(!TauUtil.NOCORR) {
+								tTime.tt += elevCorr(tTime.phCode, elev, tTime.dTdD, rstt);
+								// If this was a complex request, do the ellipticity and bounce 
+								// point corrections.
+								if(complex) {
+									// The ellipticity correction is straightforward.
+									tTime.tt += ellipCorr(eqLat, dSource, staDelta, staAzim, upGoing);
+									
+									// The bounce point correction is not.  See if there is a bounce.
+									if(branches[j].ref.phRefl != null) {
+										// If so, we may need to do some preliminary work.
+										if(branches[j].ref.phRefl.equals("SP")) {
+											tmpCode = "S";
+										} else if(branches[j].ref.phRefl.equals("PS")) {
+											tmpCode = tTime.phCode.substring(0, 
+													tTime.phCode.indexOf('S')-1);
+										} else {
+											tmpCode = null;
 										}
-									} else {
-										delCorDn = Double.NaN;
-									}
-									// Finally, we can do the bounce point correction.
-									if(tTime.dTdD > 0d) {
-										reflCorr = reflCorr(tTime.phCode, branches[j].ref, eqLat, 
-												eqLon, staDelta, staAzim, tTime.dTdD, delCorUp, delCorDn);
-									} else {
-										reflCorr = reflCorr(tTime.phCode, branches[j].ref, eqLat, 
-												eqLon, retDelta, retAzim, tTime.dTdD, delCorUp, delCorDn);
-									}
-									if(!Double.isNaN(reflCorr)) tTime.tt += reflCorr;
-									else if(tTime.phCode.equals("pwP")) delTT = k;
-									else System.out.println("Bad travel-time correction for "+
-											tTime.phCode);
-								} 
+										// If we had an SP or PS, get the distance of the first part.
+										if(tmpCode != null) {
+											try {
+												delCorDn = oneRay(tmpCode, tTime.dTdD);
+											} catch (Exception e) {
+												// This should never happen.
+												e.printStackTrace();
+												delCorDn = 0.5d*staDelta;
+											}
+										} else {
+											delCorDn = Double.NaN;
+										}
+										// Finally, we can do the bounce point correction.
+										if(tTime.dTdD > 0d) {
+											reflCorr = reflCorr(tTime.phCode, branches[j].ref, eqLat, 
+													eqLon, staDelta, staAzim, tTime.dTdD, delCorUp, delCorDn);
+										} else {
+											reflCorr = reflCorr(tTime.phCode, branches[j].ref, eqLat, 
+													eqLon, retDelta, retAzim, tTime.dTdD, delCorUp, delCorDn);
+										}
+										if(!Double.isNaN(reflCorr)) {
+											tTime.tt += reflCorr;
+											if(tTime.phCode.equals("pwP")) delTT = -1;
+										}
+										else if(!tTime.phCode.equals("pwP")) 
+											System.out.println("Bad travel-time correction for "+
+													tTime.phCode);
+									} 
+								}
 							}
 						}
 						// Add auxiliary information.
 						addAux(tTime.phCode, xs[i], delCorUp, tTime, upGoing);
 					}
+					// If there was no pwP, get rid of the estimate.
 					if(delTT >= 0) {
 						ttList.remove(delTT);
 						delTT = -1;

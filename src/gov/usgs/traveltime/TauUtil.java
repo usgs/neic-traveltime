@@ -10,6 +10,11 @@ import java.util.ArrayList;
  */
 public class TauUtil {
 	/**
+	 * If true, suppress all travel-time corrections for debugging 
+	 * purposes.
+	 */
+	public static final boolean NOCORR = false;
+	/**
 	 * Global default shallow crustal P velocity in km/s (from ak135).
 	 */
 	public static final double DEFVP = 5.80d;
@@ -257,9 +262,11 @@ public class TauUtil {
 	 * @param tTimes An array list of travel-time objects
 	 */
 	public static void filterBack(ArrayList<TTimeData> tTimes) {
-		for(int j=1; j<tTimes.size(); j++) {
-			if(tTimes.get(j).phCode.equals(tTimes.get(j-1).phCode)) {
-				tTimes.remove(j--);
+		for(int j=0; j<tTimes.size()-1; j++) {
+			for(int i=j+1; i<tTimes.size(); i++) {
+				if(tTimes.get(j).phCode.equals(tTimes.get(i).phCode)) {
+					tTimes.remove(i--);
+				}
 			}
 		}
 	}

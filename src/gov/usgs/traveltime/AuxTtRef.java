@@ -224,7 +224,7 @@ public class AuxTtRef {
 	 */
 	public String findGroup(String phase, boolean auto) {
 		priGroup = true;
-		if(phase.equals("")) return "all";
+		if(phase.equals("")) return "Any";
 		else if(auto && phase.equals("P")) return "Reg";
 		else return findGroup(phase);
 	}
@@ -588,7 +588,7 @@ public class AuxTtRef {
 		// Add up-going ellipticity corrections.
 		if((phGroup.equals("P") || phGroup.equals("S")) && 
 				!phCode.contains("dif")) {
-			upEllip = findEllip(phCode+"up");
+			upEllip = findEllip(phGroup+"up");
 		} else {
 			upEllip = null;
 		}
