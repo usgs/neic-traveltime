@@ -120,6 +120,13 @@ public class TauUtil {
 	protected final static double ELLIPFAC = 0.993305521d;
 	
 	/**
+	 * If true the definition of useless phases is strictly interpreted 
+	 * (i.e., eliminate reflected phases containing Pn and Sn as well 
+	 * as Pg, Pb, Sg, and Sb).
+	 */
+	private static final boolean STRICT = true;
+	
+	/**
 	 * Create a segment code by stripping a phase code of unnecessary 
 	 * frippery.
 	 * 
@@ -157,12 +164,10 @@ public class TauUtil {
 	 * coda of the first arriving P or S phases.
 	 * 
 	 * @param phCode Phase code
-	 * @param strict True if Pn and Sn reflections should be included as 
-	 * useless phases
 	 * @return True if phase is in the crustal P or S coda
 	 */
-	public static boolean setUseless(String phCode, boolean strict) {
-		if(strict) {
+	public static boolean setUseless(String phCode) {
+		if(STRICT) {
 			if((phCode.contains("Pg") || phCode.contains("Sg") || 
 					phCode.contains("Pb") || phCode.contains("Sb") || 
 					phCode.contains("Pn") || phCode.contains("Sn")) && 
@@ -291,14 +296,12 @@ public class TauUtil {
 			// Turn Pbs into Pgs.
 			if(tTimes.get(j).phCode.contains("Pb") && 
 					tTimes.get(j).phCode.charAt(1) != 'K') {
-				tTimes.get(j).phCode.replace("Pb", "Pg");
-				tTimes.get(j).dis = false;
+				tTimes.get(j).replace("Pb", "Pg");
 			}
 			// Turn Sbs into Sgs.
 			if(tTimes.get(j).phCode.contains("Sb") && 
 					tTimes.get(j).phCode.charAt(1) != 'K') {
-				tTimes.get(j).phCode.replace("Sb", "Sg");
-				tTimes.get(j).dis = false;
+				tTimes.get(j).replace("Sb", "Sg");
 			}
 		}
 	}

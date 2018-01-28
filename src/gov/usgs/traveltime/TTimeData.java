@@ -8,24 +8,21 @@ package gov.usgs.traveltime;
  *
  */
 public class TTimeData implements Comparable<TTimeData> {
-	String phCode;					// Phase code
+	String phCode;				// Phase code
 	double tt;						// Travel time (s)
-	double dTdD;					// Derivative of time with respect to 
-									// distance (s/degree)
-	double dTdZ;					// Derivative of time with respect to depth
-									// (s/km)
-	double dXdP;					// Derivative of distance with respect to 
-									// ray parameter (degree-s)
-	double spread;					// Statistical spread (s)
-	double observ;					// Relative statistical observability
-	double window;					// Association window in seconds
-	String phGroup;					// Teleseismic phase group
-	String auxGroup;				// Auxiliary phase group
-	boolean isRegional;				// If true, phase is regional
-	boolean isDepth;				// If true, phase is depth sensitive
-	boolean canUse;					// If true, can use the phase for location
+	double dTdD;					// Derivative of time with respect to distance (s/degree)
+	double dTdZ;					// Derivative of time with respect to depth (s/km)
+	double dXdP;					// Derivative of distance with respect to ray parameter (degree-s)
+	double spread;				// Statistical spread (s)
+	double observ;				// Relative statistical observability
+	double window;				// Association window in seconds
+	String phGroup;				// Teleseismic phase group
+	String auxGroup;			// Auxiliary phase group
+	boolean isRegional;		// If true, phase is regional
+	boolean isDepth;			// If true, phase is depth sensitive
+	boolean canUse;				// If true, can use the phase for location
 	boolean dis;					// Disrespect (down weight) this phase
-	boolean corrTt;					// If true, get the arrival time from the phase statistics
+	boolean corrTt;				// If true, get the arrival time from the phase statistics
 	
 	/**
 	 * The constructor accepts basic travel time information.
@@ -80,6 +77,19 @@ public class TTimeData implements Comparable<TTimeData> {
 		this.isDepth = isDepth;
 		this.canUse = canUse;
 		this.dis = dis;
+	}
+	
+	/**
+	 * Find all instances of one string and replace them with 
+	 * another.  Used to turn Pb into Pg and Sb into Sg.  Also, 
+	 * resets the disrespect flag.
+	 * 
+	 * @param find String to replace
+	 * @param replace Replacement string
+	 */
+	public void replace(String find, String replace) {
+		phCode = phCode.replace(find, replace);
+		dis = false;
 	}
 	
 	/**
