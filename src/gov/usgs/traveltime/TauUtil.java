@@ -124,7 +124,7 @@ public class TauUtil {
 	 * (i.e., eliminate reflected phases containing Pn and Sn as well 
 	 * as Pg, Pb, Sg, and Sb).
 	 */
-	private static final boolean STRICT = true;
+	private static boolean strict = true;
 	
 	/**
 	 * Create a segment code by stripping a phase code of unnecessary 
@@ -167,7 +167,7 @@ public class TauUtil {
 	 * @return True if phase is in the crustal P or S coda
 	 */
 	public static boolean setUseless(String phCode) {
-		if(STRICT) {
+		if(strict) {
 			if((phCode.contains("Pg") || phCode.contains("Sg") || 
 					phCode.contains("Pb") || phCode.contains("Sb") || 
 					phCode.contains("Pn") || phCode.contains("Sn")) && 
