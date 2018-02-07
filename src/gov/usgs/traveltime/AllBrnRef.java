@@ -73,7 +73,7 @@ public class AllBrnRef {
 		pUp = new UpDataRef(in, 'P');
 		sUp = new UpDataRef(in, 'S');
 	}
-	
+
 	/**
 	 * Get the number of travel-time branches loaded.
 	 * 
