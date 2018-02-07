@@ -58,7 +58,15 @@ public class AllBrnVol {
 	  public String getEarthModel() {
 	  	return ref.modelName;
 	  }
-	
+    
+    /**
+     * 
+     * @return The reference
+     */
+    public AllBrnRef getAllBrnRef() {
+      return ref;
+    }
+  	
 	/**
 	 * Set up a new session.  Note that this sets up the complex 
 	 * session parameters of use to the travel-time package.
