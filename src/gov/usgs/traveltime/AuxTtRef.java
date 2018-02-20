@@ -265,8 +265,8 @@ public class AuxTtRef {
 	/**
 	 * See if this phase group can be used for earthquake location.
 	 * 
-	 * @param groupName Phase group name
-	 * @return True if this group can be used for earthquake location
+	 * @param phase Phase name
+	 * @return True if this phase can be used for earthquake location
 	 */
 	public boolean canUse(String phase) {
 		for(int k=0; k<canUse.phases.size(); k++) {

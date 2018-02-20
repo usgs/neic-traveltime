@@ -121,6 +121,13 @@ public class TTimeData implements Comparable<TTimeData> {
 	public double getDTdZ() {return dTdZ;}
 	
 	/**
+	 * Getter for the ray parameter derivative.
+	 * 
+	 * @return Derivative of distance with ray parameter
+	 */
+	public double getDXdP() {return dXdP;}
+	
+	/**
 	 * Getter for spread.
 	 * 
 	 * @return Spread (scatter) of travel times in seconds

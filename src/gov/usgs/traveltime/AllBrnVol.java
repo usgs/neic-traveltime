@@ -76,19 +76,6 @@ public class AllBrnVol {
 		eqLon = longitude;
 		setSession(depth, phList);
 	}
-	
-	/**
-	 * If the current depth is still good, just update the epicentral 
-	 * parameters for the travel-time corrections.
-	 * 
-	 * @param latitude Source geographical latitude in degrees
-	 * @param longitude Source longitude in degrees
-	 */
-	public void newEpicenter(double latitude, double longitude) {
-		complex = true;
-		eqLat = latitude;
-		eqLon = longitude;
-	}
 		
 		/**
 		 * Set up a new session.  Note that this just sets up the 
@@ -103,6 +90,19 @@ public class AllBrnVol {
 		eqLat = Double.NaN;
 		eqLon = Double.NaN;
 		setSession(depth, phList);
+	}
+	
+	/**
+	 * If the current depth is still good, just update the epicentral 
+	 * parameters for the travel-time corrections.
+	 * 
+	 * @param latitude Source geographical latitude in degrees
+	 * @param longitude Source longitude in degrees
+	 */
+	public void newEpicenter(double latitude, double longitude) {
+		complex = true;
+		eqLat = latitude;
+		eqLon = longitude;
 	}
 	
 	/**
@@ -229,6 +229,7 @@ public class AllBrnVol {
 		double[] xs;
 		String tmpCode;
 		TTime ttList;
+//	TTime rsttList;
 		TTimeData tTime;
 		
 		ttList = new TTime();
@@ -352,6 +353,39 @@ public class AllBrnVol {
 			}
 		}
 		
+		// Rough in RSTT.
+/*	if(rstt) {
+			rsttList = addRSTT();
+			if(rsttList != null) {
+				for(int j=0; j<rsttList.size(); j++) {
+					tTime = ttList.get(j);
+					flags = ref.auxtt.findFlags(tTime.phCode);
+					// There's a special case for up-going P and S.
+					if(tTime.dTdZ > 0d && (flags.phGroup.equals("P") || 
+							flags.phGroup.equals("S"))) upGoing = true;
+					else upGoing = false;
+					// Set the correction to surface focus.
+					if(tTime.phCode.charAt(0) == 'L') {
+						// Travel-time corrections and correction to surface focus 
+						// don't make sense for surface waves.
+						delCorUp = 0d;
+					} else {
+						// Get the correction.
+						try {
+							delCorUp = upRay(tTime.phCode, tTime.dTdD);
+						} catch (Exception e) {
+							// This should never happen.
+							e.printStackTrace();
+							delCorUp = 0d;
+						}
+					}
+					// Add auxiliary information.
+					addAux(tTime.phCode, xs[0], delCorUp, tTime, upGoing);
+				}
+				rsttMerge(ttList, rsttList);
+			}
+		} */
+		
 		// Sort the arrivals into increasing time order, filter, etc.
 		ttList.finish(tectonic, noBackBrn);
 		return ttList;
@@ -372,6 +406,8 @@ public class AllBrnVol {
 		
 		// We don't want any corrections if RSTT is used for regional phases.
 		if(rstt && ref.auxtt.phFlags.get(phCode).isRegional) return 0d;
+		// Don't do an elevation correction for surface waves.
+		if(phCode.startsWith("L")) return 0d;
 		
 		// Otherwise, the correction depends on the phase type at the station.
 		type = TauUtil.arrivalType(phCode);
@@ -380,9 +416,7 @@ public class AllBrnVol {
 		} else if(type == 'S') {
 			return TauUtil.topoCorr(elev, TauUtil.DEFVS, dTdD/cvt.deg2km);
 		} else {
-			// The elevation correction doesn't make sense for surface waves 
-			// like LR and Lg.
-			return 0d;
+			return 0d;		// This should never happen
 		}
 	}
 	
@@ -541,7 +575,6 @@ public class AllBrnVol {
 		// Add statistics.
 		tTime.addStats(spd, obs);
 		// Add flags.
-//	flags = ref.auxtt.phFlags.get(phCode);
 		tTime.addFlags(flags.phGroup, flags.auxGroup, flags.isRegional, flags.isDepth, 
 				flags.canUse, flags.dis);
 	}

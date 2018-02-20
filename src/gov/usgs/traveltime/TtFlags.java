@@ -27,10 +27,10 @@ public class TtFlags {
 	 * @param canUse True if the phase may be used in an earthquake 
 	 * location
 	 * @param dis True if the phase should be down weighted
-	 * @param hasBounce True if the phase reflects from the surface 
-	 * of the Earth
 	 * @param ttStat Travel-time statistics object
 	 * @param ellip Ellipticity correction object
+	 * @param upEllip Ellipticity correction object for an associated 
+	 * up going branch if any
 	 */
 	public TtFlags(String phGroup, String auxGroup, boolean isRegional, 
 			boolean isDepth, boolean canUse, boolean dis, TtStat ttStat, 
