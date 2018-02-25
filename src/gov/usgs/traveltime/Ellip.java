@@ -1,7 +1,7 @@
 package gov.usgs.traveltime;
 
 /**
- * Implements the Dziewonski & Gilbert ellipticity correction 
+ * Implements the Dziewonski &amp; Gilbert ellipticity correction 
  * algorithm for one phase.
  * 
  * @author Ray Buland

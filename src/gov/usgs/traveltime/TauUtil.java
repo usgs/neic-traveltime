@@ -478,19 +478,17 @@ public class TauUtil {
 	
 	/**
 	 * Bilinear interpolation.  The indices are such that 
-	 * val[ind] < var <= val[ind+1].  The two dimensional grid of 
+	 * val[ind] &lt; var &lt;= val[ind+1].  The two dimensional grid of 
 	 * values to be interpolated has values val0 associated with 
 	 * it's first index and values val1 associated with it's second 
 	 * index.
 	 * 
 	 * @param var0 First variable
 	 * @param var1 Second variable
-	 * @param ind0 Lower index of the first value array
-	 * @param ind1 Lower index of the second value array
 	 * @param val0 Value array for the first grid index
 	 * @param val1 Value array for the second grid index
 	 * @param grid Two dimensional array of values to be interpolated
-	 * @return
+	 * @return Interpolated value
 	 */
 	public static double biLinear(double var0, double var1, 
 			GenIndex val0, GenIndex val1, double[][] grid) {
@@ -514,19 +512,17 @@ public class TauUtil {
 	
 	/**
 	 * Bilinear interpolation.  The indices are such that 
-	 * val[ind] < var <= val[ind+1].  The two dimensional grid of 
+	 * val[ind] &lt; var &lt;= val[ind+1].  The two dimensional grid of 
 	 * values to be interpolated has values val0 associated with 
 	 * it's first index and values val1 associated with it's second 
 	 * index.
 	 * 
 	 * @param var0 First variable
 	 * @param var1 Second variable
-	 * @param ind0 Lower index of the first value array
-	 * @param ind1 Lower index of the second value array
 	 * @param val0 Value array for the first grid index
 	 * @param val1 Value array for the second grid index
 	 * @param grid Two dimensional array of values to be interpolated
-	 * @return
+	 * @return Interpolated value
 	 */
 	public static double biLinear(double var0, double var1, 
 			GenIndex val0, GenIndex val1, short[][] grid) {
