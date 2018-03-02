@@ -42,9 +42,6 @@ public class AuxTtRef {
 	TtStat ttStat;					// Phase statistics
 	Ellip ellip, upEllip;		// Ellipticity correction(s)
 	// Set up the reader.
-	final String phGroupPath = "../../Documents/Work/Models/phgrp.dat";
-	final String ttStatsPath = "../../Documents/Work/Models/ttstats.lis";
-	final String ellipPath = "../../Documents/Work/Models/tau.table";
 	Scanner scan;
 	boolean priGroup = false;
 	int nDepth;
@@ -68,8 +65,10 @@ public class AuxTtRef {
 		BufferedInputStream inGroup, inStats, inEllip;
 		EllipDeps eDepth;
 		
+		// Set up the properties.
+		TauUtil.getProperties();
 		// Open and read the phase groups file.
-		inGroup = new BufferedInputStream(new FileInputStream(phGroupPath));
+		inGroup = new BufferedInputStream(new FileInputStream(TauUtil.model("groups.txt")));
 		scan = new Scanner(inGroup);
 		// Prime the pump.
 		nextCode = scan.next();
@@ -105,7 +104,7 @@ public class AuxTtRef {
 		inGroup.close();
 		
 		// Open and read the travel-time statistics file.
-		inStats = new BufferedInputStream(new FileInputStream(ttStatsPath));
+		inStats = new BufferedInputStream(new FileInputStream(TauUtil.model("ttstats.txt")));
 		scan = new Scanner(inStats);
 		ttStats = new TreeMap<String, TtStat>();
 		// Prime the pump.
@@ -119,7 +118,7 @@ public class AuxTtRef {
 		inStats.close();
 		
 		// Open and read the ellipticity correction file.
-		inEllip = new BufferedInputStream(new FileInputStream(ellipPath));
+		inEllip = new BufferedInputStream(new FileInputStream(TauUtil.model("ellip.txt")));
 		scan = new Scanner(inEllip);
 		ellips = new TreeMap<String, Ellip>();
 		eDepth = new EllipDeps();
