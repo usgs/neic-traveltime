@@ -130,7 +130,9 @@ public class TauUtil {
 	/**
 	 * Path of the travel time/locator properties file.
 	 */
-	private static String propFile = "Documents\\Work\\Models\\traveltime.prop";
+//private static String propFile = System.getProperty("user.home")+Util.FS+
+//		"Properties"+Util.FS+"traveltime.prop";
+	private static String propFile = "Properties"+Util.FS+"traveltime.prop";
 	/**
 	 * Paths for model and event files set in getProperties.
 	 */
