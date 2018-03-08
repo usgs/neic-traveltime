@@ -39,7 +39,7 @@ public class ReadTau {
 	public final int JTSM = 500;
 	
 	// Set up the reader.
-	final String modelPath = "../../Documents/Work/Models/";
+//final String modelPath = "../../Documents/Work/Models/";
 	String modelName;
 	final int bufLen = 100020;
 	byte[] byteArray;
@@ -133,8 +133,9 @@ public class ReadTau {
 		int bytesRead, recLen = 0, recLast;
 		
 		// Open the file.
-		in = new BufferedInputStream(new FileInputStream(modelPath + 
-				modelName + ".hed"));
+//	in = new BufferedInputStream(new FileInputStream(modelPath + 
+//			modelName + ".hed"));
+		in = new BufferedInputStream(new FileInputStream(TauUtil.model(modelName+".hed")));
 		
 		/*
 		 * Read the first record.
@@ -476,8 +477,7 @@ public class ReadTau {
 		int[] upSize;
 		
 		// Open the table file.
-		in = new BufferedInputStream(new FileInputStream(modelPath + 
-				modelName + ".tbl"));
+		in = new BufferedInputStream(new FileInputStream(TauUtil.model(modelName+".tbl")));
 		
 		// Set the random access record length.  Note: the factor of four reflects 
 		// a bug in the Fortran code (the record length for direct access binary 

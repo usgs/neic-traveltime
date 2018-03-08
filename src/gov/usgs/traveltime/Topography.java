@@ -18,7 +18,7 @@ import java.nio.ShortBuffer;
  */
 public class Topography {
 	short[][] topo;						// Global topography on a 20" grid in kilometers
-	final String topoFile = "../../Documents/Work/Models/ETOPObase.smth";
+//final String topoFile = "../../Documents/Work/Models/ETOPObase.smth";
 	TopoLons topoLons;				// Virtual array of longitude sample points
 	TopoLats topoLats;				// Virtual array of latitude sample points
 	
@@ -57,7 +57,7 @@ public class Topography {
 			ShortBuffer shorts = byteBuf.asShortBuffer();
 			
 			// Open the topo file.
-			in = new BufferedInputStream(new FileInputStream(topoFile));
+			in = new BufferedInputStream(new FileInputStream(TauUtil.model("topo.dat")));
 			
 			// Read the record header.
 			bytesRead = in.read(byteArray, 0, 4);

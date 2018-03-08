@@ -125,6 +125,47 @@ public class TauUtil {
 	 * as Pg, Pb, Sg, and Sb).
 	 */
 	private static boolean strict = true;
+	/**
+	 * Path of the travel time/locator properties file.
+	 */
+//private static String propFile = System.getProperty("user.home")+Util.FS+
+//		"Properties"+Util.FS+"traveltime.prop";
+	private static String propFile = "Properties"+CWBProperties.FS+"traveltime.prop";
+	/**
+	 * Paths for model and event files set in getProperties.
+	 */
+	private static String modelPath;
+	private static String eventPath;
+	
+	/**
+	 * Read the travel time properties file and set up paths to the model 
+	 * and event files.
+	 */
+	public static void getProperties() {		
+		CWBProperties.loadProperties(propFile);
+		modelPath = CWBProperties.getProperty("modelPath");
+		eventPath = CWBProperties.getProperty("eventPath");
+	}
+	
+	/**
+	 * Build a path to a model file.
+	 * 
+	 * @param modelFile Model file name
+	 * @return Model file path
+	 */
+	public static String model(String modelFile) {
+		return modelPath+modelFile;
+	}
+	
+	/**
+	 * Build a path to an event file.
+	 * 
+	 * @param eventFile Event file ID
+	 * @return Event file path
+	 */
+	public static String event(String eventID) {
+		return eventPath+"RayLocInput"+eventID+".txt";
+	}
 	
 	/**
 	 * Create a segment code by stripping a phase code of unnecessary 
