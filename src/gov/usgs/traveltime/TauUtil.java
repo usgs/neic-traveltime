@@ -2,8 +2,6 @@ package gov.usgs.traveltime;
 
 import java.util.ArrayList;
 
-import gov.usgs.anss.util.Util;
-
 /**
  * Utility methods for the travel-time package.
  * 
@@ -132,7 +130,7 @@ public class TauUtil {
 	 */
 //private static String propFile = System.getProperty("user.home")+Util.FS+
 //		"Properties"+Util.FS+"traveltime.prop";
-	private static String propFile = "Properties"+Util.FS+"traveltime.prop";
+	private static String propFile = "Properties"+CWBProperties.FS+"traveltime.prop";
 	/**
 	 * Paths for model and event files set in getProperties.
 	 */
@@ -144,9 +142,9 @@ public class TauUtil {
 	 * and event files.
 	 */
 	public static void getProperties() {		
-		Util.loadProperties(propFile);
-		modelPath = Util.getProperty("modelPath");
-		eventPath = Util.getProperty("eventPath");
+		CWBProperties.loadProperties(propFile);
+		modelPath = CWBProperties.getProperty("modelPath");
+		eventPath = CWBProperties.getProperty("eventPath");
 	}
 	
 	/**
