@@ -304,8 +304,7 @@ public class AllBrnVol {
 										if(branches[j].ref.phRefl.equals("SP")) {
 											tmpCode = "S";
 										} else if(branches[j].ref.phRefl.equals("PS")) {
-											tmpCode = tTime.phCode.substring(0, 
-													tTime.phCode.indexOf('S')-1);
+											tmpCode = tTime.phCode.substring(0, tTime.phCode.indexOf('S'));
 										} else {
 											tmpCode = null;
 										}
@@ -589,12 +588,14 @@ public class AllBrnVol {
 	 */
 	public double oneRay(String phCode, double dTdD) throws Exception {
 		String tmpCode;
+		double tcorr;
 		
 		if(phCode.contains("bc")) tmpCode = TauUtil.phSeg(phCode)+"ab";
 		else tmpCode = phCode;
 		for(lastBrn=0; lastBrn<branches.length; lastBrn++) {
 			if(tmpCode.equals(branches[lastBrn].phCode)) {
-					return branches[lastBrn].oneRay(dTdD);
+					tcorr = branches[lastBrn].oneRay(dTdD);
+					if(!Double.isNaN(tcorr)) return tcorr;
 			}
 		}
 		throw new Exception();
