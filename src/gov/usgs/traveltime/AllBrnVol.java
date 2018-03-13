@@ -22,6 +22,11 @@ public class AllBrnVol {
 	double staDelta;									// Source-receiver distance in degrees
 	double staAzim;										// Receiver azimuth at the source in degrees
 	boolean complex;									// True if this is a "complex" request
+	boolean useful;										// Do only "useful" phases (opposite of "all")
+	boolean noBackBrn;								// Suppress back branches for stability
+	boolean tectonic;									// True if the source is in a tectonic province
+	boolean rstt;											// Use RSTT for local phases
+	boolean plot;											// Generate travel-time plot data
 	AllBrnRef ref;
 	ModConvert cvt;
 	TtFlags flags;
@@ -70,11 +75,12 @@ public class AllBrnVol {
 	 * @throws Exception If the depth is out of range
 	 */
 	public void newSession(double latitude, double longitude, double depth, 
-			String[] phList) throws Exception {
+			String[] phList, boolean useful, boolean noBackBrn, boolean tectonic, 
+			boolean rstt, boolean plot) throws Exception {
 		complex = true;
 		eqLat = latitude;
 		eqLon = longitude;
-		setSession(depth, phList);
+		setSession(depth, phList, useful, noBackBrn, tectonic, rstt, plot);
 	}
 		
 		/**
@@ -85,11 +91,13 @@ public class AllBrnVol {
 		 * @param phList Array of phase use commands
 		 * @throws Exception If the depth is out of range
 		 */
-	public void newSession(double depth, String[] phList) throws Exception {
+	public void newSession(double depth, String[] phList, boolean useful, 
+			boolean noBackBrn, boolean tectonic, boolean rstt, boolean plot) 
+			throws Exception {
 		complex = false;
 		eqLat = Double.NaN;
 		eqLon = Double.NaN;
-		setSession(depth, phList);
+		setSession(depth, phList, useful, noBackBrn, tectonic, rstt, plot);
 	}
 	
 	/**
@@ -113,9 +121,18 @@ public class AllBrnVol {
 	 * @param phList Array of phase use commands
 	 * @throws Exception If the depth is out of range
 	 */
-	private void setSession(double depth, String[] phList) throws Exception {
+	private void setSession(double depth, String[] phList, boolean useful, 
+			boolean noBackBrn, boolean tectonic, boolean rstt, boolean plot) 
+			throws Exception {
 		char tagBrn;
 		double xMin;
+		
+		// Remember the session control flags.
+		this.useful = useful;
+		this.noBackBrn = noBackBrn;
+		this.tectonic = tectonic;
+		this.rstt = rstt;
+		this.plot = plot;
 		
 		// Set up the new source depth.
 		dSource = Math.max(depth, 0.011d);
@@ -170,8 +187,7 @@ public class AllBrnVol {
 	 * @return An array list of travel times
 	 */
 	public TTime getTT(double latitude, double longitude, double elev, 
-			double delta, double azimuth, boolean useful, boolean tectonic, 
-			boolean noBackBrn, boolean rstt) {
+			double delta, double azimuth) {
 		
 		staLat = latitude;
 		staLon = longitude;
@@ -183,7 +199,7 @@ public class AllBrnVol {
 			staDelta = delta;
 			staAzim = azimuth;
 		}
-		return doTT(elev, useful, tectonic, noBackBrn, rstt);
+		return doTT(elev);
 	}
 			
 	/**
@@ -199,14 +215,13 @@ public class AllBrnVol {
 	 * @param rstt If true, use RSTT crustal phases
 	 * @return An array list of travel times
 	 */
-	public TTime getTT(double elev, double delta, boolean useful, 
-			boolean tectonic, boolean noBackBrn, boolean rstt) {
+	public TTime getTT(double elev, double delta) {
 		
 		staLat = Double.NaN;
 		staLon = Double.NaN;
 		staDelta = delta;
 		staAzim = Double.NaN;
-		return doTT(elev, useful, tectonic, noBackBrn, rstt);
+		return doTT(elev);
 	}
 	
 	/**
@@ -220,8 +235,7 @@ public class AllBrnVol {
 	 * @param rstt If true, use RSTT crustal phases
 	 * @return An array list of travel times
 	 */
-	private TTime doTT(double elev, boolean useful, boolean tectonic, 
-			boolean noBackBrn, boolean rstt) {
+	private TTime doTT(double elev) {
 		boolean upGoing;
 		int lastTT, delTT = -1;
 		double delCorUp, delCorDn, retDelta = Double.NaN, 
