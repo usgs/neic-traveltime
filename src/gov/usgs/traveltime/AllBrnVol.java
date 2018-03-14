@@ -27,6 +27,7 @@ public class AllBrnVol {
 	boolean tectonic;									// True if the source is in a tectonic province
 	boolean rstt;											// Use RSTT for local phases
 	boolean plot;											// Generate travel-time plot data
+	double lastDepth = Double.NaN;		// Last depth computed in kilometers
 	AllBrnRef ref;
 	ModConvert cvt;
 	TtFlags flags;
@@ -134,38 +135,41 @@ public class AllBrnVol {
 		this.rstt = rstt;
 		this.plot = plot;
 		
-		// Set up the new source depth.
-		dSource = Math.max(depth, 0.011d);
-		// The interpolation gets squirrelly for very shallow sources.
-		if(depth < 0.011d) {
-			zSource = 0d;
-			dTdDepth = 1d/cvt.pNorm;
-		} else {
-			zSource = Math.min(Math.log(Math.max(1d-dSource*cvt.xNorm, 
-					TauUtil.DMIN)), 0d);
-			dTdDepth = 1d/(cvt.pNorm*(1d-dSource*cvt.xNorm));
-		}
-		
-		// Fake up the phase list commands for now.
-		for(int j=0; j<branches.length; j++) {
-			branches[j].setCompute(true);
-		}
-		// If there are no commands, we're done.
-//	if(phList == null) return;
-		
-		// Correct the up-going branch data.
-		pUp.newDepth(zSource);
-		sUp.newDepth(zSource);
-		
-		// To correct each branch we need a few depth dependent pieces.
-		xMin = cvt.xNorm*Math.min(Math.max(2d*dSource, 2d), 25d);
-		if(dSource <= cvt.zConrad) tagBrn = 'g';
-		else if(dSource <= cvt.zMoho) tagBrn = 'b';
-		else if(dSource <= cvt.zUpperMantle) tagBrn = 'n';
-		else tagBrn = ' ';
-		// Now correct each branch.
-		for(int j=0; j<branches.length; j++) {
-			branches[j].depthCorr(dTdDepth, xMin, tagBrn);
+		if(depth != lastDepth) {
+			// Set up the new source depth.
+			dSource = Math.max(depth, 0.011d);
+			// The interpolation gets squirrelly for very shallow sources.
+			if(depth < 0.011d) {
+				zSource = 0d;
+				dTdDepth = 1d/cvt.pNorm;
+			} else {
+				zSource = Math.min(Math.log(Math.max(1d-dSource*cvt.xNorm, 
+						TauUtil.DMIN)), 0d);
+				dTdDepth = 1d/(cvt.pNorm*(1d-dSource*cvt.xNorm));
+			}
+			
+			// Fake up the phase list commands for now.
+			for(int j=0; j<branches.length; j++) {
+				branches[j].setCompute(true);
+			}
+			// If there are no commands, we're done.
+	//	if(phList == null) return;
+			
+			// Correct the up-going branch data.
+			pUp.newDepth(zSource);
+			sUp.newDepth(zSource);
+			
+			// To correct each branch we need a few depth dependent pieces.
+			xMin = cvt.xNorm*Math.min(Math.max(2d*dSource, 2d), 25d);
+			if(dSource <= cvt.zConrad) tagBrn = 'g';
+			else if(dSource <= cvt.zMoho) tagBrn = 'b';
+			else if(dSource <= cvt.zUpperMantle) tagBrn = 'n';
+			else tagBrn = ' ';
+			// Now correct each branch.
+			for(int j=0; j<branches.length; j++) {
+				branches[j].depthCorr(dTdDepth, xMin, tagBrn);
+			}
+			lastDepth = depth;
 		}
 	}
 		
