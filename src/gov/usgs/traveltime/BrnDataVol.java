@@ -735,14 +735,8 @@ public class BrnDataVol {
 		double ps = Math.abs(dTdD)/cvt.dTdDelta;
 		
 		// Check validity.
-		if(!exists ||(ps < pRange[0] || ps > pRange[1])) {
-			if(ps > pRange[1] && (ps-pRange[1])/pRange[1] < 0.01d) ps = pRange[1];
-			else {
-				tCorr = 0d;
-				System.out.format("OneRay failed: %10.3e %10.3e %10.3e %b\n", ps, 
-						pRange[0], pRange[1], exists);
-				throw new Exception();
-			}
+		if(!exists || ps < pRange[0] || ps > pRange[1]) {
+			return Double.NaN;
 		}
 		
 		for(int j=1; j<pBrn.length; j++) {
