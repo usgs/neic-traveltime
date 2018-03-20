@@ -11,13 +11,17 @@ import java.util.ArrayList;
  *
  */
 public class TTime {
+	double depth;				// Source depth in kilometers
+	double delta;				// Source-receiver distance in degrees
 	ArrayList<TTimeData> tTimes;
 	
 	/**
 	 * The constructor just creates an ArrayList to hold the phase 
 	 * data.
 	 */
-	public TTime() {
+	public TTime(double depth, double delta) {
+		this.depth = depth;
+		this.delta = delta;
 		tTimes = new ArrayList<TTimeData>();
 	}
 	
@@ -79,6 +83,8 @@ public class TTime {
 		if(tectonic) TauUtil.filterTect(tTimes);
 		if(noBackBrn) TauUtil.filterBack(tTimes);
 		else TauUtil.filterDef(tTimes);
+		// A catch all filter to compensate for strange model artifacts.
+		TauUtil.filterMisc(tTimes, delta);
 		// Modify the observabilities of phases closely following 
 		// another phase in time.
 		TauUtil.modObserv(tTimes);
@@ -120,7 +126,7 @@ public class TTime {
 	 * @param depth Source depth in kilometers
 	 * @param delta Source-receiver distance in degrees
 	 */
-	public void print(double depth, double delta) {
+	public void print() {
 		System.out.println();
 		System.out.format("Depth = %6.2f  Delta = %8.4f\n", depth, delta);
 		if(tTimes.size() > 0) {

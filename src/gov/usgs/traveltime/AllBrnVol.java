@@ -102,19 +102,6 @@ public class AllBrnVol {
 	}
 	
 	/**
-	 * If the current depth is still good, just update the epicentral 
-	 * parameters for the travel-time corrections.
-	 * 
-	 * @param latitude Source geographical latitude in degrees
-	 * @param longitude Source longitude in degrees
-	 */
-	public void newEpicenter(double latitude, double longitude) {
-		complex = true;
-		eqLat = latitude;
-		eqLon = longitude;
-	}
-	
-	/**
 	 * Set up a new session.  Note that this just sets up the 
 	 * simple session parameters of use to the travel-time package.
 	 * 
@@ -250,7 +237,7 @@ public class AllBrnVol {
 //	TTime rsttList;
 		TTimeData tTime;
 		
-		ttList = new TTime();
+		ttList = new TTime(dSource, staDelta);
 		lastTT = 0;
 		// The desired distance might translate to up to three 
 		// different distances (as the phases wrap around the Earth).
@@ -308,7 +295,7 @@ public class AllBrnVol {
 								delCorUp = 0d;
 							}
 							// This is the normal case.  Do various travel-time corrections.
-							if(!TauUtil.NOCORR) {
+							if(!TauUtil.NoCorr) {
 								tTime.tt += elevCorr(tTime.phCode, elev, tTime.dTdD, rstt);
 								// If this was a complex request, do the ellipticity and bounce 
 								// point corrections.
