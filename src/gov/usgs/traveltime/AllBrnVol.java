@@ -572,7 +572,9 @@ public class AllBrnVol {
 			// Wrap distances greater than 180 degrees.
 			if(del > 180d) del = 360d-del;
 			// Do the interpolation.
-			if(tTime.corrTt) tTime.tt += flags.ttStat.getBias(del);
+			if(tTime.corrTt) {
+				tTime.tt += flags.ttStat.getBias(del);
+			}
 			spd = flags.ttStat.getSpread(del, upGoing);
 			obs = flags.ttStat.getObserv(del, upGoing);
 		}

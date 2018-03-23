@@ -638,7 +638,7 @@ public class BrnDataVol {
 											dps*poly[3][j])+ps*xs),xSign*ps,zSign*
 											Math.sqrt(Math.abs(pSourceSq-Math.pow(ps,2d))),
 											-(2d*poly[2][j]+0.75d*poly[3][j]/
-											Math.max(Math.abs(dps),TauUtil.DTOL))/cvt.tNorm);
+											Math.max(Math.abs(dps),TauUtil.DTOL))/cvt.tNorm, false);
 								}
 							}
 						// We have to be careful if the quadratic term is zero.
@@ -662,8 +662,7 @@ public class BrnDataVol {
 									dp*(poly[1][j]+dps*poly[3][j])+ps*xs),
 									xSign*ps,zSign*Math.sqrt(Math.abs(pSourceSq-
 									Math.pow(ps,2d))),-(0.75d*poly[3][j]/
-									Math.max(Math.abs(dps),TauUtil.DTOL))/cvt.tNorm);
-					//	System.out.println("\n\t\t***** Got Arrival Special Case !!! *****\n");
+									Math.max(Math.abs(dps),TauUtil.DTOL))/cvt.tNorm, false);
 						}
 					}
 				}
@@ -686,7 +685,7 @@ public class BrnDataVol {
 							dp*(poly[1][0]+dp*poly[2][0]+dps*poly[3][0])+
 							pRange[0]*xs),xSign*pRange[0],zSign*Math.sqrt(Math.abs(pSourceSq-
 							Math.pow(pRange[0],2d))),-(2d*poly[2][0]+0.75d*poly[3][0]/
-							Math.max(Math.abs(dps),TauUtil.DTOL))/cvt.tNorm);
+							Math.max(Math.abs(dps),TauUtil.DTOL))/cvt.tNorm, false);
 				}
 			}
 			
@@ -699,22 +698,17 @@ public class BrnDataVol {
 					if(ref.phAddOn.equals("Lg")) {
 						// Make sure we have a valid depth.
 						if(dSource <= TauUtil.LGDEPMAX) {
-							tTime = ttList.get(ttList.size()-1);
-							ttList.addPhase(ref.phAddOn, 0d, cvt.dTdDLg, 0d, 0d);
-							ttList.get(ttList.size()-1).corrTt = true;
+							ttList.addPhase(ref.phAddOn, 0d, cvt.dTdDLg, 0d, 0d, true);
 						}
 					} else if(ref.phAddOn.equals("LR")) {
 						// Make sure we have a valid depth and distance.
 						if(dSource <= TauUtil.LRDEPMAX && xs <= TauUtil.LRDELMAX) {
-							tTime = ttList.get(ttList.size()-1);
-							ttList.addPhase(ref.phAddOn, 0d, cvt.dTdDLR, 0d, 0d);
-							ttList.get(ttList.size()-1).corrTt = true;
+							ttList.addPhase(ref.phAddOn, 0d, cvt.dTdDLR, 0d, 0d, true);
 						}
 					} else if(ref.phAddOn.equals("pwP") || ref.phAddOn.equals("PKPpre")) {
 						tTime = ttList.get(ttList.size()-1);
 						ttList.addPhase(ref.phAddOn, tTime.tt, tTime.dTdD, tTime.dTdZ, 
-								tTime.dXdP);
-						ttList.get(ttList.size()-1).corrTt = true;
+								tTime.dXdP, true);
 					}
 				}
 			}

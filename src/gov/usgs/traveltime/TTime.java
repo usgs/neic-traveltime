@@ -36,8 +36,8 @@ public class TTime {
 	 * parameter
 	 */
 	public void addPhase(String phCode, double tt, double dTdD, 
-			double dTdZ, double dXdP) {
-		tTimes.add(new TTimeData(phCode,tt,dTdD,dTdZ,dXdP));
+			double dTdZ, double dXdP, boolean corrTt) {
+		tTimes.add(new TTimeData(phCode,tt,dTdD,dTdZ,dXdP, corrTt));
 	}
 	
 	/**
@@ -128,7 +128,7 @@ public class TTime {
 	 */
 	public void print() {
 		System.out.println();
-		System.out.format("Depth = %6.2f  Delta = %8.4f\n", depth, delta);
+		System.out.format("Depth = %5.1f  Delta = %6.2f\n", depth, delta);
 		if(tTimes.size() > 0) {
 			for(int j=0; j<tTimes.size(); j++) {
 				System.out.format("%2d  %s", j, tTimes.get(j));
