@@ -73,6 +73,11 @@ public class AllBrnVol {
 	 * @param longitude Source longitude in degrees
 	 * @param depth Source depth in kilometers
 	 * @param phList Array of phase use commands
+	 * @param useful If true, only provide "useful" crustal phases
+	 * @param tectonic If true, map Pb and Sb onto Pg and Sg
+	 * @param noBackBrn If true, suppress back branches
+	 * @param rstt If true, use RSTT crustal phases
+	 * @param plot If true, compute travel-time plot data
 	 * @throws Exception If the depth is out of range
 	 */
 	public void newSession(double latitude, double longitude, double depth, 
@@ -84,14 +89,19 @@ public class AllBrnVol {
 		setSession(depth, phList, useful, noBackBrn, tectonic, rstt, plot);
 	}
 		
-		/**
-		 * Set up a new session.  Note that this just sets up the 
-		 * simple session parameters of use to the travel-time package.
-		 * 
-		 * @param depth Source depth in kilometers
-		 * @param phList Array of phase use commands
-		 * @throws Exception If the depth is out of range
-		 */
+	/**
+	 * Set up a new session.  Note that this just sets up the 
+	 * simple session parameters of use to the travel-time package.
+	 * 
+	 * @param depth Source depth in kilometers
+	 * @param phList Array of phase use commands
+	 * @param useful If true, only provide "useful" crustal phases
+	 * @param tectonic If true, map Pb and Sb onto Pg and Sg
+	 * @param noBackBrn If true, suppress back branches
+	 * @param rstt If true, use RSTT crustal phases
+	 * @param plot If true, compute travel-time plot data
+	 * @throws Exception If the depth is out of range
+	 */
 	public void newSession(double depth, String[] phList, boolean useful, 
 			boolean noBackBrn, boolean tectonic, boolean rstt, boolean plot) 
 			throws Exception {
@@ -171,10 +181,6 @@ public class AllBrnVol {
 	 * @param elev Station elevation in kilometers
 	 * @param delta Source receiver distance desired in degrees
 	 * @param azimuth Receiver azimuth at the source in degrees
-	 * @param useful If true, only provide "useful" crustal phases
-	 * @param tectonic If true, map Pb and Sb onto Pg and Sg
-	 * @param noBackBrn If true, suppress back branches
-	 * @param rstt If true, use RSTT crustal phases
 	 * @return An array list of travel times
 	 */
 	public TTime getTT(double latitude, double longitude, double elev, 
@@ -200,10 +206,6 @@ public class AllBrnVol {
 	 * 
 	 * @param elev Station elevation in kilometers
 	 * @param delta Source receiver distance desired in degrees
-	 * @param useful If true, only provide "useful" crustal phases
-	 * @param tectonic If true, map Pb and Sb onto Pg and Sg
-	 * @param noBackBrn If true, suppress back branches
-	 * @param rstt If true, use RSTT crustal phases
 	 * @return An array list of travel times
 	 */
 	public TTime getTT(double elev, double delta) {

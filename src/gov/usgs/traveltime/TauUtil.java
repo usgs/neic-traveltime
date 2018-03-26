@@ -183,7 +183,7 @@ public class TauUtil {
 	/**
 	 * Build a path to an event file.
 	 * 
-	 * @param eventFile Event file ID
+	 * @param eventID Hydra style event file ID number
 	 * @return Event file path
 	 */
 	public static String event(String eventID) {
