@@ -31,8 +31,9 @@ public class TTimeData implements Comparable<TTimeData> {
 	 * @param tt Travel time
 	 * @param dTdD Derivative of time with respect to distance
 	 * @param dTdZ Derivative of time with respect to depth
-	 * @param dXdP Derivative of distance with respect to ray 
-	 * parameter
+	 * @param dXdP Derivative of distance with respect to ray parameter
+	 * @param corrTt True if the travel-time itself needs to be modified 
+	 * by the statistical bias
 	 */
 	public TTimeData(String phCode, double tt, double dTdD, 
 			double dTdZ, double dXdP, boolean corrTt) {

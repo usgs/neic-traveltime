@@ -17,7 +17,11 @@ public class TTime {
 	
 	/**
 	 * The constructor just creates an ArrayList to hold the phase 
-	 * data.
+	 * data.  The depth and source-receiver distance are remembered for 
+	 * convenience.
+	 * 
+	 * @param depth Source depth in kilometers
+	 * @param delta Source-receiver distance in degrees
 	 */
 	public TTime(double depth, double delta) {
 		this.depth = depth;
@@ -32,7 +36,9 @@ public class TTime {
 	 * @param tt Travel time
 	 * @param dTdD Derivative of time with respect to distance
 	 * @param dTdZ Derivative of time with respect to depth
-	 * @param dXdP Derivative of distance with respect to ray 
+	 * @param dXdP Derivative of distance with respect to ray
+	 * @param corrTt True if the travel-time itself needs to be modified 
+	 * by the statistical bias
 	 * parameter
 	 */
 	public void addPhase(String phCode, double tt, double dTdD, 
@@ -123,8 +129,6 @@ public class TTime {
 	/**
 	 * Print the travel-time data for all phases as a table.
 	 * 
-	 * @param depth Source depth in kilometers
-	 * @param delta Source-receiver distance in degrees
 	 */
 	public void print() {
 		System.out.println();

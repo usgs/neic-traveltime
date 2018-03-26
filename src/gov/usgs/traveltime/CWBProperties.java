@@ -18,7 +18,7 @@ import java.io.PrintStream;
 
 /** Static classes related to properties.
  *
- * @author U.S. Geological Survey  <ketchum at usgs.gov>
+ * @author U.S. Geological Survey  &lt;ketchum at usgs.gov&gt;
  */
 public class CWBProperties {
 
