@@ -54,7 +54,7 @@ public class TtStat {
 		for(int k=0; k<bias.size(); k++) {
 			seg = bias.get(k);
 			if(delta >= seg.minDelta && delta <= seg.maxDelta) {
-				return Math.max(seg.interp(delta), TauUtil.DEFBIAS);
+				return seg.interp(delta);
 			}
 		}
 		return TauUtil.DEFBIAS;

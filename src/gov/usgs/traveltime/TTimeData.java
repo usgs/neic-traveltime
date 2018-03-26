@@ -35,13 +35,13 @@ public class TTimeData implements Comparable<TTimeData> {
 	 * parameter
 	 */
 	public TTimeData(String phCode, double tt, double dTdD, 
-			double dTdZ, double dXdP) {
+			double dTdZ, double dXdP, boolean corrTt) {
 		this.phCode = phCode;
 		this.tt = tt;
 		this.dTdD = dTdD;
 		this.dTdZ = dTdZ;
 		this.dXdP = dXdP;
-		corrTt = false;
+		this.corrTt = corrTt;
 	}
 	
 	/**

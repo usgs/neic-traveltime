@@ -27,6 +27,7 @@ public class AllBrnVol {
 	boolean tectonic;									// True if the source is in a tectonic province
 	boolean rstt;											// Use RSTT for local phases
 	boolean plot;											// Generate travel-time plot data
+	double lastDepth = Double.NaN;		// Last depth computed in kilometers
 	AllBrnRef ref;
 	ModConvert cvt;
 	TtFlags flags;
@@ -109,19 +110,6 @@ public class AllBrnVol {
 	}
 	
 	/**
-	 * If the current depth is still good, just update the epicentral 
-	 * parameters for the travel-time corrections.
-	 * 
-	 * @param latitude Source geographical latitude in degrees
-	 * @param longitude Source longitude in degrees
-	 */
-	public void newEpicenter(double latitude, double longitude) {
-		complex = true;
-		eqLat = latitude;
-		eqLon = longitude;
-	}
-	
-	/**
 	 * Set up a new session.  Note that this just sets up the 
 	 * simple session parameters of use to the travel-time package.
 	 * 
@@ -142,38 +130,41 @@ public class AllBrnVol {
 		this.rstt = rstt;
 		this.plot = plot;
 		
-		// Set up the new source depth.
-		dSource = Math.max(depth, 0.011d);
-		// The interpolation gets squirrelly for very shallow sources.
-		if(depth < 0.011d) {
-			zSource = 0d;
-			dTdDepth = 1d/cvt.pNorm;
-		} else {
-			zSource = Math.min(Math.log(Math.max(1d-dSource*cvt.xNorm, 
-					TauUtil.DMIN)), 0d);
-			dTdDepth = 1d/(cvt.pNorm*(1d-dSource*cvt.xNorm));
-		}
-		
-		// Fake up the phase list commands for now.
-		for(int j=0; j<branches.length; j++) {
-			branches[j].setCompute(true);
-		}
-		// If there are no commands, we're done.
-//	if(phList == null) return;
-		
-		// Correct the up-going branch data.
-		pUp.newDepth(zSource);
-		sUp.newDepth(zSource);
-		
-		// To correct each branch we need a few depth dependent pieces.
-		xMin = cvt.xNorm*Math.min(Math.max(2d*dSource, 2d), 25d);
-		if(dSource <= cvt.zConrad) tagBrn = 'g';
-		else if(dSource <= cvt.zMoho) tagBrn = 'b';
-		else if(dSource <= cvt.zUpperMantle) tagBrn = 'n';
-		else tagBrn = ' ';
-		// Now correct each branch.
-		for(int j=0; j<branches.length; j++) {
-			branches[j].depthCorr(dTdDepth, xMin, tagBrn);
+		if(depth != lastDepth) {
+			// Set up the new source depth.
+			dSource = Math.max(depth, 0.011d);
+			// The interpolation gets squirrelly for very shallow sources.
+			if(depth < 0.011d) {
+				zSource = 0d;
+				dTdDepth = 1d/cvt.pNorm;
+			} else {
+				zSource = Math.min(Math.log(Math.max(1d-dSource*cvt.xNorm, 
+						TauUtil.DMIN)), 0d);
+				dTdDepth = 1d/(cvt.pNorm*(1d-dSource*cvt.xNorm));
+			}
+			
+			// Fake up the phase list commands for now.
+			for(int j=0; j<branches.length; j++) {
+				branches[j].setCompute(true);
+			}
+			// If there are no commands, we're done.
+	//	if(phList == null) return;
+			
+			// Correct the up-going branch data.
+			pUp.newDepth(zSource);
+			sUp.newDepth(zSource);
+			
+			// To correct each branch we need a few depth dependent pieces.
+			xMin = cvt.xNorm*Math.min(Math.max(2d*dSource, 2d), 25d);
+			if(dSource <= cvt.zConrad) tagBrn = 'g';
+			else if(dSource <= cvt.zMoho) tagBrn = 'b';
+			else if(dSource <= cvt.zUpperMantle) tagBrn = 'n';
+			else tagBrn = ' ';
+			// Now correct each branch.
+			for(int j=0; j<branches.length; j++) {
+				branches[j].depthCorr(dTdDepth, xMin, tagBrn);
+			}
+			lastDepth = depth;
 		}
 	}
 		
@@ -254,7 +245,7 @@ public class AllBrnVol {
 //	TTime rsttList;
 		TTimeData tTime;
 		
-		ttList = new TTime();
+		ttList = new TTime(dSource, staDelta);
 		lastTT = 0;
 		// The desired distance might translate to up to three 
 		// different distances (as the phases wrap around the Earth).
@@ -312,7 +303,7 @@ public class AllBrnVol {
 								delCorUp = 0d;
 							}
 							// This is the normal case.  Do various travel-time corrections.
-							if(!TauUtil.NOCORR) {
+							if(!TauUtil.NoCorr) {
 								tTime.tt += elevCorr(tTime.phCode, elev, tTime.dTdD, rstt);
 								// If this was a complex request, do the ellipticity and bounce 
 								// point corrections.
@@ -589,7 +580,9 @@ public class AllBrnVol {
 			// Wrap distances greater than 180 degrees.
 			if(del > 180d) del = 360d-del;
 			// Do the interpolation.
-			if(tTime.corrTt) tTime.tt += flags.ttStat.getBias(del);
+			if(tTime.corrTt) {
+				tTime.tt += flags.ttStat.getBias(del);
+			}
 			spd = flags.ttStat.getSpread(del, upGoing);
 			obs = flags.ttStat.getObserv(del, upGoing);
 		}

@@ -10,10 +10,17 @@ import java.util.ArrayList;
  */
 public class TauUtil {
 	/**
-	 * If true, suppress all travel-time corrections for debugging 
-	 * purposes.
+	 * Global tolerance value.
 	 */
-	public static final boolean NOCORR = false;
+	public static final double DTOL = 1e-9d;
+	/**
+	 * Global minimum positive value.
+	 */
+	public static final double DMIN = 1e-30d;
+	/**
+	 * Global maximum positive value.
+	 */
+	public static final double DMAX = 1e30d;
 	/**
 	 * Global default shallow crustal P velocity in km/s (from ak135).
 	 */
@@ -34,6 +41,28 @@ public class TauUtil {
 	 * LR group velocity in kilometers/second.
 	 */
 	public static final double LRGRPVEL = 3.5d;
+	/**
+	 * Maximum credible Pn source-receiver distance in degrees.  
+	 * Note that these maximum regional phase distances are mostly 
+	 * needed for RSTT.  Because of the nature of the algorithm, 
+	 * there are no inherent distance limits for any of the phases.
+	 */
+	public static final double MAXDELPN = 21.5d;
+	/**
+	 * Maximum credible Sn source-receiver distance in degrees.  
+	 * Note that there is a short Sn branch in the WUS model at more  
+	 * than 40 degrees that appears to be an artifact of layering the 
+	 * WUS crust on top of the AK135 mantle.
+	 */
+	public static final double MAXDELSN = 30.0d;
+	/**
+	 * Maximum credible Pg source-receiver distance in degrees.
+	 */
+	public static final double MAXDELPG = 8.5d;
+	/**
+	 * Maximum credible Lg source-receiver distance in degrees.
+	 */
+	public static final double MAXDELLG = 30.0d;
 	/**
 	 * Global default travel-time statistical bias in seconds.
 	 */
@@ -57,29 +86,6 @@ public class TauUtil {
 	 * is.  The larger window is needed when the location is poor.
 	 */
 	public static final double WINDOWMIN = 5d;
-	/**
-	 * Receiver azimuth relative to the source in degrees clockwise from 
-	 * north (available after calling delAz).
-	 */
-	public static double azimuth = Double.NaN;
-	/**
-	 * Longitude in degrees projected from an epicenter by a distance 
-	 * and azimuth.
-	 */
-	public static double projLon = Double.NaN;
-	
-	/**
-	 * Global tolerance value.
-	 */
-	public static final double DTOL = 1e-9d;
-	/**
-	 * Global minimum positive value.
-	 */
-	public static final double DMIN = 1e-30d;
-	/**
-	 * Global maximum positive value.
-	 */
-	public static final double DMAX = 1e30d;
 	/**
 	 * Minimum distance in radians for an Sn branch to proxy for Lg.
 	 */
@@ -120,11 +126,28 @@ public class TauUtil {
 	protected final static double ELLIPFAC = 0.993305521d;
 	
 	/**
+	 * If true, suppress all travel-time corrections for debugging 
+	 * purposes and cases where the corrections aren't needed.
+	 */
+	public static final boolean NoCorr = false;
+	/**
 	 * If true the definition of useless phases is strictly interpreted 
 	 * (i.e., eliminate reflected phases containing Pn and Sn as well 
 	 * as Pg, Pb, Sg, and Sb).
 	 */
 	private static boolean strict = true;
+	
+	/**
+	 * Receiver azimuth relative to the source in degrees clockwise from 
+	 * north (available after calling delAz).
+	 */
+	public static double azimuth = Double.NaN;
+	/**
+	 * Longitude in degrees projected from an epicenter by a distance 
+	 * and azimuth.
+	 */
+	public static double projLon = Double.NaN;
+	
 	/**
 	 * Path of the travel time/locator properties file.
 	 */
@@ -212,12 +235,12 @@ public class TauUtil {
 			if((phCode.contains("Pg") || phCode.contains("Sg") || 
 					phCode.contains("Pb") || phCode.contains("Sb") || 
 					phCode.contains("Pn") || phCode.contains("Sn")) && 
-					phCode.length() > 2) return true;
+					phCode.length() > 3) return true;
 			else return false;
 		} else {
 			if((phCode.contains("Pg") || phCode.contains("Sg") || 
 					phCode.contains("Pb") || phCode.contains("Sb")) && 
-					phCode.length() > 2) return true;
+					phCode.length() > 3) return true;
 			else return false;
 		}
 	}
@@ -359,6 +382,21 @@ public class TauUtil {
 		for(int j=0; j<tTimes.size(); j++) {
 			if(tTimes.get(j).spread >= DEFSPREAD || tTimes.get(j).observ <= 
 					DEFOBSERV) tTimes.get(j).canUse = false;
+		}
+	}
+	
+	/**
+	 * Apply miscellaneous filters to get rid of extraneous phases.
+	 * 
+	 * @param tTimes An array list of travel-time objects
+	 * @param delta Source-receiver distance in degrees
+	 */
+	public static void filterMisc(ArrayList<TTimeData> tTimes, double delta) {
+		for(int j=0; j<tTimes.size(); j++) {
+			if(tTimes.get(j).phCode.equals("Sn") && delta > MAXDELSN) {
+				tTimes.remove(j);
+				break;
+			}
 		}
 	}
 	
