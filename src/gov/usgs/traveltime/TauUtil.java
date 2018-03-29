@@ -235,12 +235,13 @@ public class TauUtil {
 			if((phCode.contains("Pg") || phCode.contains("Sg") || 
 					phCode.contains("Pb") || phCode.contains("Sb") || 
 					phCode.contains("Pn") || phCode.contains("Sn")) && 
-					phCode.length() > 3) return true;
+					(phCode.length() > 2 && !phCode.equals("PSn") && 
+					!phCode.equals("SPn"))) return true;
 			else return false;
 		} else {
 			if((phCode.contains("Pg") || phCode.contains("Sg") || 
 					phCode.contains("Pb") || phCode.contains("Sb")) && 
-					phCode.length() > 3) return true;
+					phCode.length() > 2) return true;
 			else return false;
 		}
 	}

@@ -16,14 +16,14 @@ public class TtMain {
 		TreeMap<String,AllBrnRef> modelData = null;
 		// Simulate a simple session request.
 		String earthModel = "ak135";
-		double sourceDepth = 509.98d;
+		double sourceDepth = 0.0d;
 		String[] phList = null;
 		boolean useful = true;
 		boolean noBackBrn = true;
 		boolean rstt = false;
 		// Simulate a simple travel time request.
-		double delta = 1.3051d;
-		double elev = 1.40d;
+		double delta = 79.8967d;
+		double elev = 0.0d;
 		boolean tectonic = true;
 		// Simulate a complex travel time request.
 		double sourceLat = 50.2075d;
@@ -64,14 +64,14 @@ public class TtMain {
 			}
 			allRef = new AllBrnRef(readTau, auxtt);
 			modelData.put(earthModel, allRef);
-			allRef.dumpBrn(false);
+//		allRef.dumpBrn(false);
 		}
 		
 		// At this point, we've either found the reference part of the model 
 		// or read it in.  Now Set up the (depth dependent) volatile part.
 		allBrn = new AllBrnVol(allRef);
 //	allBrn.dumpHead();
-//	allBrn.dumpMod('P', true);
+		allBrn.dumpMod('P', false);
 //	allBrn.dumpMod('S', true);
 		// Set up a new session.
 		try {
