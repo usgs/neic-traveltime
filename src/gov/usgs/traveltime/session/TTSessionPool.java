@@ -44,9 +44,29 @@ public class TTSessionPool {
           double lat, double lng, boolean allPhases, 
           boolean backBranches, boolean tectonic, boolean rstt, boolean plot/*, EdgeThread parent*/)
           throws IOException, Exception {
-    TTSession session  = common(model, depth, phaseList, lat, lng, allPhases, backBranches, tectonic, rstt, plot);
- 
-    return session;
+    return common(model, depth, phaseList, lat, lng, allPhases, backBranches, tectonic, rstt, plot);
+   }
+    /** Get a TTSession with the following model and settings.  Once the caller has the model,
+   * the specifics can be changed by calling TTSession.newSession().  The session object remains
+   * the same, but the computations needed by the new settings are done.
+   * 
+   * @param model Model name
+   * @param depth Depth in km
+   * @param phaseList If not null, an array with the desired phase
+   * @param allPhases If true, calls return all phase
+   * @param backBranches If true, call return back branches
+   * @param tectonic Region is tectonic
+   * @param rstt If true, use RSTT for local travel times
+   * @param plot If true, this returns plot mode
+   * @return A TTSession set to the arguments
+   * @throws IOException 
+   */
+  public static TTSession getTravelTimeSession(String model, double depth, 
+          String [] phaseList, 
+          boolean allPhases, 
+          boolean backBranches, boolean tectonic, boolean rstt, boolean plot/*, EdgeThread parent*/)
+          throws IOException, Exception {
+    return  common(model, depth, phaseList, Double.NaN, Double.NaN, allPhases, backBranches, tectonic, rstt, plot);
   }
   /** Get a TTSession with the following parmeters
    * 
@@ -76,9 +96,39 @@ public class TTSessionPool {
         phaseList.toArray(phList);
       }
     }    
-    TTSession session = common(model, depth, phList, lat, lng, allPhases, backBranches, tectonic, rstt, plot);
-    return session;
+    return common(model, depth, phList, lat, lng, allPhases, backBranches, tectonic, rstt, plot);
   }
+  
+  public static TTSession getTravelTimeSession(String model, double depth, 
+          ArrayList<String> phaseList, 
+           boolean allPhases, 
+          boolean backBranches, boolean tectonic, boolean rstt, boolean plot/*, EdgeThread parent*/)
+          throws IOException, Exception {
+      String[] phList = null;
+      if(phaseList != null) {
+      if(!phaseList.isEmpty()) {
+        phList = new String[phaseList.size()];
+        phaseList.toArray(phList);
+      }
+    }  
+    return common(model, depth, phList, Double.NaN, Double.NaN, allPhases, backBranches, tectonic, rstt, plot);
+      
+  }
+  /** setup a TTSession based on the given parameters
+   * 
+   * @param model Model name
+   * @param depth Depth in km
+   * @param phaseList If not null, an array with the desired phase
+   * @param lat source Latitude in degrees
+   * @param lng source Longitude in degrees
+   * @param allPhases If true, calls return all phase
+   * @param backBranches If true, call return back branches
+   * @param tectonic Region is tectonic
+   * @param rstt If true, use RSTT for local travel times
+   * @param plot If true, this returns plot mode
+   * @return A TTSession set to the arguments
+   * @throws IOException 
+   */
   private synchronized static TTSession  common(String model, double depth, 
           String [] phList, 
           double lat, double lng, boolean allPhases, 
@@ -107,13 +157,19 @@ public class TTSessionPool {
       session = frees.get(frees.size() -1);
       used.add(session);
       frees.remove(frees.size() -1);
-      session.newSession(depth, phList, rstt, backBranches, tectonic, rstt, plot);
+      if(Double.isNaN(lat)) {
+        session.newSession(depth, phList, rstt, backBranches, tectonic, rstt, plot);
+      }
+      else {
+        session.newSession(lat, lng, depth, phList, rstt, backBranches, tectonic, rstt, plot);
+      }
     }
     else {
       // There is not a free session, so create one and add it to the used list
       session = new TTSession(model, depth, phList,lat, lng, allPhases,
                    backBranches, tectonic, rstt, plot/*, parent*/);
       used.add(session);      
+      System.out.println("Create new TTSession #used="+used.size()+" #fr="+frees.size()+" "+model+" "+depth+" "+lat+" "+lng+" "+session);
     }
     return session;    
   }
