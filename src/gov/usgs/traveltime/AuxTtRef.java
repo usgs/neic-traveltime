@@ -209,7 +209,22 @@ public class AuxTtRef {
 				}
 			}
 		}
-		return null;
+		// OK, that didn't work.  See if the phase is generic.
+		for(int j=0; j<phGroups.size(); j++) {
+			// Try the primary group name.
+			if(phase.equals(phGroups.get(j).groupName)) {
+				priGroup = true;
+				return phGroups.get(j).groupName;
+			}
+			// Try the auxiliary group name.
+			if(phase.equals(auxGroups.get(j).groupName)) {
+				priGroup = false;
+				return auxGroups.get(j).groupName;
+			}
+		}
+		// OK, that didn't work.  Let's just give up.
+		priGroup = true;
+		return "";
 	}
 	
 	/**

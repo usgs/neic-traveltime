@@ -136,14 +136,14 @@ public class AllBrnVol {
 			// Set up the new source depth.
 			dSource = Math.max(depth, 0.011d);
 			// The interpolation gets squirrelly for very shallow sources.
-			if(depth < 0.011d) {
-				zSource = 0d;
-				dTdDepth = 1d/cvt.pNorm;
-			} else {
+	//	if(depth < 0.011d) {
+	//		zSource = 0d;
+	//		dTdDepth = 1d/cvt.pNorm;
+	//	} else {
 				zSource = Math.min(Math.log(Math.max(1d-dSource*cvt.xNorm, 
 						TauUtil.DMIN)), 0d);
 				dTdDepth = 1d/(cvt.pNorm*(1d-dSource*cvt.xNorm));
-			}
+	//	}
 			
 			// Fake up the phase list commands for now.
 			for(int j=0; j<branches.length; j++) {
