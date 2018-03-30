@@ -24,8 +24,8 @@ import java.util.TreeMap;
 public class TTSession {
   private static AuxTtRef auxtt;
   private static final TreeMap<String, AllBrnRef> modelData = new TreeMap();
-  private static final TreeMap<String, ArrayList<AllBrnVol>> modelAllBrnVolFree = new TreeMap<>();
-  private static final TreeMap<String, ArrayList<AllBrnVol>> modelAllBrnVolAssigned = new TreeMap<>();
+  //private static final TreeMap<String, ArrayList<AllBrnVol>> modelAllBrnVolFree = new TreeMap<>();
+  //private static final TreeMap<String, ArrayList<AllBrnVol>> modelAllBrnVolAssigned = new TreeMap<>();
   
 // Session variables 
   private String earthModel;
@@ -44,6 +44,10 @@ public class TTSession {
   // Variables used within a Session
   private AllBrnVol allBrn;         // The current session with depth object to query for stuff
   
+  @Override
+  public String toString() {
+    return "TTS: "+allBrn.toString();
+  }
   // logging related stuff
   //private EdgeThread par;
   private void prt(String s) {System.out.println(s);}
@@ -59,10 +63,29 @@ public class TTSession {
   public String getKey() {return key;}
   /** Return the working AllBrnVol for this session
    * 
-   * @return The curren AllBrnV
+   * @return The current AllBrnVol
    */
   public AllBrnVol getAllBrnVol() {return allBrn ;}  
-
+ /**
+   * Construct up a session from the session parameters
+   *
+   * @param earthModel Like ak135
+   * @param sourceDepth Depth in km
+   * @param phases List of phase desired or null  for all phases
+   * @param allPhases If true all phase return (this is !useful for the TT package)
+   * @param returnBackBranches Return back branches (TT this is !noBackBranch)
+   * @param tectonic source is a tectonic province
+   * @param useRSTT Use RSTT instead for all local phases
+   * @param isPlot Call in plot mode
+   * @throws IOException
+   */
+  public TTSession(String earthModel, double sourceDepth, String[] phases, 
+          boolean allPhases, boolean returnBackBranches, boolean tectonic,
+          boolean useRSTT, boolean isPlot /*, EdgeThread parent*/) throws IOException {
+    makeTT(earthModel, sourceDepth, phases, Double.NaN, Double.NaN, 
+            allPhases, returnBackBranches, tectonic, useRSTT, isPlot);
+    
+  }
   /**
    * Set up a session from the session parameters
    *
@@ -82,6 +105,29 @@ public class TTSession {
           double srcLat, double srcLong,
           boolean allPhases, boolean returnBackBranches, boolean tectonic,
           boolean useRSTT, boolean isPlot /*, EdgeThread parent*/) throws IOException {
+    makeTT(earthModel, sourceDepth, phases, 
+            srcLat, srcLong,
+            allPhases, returnBackBranches, tectonic, useRSTT, isPlot);
+  }
+ /**
+   * Set up a session from the session parameters
+   *
+   * @param earthModel Like ak135
+   * @param sourceDepth Depth in km
+   * @param phases List of phase desired or null  for all phases
+   * @param srcLat Source latitude in degrees
+   * @param srcLong Source longitude in degrees
+   * @param allPhases If true all phase return (this is !useful for the TT package)
+   * @param returnBackBranches Return back branches (TT this is !noBackBranch)
+   * @param tectonic source is a tectonic province
+   * @param useRSTT Use RSTT instead for all local phases
+   * @param isPlot Call in plot mode
+   * @throws IOException
+   */  
+  private void makeTT(String earthModel, double sourceDepth, String[] phases, 
+          double srcLat, double srcLong,
+          boolean allPhases, boolean returnBackBranches, boolean tectonic,
+          boolean useRSTT, boolean isPlot ) throws IOException {
     //par = parent;
     this.earthModel = earthModel;
     this.sourceDepth = sourceDepth;
@@ -151,7 +197,7 @@ public class TTSession {
          The modelAllBrnAssigned is the list of busy ones.  The tremmat is done by
          earth model.  They are moved to free list when the Session is closed.
       */
-      synchronized (modelAllBrnVolFree) {
+      /*synchronized (modelAllBrnVolFree) {
         ArrayList<AllBrnVol> free = modelAllBrnVolFree.get(earthModel);
         ArrayList<AllBrnVol> used;
         if (free == null) {
@@ -160,27 +206,32 @@ public class TTSession {
           used = new ArrayList<AllBrnVol>(10);
           modelAllBrnVolFree.put(earthModel, free);
           modelAllBrnVolAssigned.put(earthModel, used);
-        }
+        }*/
         
         // Get the used list and if the free list is empty, put a new AllBrnVol on it
-        used = modelAllBrnVolAssigned.get(earthModel);
-        if (free.isEmpty()) {
-          prta(ttag+"TTS: creating a new AllBrnVol for "+earthModel+" #free="+free.size()+" #used="+used.size());
+        //used = modelAllBrnVolAssigned.get(earthModel);
+        //if (free.isEmpty()) {
+          prta(ttag+"TTS: creating a new AllBrnVol for "+earthModel/*+" #free="+free.size()+" #used="+used.size()*/);
           allBrn = new AllBrnVol(allRef);
-          free.add(allBrn);
-        }
+        //  free.add(allBrn);
+        //}
 
         // get a allBrnVol from the free list and put it on the used list
-        allBrn = free.get(free.size() - 1);
-        free.remove(free.size() - 1);
-        used.add(allBrn);
-      }
+        //allBrn = free.get(free.size() - 1);
+        //free.remove(free.size() - 1);
+        //used.add(allBrn);
+      //}
       //	allBrn.dumpHead();
       //	allBrn.dumpMod('P', true);
       //	allBrn.dumpMod('S', true);
       // Set up a new session.
       try {
-        allBrn.newSession(sourceDepth, phList, !allPhases, !returnBackBranches, tectonic, useRSTT,isPlot);
+        if(Double.isNaN(sourceLatitude) ) {
+          allBrn.newSession(sourceDepth, phList, !allPhases, !returnBackBranches, tectonic, useRSTT,isPlot);      
+        }
+        else {
+          allBrn.newSession(sourceLatitude, sourceLongitude, sourceDepth, phList,!allPhases, !returnBackBranches, tectonic, useRSTT,isPlot);
+        }
       } catch (Exception e) {
         e.printStackTrace(getPrintStream());
         prta(ttag+"TTS: Unknown exception while setting sourceDepth and phList in newSession()!");
@@ -208,8 +259,13 @@ public class TTSession {
 	 */
 	public void newSession(double latitude, double longitude, double depth, 
 			String[] phList, boolean useful, boolean noBackBrn, boolean tectonic, 
-			boolean rstt, boolean plot) throws Exception {
-    allBrn.newSession(latitude, longitude, depth, phList, useful, noBackBrn, tectonic, rstt, plot);
+			boolean rstt, boolean plot) throws Exception {  
+    if(Double.isNaN(latitude)) {
+      allBrn.newSession(latitude, longitude, depth, phList, useful, noBackBrn, tectonic, rstt, plot);
+    }
+    else {
+      allBrn.newSession(depth, phList, useful, noBackBrn, tectonic, rstt, plot);
+    }
   }
   /**
     * Set up a new session.  Note that this just sets up the 
@@ -229,7 +285,12 @@ public class TTSession {
 			throws Exception {
     allBrn.newSession(depth, phList, useful, noBackBrn, tectonic, rstt, plot);
   }
-    private void freeAllBrnVol(AllBrnVol obj) {
+  
+  /**
+   * 
+   * @param obj 
+   */
+  /*private void freeAllBrnVol(AllBrnVol obj) {
     String model = obj.getEarthModel();
     synchronized(modelAllBrnVolFree) {
       ArrayList<AllBrnVol> free = modelAllBrnVolFree.get(earthModel);
@@ -250,7 +311,7 @@ public class TTSession {
         prta(ttag+"TTS: **** free or used not available for model="+earthModel);
       }
     }
-  }  
+  } */
   /**
    * For 'standard' requests giving receiver distance and elevation only
    *
@@ -286,9 +347,10 @@ public class TTSession {
   
   */
   public void close() {
-    if(allBrn != null) {
-      freeAllBrnVol(allBrn);
-    }
-    allBrn = null;
+    TTSessionPool.releaseSession(this);
+    //if(allBrn != null) {
+    //  freeAllBrnVol(allBrn);
+    //
+    //allBrn = null;
   }
 }
