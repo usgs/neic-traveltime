@@ -14,7 +14,7 @@ import gov.usgs.traveltime.ReadTau;
 import gov.usgs.traveltime.TTime;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
+//import java.util.ArrayList;
 import java.util.TreeMap;
 
 /**
@@ -38,7 +38,7 @@ public class TTSession {
   private boolean useRSTT;
   private boolean isPlot;
   private String[] phList;
-  private StringBuilder ttag;
+  private StringBuilder ttag=new StringBuilder(4);
   private String key;
   
   // Variables used within a Session
@@ -46,7 +46,7 @@ public class TTSession {
   
   @Override
   public String toString() {
-    return "TTS: "+allBrn.toString();
+    return ttag+" "+allBrn.toString();
   }
   // logging related stuff
   //private EdgeThread par;
@@ -82,7 +82,7 @@ public class TTSession {
   public TTSession(String earthModel, double sourceDepth, String[] phases, 
           boolean allPhases, boolean returnBackBranches, boolean tectonic,
           boolean useRSTT, boolean isPlot /*, EdgeThread parent*/) throws IOException {
-    makeTT(earthModel, sourceDepth, phases, Double.NaN, Double.NaN, 
+    makeTTSession(earthModel, sourceDepth, phases, Double.NaN, Double.NaN, 
             allPhases, returnBackBranches, tectonic, useRSTT, isPlot);
     
   }
@@ -105,9 +105,15 @@ public class TTSession {
           double srcLat, double srcLong,
           boolean allPhases, boolean returnBackBranches, boolean tectonic,
           boolean useRSTT, boolean isPlot /*, EdgeThread parent*/) throws IOException {
-    makeTT(earthModel, sourceDepth, phases, 
+    makeTTSession(earthModel, sourceDepth, phases, 
             srcLat, srcLong,
             allPhases, returnBackBranches, tectonic, useRSTT, isPlot);
+  }
+  private void makeTTag() {
+    if(ttag.length() >0) ttag.delete(0, ttag.length());
+    ttag.append("TTS(").append(earthModel).append("/").append((""+sourceDepth).substring(0,Math.max(4,(""+sourceDepth).length()))).
+            append("/").append(returnAllPhases?"P":"p").append(returnBackBranches?"B":"b").
+          append(convertTectonic ? "T" : "t").append(useRSTT? "R" : "r").append(isPlot ? "P" : "p").append("):");
   }
  /**
    * Set up a session from the session parameters
@@ -124,7 +130,7 @@ public class TTSession {
    * @param isPlot Call in plot mode
    * @throws IOException
    */  
-  private void makeTT(String earthModel, double sourceDepth, String[] phases, 
+  private void makeTTSession(String earthModel, double sourceDepth, String[] phases, 
           double srcLat, double srcLong,
           boolean allPhases, boolean returnBackBranches, boolean tectonic,
           boolean useRSTT, boolean isPlot ) throws IOException {
@@ -161,11 +167,12 @@ public class TTSession {
     this.returnBackBranches = returnBackBranches;
     this.useRSTT = useRSTT;
     this.isPlot = isPlot;
+    makeTTag();
 
     try {
       // Read in data common to all models.
       if (auxtt == null) {
-        prta(ttag+"TTS: create AuxTtRef ");
+        prta(ttag+" create AuxTtRef ");
         auxtt = new AuxTtRef(false, false, false, false);
       }
 
@@ -175,7 +182,7 @@ public class TTSession {
       // If not, set it up.
       if (allRef == null) {
         try {
-          prta(ttag+"TTS: Need to read in model="+earthModel);
+          prta(ttag+" Need to read in model="+earthModel);
           ReadTau readTau = new ReadTau(earthModel);
           readTau.readHeader();
           //	readTau.dumpSegments();
@@ -211,7 +218,7 @@ public class TTSession {
         // Get the used list and if the free list is empty, put a new AllBrnVol on it
         //used = modelAllBrnVolAssigned.get(earthModel);
         //if (free.isEmpty()) {
-          prta(ttag+"TTS: creating a new AllBrnVol for "+earthModel/*+" #free="+free.size()+" #used="+used.size()*/);
+          prta(ttag+" creating a new AllBrnVol for "+earthModel/*+" #free="+free.size()+" #used="+used.size()*/);
           allBrn = new AllBrnVol(allRef);
         //  free.add(allBrn);
         //}
@@ -234,7 +241,7 @@ public class TTSession {
         }
       } catch (Exception e) {
         e.printStackTrace(getPrintStream());
-        prta(ttag+"TTS: Unknown exception while setting sourceDepth and phList in newSession()!");
+        prta(ttag+" Unknown exception while setting sourceDepth and phList in newSession()!");
       }
     } catch (IOException e) {
       e.printStackTrace(getPrintStream());
@@ -250,22 +257,23 @@ public class TTSession {
 	 * @param longitude Source longitude in degrees
 	 * @param depth Source depth in kilometers
 	 * @param phList Array of phase use commands 
-   * @param useful This is !returnAllPhases
-   * @param noBackBrn This is !backBranches
+   * @param allPhases This is passed to the TT package as useful = !allPhases
+   * @param backBrn This is passed to the TT package at noBackBranches = !backBrn
    * @param tectonic in a tectonic region
    * @param rstt If true, use RSTT for local phase
    * @param plot If true, call in ploc mode
 	 * @throws Exception If the depth is out of range
 	 */
 	public void newSession(double latitude, double longitude, double depth, 
-			String[] phList, boolean useful, boolean noBackBrn, boolean tectonic, 
+			String[] phList, boolean allPhases, boolean backBrn, boolean tectonic, 
 			boolean rstt, boolean plot) throws Exception {  
     if(Double.isNaN(latitude)) {
-      allBrn.newSession(latitude, longitude, depth, phList, useful, noBackBrn, tectonic, rstt, plot);
+      allBrn.newSession(latitude, longitude, depth, phList, !allPhases, !backBrn, tectonic, rstt, plot);
     }
     else {
-      allBrn.newSession(depth, phList, useful, noBackBrn, tectonic, rstt, plot);
+      allBrn.newSession(depth, phList, !allPhases, !backBrn, tectonic, rstt, plot);
     }
+    makeTTag();
   }
   /**
     * Set up a new session.  Note that this just sets up the 
@@ -273,17 +281,18 @@ public class TTSession {
     * 
     * @param depth Source depth in kilometers
     * @param phList Array of phase use commands
-    * @param useful This is !returnAllPhases
-    * @param noBackBrn This is !backBranches
+    * @param allPhases This is passed to the TT package as useful = !allPhases
+    * @param backBrn This is passed to the TT package at noBackBranches = !backBrn
     * @param tectonic in a tectonic region
     * @param rstt If true, use RSTT for local phase
     * @param plot If true, call in ploc mode
     * @throws Exception If the depth is out of range
     */
-	public void newSession(double depth, String[] phList, boolean useful, 
-			boolean noBackBrn, boolean tectonic, boolean rstt, boolean plot) 
+	public void newSession(double depth, String[] phList, boolean allPhases, 
+			boolean backBrn, boolean tectonic, boolean rstt, boolean plot) 
 			throws Exception {
-    allBrn.newSession(depth, phList, useful, noBackBrn, tectonic, rstt, plot);
+    allBrn.newSession(depth, phList, !allPhases, !backBrn, tectonic, rstt, plot);
+    makeTTag();
   }
   
   /**
@@ -352,5 +361,31 @@ public class TTSession {
     //  freeAllBrnVol(allBrn);
     //
     //allBrn = null;
+  }
+  public static void main(String [] args) {
+    if(args.length == 0) {
+      System.out.println("Usage: gettt depth distance [model def=ak135][Ph1:Ph2...:PHn]");
+      args = "33 10 ak135".split("\\s");
+              
+      System.exit(0);
+    }
+    double depth = Double.parseDouble(args[0]);
+    double delta = Double.parseDouble(args[1]);
+    String model = "ak135";
+    if(args.length >= 3) model = args[2];
+    String [] phList = new String[0];
+    if(args.length >= 4) phList = args[3].split(":,");
+    try {
+      TTSession session = TTSessionPool.getTravelTimeSession(model, depth, phList, true, false, false, false, false);
+      TTime ttime = session.getTT( delta, 0.);
+      System.out.println("Phase     TTtime      dTdD     dTdZ  Spread   Obsrv PhGrp  AuxGrp    Use   Regn Depth  Dis   isDpth=" + depth+ " delta="+delta);
+
+      for (int i = 0; i < ttime.size(); i++) {
+        System.out.print(ttime.get(i).toString());    
+      }      
+    }
+    catch(Exception e) {
+      e.printStackTrace();
+    }
   }
 }
