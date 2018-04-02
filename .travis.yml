@@ -1,0 +1,9 @@
+# travis file for java
+language: java
+
+jdk:
+  - openjdk7
+
+script:
+  # Java build
+  - ant all
