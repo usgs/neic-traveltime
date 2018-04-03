@@ -1,1 +1,6 @@
-/dist/
+# User-specific files
+.DS_Store
+
+# Build results
+*[Dd]ist*/
+*[Bb]uild*/
