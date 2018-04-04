@@ -136,14 +136,16 @@ public class AllBrnVol {
 			// Set up the new source depth.
 			dSource = Math.max(depth, 0.011d);
 			// The interpolation gets squirrelly for very shallow sources.
-	//	if(depth < 0.011d) {
-	//		zSource = 0d;
-	//		dTdDepth = 1d/cvt.pNorm;
-	//	} else {
+			if(depth < 0.011d) {
+				// Note that a source depth of zero is intrinsically different 
+				// from any positive depth (i.e., no up-going phases).
+				zSource = 0d;
+				dTdDepth = 1d/cvt.pNorm;
+			} else {
 				zSource = Math.min(Math.log(Math.max(1d-dSource*cvt.xNorm, 
 						TauUtil.DMIN)), 0d);
 				dTdDepth = 1d/(cvt.pNorm*(1d-dSource*cvt.xNorm));
-	//	}
+			}
 			
 			// Fake up the phase list commands for now.
 			for(int j=0; j<branches.length; j++) {
@@ -164,7 +166,7 @@ public class AllBrnVol {
 			else tagBrn = ' ';
 			// Now correct each branch.
 			for(int j=0; j<branches.length; j++) {
-				branches[j].depthCorr(dTdDepth, xMin, tagBrn);
+				branches[j].depthCorr(zSource, dTdDepth, xMin, tagBrn);
 			}
 			lastDepth = depth;
 		}
@@ -297,7 +299,7 @@ public class AllBrnVol {
 								delCorUp = 0d;
 							}
 							// This is the normal case.  Do various travel-time corrections.
-							if(!TauUtil.NoCorr) {
+							if(!TauUtil.noCorr) {
 								tTime.tt += elevCorr(tTime.phCode, elev, tTime.dTdD, rstt);
 								// If this was a complex request, do the ellipticity and bounce 
 								// point corrections.
@@ -626,7 +628,8 @@ public class AllBrnVol {
 		if(type == 'p' || type == 'P') lastBrn = upBrnP;
 		else if(type == 's' || type == 'S') lastBrn = upBrnS;
 		else throw new Exception();
-		return branches[lastBrn].oneRay(dTdD);
+		if(lastBrn < 0) return 0d;
+		else return branches[lastBrn].oneRay(dTdD);
 	}
 	
 	/**

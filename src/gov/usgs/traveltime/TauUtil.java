@@ -129,7 +129,7 @@ public class TauUtil {
 	 * If true, suppress all travel-time corrections for debugging 
 	 * purposes and cases where the corrections aren't needed.
 	 */
-	public static final boolean NoCorr = false;
+	public static boolean noCorr = false;
 	/**
 	 * If true the definition of useless phases is strictly interpreted 
 	 * (i.e., eliminate reflected phases containing Pn and Sn as well 
@@ -235,7 +235,7 @@ public class TauUtil {
 			if((phCode.contains("Pg") || phCode.contains("Sg") || 
 					phCode.contains("Pb") || phCode.contains("Sb") || 
 					phCode.contains("Pn") || phCode.contains("Sn")) && 
-					(phCode.length() > 2 && !phCode.equals("PSn") && 
+					(phCode.length() > 2 && !phCode.equals("PnS") && 
 					!phCode.equals("SPn"))) return true;
 			else return false;
 		} else {

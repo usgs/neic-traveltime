@@ -89,15 +89,15 @@ public class UpDataVol {
 		iSrc = modPri.iSource;
 		pMax = modPri.findMaxP();
 //	modPri.printFind(false);
-		// Copy the desired data into temporary storage.
+		
+		// If the source is at the surface, we're already done.
+		if(-zSource <= TauUtil.DTOL) return;
+		// Otherwise, copy the desired data into temporary storage.
 		iUp = modPri.ref.indexUp[iSrc];
 //	System.out.println("\t\t\tiUp = "+iUp);
 		pUp = Arrays.copyOf(ref.pTauUp, ref.tauUp[iUp].length);
 		tauUp = Arrays.copyOf(ref.tauUp[iUp], pUp.length);
 		xUp = Arrays.copyOf(ref.xUp[iUp], ref.xUp[iUp].length);
-		
-		// If the source is at the surface, we're already done.
-		if(-zSource <= TauUtil.DTOL) return;
 		
 		// See if we need to correct tauUp.
 		if(Math.abs(ref.pTauUp[iUp]-pMax) <= TauUtil.DTOL) corrTau = false;
