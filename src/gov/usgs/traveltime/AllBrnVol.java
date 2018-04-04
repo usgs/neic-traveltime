@@ -8,6 +8,7 @@ import com.sun.webkit.network.Util;
  * @author Ray Buland
  *
  */
+
 public class AllBrnVol {
 
   BrnDataVol[] branches;						// Volatile branch data
@@ -190,7 +191,7 @@ public class AllBrnVol {
       }
       // Now correct each branch.
       for (int j = 0; j < branches.length; j++) {
-        branches[j].depthCorr(dTdDepth, xMin, tagBrn);
+        branches[j].depthCorr(zSource, dTdDepth, xMin, tagBrn);
       }
       lastDepth = depth;
     }
@@ -329,7 +330,7 @@ public class AllBrnVol {
                 delCorUp = 0d;
               }
               // This is the normal case.  Do various travel-time corrections.
-              if (!TauUtil.NoCorr) {
+              if (!TauUtil.noCorr) {
                 tTime.tt += elevCorr(tTime.phCode, elev, tTime.dTdD, rstt);
                 // If this was a complex request, do the ellipticity and bounce 
                 // point corrections.
@@ -813,20 +814,20 @@ public class AllBrnVol {
     } else if (typeUp == 'S') {
       sUp.dumpCorrUp(full);
     }
-  }
-
-  /**
-   * Print data for one decimated up-going branch for debugging purposes.
-   *
-   * @param typeUp Wave type ('P' or 'S')
-   * @param full If true print the up-going tau values as well
-   */
-  public void dumpDecUp(char typeUp, boolean full) {
-    if (typeUp == 'P') {
-      pUp.dumpDecUp(full);
-    } else if (typeUp == 'S') {
-      sUp.dumpDecUp(full);
-    }
-  }
+	}
+	
+	/**
+	 * Print data for one decimated up-going branch for debugging purposes.
+	 * 
+	 * @param typeUp Wave type ('P' or 'S')
+	 * @param full If true print the up-going tau values as well
+	 */
+	public void dumpDecUp(char typeUp, boolean full) {
+		if(typeUp == 'P') {
+			pUp.dumpDecUp(full);
+		} else if(typeUp == 'S') {
+			sUp.dumpDecUp(full);
+		}
+	}
 
 }
