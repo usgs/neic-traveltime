@@ -29,9 +29,10 @@ public class BrnDataVol {
 	BrnDataRef ref;					// Link to non-volatile branch data
 	UpDataVol pUp, sUp;			// Up-going P and S data for correcting the depth
 	ModConvert cvt;					// Model specific conversions
-	TtFlags flags;						// Flags, etc. by phase code
+	TtFlags flags;					// Flags, etc. by phase code
 	TtStat ttStat;					// Local copy of the phase statistics
 	Ellip ellip;						// Local copy of the ellipticity correction
+	Spline spline;					// Spline code
 	double tCorr, xSign = Double.NaN, zSign = Double.NaN, pSourceSq = Double.NaN, 
 			pEnd = Double.NaN;	// Some variables need to be remembered between calls 
 													// to the travel-time routine.
@@ -44,11 +45,13 @@ public class BrnDataVol {
 	 * @param sUp The corrected S up-going branch source
 	 * @param cvt The conversion factor object
 	 */
-	public BrnDataVol(BrnDataRef ref, UpDataVol pUp, UpDataVol sUp, ModConvert cvt) {
+	public BrnDataVol(BrnDataRef ref, UpDataVol pUp, UpDataVol sUp, ModConvert cvt, 
+			Spline spline) {
 		this.ref = ref;
 		this.pUp = pUp;
 		this.sUp = sUp;
 		this.cvt = cvt;
+		this.spline = spline;
 		
 		// Do branch summary information.
 		compute = true;
@@ -87,7 +90,6 @@ public class BrnDataVol {
 					pCaustic = pRange[1];
 					pEnd = Double.NaN;
 					flags = ref.auxtt.findFlags(phCode);
-					Spline spline = new Spline();
 					
 					// Make a local copy of the reference p and tau.
 					len = ref.pBrn.length;
@@ -119,7 +121,6 @@ public class BrnDataVol {
 				pCaustic = pRange[1];
 				pEnd = Double.NaN;
 				flags = ref.auxtt.findFlags(phCode);
-				Spline spline = new Spline();
 			
 				// Do phases that start as P.
 				if(ref.typeSeg[0] == 'P') {

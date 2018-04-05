@@ -34,6 +34,7 @@ public class AllBrnVol {
   AllBrnRef ref;
   ModConvert cvt;
   TtFlags flags;
+	Spline spline;
   int lastBrn = -1, upBrnP = -1, upBrnS = -1;
 
   @Override
@@ -62,8 +63,9 @@ public class AllBrnVol {
 
     // Set up the branch data.
     branches = new BrnDataVol[ref.branches.length];
+		spline = new Spline();
     for (int j = 0; j < branches.length; j++) {
-      branches[j] = new BrnDataVol(ref.branches[j], pUp, sUp, cvt);
+      branches[j] = new BrnDataVol(ref.branches[j], pUp, sUp, cvt, spline);
     }
   }
 
