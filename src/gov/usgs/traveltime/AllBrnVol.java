@@ -17,11 +17,12 @@ public class AllBrnVol {
 	double eqLat;											// Geographical earthquake latitude in degrees
 	double eqLon;											// Earthquake longitude in degrees
 	double eqDepth;										// Earthquake depth in kilometers
-	double staLat;										// Geographical station latitude in degrees
-	double staLon;										// Station longitude in degrees
 	double staDelta;									// Source-receiver distance in degrees
 	double staAzim;										// Receiver azimuth at the source in degrees
-	boolean complex;									// True if this is a "complex" request
+	boolean complexSession;						// True if this is a "complex" session
+	boolean complexRequest;						// True if this is a "complex" request
+	boolean badDepth;									// True if the depth is out of range
+	boolean badDelta;									// True if the distance is out of range
 	boolean useful;										// Do only "useful" phases (opposite of "all")
 	boolean noBackBrn;								// Suppress back branches for stability
 	boolean tectonic;									// True if the source is in a tectonic province
@@ -85,9 +86,18 @@ public class AllBrnVol {
 	public void newSession(double latitude, double longitude, double depth, 
 			String[] phList, boolean useful, boolean noBackBrn, boolean tectonic, 
 			boolean rstt, boolean plot) throws Exception {
-		complex = true;
-		eqLat = latitude;
-		eqLon = longitude;
+		// See if the epicenter makes sense.
+		if(!Double.isNaN(latitude) && latitude >= -90d && latitude <= 90d && 
+				!Double.isNaN(longitude) && longitude >= -180d && longitude <= 180d) {
+			complexSession = true;
+			eqLat = latitude;
+			eqLon = longitude;
+		// If not, this can only be a simple request.
+		} else {
+			complexSession = false;
+			eqLat = Double.NaN;
+			eqLon = Double.NaN;
+		}
 		setSession(depth, phList, useful, noBackBrn, tectonic, rstt, plot);
 	}
 		
@@ -107,7 +117,7 @@ public class AllBrnVol {
 	public void newSession(double depth, String[] phList, boolean useful, 
 			boolean noBackBrn, boolean tectonic, boolean rstt, boolean plot) 
 			throws Exception {
-		complex = false;
+		complexSession = false;
 		eqLat = Double.NaN;
 		eqLon = Double.NaN;
 		setSession(depth, phList, useful, noBackBrn, tectonic, rstt, plot);
@@ -127,50 +137,56 @@ public class AllBrnVol {
 		char tagBrn;
 		double xMin;
 		
-		// Remember the session control flags.
-		this.useful = useful;
-		this.noBackBrn = noBackBrn;
-		this.tectonic = tectonic;
-		this.rstt = rstt;
-		this.plot = plot;
-		
-		if(depth != lastDepth) {
-			// Set up the new source depth.
-			dSource = Math.max(depth, 0.011d);
-			// The interpolation gets squirrelly for very shallow sources.
-			if(depth < 0.011d) {
-				// Note that a source depth of zero is intrinsically different 
-				// from any positive depth (i.e., no up-going phases).
-				zSource = 0d;
-				dTdDepth = 1d/cvt.pNorm;
-			} else {
-				zSource = Math.min(Math.log(Math.max(1d-dSource*cvt.xNorm, 
-						TauUtil.DMIN)), 0d);
-				dTdDepth = 1d/(cvt.pNorm*(1d-dSource*cvt.xNorm));
-			}
+		// Make sure the depth is in range.
+		if(depth >= 0d && depth <= TauUtil.DEPTHMAX) {
+			badDepth = false;
+			// Remember the session control flags.
+			this.useful = useful;
+			this.noBackBrn = noBackBrn;
+			this.tectonic = tectonic;
+			this.rstt = rstt;
+			this.plot = plot;
 			
-			// Fake up the phase list commands for now.
-			for(int j=0; j<branches.length; j++) {
-				branches[j].setCompute(true);
+			if(depth != lastDepth) {
+				// Set up the new source depth.
+				dSource = Math.max(depth, 0.011d);
+				// The interpolation gets squirrelly for very shallow sources.
+				if(depth < 0.011d) {
+					// Note that a source depth of zero is intrinsically different 
+					// from any positive depth (i.e., no up-going phases).
+					zSource = 0d;
+					dTdDepth = 1d/cvt.pNorm;
+				} else {
+					zSource = Math.min(Math.log(Math.max(1d-dSource*cvt.xNorm, 
+							TauUtil.DMIN)), 0d);
+					dTdDepth = 1d/(cvt.pNorm*(1d-dSource*cvt.xNorm));
+				}
+				
+				// Fake up the phase list commands for now.
+				for(int j=0; j<branches.length; j++) {
+					branches[j].setCompute(true);
+				}
+				// If there are no commands, we're done.
+		//	if(phList == null) return;
+				
+				// Correct the up-going branch data.
+				pUp.newDepth(zSource);
+				sUp.newDepth(zSource);
+				
+				// To correct each branch we need a few depth dependent pieces.
+				xMin = cvt.xNorm*Math.min(Math.max(2d*dSource, 2d), 25d);
+				if(dSource <= cvt.zConrad) tagBrn = 'g';
+				else if(dSource <= cvt.zMoho) tagBrn = 'b';
+				else if(dSource <= cvt.zUpperMantle) tagBrn = 'n';
+				else tagBrn = ' ';
+				// Now correct each branch.
+				for(int j=0; j<branches.length; j++) {
+					branches[j].depthCorr(zSource, dTdDepth, xMin, tagBrn);
+				}
+				lastDepth = depth;
 			}
-			// If there are no commands, we're done.
-	//	if(phList == null) return;
-			
-			// Correct the up-going branch data.
-			pUp.newDepth(zSource);
-			sUp.newDepth(zSource);
-			
-			// To correct each branch we need a few depth dependent pieces.
-			xMin = cvt.xNorm*Math.min(Math.max(2d*dSource, 2d), 25d);
-			if(dSource <= cvt.zConrad) tagBrn = 'g';
-			else if(dSource <= cvt.zMoho) tagBrn = 'b';
-			else if(dSource <= cvt.zUpperMantle) tagBrn = 'n';
-			else tagBrn = ' ';
-			// Now correct each branch.
-			for(int j=0; j<branches.length; j++) {
-				branches[j].depthCorr(zSource, dTdDepth, xMin, tagBrn);
-			}
-			lastDepth = depth;
+		} else {
+			badDepth = true;
 		}
 	}
 		
@@ -180,27 +196,61 @@ public class AllBrnVol {
 	 * will include the ellipticity and bounce point corrections 
 	 * as well as the elevation correction.
 	 * 
-	 * @param latitude Receiver geographic latitude in degrees
-	 * @param longitude Receiver longitude in degrees
+	 * @param staLat Receiver geographic latitude in degrees
+	 * @param staLon Receiver longitude in degrees
 	 * @param elev Station elevation in kilometers
 	 * @param delta Source receiver distance desired in degrees
 	 * @param azimuth Receiver azimuth at the source in degrees
 	 * @return An array list of travel times
 	 */
-	public TTime getTT(double latitude, double longitude, double elev, 
+	public TTime getTT(double staLat, double staLon, double elev, 
 			double delta, double azimuth) {
 		
-		staLat = latitude;
-		staLon = longitude;
-		if(delta < 0d || Double.isNaN(delta) || azimuth < 0 || 
-				Double.isNaN(azimuth)) {
-			staDelta = TauUtil.delAz(eqLat, eqLon, staLat, staLon);
-			staAzim = TauUtil.azimuth;
+		// If this is a simple session, the request can only be simple.
+		if(complexSession) complexRequest = true;
+		else complexRequest = false;
+		
+		// See if the distance makes sense.
+		if(!Double.isNaN(delta) && delta >= 0d && delta <= 180d) {
+			badDelta = false;
+			if(complexRequest) {
+				// OK, how about the azimuth.
+				if(!Double.isNaN(azimuth) && azimuth >= 0d && azimuth <= 360d) {
+					staDelta = delta;
+					staAzim = azimuth;
+				} else {
+					// If the station coordinates makes sense, we can fix it.
+					if(!Double.isNaN(staLat) && staLat >= -90d && staLat <= 90d && 
+							!Double.isNaN(staLon) && staLon >= -180d && staLon <= 180d) {
+						staDelta = TauUtil.delAz(eqLat, eqLon, staLat, staLon);
+						staAzim = TauUtil.azimuth;
+					} else {
+						complexRequest = false;
+						staAzim = Double.NaN;
+					}
+				}
+			} else {
+				staAzim = Double.NaN;
+			}
+		// The distance is bad, see if we can fix it.
 		} else {
-			staDelta = delta;
-			staAzim = azimuth;
+			// See if the station coordinates make sense.
+			if(!Double.isNaN(staLat) && staLat >= -90d && staLat <= 90d && 
+					!Double.isNaN(staLon) && staLon >= -180d && staLon <= 180d) {
+				badDelta = false;
+				staDelta = TauUtil.delAz(eqLat, eqLon, staLat, staLon);
+				staAzim = TauUtil.azimuth;
+			} else {
+				badDelta = true;
+			}
 		}
-		return doTT(elev);
+		
+		// If the elevation doesn't make sense, just set it to zero.
+		if(!Double.isNaN(elev) && elev >= TauUtil.ELEVMIN && elev <= TauUtil.ELEVMAX) {
+			return doTT(elev);
+		} else {
+			return doTT(0d);
+		}
 	}
 			
 	/**
@@ -213,12 +263,21 @@ public class AllBrnVol {
 	 * @return An array list of travel times
 	 */
 	public TTime getTT(double elev, double delta) {
-		
-		staLat = Double.NaN;
-		staLon = Double.NaN;
-		staDelta = delta;
-		staAzim = Double.NaN;
-		return doTT(elev);
+		complexRequest = false;
+		// See if the distance makes sense.
+		if(!Double.isNaN(delta) && delta >= 0d && delta <= 180d) {
+			badDelta = false;
+			staDelta = delta;
+			staAzim = Double.NaN;
+		} else {
+			badDelta = true;
+		}
+		// If the elevation doesn't make sense, just set it to zero.
+		if(!Double.isNaN(elev) && elev >= TauUtil.ELEVMIN && elev <= TauUtil.ELEVMAX) {
+			return doTT(elev);
+		} else {
+			return doTT(0d);
+		}
 	}
 	
 	/**
@@ -243,6 +302,8 @@ public class AllBrnVol {
 //	TTime rsttList;
 		TTimeData tTime;
 		
+		if(badDepth || badDelta) return null;
+		
 		ttList = new TTime(dSource, staDelta);
 		lastTT = 0;
 		// The desired distance might translate to up to three 
@@ -264,7 +325,7 @@ public class AllBrnVol {
 		// Set up the correction to surface focus.
 		findUpBrn();
 		// Set up distance and azimuth for retrograde phases.
-		if(complex) {
+		if(complexRequest) {
 			retDelta = 360d-staDelta;
 			retAzim = 180d+staAzim;
 			if(retAzim > 360d) retAzim -= 360d;
@@ -305,7 +366,7 @@ public class AllBrnVol {
 								tTime.tt += elevCorr(tTime.phCode, elev, tTime.dTdD, rstt);
 								// If this was a complex request, do the ellipticity and bounce 
 								// point corrections.
-								if(complex) {
+								if(complexRequest) {
 									// The ellipticity correction is straightforward.
 									tTime.tt += ellipCorr(eqLat, dSource, staDelta, staAzim, upGoing);
 									
@@ -788,6 +849,7 @@ public class AllBrnVol {
 	
 	@Override
   public String toString() {
-    return ref.modelName+" "+eqDepth+" cmplx="+complex+" eqcoord="+eqLat+" "+eqLon;
+    return ref.modelName+" "+eqDepth+" cmplx="+complexRequest+" eqcoord="+
+    		eqLat+" "+eqLon;
   }
 }
