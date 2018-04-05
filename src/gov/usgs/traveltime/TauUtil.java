@@ -144,12 +144,6 @@ public class TauUtil {
 	 * purposes and cases where the corrections aren't needed.
 	 */
 	public static boolean noCorr = false;
-	/**
-	 * If true the definition of useless phases is strictly interpreted 
-	 * (i.e., eliminate reflected phases containing Pn and Sn as well 
-	 * as Pg, Pb, Sg, and Sb).
-	 */
-	private static boolean strict = true;
 	
 	/**
 	 * Receiver azimuth relative to the source in degrees clockwise from 
@@ -234,30 +228,6 @@ public class TauUtil {
 			else return phGen;
 		}
 		return phCode;
-	}
-	
-	/**
-	 * Algorithmically identify phases that are unlikely to be useful for 
-	 * earthquake location.  These are crustal phases that always appear in 
-	 * coda of the first arriving P or S phases.
-	 * 
-	 * @param phCode Phase code
-	 * @return True if phase is in the crustal P or S coda
-	 */
-	public static boolean setUseless(String phCode) {
-		if(strict) {
-			if((phCode.contains("Pg") || phCode.contains("Sg") || 
-					phCode.contains("Pb") || phCode.contains("Sb") || 
-					phCode.contains("Pn") || phCode.contains("Sn")) && 
-					(phCode.length() > 2 && !phCode.equals("PnS") && 
-					!phCode.equals("SPn"))) return true;
-			else return false;
-		} else {
-			if((phCode.contains("Pg") || phCode.contains("Sg") || 
-					phCode.contains("Pb") || phCode.contains("Sb")) && 
-					phCode.length() > 2) return true;
-			else return false;
-		}
 	}
 
 	/**

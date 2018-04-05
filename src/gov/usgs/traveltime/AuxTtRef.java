@@ -29,6 +29,7 @@ public class AuxTtRef {
 	final PhGroup depth;										// Depth sensitive phase group
 	final PhGroup downWeight;								// Phases to be down weighted
 	final PhGroup canUse;										// Phases that can be used for location
+	final PhGroup chaff;										// Useless phases according to NEIC analysts
 	final ArrayList<PhGroup> phGroups;			// List of primary phase groups
 	final ArrayList<PhGroup> auxGroups;			// List of auxiliary phase groups
 	// Phase statistics storage.
@@ -94,6 +95,12 @@ public class AuxTtRef {
 		canUse = read1Group();
 		if(printGrp) {
 			canUse.dumpGroup();
+			System.out.println();
+		}
+		// Handle useless phases separately.
+		chaff = read1Group();
+		if(printGrp) {
+			chaff.dumpGroup();
 			System.out.println();
 		}
 		
@@ -285,6 +292,23 @@ public class AuxTtRef {
 	public boolean canUse(String phase) {
 		for(int k=0; k<canUse.phases.size(); k++) {
 			if(phase.equals(canUse.phases.get(k))) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * See if this phase group is useless for earthquake location 
+	 * (according to the NEIC analysts).  Most of these phases are crustal 
+	 * reverberations that end up in the coda of more useful phases.
+	 * 
+	 * @param phase Phase name
+	 * @return True if this phase is useless
+	 */
+	public boolean chaff(String phase) {
+		for(int k=0; k<chaff.phases.size(); k++) {
+			if(phase.equals(chaff.phases.get(k))) {
 				return true;
 			}
 		}

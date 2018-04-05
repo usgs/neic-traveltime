@@ -56,7 +56,8 @@ public class BrnDataRef {
 		phSeg = segCode;
 		if(in.typeSeg[indexSeg][1] <= 0) isUpGoing = true;
 		else isUpGoing = false;
-		isUseless = TauUtil.setUseless(phCode);
+//	isUseless = TauUtil.setUseless(phCode);
+		isUseless = auxtt.chaff(phCode);
 		// The three types are: 1) initial, 2) down-going, and 3) up-coming.
 		// For example, sP would be S, P, P, while ScP would be S, S, P.
 		typeSeg = new char[3];
