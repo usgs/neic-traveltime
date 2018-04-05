@@ -22,6 +22,20 @@ public class TauUtil {
 	 */
 	public static final double DMAX = 1e30d;
 	/**
+	 * Maximum depth supported by the travel-time tables.
+	 */
+	public static final double DEPTHMAX = 800d;
+	/**
+	 * Crude minimum elevation in kilometers (would include a station 
+	 * at the bottom of the Mariana Trench).
+	 */
+	public static final double ELEVMIN = -11d;
+	/**
+	 * Crude maximum elevation in kilometers (would include a station 
+	 * at the top of Mount Everest).
+	 */
+	public static final double ELEVMAX = 9d;
+	/**
 	 * Global default shallow crustal P velocity in km/s (from ak135).
 	 */
 	public static final double DEFVP = 5.80d;
