@@ -181,7 +181,12 @@ public class AllBrnVol {
 				
 				// Fake up the phase list commands for now.
 				for(int j=0; j<branches.length; j++) {
-					branches[j].setCompute(true);
+					// If we only want useful phases and this one is useless, just 
+					// turn it off.
+					if(useful && ref.branches[j].isUseless) 
+						branches[j].setCompute(false);
+					// Otherwise, we're good to go.
+					else branches[j].setCompute(true);
 				}
 				// If there are no commands, we're done.
 		//	if(phList == null) return;
