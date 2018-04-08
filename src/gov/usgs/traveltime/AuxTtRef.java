@@ -53,21 +53,23 @@ public class AuxTtRef {
 	 * some processing is done on the travel-time statistics.  This 
 	 * eliminates a stand alone program that processed the raw 
 	 * (maintainable) statistics into an intermediate form for the 
-	 * Locator.
+	 * Locator.  Only the phase groups are mandatory.  If other 
+	 * information isn't read, the relevant processing will simply not 
+	 * be done.
 	 * 
-	 * @param printGrp If true, print the phase groups
-	 * @param printFlg If true, print the phase flags
-	 * @param printRaw If true, print the raw statistics data
-	 * @param printFit If true, print the fit statistics data
+	 * @param readStats If true, read the phase statistics
+	 * @param readEllip If true, read the ellipticity corrections
+	 * @param readTopo If true, read the topography file
 	 * @throws IOException If opens fail
 	 */
-	public AuxTtRef(boolean printGrp, boolean printFlg, boolean printRaw, boolean printFit) 
+	public AuxTtRef(boolean readStats, boolean readEllip, boolean readTopo) 
 			throws IOException {
 		BufferedInputStream inGroup, inStats, inEllip;
 		EllipDeps eDepth;
 		
 		// Set up the properties.
 		TauUtil.getProperties();
+		
 		// Open and read the phase groups file.
 		inGroup = new BufferedInputStream(new FileInputStream(TauUtil.model("groups.txt")));
 		scan = new Scanner(inGroup);
@@ -75,74 +77,67 @@ public class AuxTtRef {
 		nextCode = scan.next();
 		// Handle local-regional phases separately.
 		regional = read1Group();
-		if(printGrp) {
-			regional.dumpGroup();
-			System.out.println();
-		}
 		// Handle depth phases separately.
 		depth = read1Group();
-		if(printGrp) {
-			depth.dumpGroup();
-			System.out.println();
-		}
 		// Handle down weighted phases separately.
 		downWeight = read1Group();
-		if(printGrp) {
-			downWeight.dumpGroup();
-			System.out.println();
-		}
 		// Handle used phases separately.
 		canUse = read1Group();
-		if(printGrp) {
-			canUse.dumpGroup();
-			System.out.println();
-		}
 		// Handle useless phases separately.
 		chaff = read1Group();
-		if(printGrp) {
-			chaff.dumpGroup();
-			System.out.println();
-		}
-		
 		// Handle "normal" groups.
 		phGroups = new ArrayList<PhGroup>();
 		auxGroups = new ArrayList<PhGroup>();
-		readGroups(printGrp);
+		readGroups();
 		inGroup.close();
 		
-		// Open and read the travel-time statistics file.
-		inStats = new BufferedInputStream(new FileInputStream(TauUtil.model("ttstats.txt")));
-		scan = new Scanner(inStats);
-		ttStats = new TreeMap<String, TtStat>();
-		// Prime the pump.
-		nextCode = scan.next();
-		// Scan phase statistics until we run out.
-		do {
-			ttStat = read1StatHead();
-			ttStats.put(ttStat.phCode, ttStat);
-			read1StatData(new TtStatLinFit(ttStat), printRaw, printFit);
-		} while(scan.hasNext());
-		inStats.close();
+		if(readStats) {
+			// Open and read the travel-time statistics file.
+			inStats = new BufferedInputStream(new FileInputStream(
+					TauUtil.model("ttstats.txt")));
+			scan = new Scanner(inStats);
+			ttStats = new TreeMap<String, TtStat>();
+			// Prime the pump.
+			nextCode = scan.next();
+			// Scan phase statistics until we run out.
+			do {
+				ttStat = read1StatHead();
+				ttStats.put(ttStat.phCode, ttStat);
+				read1StatData(new TtStatLinFit(ttStat));
+			} while(scan.hasNext());
+			inStats.close();
+		} else {
+			ttStats = null;
+		}
 		
-		// Open and read the ellipticity correction file.
-		inEllip = new BufferedInputStream(new FileInputStream(TauUtil.model("ellip.txt")));
-		scan = new Scanner(inEllip);
-		ellips = new TreeMap<String, Ellip>();
-		eDepth = new EllipDeps();
-		nDepth = eDepth.ellipDeps.length;
-		do {
-			ellip = read1Ellip();
-			ellips.put(ellip.phCode, ellip);
-		} while(scan.hasNext());
-		inEllip.close();
+		if(readEllip) {
+			// Open and read the ellipticity correction file.
+			inEllip = new BufferedInputStream(new FileInputStream(
+					TauUtil.model("ellip.txt")));
+			scan = new Scanner(inEllip);
+			ellips = new TreeMap<String, Ellip>();
+			eDepth = new EllipDeps();
+			nDepth = eDepth.ellipDeps.length;
+			do {
+				ellip = read1Ellip();
+				ellips.put(ellip.phCode, ellip);
+			} while(scan.hasNext());
+			inEllip.close();
+		} else {
+			ellips = null;
+		}
 		
 		// Rearrange group flags, phase flags and statistics and the 
 		// ellipticity correction by phase.
 		phFlags = new TreeMap<String, TtFlags>();
-		makePhFlags(printFlg);
+		makePhFlags();
 		
-		// Set up the topography data.
-		topoMap = new Topography();
+		if(readTopo) {
+			// Set up the topography data.
+			topoMap = new Topography();
+		} else {
+			topoMap = null;
+		}
 	}
 	
 	/**
@@ -174,17 +169,11 @@ public class AuxTtRef {
 	 * 
 	 * @param print List the auxiliary data as it's read if true
 	 */
-	private void readGroups(boolean print) {
+	private void readGroups() {
 		do {
 			// Groups are added to the ArrayLists as they are created.
 			phGroups.add(read1Group());
 			auxGroups.add(read1Group());
-			if(print) {
-				phGroups.get(phGroups.size()-1).dumpGroup();
-				if(auxGroups.get(auxGroups.size()-1) != null) 
-					auxGroups.get(auxGroups.size()-1).dumpGroup();
-				else System.out.println("    *null*");
-			}
 		} while(scan.hasNext());
 	}
 	
@@ -306,7 +295,7 @@ public class AuxTtRef {
 	 * @param phase Phase name
 	 * @return True if this phase is useless
 	 */
-	public boolean chaff(String phase) {
+	public boolean isChaff(String phase) {
 		for(int k=0; k<chaff.phases.size(); k++) {
 			if(phase.equals(chaff.phases.get(k))) {
 				return true;
@@ -361,6 +350,33 @@ public class AuxTtRef {
 	}
 	
 	/**
+	 * Print phase groups.
+	 */
+	public void printGroups() {
+		// Dump regional phases.
+		regional.dumpGroup();
+		System.out.println();
+		// Dump depth phases.
+		depth.dumpGroup();
+		System.out.println();
+		// Dump down weighted phases.
+		downWeight.dumpGroup();
+		System.out.println();
+		// Dump phases that can be used for location.
+		canUse.dumpGroup();
+		System.out.println();
+		// Dump phases that are NEIC-useless.
+		chaff.dumpGroup();
+		System.out.println();
+		// Dump normal groups.
+		for(int j=0; j<phGroups.size(); j++) {
+			phGroups.get(j).dumpGroup();
+			if(auxGroups.get(j) != null) auxGroups.get(j).dumpGroup();
+			else System.out.println("    *null*");
+		}
+	}
+	
+	/**
 	 * Read in the statistics header for one phase.
 	 * 
 	 * @return Statistics object
@@ -386,11 +402,8 @@ public class AuxTtRef {
 	 * the fits becomes redundant.
 	 * 
 	 * @param fit LinearFit object
-	 * @param printRaw If true, print the raw statistics data
-	 * @param printFit If true, print the fit statistics data
 	 */
-	private void read1StatData(TtStatLinFit fit, boolean printRaw, 
-			boolean printFit) {
+	private void read1StatData(TtStatLinFit fit) {
 		int delta;
 		double res, spd, obs;
 		boolean resBrk, spdBrk, obsBrk;
@@ -450,12 +463,9 @@ public class AuxTtRef {
 			}
 			fit.add(delta, res, resBrk, spd, spdBrk, obs, obsBrk);
 		} while(!done);
-		// Optionally, list the raw data (i.e., before the fits are done).
-		if(printRaw) fit.dumpStats();
 		
 		// Crunch the linear fits.
 		fit.fitAll();
-		if(printFit) fit.ttStat.dumpStats();
 		fit = null;
 	}
 	
@@ -466,7 +476,8 @@ public class AuxTtRef {
 	 * @return A phase statistics object
 	 */
 	public TtStat findStats(String phase) {
-		return ttStats.get(phase);
+		if(ttStats == null) return null;
+		else return ttStats.get(phase);
 	}
 	
 	/**
@@ -507,6 +518,20 @@ public class AuxTtRef {
 			boolean upGoing) {
 		if(ttStat == null) return TauUtil.DEFOBSERV;
 		else return ttStat.getObserv(delta, upGoing);
+	}
+	
+	/**
+	 * Print phase statistics.
+	 */
+	public void printStats() {
+		TtStat ttStat;
+		
+		NavigableMap<String, TtStat> map = ttStats.headMap("~", true);
+		System.out.println("\n     Phase Statistics:");
+		for(@SuppressWarnings("rawtypes") Map.Entry entry : map.entrySet()) {
+			ttStat = (TtStat)entry.getValue();
+			ttStat.dumpStats();
+		}
 	}
 	
 	/**
@@ -552,16 +577,16 @@ public class AuxTtRef {
 	 * @return Ellipticity data
 	 */
 	public Ellip findEllip(String phCode) {
-		return ellips.get(phCode);
+		if(ellips == null) return null;
+		else return ellips.get(phCode);
 	}
 	
 	/**
 	 * Reorganize the flags from ArrayLists of phases by group to 
 	 * a TreeMap of flags by phase.
 	 */
-	private void makePhFlags(boolean print) {
+	private void makePhFlags() {
 		String phCode, phGroup;
-		TtFlags flags;
 
 		// Search the phase groups for phases.
 		for(int j=0; j<phGroups.size(); j++) {
@@ -585,23 +610,6 @@ public class AuxTtRef {
 							isRegional(phCode), isDepthPh(phCode), canUse(phCode), 
 							isDisPh(phCode), ttStat, ellip, upEllip));
 				}
-			}
-		}
-		
-		if(print) {
-			NavigableMap<String, TtFlags> map = phFlags.headMap("~", true);
-			System.out.println("\n     Phase Flags:");
-			for(@SuppressWarnings("rawtypes") Map.Entry entry : map.entrySet()) {
-				flags = (TtFlags)entry.getValue();
-				System.out.format("%8s: %8s %8s  flags = %5b %5b %5b %5b", 
-						entry.getKey(), flags.phGroup, flags.auxGroup, flags.canUse, 
-						flags.isRegional, flags.isDepth, flags.dis);
-				if(flags.ttStat == null) System.out.print("   stats = null    ");
-				else System.out.format("   stats = %-8s", flags.ttStat.phCode);
-				if(flags.ellip == null) System.out.print(" ellip = null    ");
-				else System.out.format(" ellip = %-8s", flags.ellip.phCode);
-				if(flags.upEllip == null) System.out.println(" upEllip = null");
-				else System.out.format(" upEllip = %-8s\n", flags.upEllip.phCode);
 			}
 		}
 	}
@@ -640,5 +648,27 @@ public class AuxTtRef {
 	 */
 	public TtFlags findFlags(String phCode) {
 		return phFlags.get(phCode);
+	}
+	
+	/**
+	 * Print phase flags.
+	 */
+	public void printFlags() {
+		TtFlags flags;
+		
+		NavigableMap<String, TtFlags> map = phFlags.headMap("~", true);
+		System.out.println("\n     Phase Flags:");
+		for(@SuppressWarnings("rawtypes") Map.Entry entry : map.entrySet()) {
+			flags = (TtFlags)entry.getValue();
+			System.out.format("%8s: %8s %8s  flags = %5b %5b %5b %5b", 
+					entry.getKey(), flags.phGroup, flags.auxGroup, flags.canUse, 
+					flags.isRegional, flags.isDepth, flags.dis);
+			if(flags.ttStat == null) System.out.print("   stats = null    ");
+			else System.out.format("   stats = %-8s", flags.ttStat.phCode);
+			if(flags.ellip == null) System.out.print(" ellip = null    ");
+			else System.out.format(" ellip = %-8s", flags.ellip.phCode);
+			if(flags.upEllip == null) System.out.println(" upEllip = null");
+			else System.out.format(" upEllip = %-8s\n", flags.upEllip.phCode);
+		}
 	}
 }
