@@ -671,12 +671,11 @@ public class BrnDataVol {
 											TauUtil.phSeg(phCode)+"bc";
 									else tmpCode = phCode;
 									// Add it.
-									ttList.addPhase(tmpCode,cvt.tNorm*(poly[0][j]+
-											dp*(poly[1][j]+dp*poly[2][j]+
-											dps*poly[3][j])+ps*xs),xSign*ps,zSign*
-											Math.sqrt(Math.abs(pSourceSq-Math.pow(ps,2d))),
-											-(2d*poly[2][j]+0.75d*poly[3][j]/
-											Math.max(Math.abs(dps),TauUtil.DTOL))/cvt.tNorm, false);
+									ttList.addPhase(tmpCode, ref.uniqueCode, cvt.tNorm*(poly[0][j]+
+											dp*(poly[1][j]+dp*poly[2][j]+dps*poly[3][j])+ps*xs), 
+											xSign*ps,zSign*Math.sqrt(Math.abs(pSourceSq-Math.pow(ps,2d))),
+											-(2d*poly[2][j]+0.75d*poly[3][j]/Math.max(Math.abs(dps), 
+											TauUtil.DTOL))/cvt.tNorm, false);
 								}
 							}
 						// We have to be careful if the quadratic term is zero.
@@ -696,11 +695,11 @@ public class BrnDataVol {
 									TauUtil.phSeg(phCode)+"bc";
 							else tmpCode = phCode;
 							// add it.
-							ttList.addPhase(tmpCode,cvt.tNorm*(poly[0][j]+
-									dp*(poly[1][j]+dps*poly[3][j])+ps*xs),
-									xSign*ps,zSign*Math.sqrt(Math.abs(pSourceSq-
-									Math.pow(ps,2d))),-(0.75d*poly[3][j]/
-									Math.max(Math.abs(dps),TauUtil.DTOL))/cvt.tNorm, false);
+							ttList.addPhase(tmpCode, ref.uniqueCode, cvt.tNorm*(poly[0][j]+
+									dp*(poly[1][j]+dps*poly[3][j])+ps*xs), xSign*ps, 
+									zSign*Math.sqrt(Math.abs(pSourceSq-Math.pow(ps,2d))), 
+									-(0.75d*poly[3][j]/Math.max(Math.abs(dps), 
+									TauUtil.DTOL))/cvt.tNorm, false);
 						}
 					}
 				}
@@ -719,11 +718,11 @@ public class BrnDataVol {
 					dp = pRange[1]-pRange[0];
 					dps = Math.sqrt(Math.abs(dp));
 					// Add it.
-					ttList.addPhase(ref.phDiff,cvt.tNorm*(poly[0][0]+
+					ttList.addPhase(ref.phDiff, ref.phDiff, cvt.tNorm*(poly[0][0]+
 							dp*(poly[1][0]+dp*poly[2][0]+dps*poly[3][0])+
-							pRange[0]*xs),xSign*pRange[0],zSign*Math.sqrt(Math.abs(pSourceSq-
-							Math.pow(pRange[0],2d))),-(2d*poly[2][0]+0.75d*poly[3][0]/
-							Math.max(Math.abs(dps),TauUtil.DTOL))/cvt.tNorm, false);
+							pRange[0]*xs), xSign*pRange[0], zSign*Math.sqrt(Math.abs(pSourceSq-
+							Math.pow(pRange[0],2d))), -(2d*poly[2][0]+0.75d*poly[3][0]/
+							Math.max(Math.abs(dps), TauUtil.DTOL))/cvt.tNorm, false);
 				}
 			}
 			
@@ -736,16 +735,16 @@ public class BrnDataVol {
 					if(ref.phAddOn.equals("Lg")) {
 						// Make sure we have a valid depth.
 						if(dSource <= TauUtil.LGDEPMAX) {
-							ttList.addPhase(ref.phAddOn, 0d, cvt.dTdDLg, 0d, 0d, true);
+							ttList.addPhase(ref.phAddOn, ref.phAddOn, 0d, cvt.dTdDLg, 0d, 0d, true);
 						}
 					} else if(ref.phAddOn.equals("LR")) {
 						// Make sure we have a valid depth and distance.
 						if(dSource <= TauUtil.LRDEPMAX && xs <= TauUtil.LRDELMAX) {
-							ttList.addPhase(ref.phAddOn, 0d, cvt.dTdDLR, 0d, 0d, true);
+							ttList.addPhase(ref.phAddOn, ref.phAddOn, 0d, cvt.dTdDLR, 0d, 0d, true);
 						}
 					} else if(ref.phAddOn.equals("pwP") || ref.phAddOn.equals("PKPpre")) {
 						tTime = ttList.get(ttList.size()-1);
-						ttList.addPhase(ref.phAddOn, tTime.tt, tTime.dTdD, tTime.dTdZ, 
+						ttList.addPhase(ref.phAddOn, ref.phAddOn, tTime.tt, tTime.dTdD, tTime.dTdZ, 
 								tTime.dXdP, true);
 					}
 				}

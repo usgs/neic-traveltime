@@ -1,6 +1,7 @@
 package gov.usgs.traveltime;
 
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 /**
  * Utility methods for the travel-time package.
@@ -24,17 +25,17 @@ public class TauUtil {
 	/**
 	 * Maximum depth supported by the travel-time tables.
 	 */
-	public static final double DEPTHMAX = 800d;
+	public static final double MAXDEPTH = 800d;
 	/**
 	 * Crude minimum elevation in kilometers (would include a station 
 	 * at the bottom of the Mariana Trench).
 	 */
-	public static final double ELEVMIN = -11d;
+	public static final double MINELEV = -11d;
 	/**
 	 * Crude maximum elevation in kilometers (would include a station 
 	 * at the top of Mount Everest).
 	 */
-	public static final double ELEVMAX = 9d;
+	public static final double MAXELEV = 9d;
 	/**
 	 * Global default shallow crustal P velocity in km/s (from ak135).
 	 */
@@ -100,6 +101,11 @@ public class TauUtil {
 	 * is.  The larger window is needed when the location is poor.
 	 */
 	public static final double WINDOWMIN = 5d;
+	/**
+	 * The distance increment in degrees for travel-time plots.
+	 */
+	public static final double DDELPLOT = 1d;
+	
 	/**
 	 * Minimum distance in radians for an Sn branch to proxy for Lg.
 	 */
@@ -167,6 +173,10 @@ public class TauUtil {
 	 */
 	private static String modelPath;
 	private static String eventPath;
+	/**
+	 * Storage for unique codes.
+	 */
+	private static TreeMap<String, Integer> unique;
 	
 	/**
 	 * Read the travel time properties file and set up paths to the model 
@@ -228,6 +238,27 @@ public class TauUtil {
 			else return phGen;
 		}
 		return phCode;
+	}
+	
+	/**
+	 * Make phase codes unique by appending a reference number.  This is needed to 
+	 * keep branches straight in the plot data.
+	 * 
+	 * @param phCode Phase code
+	 * @return Unique phase code
+	 */
+	public static String uniqueCode(String phCode) {
+		Integer no;
+		
+		if(unique == null) unique = new TreeMap<String, Integer>();
+		no = unique.get(phCode);
+		if(no != null) {
+			unique.replace(phCode, ++no);
+		} else {
+			no = 0;
+			unique.put(phCode, no);
+		}
+		return phCode+no;
 	}
 
 	/**

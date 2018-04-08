@@ -1,5 +1,7 @@
 package gov.usgs.traveltime;
 
+import java.util.ArrayList;
+
 /**
  * Umbrella storage for all volatile branch level travel-time 
  * data.  
@@ -27,12 +29,12 @@ public class AllBrnVol {
 	boolean noBackBrn;								// Suppress back branches for stability
 	boolean tectonic;									// True if the source is in a tectonic province
 	boolean rstt;											// Use RSTT for local phases
-	boolean plot;											// Generate travel-time plot data
 	double lastDepth = Double.NaN;		// Last depth computed in kilometers
 	AllBrnRef ref;
 	ModConvert cvt;
 	TtFlags flags;
 	Spline spline;
+	ArrayList<String> expList;
 	int lastBrn = -1, upBrnP = -1, upBrnS = -1;
 	
 	/**
@@ -77,15 +79,15 @@ public class AllBrnVol {
 	 * @param depth Source depth in kilometers
 	 * @param phList Array of phase use commands
 	 * @param useful If true, only provide "useful" crustal phases
-	 * @param tectonic If true, map Pb and Sb onto Pg and Sg
 	 * @param noBackBrn If true, suppress back branches
+	 * @param tectonic If true, map Pb and Sb onto Pg and Sg
 	 * @param rstt If true, use RSTT crustal phases
 	 * @param plot If true, compute travel-time plot data
 	 * @throws Exception If the depth is out of range
 	 */
 	public void newSession(double latitude, double longitude, double depth, 
 			String[] phList, boolean useful, boolean noBackBrn, boolean tectonic, 
-			boolean rstt, boolean plot) throws Exception {
+			boolean rstt) throws Exception {
 		// See if the epicenter makes sense.
 		if(!Double.isNaN(latitude) && latitude >= -90d && latitude <= 90d && 
 				!Double.isNaN(longitude) && longitude >= -180d && longitude <= 180d) {
@@ -98,7 +100,7 @@ public class AllBrnVol {
 			eqLat = Double.NaN;
 			eqLon = Double.NaN;
 		}
-		setSession(depth, phList, useful, noBackBrn, tectonic, rstt, plot);
+		setSession(depth, phList, useful, noBackBrn, tectonic, rstt);
 	}
 		
 	/**
@@ -108,19 +110,19 @@ public class AllBrnVol {
 	 * @param depth Source depth in kilometers
 	 * @param phList Array of phase use commands
 	 * @param useful If true, only provide "useful" crustal phases
-	 * @param tectonic If true, map Pb and Sb onto Pg and Sg
 	 * @param noBackBrn If true, suppress back branches
+	 * @param tectonic If true, map Pb and Sb onto Pg and Sg
 	 * @param rstt If true, use RSTT crustal phases
 	 * @param plot If true, compute travel-time plot data
 	 * @throws Exception If the depth is out of range
 	 */
 	public void newSession(double depth, String[] phList, boolean useful, 
-			boolean noBackBrn, boolean tectonic, boolean rstt, boolean plot) 
+			boolean noBackBrn, boolean tectonic, boolean rstt) 
 			throws Exception {
 		complexSession = false;
 		eqLat = Double.NaN;
 		eqLon = Double.NaN;
-		setSession(depth, phList, useful, noBackBrn, tectonic, rstt, plot);
+		setSession(depth, phList, useful, noBackBrn, tectonic, rstt);
 	}
 	
 	/**
@@ -132,20 +134,20 @@ public class AllBrnVol {
 	 * @throws Exception If the depth is out of range
 	 */
 	private void setSession(double depth, String[] phList, boolean useful, 
-			boolean noBackBrn, boolean tectonic, boolean rstt, boolean plot) 
+			boolean noBackBrn, boolean tectonic, boolean rstt) 
 			throws Exception {
 		char tagBrn;
 		double xMin;
+		boolean all;
 		
 		// Make sure the depth is in range.
-		if(depth >= 0d && depth <= TauUtil.DEPTHMAX) {
+		if(depth >= 0d && depth <= TauUtil.MAXDEPTH) {
 			badDepth = false;
 			// Remember the session control flags.
 			this.useful = useful;
 			this.noBackBrn = noBackBrn;
 			this.tectonic = tectonic;
 			this.rstt = rstt;
-			this.plot = plot;
 			
 			if(depth != lastDepth) {
 				// Set up the new source depth.
@@ -162,17 +164,43 @@ public class AllBrnVol {
 					dTdDepth = 1d/(cvt.pNorm*(1d-dSource*cvt.xNorm));
 				}
 				
-				// Fake up the phase list commands for now.
-				for(int j=0; j<branches.length; j++) {
-					// If we only want useful phases and this one is useless, just 
-					// turn it off.
-					if(useful && ref.branches[j].isUseless) 
-						branches[j].setCompute(false);
-					// Otherwise, we're good to go.
-					else branches[j].setCompute(true);
+				// See if we want all phases.
+				all = false;
+				if(phList != null) {
+					if(phList.length > 0) {
+						// Check for the "all" keyword (overrides everything else).
+						for(int j=0; j<phList.length; j++) {
+							if(phList[j].toLowerCase().equals("all")) {
+								all = true;
+								break;
+							}
+						}
+					} else all = true;		// The phase list is empty.
+				} else all = true;			// The phase list is null.
+				
+				// Initialize the branch compute flags.
+				if(all) {
+					// Turn everything on except possibly useless phases.
+					for(int j=0; j<branches.length; j++) {
+						// If we only want useful phases and this one is useless, just 
+						// turn it off.
+						if(useful && ref.branches[j].isUseless) 
+							branches[j].setCompute(false);
+						// Otherwise, we're good to go.
+						else branches[j].setCompute(true);
+					}
+				} else {
+					// Compare branch phase codes against the phase list.
+					expandList(phList);
+					for(int j=0; j<branches.length; j++) {
+						// See if this phase is selected (unless it's uesless).
+						if(!useful || !ref.branches[j].isUseless) {
+							branches[j].setCompute(testList(branches[j].phCode));
+						} else {
+							branches[j].setCompute(false);
+						}
+					}
 				}
-				// If there are no commands, we're done.
-		//	if(phList == null) return;
 				
 				// Correct the up-going branch data.
 				pUp.newDepth(zSource);
@@ -251,7 +279,7 @@ public class AllBrnVol {
 		}
 		
 		// If the elevation doesn't make sense, just set it to zero.
-		if(!Double.isNaN(elev) && elev >= TauUtil.ELEVMIN && elev <= TauUtil.ELEVMAX) {
+		if(!Double.isNaN(elev) && elev >= TauUtil.MINELEV && elev <= TauUtil.MAXELEV) {
 			return doTT(elev);
 		} else {
 			return doTT(0d);
@@ -278,7 +306,7 @@ public class AllBrnVol {
 			badDelta = true;
 		}
 		// If the elevation doesn't make sense, just set it to zero.
-		if(!Double.isNaN(elev) && elev >= TauUtil.ELEVMIN && elev <= TauUtil.ELEVMAX) {
+		if(!Double.isNaN(elev) && elev >= TauUtil.MINELEV && elev <= TauUtil.MAXELEV) {
 			return doTT(elev);
 		} else {
 			return doTT(0d);
@@ -377,33 +405,37 @@ public class AllBrnVol {
 									
 									// The bounce point correction is not.  See if there is a bounce.
 									if(branches[j].ref.phRefl != null) {
-										// If so, we may need to do some preliminary work.
-										if(branches[j].ref.phRefl.equals("SP")) {
-											tmpCode = "S";
-										} else if(branches[j].ref.phRefl.equals("PS")) {
-											tmpCode = tTime.phCode.substring(0, tTime.phCode.indexOf('S'));
-										} else {
-											tmpCode = null;
-										}
-										// If we had an SP or PS, get the distance of the first part.
-										if(tmpCode != null) {
-											try {
-												delCorDn = oneRay(tmpCode, tTime.dTdD);
-											} catch (Exception e) {
-												// This should never happen.
-												e.printStackTrace();
-												delCorDn = 0.5d*staDelta;
+										if(ref.auxtt.topoMap != null) {
+											// If so, we may need to do some preliminary work.
+											if(branches[j].ref.phRefl.equals("SP")) {
+												tmpCode = "S";
+											} else if(branches[j].ref.phRefl.equals("PS")) {
+												tmpCode = tTime.phCode.substring(0, tTime.phCode.indexOf('S'));
+											} else {
+												tmpCode = null;
+											}
+											// If we had an SP or PS, get the distance of the first part.
+											if(tmpCode != null) {
+												try {
+													delCorDn = oneRay(tmpCode, tTime.dTdD);
+												} catch (Exception e) {
+													// This should never happen.
+													e.printStackTrace();
+													delCorDn = 0.5d*staDelta;
+												}
+											} else {
+												delCorDn = Double.NaN;
+											}
+											// Finally, we can do the bounce point correction.
+											if(tTime.dTdD > 0d) {
+												reflCorr = reflCorr(tTime.phCode, branches[j].ref, eqLat, 
+														eqLon, staDelta, staAzim, tTime.dTdD, delCorUp, delCorDn);
+											} else {
+												reflCorr = reflCorr(tTime.phCode, branches[j].ref, eqLat, 
+														eqLon, retDelta, retAzim, tTime.dTdD, delCorUp, delCorDn);
 											}
 										} else {
-											delCorDn = Double.NaN;
-										}
-										// Finally, we can do the bounce point correction.
-										if(tTime.dTdD > 0d) {
-											reflCorr = reflCorr(tTime.phCode, branches[j].ref, eqLat, 
-													eqLon, staDelta, staAzim, tTime.dTdD, delCorUp, delCorDn);
-										} else {
-											reflCorr = reflCorr(tTime.phCode, branches[j].ref, eqLat, 
-													eqLon, retDelta, retAzim, tTime.dTdD, delCorUp, delCorDn);
+											reflCorr = Double.NaN;
 										}
 										if(!Double.isNaN(reflCorr)) {
 											tTime.tt += reflCorr;
@@ -733,6 +765,71 @@ public class AllBrnVol {
 				break;
 			}
 		}
+	}
+	
+	/**
+	 * Expand the list of desired phases using group codes.  Note that the 
+	 * output list can be a combination of phase codes, group codes, and 
+	 * special keywords.
+	 * 
+	 * @param phList Input phase list
+	 */
+	private void expandList(String[] phList) {
+		String phGroup, auxGroup;
+		
+		// Start over with a new keyword list.
+		if(expList != null) expList.clear();
+		else expList = new ArrayList<String>();
+		
+		// Loop over the phase list entries expanding into a list of keywords.
+		for(int j=0; j<phList.length; j++) {
+			phGroup = ref.auxtt.findGroup(phList[j]);
+			// If the phase and group are the same, the list is generic.
+			if(phGroup.equals(phList[j])) {
+				expList.add(phGroup);
+				if(ref.auxtt.isPrimary()) {
+					auxGroup = ref.auxtt.compGroup(phGroup);
+					if(auxGroup != null) expList.add(auxGroup);
+				}
+			// Otherwise, just keep the phase code or special keyword.
+			} else {
+				expList.add(phList[j]);
+			}
+		}
+	}
+	
+	/**
+	 * Test a phase code against phase list keywords.  Note that this 
+	 * implementation is somewhat different from the Fortran Brnset, but 
+	 * follows the same ideas and is somewhat more precise.  This is 
+	 * because the Fortran implementation predated the phase groups and 
+	 * the phase groups were developed and integrated with the Locator 
+	 * rather than the travel-time package.
+	 * 
+	 * @param phCode Phase code
+	 * @return True if the phase code matches any of the phase list keywords
+	 */
+	private boolean testList(String phCode) {
+		String keyword;
+		
+		for(int j=0; j<expList.size(); j++) {
+			keyword = expList.get(j);
+			// Local phases.
+			if(keyword.toLowerCase().equals("ploc")) {
+				if(ref.auxtt.isRegional(phCode)) return true;
+			// Depth phases.
+			} else if(keyword.toLowerCase().equals("pdep")) {
+				if(ref.auxtt.isDepthPh(phCode)) return true;
+			// Basic phases (everything that can be used in a location).
+			} else if(keyword.toLowerCase().equals("basic")) {
+				if(ref.auxtt.canUse(phCode)) return true;
+			// Otherwise, see if we want this specific (or generic) phase.
+			} else {
+				if(keyword.equals(phCode) || 
+						keyword.equals(ref.auxtt.findGroup(phCode))) return true;
+			}
+		}
+		return false;
 	}
 		
 	/**
