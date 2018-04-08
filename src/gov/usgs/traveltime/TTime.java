@@ -41,9 +41,10 @@ public class TTime {
 	 * by the statistical bias
 	 * parameter
 	 */
-	public void addPhase(String phCode, double tt, double dTdD, 
-			double dTdZ, double dXdP, boolean corrTt) {
-		tTimes.add(new TTimeData(phCode,tt,dTdD,dTdZ,dXdP, corrTt));
+	public void addPhase(String phCode, String uniqueCode, double tt, 
+			double dTdD,double dTdZ, double dXdP, boolean corrTt) {
+		tTimes.add(new TTimeData(phCode, uniqueCode, tt, dTdD, dTdZ, dXdP, 
+				corrTt));
 	}
 	
 	/**
