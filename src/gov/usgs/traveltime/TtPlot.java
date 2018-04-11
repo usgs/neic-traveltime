@@ -39,20 +39,28 @@ public class TtPlot {
 	 * @param observ Relative observability
 	 * @param dTdD Ray parameter in seconds/degree
 	 */
-	public void addPoint(String phCode, String uniqueCode, double delta, double tt, 
+	public void addPoint(String phCode, String[] uniqueCode, double delta, double tt, 
 			double spread, double observ, double dTdD) {
+		String key;
 		TtBranch branch;
 		
-		branch = branches.get(uniqueCode);
+		if(!phCode.contains("bc")) {
+			key = uniqueCode[0];
+		} else {
+			key = uniqueCode[1];
+		}
+		branch = branches.get(key);
 		if(branch == null) {
 			branch = new TtBranch(phCode);
-			branches.put(uniqueCode, branch);
+			branches.put(key, branch);
 		}
 		branch.addPoint(new TtPlotPoint(delta, tt, spread, observ, dTdD));
 		// Keep track of maximums for plot scaling purposes.
 		ttMax = Math.max(ttMax, tt);
-		spreadMax = Math.max(spreadMax, spread);
-		observMax = Math.max(observMax, observ);
+		if(!Double.isNaN(spread)) {
+			spreadMax = Math.max(spreadMax, spread);
+			observMax = Math.max(observMax, observ);
+		}
 	}
 	
 	/**
@@ -76,9 +84,10 @@ public class TtPlot {
 		
 		if(branches.size() > 0) {
 			System.out.format("\n\t\tPlot Data (maximums: tt = %7.2f spread = %5.2f "+
-					"observ = %7.1):\n", ttMax, spreadMax, observMax);
+					"observ = %7.1f):\n", ttMax, spreadMax, observMax);
 			NavigableMap<String, TtBranch> map = branches.headMap("~", true);
 			for(@SuppressWarnings("rawtypes") Map.Entry entry : map.entrySet()) {
+				System.out.println((String)entry.getKey());
 				branch = (TtBranch)entry.getValue();
 				branch.printBranch();
 			}

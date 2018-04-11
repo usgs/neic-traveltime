@@ -21,6 +21,16 @@ public class ExtraPhases {
 	final boolean[] addOnUsed = {false, false, false, false, false};
 	String phDiff, phAddOn;
 	double phLim;
+	AuxTtRef auxtt;
+	
+	/**
+	 * Remember the auxiliary phase information.
+	 * 
+	 * @param auxtt
+	 */
+	public ExtraPhases(AuxTtRef auxtt) {
+		this.auxtt = auxtt;
+	}
 	
 	/**
 	 * Given a phase code, determine if the phase should be diffracted.  
@@ -78,6 +88,9 @@ public class ExtraPhases {
 	 * with it
 	 */
 	public boolean hasAddOn(String phCode, double xMin) {
+		// If we didn't read in the phase statistics, we can't do an add on.
+		if(auxtt.findFlags(phCode).ttStat == null) return false;
+		// Otherwise, see if an add on phase is listed.
 		for(int j=0; j<baseCode.length; j++) {
 			if(phCode.equals(baseCode[j])) {
 				if(!addOnUsed[j]) {

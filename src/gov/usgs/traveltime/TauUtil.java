@@ -375,12 +375,12 @@ public class TauUtil {
 		for(int j=0; j<tTimes.size(); j++) {
 			// Turn Pbs into Pgs.
 			if(tTimes.get(j).phCode.contains("Pb") && 
-					tTimes.get(j).phCode.charAt(1) != 'K') {
+					!tTimes.get(j).phCode.contains("K")) {
 				tTimes.get(j).replace("Pb", "Pg");
 			}
 			// Turn Sbs into Sgs.
 			if(tTimes.get(j).phCode.contains("Sb") && 
-					tTimes.get(j).phCode.charAt(1) != 'K') {
+					!tTimes.get(j).phCode.contains("K")) {
 				tTimes.get(j).replace("Sb", "Sg");
 			}
 		}

@@ -193,9 +193,9 @@ public class AllBrnVol {
 					// Compare branch phase codes against the phase list.
 					expandList(phList);
 					for(int j=0; j<branches.length; j++) {
-						// See if this phase is selected (unless it's uesless).
+						// See if this phase is selected (unless it's NEIC-useless).
 						if(!useful || !ref.branches[j].isUseless) {
-							branches[j].setCompute(testList(branches[j].phCode));
+							branches[j].setCompute(testList(ref.branches[j].phCode));
 						} else {
 							branches[j].setCompute(false);
 						}
@@ -441,9 +441,6 @@ public class AllBrnVol {
 											tTime.tt += reflCorr;
 											if(tTime.phCode.equals("pwP")) delTT = -1;
 										}
-										else if(!tTime.phCode.equals("pwP")) 
-											System.out.println("Bad travel-time correction for "+
-													tTime.phCode);
 									} 
 								}
 							}
@@ -825,7 +822,7 @@ public class AllBrnVol {
 				if(ref.auxtt.canUse(phCode)) return true;
 			// Otherwise, see if we want this specific (or generic) phase.
 			} else {
-				if(keyword.equals(phCode) || 
+				if(keyword.equals(phCode) ||
 						keyword.equals(ref.auxtt.findGroup(phCode))) return true;
 			}
 		}

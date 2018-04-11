@@ -12,7 +12,7 @@ import java.util.Arrays;
  */
 public class BrnDataRef {
 	final String phCode;					// Branch phase code
-	final String uniqueCode;			// Unique phase code
+	final String[] uniqueCode;		// Unique phase codes (oxymoron?)
 	final String phSeg;						// Generic phase code for all branches in this segment
 	final String phDiff;					// Phase code of an associated diffracted phase
 	final String phAddOn;					// Phase code of an associated add-on phase
@@ -49,7 +49,13 @@ public class BrnDataRef {
 		
 		// Do phase code.
 		phCode = in.phCode[indexBrn];
-		uniqueCode = TauUtil.uniqueCode(phCode);
+		uniqueCode = new String[2];
+		uniqueCode[0] = TauUtil.uniqueCode(phCode);
+		if(phCode.contains("ab")) {
+			uniqueCode[1] = uniqueCode[0].replace("ab", "bc");
+		} else {
+			uniqueCode[1] = null;
+		}
 		
 		// Remember the auxiliary data and the branch statistics and ellipticity.
 		this.auxtt = auxtt;
@@ -58,7 +64,6 @@ public class BrnDataRef {
 		phSeg = segCode;
 		if(in.typeSeg[indexSeg][1] <= 0) isUpGoing = true;
 		else isUpGoing = false;
-//	isUseless = TauUtil.setUseless(phCode);
 		isUseless = auxtt.isChaff(phCode);
 		// The three types are: 1) initial, 2) down-going, and 3) up-coming.
 		// For example, sP would be S, P, P, while ScP would be S, S, P.

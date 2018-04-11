@@ -33,7 +33,7 @@ public class TtPlotPoint implements Comparable<TtPlotPoint> {
 			this.spread = Double.NaN;
 			this.observ = Double.NaN;
 		}
-		this.dTdD = dTdD;
+		this.dTdD = Math.abs(dTdD);
 	}
 
 	/**
@@ -43,7 +43,7 @@ public class TtPlotPoint implements Comparable<TtPlotPoint> {
 	@Override
 	public int compareTo(TtPlotPoint point) {
 		// Sort into decreasing ray parameter order.
-		if(this.dTdD > point.dTdD) return +1;
+		if(this.dTdD < point.dTdD) return +1;
 		else if(this.dTdD == point.dTdD) return 0;
 		else return -1;
 	}
@@ -51,7 +51,7 @@ public class TtPlotPoint implements Comparable<TtPlotPoint> {
 	@Override
 	public String toString() {
 		if(!Double.isNaN(spread)) {
-			return String.format("%5.1f %7.2f +/- %5.2 (%7.1f)", delta, tt, 
+			return String.format("%5.1f %7.2f +/- %5.2f (%7.1f)", delta, tt, 
 					spread, observ);
 		} else {
 			return String.format("%5.1f %7.2f", delta, tt);

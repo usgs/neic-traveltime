@@ -56,7 +56,7 @@ public class AllBrnRef {
 		
 		// Load the branch data.
 		branches = new BrnDataRef[in.numBrn];
-		ExtraPhases diff = new ExtraPhases();
+		ExtraPhases extra = new ExtraPhases(auxtt);
 		i = -1;
 		endSeg = 0;
 		// Loop over branches setting them up.
@@ -66,7 +66,7 @@ public class AllBrnRef {
 				endSeg = in.indexSeg[++i][1];
 			}
 			// Load the branch data.
-			branches[j] = new BrnDataRef(in, j, i, segCode[i], diff, auxtt);
+			branches[j] = new BrnDataRef(in, j, i, segCode[i], extra, auxtt);
 		}
 		
 		// Set up the up-going branch data.

@@ -9,7 +9,7 @@ package gov.usgs.traveltime;
  */
 public class TTimeData implements Comparable<TTimeData> {
 	String phCode;				// Phase code
-	String uniqueCode;		// Unique phase code
+	String[] uniqueCode;	// Unique phase codes
 	double tt;						// Travel time (s)
 	double dTdD;					// Derivative of time with respect to distance (s/degree)
 	double dTdZ;					// Derivative of time with respect to depth (s/km)
@@ -37,7 +37,7 @@ public class TTimeData implements Comparable<TTimeData> {
 	 * @param corrTt True if the travel-time itself needs to be modified 
 	 * by the statistical bias
 	 */
-	public TTimeData(String phCode, String uniqueCode, double tt, double dTdD, 
+	public TTimeData(String phCode, String[] uniqueCode, double tt, double dTdD, 
 			double dTdZ, double dXdP, boolean corrTt) {
 		this.phCode = phCode;
 		this.uniqueCode = uniqueCode;
