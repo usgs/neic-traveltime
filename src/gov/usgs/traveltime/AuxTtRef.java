@@ -213,9 +213,11 @@ public class AuxTtRef {
 				return phGroups.get(j).groupName;
 			}
 			// Try the auxiliary group name.
-			if(phase.equals(auxGroups.get(j).groupName)) {
-				priGroup = false;
-				return auxGroups.get(j).groupName;
+			if(auxGroups.get(j) != null) {
+				if(phase.equals(auxGroups.get(j).groupName)) {
+					priGroup = false;
+					return auxGroups.get(j).groupName;
+				}
 			}
 		}
 		// OK, that didn't work.  Let's just give up.

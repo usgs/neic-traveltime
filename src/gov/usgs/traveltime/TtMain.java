@@ -16,12 +16,14 @@ public class TtMain {
 		String earthModel = "ak135";
 		double sourceDepth = 10.0d;
 		String[] phList = null;
+//	String[] phList = {"PKP", "SKP"};
 		boolean useful = true;
 		boolean noBackBrn = true;
 		boolean rstt = false;
 		// Simulate a simple travel time request.
-		double delta = 79.8967d;
-		double elev = 800.0d;
+//	double delta = 79.8967d;
+		double delta = 12.0d;
+		double elev = 0.0d;
 		boolean tectonic = true;
 		// Simulate a complex travel time request.
 		double sourceLat = 50.2075d;
@@ -32,11 +34,12 @@ public class TtMain {
 		// Classes we will need.
 		TravelTimeLocal ttLocal;
 		TTime ttList;
+		TtPlot ttPlot;
 		
 		// Initialize the local travel-time manager.
 		ttLocal = new TravelTimeLocal(true, true, true);
 		
-		TauUtil.noCorr = true;
+//	TauUtil.noCorr = true;
 		try {
 			// Set up a session.
 			ttLocal.travelTimeSession(earthModel, sourceDepth, phList, sourceLat, 
@@ -48,6 +51,11 @@ public class TtMain {
 			ttList = ttLocal.getTT(staLat, staLon, elev, delta, azimuth);
 			// Print them.
 			ttList.print();
+			
+			ttPlot = ttLocal.getPlot(earthModel, sourceDepth, phList, !useful, 
+					true, tectonic);
+			ttPlot.printBranches();
+			
 		} catch(IOException e) {
 			System.out.println("Source depth out of range");
 		}

@@ -12,6 +12,7 @@ public class BrnDataVol {
 	boolean compute;				// True if travel times should be computed
 	boolean exists;					// True if the corrected branch still exists
 	String phCode;					// Corrected phase code
+	String[] uniqueCode;		// Local storage for diffracted and add on phases
 	double[] pRange;				// Corrected slowness range for this branch
 	double[] xRange;				// Corrected distance range for this branch
 	double[] xDiff;					// Corrected distance range for a diffracted branch
@@ -717,8 +718,12 @@ public class BrnDataVol {
 					}
 					dp = pRange[1]-pRange[0];
 					dps = Math.sqrt(Math.abs(dp));
+					// Fiddle the uniqueCode.
+					if(uniqueCode == null) uniqueCode = new String[2];
+					uniqueCode[0] = ref.phDiff+0;
+					uniqueCode[1] = null;
 					// Add it.
-					ttList.addPhase(ref.phDiff, ref.phDiff, cvt.tNorm*(poly[0][0]+
+					ttList.addPhase(ref.phDiff, uniqueCode, cvt.tNorm*(poly[0][0]+
 							dp*(poly[1][0]+dp*poly[2][0]+dps*poly[3][0])+
 							pRange[0]*xs), xSign*pRange[0], zSign*Math.sqrt(Math.abs(pSourceSq-
 							Math.pow(pRange[0],2d))), -(2d*poly[2][0]+0.75d*poly[3][0]/
@@ -730,21 +735,25 @@ public class BrnDataVol {
 			if(ref.hasAddOn && found) {
 				del = Math.toDegrees(xs);
 				addFlags = ref.auxtt.findFlags(ref.phAddOn);
-				if(del >= addFlags.ttStat.minDelta && del <= 
-						addFlags.ttStat.maxDelta) {
+				if(del >= addFlags.ttStat.minDelta && del <= addFlags.ttStat.maxDelta) {
+					// Fiddle the uniqueCode.
+					if(uniqueCode == null) uniqueCode = new String[2];
+					uniqueCode[0] = ref.phAddOn+0;
+					uniqueCode[1] = null;
+					// See what we've got.
 					if(ref.phAddOn.equals("Lg")) {
 						// Make sure we have a valid depth.
 						if(dSource <= TauUtil.LGDEPMAX) {
-							ttList.addPhase(ref.phAddOn, ref.phAddOn, 0d, cvt.dTdDLg, 0d, 0d, true);
+							ttList.addPhase(ref.phAddOn, uniqueCode, 0d, cvt.dTdDLg, 0d, 0d, true);
 						}
 					} else if(ref.phAddOn.equals("LR")) {
 						// Make sure we have a valid depth and distance.
 						if(dSource <= TauUtil.LRDEPMAX && xs <= TauUtil.LRDELMAX) {
-							ttList.addPhase(ref.phAddOn, ref.phAddOn, 0d, cvt.dTdDLR, 0d, 0d, true);
+							ttList.addPhase(ref.phAddOn, uniqueCode, 0d, cvt.dTdDLR, 0d, 0d, true);
 						}
 					} else if(ref.phAddOn.equals("pwP") || ref.phAddOn.equals("PKPpre")) {
 						tTime = ttList.get(ttList.size()-1);
-						ttList.addPhase(ref.phAddOn, ref.phAddOn, tTime.tt, tTime.dTdD, tTime.dTdZ, 
+						ttList.addPhase(ref.phAddOn, uniqueCode, tTime.tt, tTime.dTdD, tTime.dTdZ, 
 								tTime.dXdP, true);
 					}
 				}
