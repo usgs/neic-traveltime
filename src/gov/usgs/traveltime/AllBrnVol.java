@@ -10,6 +10,7 @@ import java.util.ArrayList;
  *
  */
 public class AllBrnVol {	
+	
 	BrnDataVol[] branches;						// Volatile branch data
 	ModDataVol pModel, sModel;				// Volatile model data
 	UpDataVol pUp, sUp;								// Volatile up-going branch data
