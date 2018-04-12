@@ -34,7 +34,7 @@ public class TtMain {
 		// Classes we will need.
 		TravelTimeLocal ttLocal;
 		TTime ttList;
-		TtPlot ttPlot;
+//	TtPlot ttPlot;
 		
 		// Initialize the local travel-time manager.
 		ttLocal = new TravelTimeLocal(true, true, true);
@@ -52,9 +52,9 @@ public class TtMain {
 			// Print them.
 			ttList.print();
 			
-			ttPlot = ttLocal.getPlot(earthModel, sourceDepth, phList, !useful, 
-					true, tectonic);
-			ttPlot.printBranches();
+//		ttPlot = ttLocal.getPlot(earthModel, sourceDepth, phList, !useful, 
+//				true, tectonic);
+//		ttPlot.printBranches();
 			
 		} catch(IOException e) {
 			System.out.println("Source depth out of range");
