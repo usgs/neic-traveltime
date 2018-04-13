@@ -87,7 +87,7 @@ public class TtPlot {
 					"observ = %7.1f):\n", ttMax, spreadMax, observMax);
 			NavigableMap<String, TtBranch> map = branches.headMap("~", true);
 			for(@SuppressWarnings("rawtypes") Map.Entry entry : map.entrySet()) {
-				System.out.println((String)entry.getKey());
+	//		System.out.println((String)entry.getKey());
 				branch = (TtBranch)entry.getValue();
 				branch.printBranch();
 			}

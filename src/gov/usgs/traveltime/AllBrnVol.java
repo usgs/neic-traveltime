@@ -80,6 +80,7 @@ public class AllBrnVol {
   }
 
   /**
+   * Return a pointer to the reference portion of all branches.
    *
    * @return The reference
    */
@@ -99,7 +100,6 @@ public class AllBrnVol {
 	 * @param noBackBrn If true, suppress back branches
 	 * @param tectonic If true, map Pb and Sb onto Pg and Sg
 	 * @param rstt If true, use RSTT crustal phases
-	 * @param plot If true, compute travel-time plot data
 	 * @throws Exception If the depth is out of range
 	 */
 	public void newSession(double latitude, double longitude, double depth, 
@@ -130,7 +130,6 @@ public class AllBrnVol {
 	 * @param noBackBrn If true, suppress back branches
 	 * @param tectonic If true, map Pb and Sb onto Pg and Sg
 	 * @param rstt If true, use RSTT crustal phases
-	 * @param plot If true, compute travel-time plot data
 	 * @throws Exception If the depth is out of range
 	 */
 	public void newSession(double depth, String[] phList, boolean useful, 
@@ -148,6 +147,10 @@ public class AllBrnVol {
 	 * 
 	 * @param depth Source depth in kilometers
 	 * @param phList Array of phase use commands
+	 * @param useful If true, only provide "useful" crustal phases
+	 * @param noBackBrn If true, suppress back branches
+	 * @param tectonic If true, map Pb and Sb onto Pg and Sg
+	 * @param rstt If true, use RSTT crustal phases
 	 * @throws Exception If the depth is out of range
 	 */
 	private void setSession(double depth, String[] phList, boolean useful, 
@@ -201,10 +204,13 @@ public class AllBrnVol {
 					for(int j=0; j<branches.length; j++) {
 						// If we only want useful phases and this one is useless, just 
 						// turn it off.
-						if(useful && ref.branches[j].isUseless) 
+						if(useful && ref.branches[j].isUseless) {
 							branches[j].setCompute(false);
+						}
 						// Otherwise, we're good to go.
-						else branches[j].setCompute(true);
+						else {
+							branches[j].setCompute(true);
+						}
 					}
 				} else {
 					// Compare branch phase codes against the phase list.
@@ -225,10 +231,15 @@ public class AllBrnVol {
 				
 				// To correct each branch we need a few depth dependent pieces.
 				xMin = cvt.xNorm*Math.min(Math.max(2d*dSource, 2d), 25d);
-				if(dSource <= cvt.zConrad) tagBrn = 'g';
-				else if(dSource <= cvt.zMoho) tagBrn = 'b';
-				else if(dSource <= cvt.zUpperMantle) tagBrn = 'n';
-				else tagBrn = ' ';
+				if(dSource <= cvt.zConrad) {
+					tagBrn = 'g';
+				} else if(dSource <= cvt.zMoho) {
+					tagBrn = 'b';
+				} else if(dSource <= cvt.zUpperMantle) {
+					tagBrn = 'n';
+				} else {
+					tagBrn = ' ';
+				}
 				// Now correct each branch.
 				for(int j=0; j<branches.length; j++) {
 					branches[j].depthCorr(zSource, dTdDepth, xMin, tagBrn);
@@ -335,10 +346,6 @@ public class AllBrnVol {
 	 * applicable travel-time corrections.
 	 * 
 	 * @param elev Station elevation in kilometers
-	 * @param useful If true, only provide "useful" crustal phases
-	 * @param tectonic If true, map Pb and Sb onto Pg and Sg
-	 * @param noBackBrn If true, suppress back branches
-	 * @param rstt If true, use RSTT crustal phases
 	 * @return An array list of travel times
 	 */
 	private TTime doTT(double elev) {
@@ -360,7 +367,9 @@ public class AllBrnVol {
 		// different distances (as the phases wrap around the Earth).
 		xs = new double[3];
 		xs[0] = Math.abs(Math.toRadians(staDelta))%(2d*Math.PI);
-		if(xs[0] > Math.PI) xs[0] = 2d*Math.PI-xs[0];
+		if(xs[0] > Math.PI) {
+			xs[0] = 2d*Math.PI-xs[0];
+		}
 		xs[1] = 2d*Math.PI-xs[0];
 		xs[2] = xs[0]+2d*Math.PI;
 		if(Math.abs(xs[0]) <= TauUtil.DTOL) {
@@ -378,7 +387,9 @@ public class AllBrnVol {
 		if(complexRequest) {
 			retDelta = 360d-staDelta;
 			retAzim = 180d+staAzim;
-			if(retAzim > 360d) retAzim -= 360d;
+			if(retAzim > 360d) {
+				retAzim -= 360d;
+			}
 		}
 		
 		// Go get the arrivals.  This is a little convoluted because 
@@ -395,8 +406,12 @@ public class AllBrnVol {
 						if(tTime.phCode.equals("pwP")) delTT = k;
 						// There's a special case for up-going P and S.
 						if(tTime.dTdZ > 0d && (flags.phGroup.equals("P") || 
-								flags.phGroup.equals("S"))) upGoing = true;
-						else upGoing = false;
+								flags.phGroup.equals("S"))) {
+							upGoing = true;
+						}
+						else {
+							upGoing = false;
+						}
 						// Set the correction to surface focus.
 						if(tTime.phCode.charAt(0) == 'L') {
 							// Travel-time corrections and correction to surface focus 
@@ -679,13 +694,11 @@ public class AllBrnVol {
     // Add the phase statistics.  First, convert distance to degrees
     del = Math.toDegrees(xs);
     // Apply the surface focus correction.
-    if (phCode.charAt(0) == 'p' || phCode.charAt(0) == 's')
-    {
+    if (phCode.charAt(0) == 'p' || phCode.charAt(0) == 's') {
     	// For surface reflections, just subtract the up-going distance.
     	del = Math.max(del - delCorUp, 0.01d);
     }
-    else if (phCode.charAt(0) != 'L')
-    {
+    else if (phCode.charAt(0) != 'L') {
     	// For a down-going ray.
       del = del + delCorUp;
     }
@@ -790,7 +803,7 @@ public class AllBrnVol {
         break;
       }
     }
-    // Fine the up-going S type branch.
+    // Find the up-going S type branch.
     for (int j = 0; j < branches.length; j++) {
       if (branches[j].exists && branches[j].ref.isUpGoing
               && branches[j].ref.typeSeg[0] == 'S') {
@@ -849,17 +862,25 @@ public class AllBrnVol {
 			keyword = expList.get(j);
 			// Local phases.
 			if(keyword.toLowerCase().equals("ploc")) {
-				if(ref.auxtt.isRegional(phCode)) return true;
+				if(ref.auxtt.isRegional(phCode)) {
+					return true;
+				}
 			// Depth phases.
 			} else if(keyword.toLowerCase().equals("pdep")) {
-				if(ref.auxtt.isDepthPh(phCode)) return true;
+				if(ref.auxtt.isDepthPh(phCode)) {
+					return true;
+				}
 			// Basic phases (everything that can be used in a location).
 			} else if(keyword.toLowerCase().equals("basic")) {
-				if(ref.auxtt.canUse(phCode)) return true;
+				if(ref.auxtt.canUse(phCode)) {
+					return true;
+				}
 			// Otherwise, see if we want this specific (or generic) phase.
 			} else {
 				if(keyword.equals(phCode) ||
-						keyword.equals(ref.auxtt.findGroup(phCode))) return true;
+						keyword.equals(ref.auxtt.findGroup(phCode))) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -965,6 +986,20 @@ public class AllBrnVol {
 			pUp.dumpCorrUp(full);
 		} else if(typeUp == 'S') {
 			sUp.dumpCorrUp(full);
+		}
+	}
+	
+	/**
+	 * Print data for one decimated up-going branch for debugging purposes.
+	 * 
+	 * @param typeUp Wave type ('P' or 'S')
+	 * @param full If true print the up-going tau values as well
+	 */
+	public void dumpDecUp(char typeUp, boolean full) {
+		if(typeUp == 'P') {
+			pUp.dumpDecUp(full);
+		} else if(typeUp == 'S') {
+			sUp.dumpDecUp(full);
 		}
 	}
 }

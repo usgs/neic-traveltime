@@ -37,7 +37,7 @@ public class TtMain {
 //	TtPlot ttPlot;
 		
 		// Initialize the local travel-time manager.
-		ttLocal = new TravelTimeLocal(true, true, true);
+		ttLocal = new TravelTimeLocal(false, false, false);
 		
 //	TauUtil.noCorr = true;
 		try {
