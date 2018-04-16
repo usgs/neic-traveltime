@@ -33,6 +33,8 @@ public class TTime {
 	 * Add basic travel time information for one phase.
 	 * 
 	 * @param phCode Phase code
+	 * @param uniqueCode A unique phase code for branches with duplicate 
+	 * names (two versions for PKPab/PKPbc)
 	 * @param tt Travel time
 	 * @param dTdD Derivative of time with respect to distance
 	 * @param dTdZ Derivative of time with respect to depth

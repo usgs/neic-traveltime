@@ -19,7 +19,7 @@ import java.util.TreeMap;
 
 /**
  *
- * @author U.S. Geological Survey  <ketchum at usgs.gov>
+ * @author U.S. Geological Survey  &lt;ketchum at usgs.gov&gt;
  */
 public class TTSession {
   private static AuxTtRef auxtt;
@@ -77,7 +77,7 @@ public class TTSession {
    * @param tectonic source is a tectonic province
    * @param useRSTT Use RSTT instead for all local phases
    * @param isPlot Call in plot mode
-   * @throws IOException
+   * @throws IOException If unable to read auxiliary or travel-time information
    */
   public TTSession(String earthModel, double sourceDepth, String[] phases, 
           boolean allPhases, boolean returnBackBranches, boolean tectonic,
@@ -99,7 +99,7 @@ public class TTSession {
    * @param tectonic source is a tectonic province
    * @param useRSTT Use RSTT instead for all local phases
    * @param isPlot Call in plot mode
-   * @throws IOException
+   * @throws IOException If unable to read auxiliary or travel-time information
    */
   public TTSession(String earthModel, double sourceDepth, String[] phases, 
           double srcLat, double srcLong,
@@ -344,12 +344,21 @@ public class TTSession {
    * @param recElev Receiver elevation in degrees
    * @param delta Degrees between source and reciever in degrees
    * @param azimuth Azimuth
-   * @return
+   * @return List of travel times
    */
   public synchronized TTime getTT(double recLat, double recLong, double recElev, double delta, double azimuth) {
     if(allBrn == null) return null;
     TTime ttime = allBrn.getTT(recLat, recLong, recElev, delta, azimuth);
     return ttime;
+  }
+  
+  /**
+   * Get a pointer to the auxiliary travel-time information.
+   * 
+   * @return Travel-time auxiliary information
+   */
+  public AuxTtRef getAuxTT() {
+  	return auxtt;
   }
   
   /** close this session which also frees the allBrnVol in use

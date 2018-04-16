@@ -26,7 +26,7 @@ public class ExtraPhases {
 	/**
 	 * Remember the auxiliary phase information.
 	 * 
-	 * @param auxtt
+	 * @param auxtt Travel-time auxiliary information
 	 */
 	public ExtraPhases(AuxTtRef auxtt) {
 		this.auxtt = auxtt;

@@ -10,7 +10,7 @@ import java.util.TreeMap;
  * @author Ray Buland
  *
  */
-public class TravelTimeLocal{
+public class TTSessionLocal{
 	TreeMap<String, AllBrnRef> modelData;
 	AuxTtRef auxTT;
 	AllBrnVol allBrn;
@@ -24,7 +24,7 @@ public class TravelTimeLocal{
 	 * @param readTopo If true, read the topography file
 	 * @throws IOException If the auxiliary data reads fail
 	 */
-	public TravelTimeLocal(boolean readStats, boolean readEllip, boolean readTopo) 
+	public TTSessionLocal(boolean readStats, boolean readEllip, boolean readTopo) 
 			throws IOException {
 		// Read in data common to all models.
 		try {
@@ -48,7 +48,7 @@ public class TravelTimeLocal{
 	 * @param useRSTT If true, use RSTT crustal phases
 	 * @throws Exception If the depth is out of range
 	 */
-	public void travelTimeSession(String earthModel, double sourceDepth, 
+	public void newSession(String earthModel, double sourceDepth, 
 			String[] phases, boolean returnAllPhases, boolean returnBackBranches, 
 			boolean tectonic, boolean useRSTT) throws Exception {
 		
@@ -71,7 +71,7 @@ public class TravelTimeLocal{
 	 * @param useRSTT If true, use RSTT crustal phases
 	 * @throws Exception If the depth is out of range
 	 */
-	public void travelTimeSession(String earthModel, double sourceDepth, 
+	public void newSession(String earthModel, double sourceDepth, 
 			String[] phases, double srcLat, double srcLong, boolean returnAllPhases, 
 			boolean returnBackBranches, boolean tectonic, boolean useRSTT) 
 					throws Exception {
@@ -170,6 +170,15 @@ public class TravelTimeLocal{
 			allBrn = new AllBrnVol(allRef);
 	//	allBrn.dumpHead();
 		}
+	}
+	
+	/**
+	 * Get a pointer to the auxiliary travel-time information.
+	 * 
+	 * @return Auxiliary travel-time data
+	 */
+	public AuxTtRef getAuxTT() {
+		return auxTT;
 	}
 	
 	/**
