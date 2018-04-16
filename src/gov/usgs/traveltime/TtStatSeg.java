@@ -39,7 +39,7 @@ public class TtStatSeg {
 	 * @return Interpolated parameter
 	 */
 	protected double interp(double delta) {
-		if(delta < maxDelta) {
+		if(delta <= maxDelta) {
 			return offset+Math.max(delta, minDelta)*slope;
 		}
 		return Double.NaN;

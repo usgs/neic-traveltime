@@ -1,6 +1,7 @@
 package gov.usgs.traveltime;
 
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 /**
  * Utility methods for the travel-time package.
@@ -21,6 +22,20 @@ public class TauUtil {
 	 * Global maximum positive value.
 	 */
 	public static final double DMAX = 1e30d;
+	/**
+	 * Maximum depth supported by the travel-time tables.
+	 */
+	public static final double MAXDEPTH = 800d;
+	/**
+	 * Crude minimum elevation in kilometers (would include a station 
+	 * at the bottom of the Mariana Trench).
+	 */
+	public static final double MINELEV = -11d;
+	/**
+	 * Crude maximum elevation in kilometers (would include a station 
+	 * at the top of Mount Everest).
+	 */
+	public static final double MAXELEV = 9d;
 	/**
 	 * Global default shallow crustal P velocity in km/s (from ak135).
 	 */
@@ -87,6 +102,11 @@ public class TauUtil {
 	 */
 	public static final double WINDOWMIN = 5d;
 	/**
+	 * The distance increment in degrees for travel-time plots.
+	 */
+	public static final double DDELPLOT = 1d;
+	
+	/**
 	 * Minimum distance in radians for an Sn branch to proxy for Lg.
 	 */
 	protected static final double SNDELMIN = 0.035d;
@@ -129,13 +149,7 @@ public class TauUtil {
 	 * If true, suppress all travel-time corrections for debugging 
 	 * purposes and cases where the corrections aren't needed.
 	 */
-	public static final boolean NoCorr = false;
-	/**
-	 * If true the definition of useless phases is strictly interpreted 
-	 * (i.e., eliminate reflected phases containing Pn and Sn as well 
-	 * as Pg, Pb, Sg, and Sb).
-	 */
-	private static boolean strict = true;
+	public static boolean noCorr = false;
 	
 	/**
 	 * Receiver azimuth relative to the source in degrees clockwise from 
@@ -159,6 +173,10 @@ public class TauUtil {
 	 */
 	private static String modelPath;
 	private static String eventPath;
+	/**
+	 * Storage for unique codes.
+	 */
+	private static TreeMap<String, Integer> unique;
 	
 	/**
 	 * Read the travel time properties file and set up paths to the model 
@@ -183,7 +201,7 @@ public class TauUtil {
 	/**
 	 * Build a path to an event file.
 	 * 
-	 * @param eventFile Event file ID
+	 * @param eventID Hydra style event file ID number
 	 * @return Event file path
 	 */
 	public static String event(String eventID) {
@@ -223,26 +241,24 @@ public class TauUtil {
 	}
 	
 	/**
-	 * Algorithmically identify phases that are unlikely to be useful for 
-	 * earthquake location.  These are crustal phases that always appear in 
-	 * coda of the first arriving P or S phases.
+	 * Make phase codes unique by appending a reference number.  This is needed to 
+	 * keep branches straight in the plot data.
 	 * 
 	 * @param phCode Phase code
-	 * @return True if phase is in the crustal P or S coda
+	 * @return Unique phase code
 	 */
-	public static boolean setUseless(String phCode) {
-		if(strict) {
-			if((phCode.contains("Pg") || phCode.contains("Sg") || 
-					phCode.contains("Pb") || phCode.contains("Sb") || 
-					phCode.contains("Pn") || phCode.contains("Sn")) && 
-					phCode.length() > 3) return true;
-			else return false;
+	public static String uniqueCode(String phCode) {
+		Integer no;
+		
+		if(unique == null) unique = new TreeMap<String, Integer>();
+		no = unique.get(phCode);
+		if(no != null) {
+			unique.replace(phCode, ++no);
 		} else {
-			if((phCode.contains("Pg") || phCode.contains("Sg") || 
-					phCode.contains("Pb") || phCode.contains("Sb")) && 
-					phCode.length() > 3) return true;
-			else return false;
+			no = 0;
+			unique.put(phCode, no);
 		}
+		return phCode+no;
 	}
 
 	/**
@@ -359,12 +375,12 @@ public class TauUtil {
 		for(int j=0; j<tTimes.size(); j++) {
 			// Turn Pbs into Pgs.
 			if(tTimes.get(j).phCode.contains("Pb") && 
-					tTimes.get(j).phCode.charAt(1) != 'K') {
+					!tTimes.get(j).phCode.contains("K")) {
 				tTimes.get(j).replace("Pb", "Pg");
 			}
 			// Turn Sbs into Sgs.
 			if(tTimes.get(j).phCode.contains("Sb") && 
-					tTimes.get(j).phCode.charAt(1) != 'K') {
+					!tTimes.get(j).phCode.contains("K")) {
 				tTimes.get(j).replace("Sb", "Sg");
 			}
 		}

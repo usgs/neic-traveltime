@@ -12,6 +12,7 @@ public class BrnDataVol {
 	boolean compute;				// True if travel times should be computed
 	boolean exists;					// True if the corrected branch still exists
 	String phCode;					// Corrected phase code
+	String[] uniqueCode;		// Local storage for diffracted and add on phases
 	double[] pRange;				// Corrected slowness range for this branch
 	double[] xRange;				// Corrected distance range for this branch
 	double[] xDiff;					// Corrected distance range for a diffracted branch
@@ -29,9 +30,10 @@ public class BrnDataVol {
 	BrnDataRef ref;					// Link to non-volatile branch data
 	UpDataVol pUp, sUp;			// Up-going P and S data for correcting the depth
 	ModConvert cvt;					// Model specific conversions
-	TtFlags flags;						// Flags, etc. by phase code
+	TtFlags flags;					// Flags, etc. by phase code
 	TtStat ttStat;					// Local copy of the phase statistics
 	Ellip ellip;						// Local copy of the ellipticity correction
+	Spline spline;					// Spline code
 	double tCorr, xSign = Double.NaN, zSign = Double.NaN, pSourceSq = Double.NaN, 
 			pEnd = Double.NaN;	// Some variables need to be remembered between calls 
 													// to the travel-time routine.
@@ -44,11 +46,13 @@ public class BrnDataVol {
 	 * @param sUp The corrected S up-going branch source
 	 * @param cvt The conversion factor object
 	 */
-	public BrnDataVol(BrnDataRef ref, UpDataVol pUp, UpDataVol sUp, ModConvert cvt) {
+	public BrnDataVol(BrnDataRef ref, UpDataVol pUp, UpDataVol sUp, ModConvert cvt, 
+			Spline spline) {
 		this.ref = ref;
 		this.pUp = pUp;
 		this.sUp = sUp;
 		this.cvt = cvt;
+		this.spline = spline;
 		
 		// Do branch summary information.
 		compute = true;
@@ -66,7 +70,7 @@ public class BrnDataVol {
 	 * @param tagBrn The P or S up-going branch suffix
 	 * @throws Exception If the tau integral fails
 	 */
-	public void depthCorr(double dTdDepth, double xMin, char tagBrn) 
+	public void depthCorr(double zSource, double dTdDepth, double xMin, char tagBrn) 
 			throws Exception {
 		int i, len = 0;
 		double[][] basisTmp;
@@ -74,265 +78,300 @@ public class BrnDataVol {
 		this.dTdDepth = dTdDepth;
 		
 		// Skip branches we aren't computing.
-		if(compute) {
-			exists = true;
-			// Re-initialize ranges, etc.
-			phCode = ref.phCode;
-			pRange = Arrays.copyOf(ref.pRange, ref.pRange.length);
-			xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
-			pCaustic = pRange[1];
-			pEnd = Double.NaN;
-			flags = ref.auxtt.findFlags(phCode);
-			Spline spline = new Spline();
-			
-			// Do phases that start as P.
-			if(ref.typeSeg[0] == 'P') {
-				// Correct ray parameter.
-				pRange[1] = Math.min(pRange[1], pUp.pMax);
-				
-				/* See how long we need the corrected arrays to be.  This is 
-				 * awkward and not very Java-like, but the gain in performance 
-				 * seemed worthwhile in this case.*/
-				for(int j=0; j<ref.pBrn.length; j++) {
-					// See if we need this point.
-					if(ref.pBrn[j] < pUp.pMax+TauUtil.DTOL) {
-						len++;
-						// If this point is equal to pMax, we're done.
-						if(Math.abs(ref.pBrn[j]-pUp.pMax) <= TauUtil.DTOL) break;
-					// Otherwise, add one more point and quit.
-					} else {
-						len++;
-						break;
+		if(compute) {			
+			// A surface source is a special case (i.e., no up-going phases).
+			if(-zSource <= TauUtil.DTOL) {
+				if(ref.signSeg < 0) {
+					// This branch starts with a down-going ray.
+					exists = true;
+					// Do things common to all branches.
+					phCode = ref.phCode;
+					pRange = Arrays.copyOf(ref.pRange, ref.pRange.length);
+					xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
+					pCaustic = pRange[1];
+					pEnd = Double.NaN;
+					flags = ref.auxtt.findFlags(phCode);
+					
+					// Make a local copy of the reference p and tau.
+					len = ref.pBrn.length;
+					pBrn = Arrays.copyOf(ref.pBrn, len);
+					tauBrn = Arrays.copyOf(ref.tauBrn, len);
+					// Set up the diffracted range.
+					if(ref.hasDiff) {
+						xDiff[0] = Math.max(xRange[0], xRange[1]);
+						xDiff[1] = ref.xDiff;
 					}
-				}
-				// If the branch is empty, it doesn't exist for this source 
-				// depth.
-				if(len == 0) {
+					// Spline it.
+					poly = new double[4][len];
+					xBrn = new double[len];
+					spline.tauSpline(tauBrn, xRange, ref.basis, poly, xBrn);
+				} else {
+					// This branch starts with an up-going ray.
 					exists = false;
 					return;
 				}
-				// Otherwise, allocate the arrays.
-				pBrn = new double[len];
-				tauBrn = new double[len];
 				
-				// Correct an up-going branch separately.
-				if(ref.isUpGoing) {
-					// Correct the distance.
-					xRange[1] = pUp.xEndUp;
-					
-					// Correct tau for the up-going branch.
-					i = 0;
-					for(int j=0; j<ref.pBrn.length; j++) {
-						// See if we need this point.
-						if(ref.pBrn[j] < pUp.pMax+TauUtil.DTOL) {
-							// pTauUp is a superset of pBrn so we need to sync them.
-							while(Math.abs(ref.pBrn[j]-pUp.pUp[i]) > TauUtil.DTOL) {
-								i++;
-							};
-							// Correct the tau and x values.
-							pBrn[j] = ref.pBrn[j];
-							tauBrn[j] = pUp.tauUp[i];
-							// If this point is equal to pMax, we're done.
-							if(Math.abs(ref.pBrn[j]-pUp.pMax) <= TauUtil.DTOL) break;
-						// Otherwise, add one more point and quit.
-						} else {
-							pBrn[j] = pUp.pMax;
-							tauBrn[j] = pUp.tauEndUp;
-							break;
-						}
-					}
-					
-					// Decimate the up-going branch.
-					pBrn = pUp.realUp(pBrn, tauBrn, xRange, xMin);
-					tauBrn = pUp.getDecTau();
-					
-					// Spline it.
-					len = pBrn.length;
-					basisTmp = new double[5][len];
-					spline.basisSet(pBrn, basisTmp);
-					poly = new double[4][len];
-					xBrn = new double[len];
-					spline.tauSpline(tauBrn, xRange, basisTmp, poly, xBrn);
-				
-				// Otherwise, correct a down-going branch.
-				} else {
-					// Correct distance.
-					int m = 0;
-					for(i=0; i<xRange.length; i++) {
-						for(; m<pUp.ref.pXUp.length; m++) {
-							if(Math.abs(pRange[i]-pUp.ref.pXUp[m]) <= TauUtil.DTOL) {
-								if(m >= pUp.xUp.length) {
-									exists = false;
-									return;
-								}
-								xRange[i] += ref.signSeg*pUp.xUp[m];
-								break;
-							}
-						}
-						if(m >= pUp.ref.pXUp.length) xRange[i] = lastX();
-					}
-					// Set up the diffracted branch distance range.
-					if(ref.hasDiff) {
-						xDiff[0] = xRange[0];
-						xDiff[1] = ref.xDiff;
-					}
-					
-					// Correct tau for down-going branches.
-					i = 0;
-					for(int j=0; j<ref.pBrn.length; j++) {
-						// See if we need this point.
-						if(ref.pBrn[j] < pUp.pMax+TauUtil.DTOL) {
-							// pTauUp is a superset of pBrn so we need to sync them.
-							while(Math.abs(ref.pBrn[j]-pUp.pUp[i]) > TauUtil.DTOL) {
-								i++;
-							};
-							// Correct the tau and x values.
-							pBrn[j] = ref.pBrn[j];
-							tauBrn[j] = ref.tauBrn[j]+ref.signSeg*pUp.tauUp[i];
-							// If this point is equal to pMax, we're done.
-							if(Math.abs(ref.pBrn[j]-pUp.pMax) <= TauUtil.DTOL) break;
-						// Otherwise, add one more point and quit.
-						} else {
-							pBrn[j] = pUp.pMax;
-							tauBrn[j] = lastTau();
-							break;
-						}
-					}
-					
-					// Spline it.
-					poly = new double[4][len];
-					xBrn = new double[len];
-					if(Math.abs(pRange[1]-ref.pRange[1]) <= TauUtil.DTOL) {
-						spline.tauSpline(tauBrn, xRange, ref.basis, poly, xBrn);
-					} else {
-						basisTmp = new double[5][len];
-						spline.basisSet(pBrn, basisTmp);
-						spline.tauSpline(tauBrn, xRange, basisTmp, poly, xBrn);
-					}
-				}
-			// Do phases that start as S.
+			// Otherwise, we need to correct the surface focus data for depth.
 			} else {
-				// Correct ray parameter.
-				pRange[1] = Math.min(pRange[1], sUp.pMax);
-				
-				/* See how long we need the corrected arrays to be.  This is 
-				 * awkward and not very Java-like, but the gain in performance 
-				 * seemed worthwhile in this case.*/
-				for(int j=0; j<ref.pBrn.length; j++) {
-					// See if we need this point.
-					if(ref.pBrn[j] < sUp.pMax+TauUtil.DTOL) {
-						len++;
-						// If this point is equal to pMax, we're done.
-						if(Math.abs(ref.pBrn[j]-sUp.pMax) <= TauUtil.DTOL) break;
-					// Otherwise, add one more point and quit.
-					} else {
-						len++;
-						break;
-					}
-				}
-				// If the branch is empty, it doesn't exist for this source 
-				// depth.
-				if(len == 0) {
-					exists = false;
-					return;
-				}
-				// Otherwise, allocate the arrays.
-				pBrn = new double[len];
-				tauBrn = new double[len];
-				
-				// Correct an up-going branch separately.
-				if(ref.isUpGoing) {
-					// Correct the distance.
-					xRange[1] = sUp.xEndUp;
+				// Assume the branch exists until proven otherwise.
+				exists = true;
+				// Do things common to all branches.
+				phCode = ref.phCode;
+				pRange = Arrays.copyOf(ref.pRange, ref.pRange.length);
+				xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
+				pCaustic = pRange[1];
+				pEnd = Double.NaN;
+				flags = ref.auxtt.findFlags(phCode);
+			
+				// Do phases that start as P.
+				if(ref.typeSeg[0] == 'P') {
+					// Correct ray parameter.
+					pRange[1] = Math.min(pRange[1], pUp.pMax);
 					
-					// Correct tau for the up-going branch.
-					i = 0;
+					/* See how long we need the corrected arrays to be.  This is 
+					 * awkward and not very Java-like, but the gain in performance 
+					 * seemed worthwhile in this case.*/
 					for(int j=0; j<ref.pBrn.length; j++) {
 						// See if we need this point.
-						if(ref.pBrn[j] < sUp.pMax+TauUtil.DTOL) {
-							// pTauUp is a superset of pBrn so we need to sync them.
-							while(Math.abs(ref.pBrn[j]-sUp.pUp[i]) > TauUtil.DTOL) {
-								i++;
-							};
-							// Correct the tau and x values.
-							pBrn[j] = ref.pBrn[j];
-							tauBrn[j] = sUp.tauUp[i];
+						if(ref.pBrn[j] < pUp.pMax+TauUtil.DTOL) {
+							len++;
 							// If this point is equal to pMax, we're done.
-							if(Math.abs(ref.pBrn[j]-sUp.pMax) <= TauUtil.DTOL) break;
+							if(Math.abs(ref.pBrn[j]-pUp.pMax) <= TauUtil.DTOL) break;
 						// Otherwise, add one more point and quit.
 						} else {
-							pBrn[j] = sUp.pMax;
-							tauBrn[j] = sUp.tauEndUp;
+							len++;
 							break;
 						}
 					}
+					// If the branch is empty, it doesn't exist for this source 
+					// depth.
+					if(len == 0) {
+						exists = false;
+						return;
+					}
+					// Otherwise, allocate the arrays.
+					pBrn = new double[len];
+					tauBrn = new double[len];
 					
-					// Decimate the up-going branch.
-					pBrn = sUp.realUp(pBrn, tauBrn, xRange, xMin);
-					tauBrn = sUp.getDecTau();
-					
-					// Spline it.
-					len = pBrn.length;
-					basisTmp = new double[5][len];
-					spline.basisSet(pBrn, basisTmp);
-					poly = new double[4][len];
-					xBrn = new double[len];
-					spline.tauSpline(tauBrn, xRange, basisTmp, poly, xBrn);
-					
-				// Otherwise, correct a down-going branch.
-				} else {
-					// Correct distance.
-					int m = 0;
-					for(i=0; i<xRange.length; i++) {
-						for(; m<sUp.ref.pXUp.length; m++) {
-							if(Math.abs(pRange[i]-sUp.ref.pXUp[m]) <= TauUtil.DTOL) {
-								if(m >= sUp.xUp.length) {
-									exists = false;
-									return;
-								}
-								xRange[i] += ref.signSeg*sUp.xUp[m];
+					// Correct an up-going branch separately.
+					if(ref.isUpGoing) {
+						// Correct the distance.
+						xRange[1] = pUp.xEndUp;
+						
+						// Correct tau for the up-going branch.
+						i = 0;
+						for(int j=0; j<ref.pBrn.length; j++) {
+							// See if we need this point.
+							if(ref.pBrn[j] < pUp.pMax+TauUtil.DTOL) {
+								// pTauUp is a superset of pBrn so we need to sync them.
+								while(Math.abs(ref.pBrn[j]-pUp.pUp[i]) > TauUtil.DTOL) {
+									i++;
+								};
+								// Correct the tau and x values.
+								pBrn[j] = ref.pBrn[j];
+								tauBrn[j] = pUp.tauUp[i];
+								// If this point is equal to pMax, we're done.
+								if(Math.abs(ref.pBrn[j]-pUp.pMax) <= TauUtil.DTOL) break;
+							// Otherwise, add one more point and quit.
+							} else {
+								pBrn[j] = pUp.pMax;
+								tauBrn[j] = pUp.tauEndUp;
 								break;
 							}
 						}
-						if(m >= sUp.ref.pXUp.length) xRange[i] = lastX();
-					}
-					// Set up the diffracted branch distance range.
-					if(ref.hasDiff) {
-						xDiff[0] = xRange[0];
-						xDiff[1] = ref.xDiff;
-					}
+						
+						// Decimate the up-going branch.
+						pBrn = pUp.realUp(pBrn, tauBrn, xRange, xMin);
+						tauBrn = pUp.getDecTau();
+						
+						// Spline it.
+						len = pBrn.length;
+						basisTmp = new double[5][len];
+						spline.basisSet(pBrn, basisTmp);
+						poly = new double[4][len];
+						xBrn = new double[len];
+						spline.tauSpline(tauBrn, xRange, basisTmp, poly, xBrn);
 					
-					// Correct tau for down-going branches.
-					i = 0;
+					// Otherwise, correct a down-going branch.
+					} else {
+						// Correct distance.
+						int m = 0;
+						for(i=0; i<xRange.length; i++) {
+							for(; m<pUp.ref.pXUp.length; m++) {
+								if(Math.abs(pRange[i]-pUp.ref.pXUp[m]) <= TauUtil.DTOL) {
+									if(m >= pUp.xUp.length) {
+										exists = false;
+										return;
+									}
+									xRange[i] += ref.signSeg*pUp.xUp[m];
+									break;
+								}
+							}
+							if(m >= pUp.ref.pXUp.length) xRange[i] = lastX();
+						}
+						// Set up the diffracted branch distance range.
+						if(ref.hasDiff) {
+							xDiff[0] = xRange[0];
+							xDiff[1] = ref.xDiff;
+						}
+						
+						// Correct tau for down-going branches.
+						i = 0;
+						for(int j=0; j<ref.pBrn.length; j++) {
+							// See if we need this point.
+							if(ref.pBrn[j] < pUp.pMax+TauUtil.DTOL) {
+								// pTauUp is a superset of pBrn so we need to sync them.
+								while(Math.abs(ref.pBrn[j]-pUp.pUp[i]) > TauUtil.DTOL) {
+									i++;
+								};
+								// Correct the tau and x values.
+								pBrn[j] = ref.pBrn[j];
+								tauBrn[j] = ref.tauBrn[j]+ref.signSeg*pUp.tauUp[i];
+								// If this point is equal to pMax, we're done.
+								if(Math.abs(ref.pBrn[j]-pUp.pMax) <= TauUtil.DTOL) break;
+							// Otherwise, add one more point and quit.
+							} else {
+								pBrn[j] = pUp.pMax;
+								tauBrn[j] = lastTau();
+								break;
+							}
+						}
+						
+						// Spline it.
+						poly = new double[4][len];
+						xBrn = new double[len];
+						if(Math.abs(pRange[1]-ref.pRange[1]) <= TauUtil.DTOL) {
+							spline.tauSpline(tauBrn, xRange, ref.basis, poly, xBrn);
+						} else {
+							basisTmp = new double[5][len];
+							spline.basisSet(pBrn, basisTmp);
+							spline.tauSpline(tauBrn, xRange, basisTmp, poly, xBrn);
+						}
+					}
+				// Do phases that start as S.
+				} else {
+					// Correct ray parameter.
+					pRange[1] = Math.min(pRange[1], sUp.pMax);
+					
+					/* See how long we need the corrected arrays to be.  This is 
+					 * awkward and not very Java-like, but the gain in performance 
+					 * seemed worthwhile in this case.*/
 					for(int j=0; j<ref.pBrn.length; j++) {
 						// See if we need this point.
 						if(ref.pBrn[j] < sUp.pMax+TauUtil.DTOL) {
-							// pTauUp is a superset of pBrn so we need to sync them.
-							while(Math.abs(ref.pBrn[j]-sUp.pUp[i]) > TauUtil.DTOL) {
-								i++;
-							};
-							// Correct the tau and x values.
-							pBrn[j] = ref.pBrn[j];
-							tauBrn[j] = ref.tauBrn[j]+ref.signSeg*sUp.tauUp[i];
+							len++;
 							// If this point is equal to pMax, we're done.
 							if(Math.abs(ref.pBrn[j]-sUp.pMax) <= TauUtil.DTOL) break;
 						// Otherwise, add one more point and quit.
 						} else {
-							pBrn[j] = sUp.pMax;
-							tauBrn[j] = lastTau();
+							len++;
 							break;
 						}
 					}
+					// If the branch is empty, it doesn't exist for this source 
+					// depth.
+					if(len == 0) {
+						exists = false;
+						return;
+					}
+					// Otherwise, allocate the arrays.
+					pBrn = new double[len];
+					tauBrn = new double[len];
 					
-					// Spline it.
-					poly = new double[4][len];
-					xBrn = new double[len];
-					if(Math.abs(pRange[1]-ref.pRange[1]) <= TauUtil.DTOL) {
-						spline.tauSpline(tauBrn, xRange, ref.basis, poly, xBrn);
-					} else {
+					// Correct an up-going branch separately.
+					if(ref.isUpGoing) {
+						// Correct the distance.
+						xRange[1] = sUp.xEndUp;
+						
+						// Correct tau for the up-going branch.
+						i = 0;
+						for(int j=0; j<ref.pBrn.length; j++) {
+							// See if we need this point.
+							if(ref.pBrn[j] < sUp.pMax+TauUtil.DTOL) {
+								// pTauUp is a superset of pBrn so we need to sync them.
+								while(Math.abs(ref.pBrn[j]-sUp.pUp[i]) > TauUtil.DTOL) {
+									i++;
+								};
+								// Correct the tau and x values.
+								pBrn[j] = ref.pBrn[j];
+								tauBrn[j] = sUp.tauUp[i];
+								// If this point is equal to pMax, we're done.
+								if(Math.abs(ref.pBrn[j]-sUp.pMax) <= TauUtil.DTOL) break;
+							// Otherwise, add one more point and quit.
+							} else {
+								pBrn[j] = sUp.pMax;
+								tauBrn[j] = sUp.tauEndUp;
+								break;
+							}
+						}
+						
+						// Decimate the up-going branch.
+						pBrn = sUp.realUp(pBrn, tauBrn, xRange, xMin);
+						tauBrn = sUp.getDecTau();
+						
+						// Spline it.
+						len = pBrn.length;
 						basisTmp = new double[5][len];
 						spline.basisSet(pBrn, basisTmp);
+						poly = new double[4][len];
+						xBrn = new double[len];
 						spline.tauSpline(tauBrn, xRange, basisTmp, poly, xBrn);
+						
+					// Otherwise, correct a down-going branch.
+					} else {
+						// Correct distance.
+						int m = 0;
+						for(i=0; i<xRange.length; i++) {
+							for(; m<sUp.ref.pXUp.length; m++) {
+								if(Math.abs(pRange[i]-sUp.ref.pXUp[m]) <= TauUtil.DTOL) {
+									if(m >= sUp.xUp.length) {
+										exists = false;
+										return;
+									}
+									xRange[i] += ref.signSeg*sUp.xUp[m];
+									break;
+								}
+							}
+							if(m >= sUp.ref.pXUp.length) xRange[i] = lastX();
+						}
+						// Set up the diffracted branch distance range.
+						if(ref.hasDiff) {
+							xDiff[0] = xRange[0];
+							xDiff[1] = ref.xDiff;
+						}
+						
+						// Correct tau for down-going branches.
+						i = 0;
+						for(int j=0; j<ref.pBrn.length; j++) {
+							// See if we need this point.
+							if(ref.pBrn[j] < sUp.pMax+TauUtil.DTOL) {
+								// pTauUp is a superset of pBrn so we need to sync them.
+								while(Math.abs(ref.pBrn[j]-sUp.pUp[i]) > TauUtil.DTOL) {
+									i++;
+								};
+								// Correct the tau and x values.
+								pBrn[j] = ref.pBrn[j];
+								tauBrn[j] = ref.tauBrn[j]+ref.signSeg*sUp.tauUp[i];
+								// If this point is equal to pMax, we're done.
+								if(Math.abs(ref.pBrn[j]-sUp.pMax) <= TauUtil.DTOL) break;
+							// Otherwise, add one more point and quit.
+							} else {
+								pBrn[j] = sUp.pMax;
+								tauBrn[j] = lastTau();
+								break;
+							}
+						}
+						
+						// Spline it.
+						poly = new double[4][len];
+						xBrn = new double[len];
+						if(Math.abs(pRange[1]-ref.pRange[1]) <= TauUtil.DTOL) {
+							spline.tauSpline(tauBrn, xRange, ref.basis, poly, xBrn);
+						} else {
+							basisTmp = new double[5][len];
+							spline.basisSet(pBrn, basisTmp);
+							spline.tauSpline(tauBrn, xRange, basisTmp, poly, xBrn);
+						}
 					}
 				}
 			}
@@ -633,12 +672,11 @@ public class BrnDataVol {
 											TauUtil.phSeg(phCode)+"bc";
 									else tmpCode = phCode;
 									// Add it.
-									ttList.addPhase(tmpCode,cvt.tNorm*(poly[0][j]+
-											dp*(poly[1][j]+dp*poly[2][j]+
-											dps*poly[3][j])+ps*xs),xSign*ps,zSign*
-											Math.sqrt(Math.abs(pSourceSq-Math.pow(ps,2d))),
-											-(2d*poly[2][j]+0.75d*poly[3][j]/
-											Math.max(Math.abs(dps),TauUtil.DTOL))/cvt.tNorm, false);
+									ttList.addPhase(tmpCode, ref.uniqueCode, cvt.tNorm*(poly[0][j]+
+											dp*(poly[1][j]+dp*poly[2][j]+dps*poly[3][j])+ps*xs), 
+											xSign*ps,zSign*Math.sqrt(Math.abs(pSourceSq-Math.pow(ps,2d))),
+											-(2d*poly[2][j]+0.75d*poly[3][j]/Math.max(Math.abs(dps), 
+											TauUtil.DTOL))/cvt.tNorm, false);
 								}
 							}
 						// We have to be careful if the quadratic term is zero.
@@ -658,11 +696,11 @@ public class BrnDataVol {
 									TauUtil.phSeg(phCode)+"bc";
 							else tmpCode = phCode;
 							// add it.
-							ttList.addPhase(tmpCode,cvt.tNorm*(poly[0][j]+
-									dp*(poly[1][j]+dps*poly[3][j])+ps*xs),
-									xSign*ps,zSign*Math.sqrt(Math.abs(pSourceSq-
-									Math.pow(ps,2d))),-(0.75d*poly[3][j]/
-									Math.max(Math.abs(dps),TauUtil.DTOL))/cvt.tNorm, false);
+							ttList.addPhase(tmpCode, ref.uniqueCode, cvt.tNorm*(poly[0][j]+
+									dp*(poly[1][j]+dps*poly[3][j])+ps*xs), xSign*ps, 
+									zSign*Math.sqrt(Math.abs(pSourceSq-Math.pow(ps,2d))), 
+									-(0.75d*poly[3][j]/Math.max(Math.abs(dps), 
+									TauUtil.DTOL))/cvt.tNorm, false);
 						}
 					}
 				}
@@ -680,12 +718,16 @@ public class BrnDataVol {
 					}
 					dp = pRange[1]-pRange[0];
 					dps = Math.sqrt(Math.abs(dp));
+					// Fiddle the uniqueCode.
+					if(uniqueCode == null) uniqueCode = new String[2];
+					uniqueCode[0] = ref.phDiff+0;
+					uniqueCode[1] = null;
 					// Add it.
-					ttList.addPhase(ref.phDiff,cvt.tNorm*(poly[0][0]+
+					ttList.addPhase(ref.phDiff, uniqueCode, cvt.tNorm*(poly[0][0]+
 							dp*(poly[1][0]+dp*poly[2][0]+dps*poly[3][0])+
-							pRange[0]*xs),xSign*pRange[0],zSign*Math.sqrt(Math.abs(pSourceSq-
-							Math.pow(pRange[0],2d))),-(2d*poly[2][0]+0.75d*poly[3][0]/
-							Math.max(Math.abs(dps),TauUtil.DTOL))/cvt.tNorm, false);
+							pRange[0]*xs), xSign*pRange[0], zSign*Math.sqrt(Math.abs(pSourceSq-
+							Math.pow(pRange[0],2d))), -(2d*poly[2][0]+0.75d*poly[3][0]/
+							Math.max(Math.abs(dps), TauUtil.DTOL))/cvt.tNorm, false);
 				}
 			}
 			
@@ -693,21 +735,25 @@ public class BrnDataVol {
 			if(ref.hasAddOn && found) {
 				del = Math.toDegrees(xs);
 				addFlags = ref.auxtt.findFlags(ref.phAddOn);
-				if(del >= addFlags.ttStat.minDelta && del <= 
-						addFlags.ttStat.maxDelta) {
+				if(del >= addFlags.ttStat.minDelta && del <= addFlags.ttStat.maxDelta) {
+					// Fiddle the uniqueCode.
+					if(uniqueCode == null) uniqueCode = new String[2];
+					uniqueCode[0] = ref.phAddOn+0;
+					uniqueCode[1] = null;
+					// See what we've got.
 					if(ref.phAddOn.equals("Lg")) {
 						// Make sure we have a valid depth.
 						if(dSource <= TauUtil.LGDEPMAX) {
-							ttList.addPhase(ref.phAddOn, 0d, cvt.dTdDLg, 0d, 0d, true);
+							ttList.addPhase(ref.phAddOn, uniqueCode, 0d, cvt.dTdDLg, 0d, 0d, true);
 						}
 					} else if(ref.phAddOn.equals("LR")) {
 						// Make sure we have a valid depth and distance.
 						if(dSource <= TauUtil.LRDEPMAX && xs <= TauUtil.LRDELMAX) {
-							ttList.addPhase(ref.phAddOn, 0d, cvt.dTdDLR, 0d, 0d, true);
+							ttList.addPhase(ref.phAddOn, uniqueCode, 0d, cvt.dTdDLR, 0d, 0d, true);
 						}
 					} else if(ref.phAddOn.equals("pwP") || ref.phAddOn.equals("PKPpre")) {
 						tTime = ttList.get(ttList.size()-1);
-						ttList.addPhase(ref.phAddOn, tTime.tt, tTime.dTdD, tTime.dTdZ, 
+						ttList.addPhase(ref.phAddOn, uniqueCode, tTime.tt, tTime.dTdD, tTime.dTdZ, 
 								tTime.dXdP, true);
 					}
 				}
@@ -892,7 +938,9 @@ public class BrnDataVol {
 				System.out.format("\n          phase = %s is useless\n", ref.phCode);
 			}
 		} else {
-			System.out.format("\n          phase = %s doesn't exist\n", ref.phCode);
+			if(ref.isUpGoing) System.out.format("\n          phase = %s up doesn't exist\n", 
+					ref.phCode);
+			else System.out.format("\n          phase = %s doesn't exist\n", ref.phCode);
 		}
 	}
 	
