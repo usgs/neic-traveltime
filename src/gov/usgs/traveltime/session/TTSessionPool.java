@@ -18,7 +18,7 @@ import gov.usgs.traveltime.TTime;
  * always creates a new one and releases it when requested. The key for the session is the model and
  * the depth to 2 sigfigs.
  *
- * @author U.S. Geological Survey  <ketchum at usgs.gov>
+ * @author U.S. Geological Survey  &lt;ketchum at usgs.gov&gt;
  */
 public class TTSessionPool {
 
@@ -41,7 +41,7 @@ public class TTSessionPool {
    * @param rstt If true, use RSTT for local travel times
    * @param plot If true, this returns plot mode
    * @return A TTSession set to the arguments
-   * @throws IOException
+   * @throws IOException If unable to read auxiliary or travel-time information
    */
   public static TTSession getTravelTimeSession(String model, double depth,
           String[] phaseList,
@@ -65,7 +65,7 @@ public class TTSessionPool {
    * @param rstt If true, use RSTT for local travel times
    * @param plot If true, this returns plot mode
    * @return A TTSession set to the arguments
-   * @throws IOException
+   * @throws IOException If unable to read auxiliary or travel-time information
    */
   public static TTSession getTravelTimeSession(String model, double depth,
           String[] phaseList,
@@ -89,7 +89,7 @@ public class TTSessionPool {
    * @param rstt If true, use RSTT for local travel times
    * @param plot If true, this returns plot mode
    * @return A TTSession set to the arguments
-   * @throws IOException
+   * @throws IOException If unable to read auxiliary or travel-time information
    */
   public static TTSession getTravelTimeSession(String model, double depth,
           ArrayList<String> phaseList,
@@ -205,7 +205,7 @@ public class TTSessionPool {
    * A simple example of how to use this program.  It samples the P at 2 to 82 degrees in 10 degree steps 
    * and at depths from 33 to 400 in 10 km steps
    *
-   * @param args
+   * @param args Command line arguments
    */
   public static void main(String[] args) {
     boolean allPhases = true;

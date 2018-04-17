@@ -33,6 +33,8 @@ public class TtPlot {
 	 * Add one plot point for one travel-time branch.
 	 * 
 	 * @param phCode Phase code
+	 * @param uniqueCode A unique phase code for branches with duplicate 
+	 * names (two versions for PKPab/PKPbc)
 	 * @param delta Distance in degrees
 	 * @param tt Travel time in seconds
 	 * @param spread Statistical spread in seconds

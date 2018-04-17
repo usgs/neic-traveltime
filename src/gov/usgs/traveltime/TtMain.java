@@ -32,17 +32,17 @@ public class TtMain {
 		double staLon = -113.9115d;
 		double azimuth = 151.4299d;
 		// Classes we will need.
-		TravelTimeLocal ttLocal;
+		TTSessionLocal ttLocal;
 		TTime ttList;
 //	TtPlot ttPlot;
 		
 		// Initialize the local travel-time manager.
-		ttLocal = new TravelTimeLocal(false, false, false);
+		ttLocal = new TTSessionLocal(true, true, true);
 		
 //	TauUtil.noCorr = true;
 		try {
 			// Set up a session.
-			ttLocal.travelTimeSession(earthModel, sourceDepth, phList, sourceLat, 
+			ttLocal.newSession(earthModel, sourceDepth, phList, sourceLat, 
 					sourceLon, !useful, !noBackBrn, tectonic, rstt);
 //		ttLocal.printRefBranches(false);
 //		ttLocal.printBranches(false, false, false, useful);

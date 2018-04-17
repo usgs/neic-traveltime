@@ -45,6 +45,7 @@ public class BrnDataVol {
 	 * @param pUp The corrected P up-going branch source
 	 * @param sUp The corrected S up-going branch source
 	 * @param cvt The conversion factor object
+	 * @param spline The spline object
 	 */
 	public BrnDataVol(BrnDataRef ref, UpDataVol pUp, UpDataVol sUp, ModConvert cvt, 
 			Spline spline) {
@@ -64,6 +65,7 @@ public class BrnDataVol {
 	 * Correct this branch for source depth using the corrected 
 	 * up-going branch ray parameters and tau values.
 	 * 
+	 * @param zSource Earth flattened, normalized source depth
 	 * @param dTdDepth Correction factor for dT/dDepth
 	 * @param xMin The minimum source-receiver distance desired 
 	 * between ray parameter samples
