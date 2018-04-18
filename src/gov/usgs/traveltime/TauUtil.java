@@ -161,22 +161,19 @@ public class TauUtil {
 	 * and azimuth.
 	 */
 	public static double projLon = Double.NaN;
+	/**
+	 * Storage for unique codes.
+	 */
+	private static TreeMap<String, Integer> unique;
 	
 	/**
 	 * Path of the travel time/locator properties file.
 	 */
-//private static String propFile = System.getProperty("user.home")+Util.FS+
-//		"Properties"+Util.FS+"traveltime.prop";
 	private static String propFile = "Properties"+CWBProperties.FS+"traveltime.prop";
 	/**
 	 * Paths for model and event files set in getProperties.
 	 */
 	private static String modelPath;
-	private static String eventPath;
-	/**
-	 * Storage for unique codes.
-	 */
-	private static TreeMap<String, Integer> unique;
 	
 	/**
 	 * Read the travel time properties file and set up paths to the model 
@@ -185,7 +182,6 @@ public class TauUtil {
 	public static void getProperties() {		
 		CWBProperties.loadProperties(propFile);
 		modelPath = CWBProperties.getProperty("modelPath");
-		eventPath = CWBProperties.getProperty("eventPath");
 	}
 	
 	/**
@@ -196,16 +192,6 @@ public class TauUtil {
 	 */
 	public static String model(String modelFile) {
 		return modelPath+modelFile;
-	}
-	
-	/**
-	 * Build a path to an event file.
-	 * 
-	 * @param eventID Hydra style event file ID number
-	 * @return Event file path
-	 */
-	public static String event(String eventID) {
-		return eventPath+"RayLocInput"+eventID+".txt";
 	}
 	
 	/**
@@ -398,6 +384,10 @@ public class TauUtil {
 		for(int j=0; j<tTimes.size(); j++) {
 			if(tTimes.get(j).spread >= DEFSPREAD || tTimes.get(j).observ <= 
 					DEFOBSERV) tTimes.get(j).canUse = false;
+			/* This is the way the old Locator worked.  It is less correct  
+			 and it should make little difference, but it makes side-by-side 
+			 comparison difficult. */
+//		if(tTimes.get(j).spread >= DEFSPREAD) tTimes.get(j).canUse = false;
 		}
 	}
 	

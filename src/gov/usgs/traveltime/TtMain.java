@@ -14,15 +14,15 @@ public class TtMain {
 	public static void main(String[] args) throws Exception {
 		// Simulate a session request.
 		String earthModel = "ak135";
-		double sourceDepth = 10.0d;
+		double sourceDepth = 32.67d;
 		String[] phList = null;
 //	String[] phList = {"PKP", "SKP"};
 		boolean useful = true;
 		boolean noBackBrn = true;
 		boolean rstt = false;
 		// Simulate a simple travel time request.
-//	double delta = 79.8967d;
-		double delta = 12.0d;
+		double delta = 5.68d;
+//	double delta = 12.0d;
 		double elev = 0.0d;
 		boolean tectonic = true;
 		// Simulate a complex travel time request.

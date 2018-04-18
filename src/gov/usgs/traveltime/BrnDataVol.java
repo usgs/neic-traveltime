@@ -665,7 +665,8 @@ public class BrnDataVol {
 								if(k > 0) dps = (poly[1][j]-xs)/(2d*poly[2][j]*dps);
 								dp = Math.copySign(Math.pow(dps,2d),dps);
 								// Arrivals outside the interval aren't real.
-								if(dp >= pEnd-pBrn[j+1]-pTol  && dp <= pEnd-pBrn[j]+pTol) {
+								if(dp >= Math.max(pEnd-pBrn[j+1]-pTol, 0d) && 
+										dp <= pEnd-pBrn[j]+pTol) {
 									// Add the arrival.
 									found = true;
 									ps = pEnd-dp;
@@ -778,6 +779,8 @@ public class BrnDataVol {
 		
 		// Check validity.
 		if(!exists || ps < pRange[0] || ps > pRange[1]) {
+//		System.out.format("OneRay NaN: %-8s %8.6f %8.6f %8.6f\n", phCode, 
+//				pRange[0], ps, pRange[1]);
 			return Double.NaN;
 		}
 		
