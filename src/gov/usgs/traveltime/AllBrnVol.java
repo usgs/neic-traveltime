@@ -453,6 +453,7 @@ public class AllBrnVol {
 												} catch (Exception e) {
 													// This should never happen.
 													e.printStackTrace();
+								//				System.out.format("Phase = %-8s delta = %6.2f\n", tTime.phCode, staDelta);
 													delCorDn = 0.5d*staDelta;
 												}
 											} else {
