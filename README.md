@@ -1,3 +1,4 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/04492b4350e744c6bf2ecc3560a66a5a)](https://app.codacy.com/app/jpatton-USGS/neic-traveltime?utm_source=github.com&utm_medium=referral&utm_content=usgs/neic-traveltime&utm_campaign=badger)
 [![Build Status](https://travis-ci.org/usgs/neic-traveltime.svg?branch=master)](https://travis-ci.org/usgs/neic-traveltime)
 [![Documentation](https://usgs.github.io/neic-traveltime/codedocumented.svg)](https://usgs.github.io/neic-traveltime/)
 
