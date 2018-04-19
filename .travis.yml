@@ -7,6 +7,7 @@ jdk:
 script:
   # Java build
   - ant all
+  - mkdir ${TRAVIS_BUILD_DIR}/doc/javadoc
   - cp -r ${TRAVIS_BUILD_DIR}/dist/javadoc/* ${TRAVIS_BUILD_DIR}/doc/javadoc
 
 deploy:
