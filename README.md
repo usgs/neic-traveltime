@@ -26,3 +26,9 @@ Using
 -----
 Once you are able to build the neic-traveltime jar, simply include the jar
 file in your application.
+
+Further Information and Documentation
+------
+For further information and documentation please check out the [neic-traveltime Documentation Site](https://usgs.github.io/neic-traveltime/).
+
+File bug reports, feature requests and questions using [GitHub Issues](https://github.com/usgs/neic-traveltime/issues)
