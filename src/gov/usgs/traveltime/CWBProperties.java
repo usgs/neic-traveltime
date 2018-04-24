@@ -21,22 +21,55 @@ import java.io.PrintStream;
  * @author U.S. Geological Survey  &lt;ketchum at usgs.gov&gt;
  */
 public class CWBProperties {
-
+/**
+ * System dependent file path separator.
+ */
   public static final String ps = System.getProperty("path.separator");
+  /**
+   * System dependent file name separator.
+   */
   public static final String fs = System.getProperty("file.separator");
+  /**
+   * Alternate variable for the system dependent file path separator.
+   */
   public static final String PS = System.getProperty("path.separator");
+  /**
+   * Alternate variable for the system dependent file name separator.
+   */
   public static final String FS = System.getProperty("file.separator");
+  /**
+   * The path portion of the users home directory.
+   */
   public static final String homedir
           = System.getProperty("user.home").substring(0, System.getProperty("user.home").
                   lastIndexOf(System.getProperty("file.separator")) + 1);
+  /**
+   * Identifier for the current operating system.
+   */
   public static final String OS = System.getProperty("os.name");
+  /**
+   * The user's current directory.
+   */
   public static final String userdir = System.getProperty("user.dir");
+  /**
+   * The user's home directory.
+   */
   public static final String userhome = System.getProperty("user.home");
+  /**
+   * The user's login name.
+   */
   public static final String username = System.getProperty("user.name");
-
-  public static String propfilename;      // Propery file last used by loadProperties with "user.home/" in front
-  //public static String propertyFile;
+/**
+ * Property file last used by loadProperties with "user.home/" in front.
+ */
+  public static String propfilename;
+  /**
+   * Default properties.
+   */
   private static final Properties defprops = new Properties();
+  /**
+   * All properties.
+   */
   private static final Properties prop = new Properties(defprops);
 
   /**
@@ -49,6 +82,11 @@ public class CWBProperties {
     defprops.setProperty(tag, value);
   }
 
+  /**
+   * Getter for the property file name.
+   * 
+   * @return Property file name.
+   */
   public static String getPropertyFilename() {
     return propfilename;
   }
@@ -63,7 +101,7 @@ public class CWBProperties {
   }
 
   /**
-   * set a property pere key value pair
+   * Set a property key value pair
    *
    * @param tag The key in the property
    * @param val The value to set it to

@@ -8,8 +8,19 @@ package gov.usgs.traveltime;
  */
 public enum TtStatus {
 	// Travel-time status:
+	/**
+	 * Internal success status.
+	 */
 	SUCCESS (0),							// Success
+	/**
+	 * Read failure on Earth model file--intended as an external 
+	 * exit status.
+	 */
 	BAD_MODEL_READ (202),			// Model read failed
+	/**
+	 * Something bad (probably fatal) is wrong with the Earth model 
+	 * file--intended as an external exit status.
+	 */
 	BAD_MODEL_FILE (203);			// Model file is badly formed
 	
 	private final int status;	// Exit flag

@@ -11,6 +11,12 @@ import java.io.IOException;
  */
 public class TtMain {
 
+	/**
+	 * Test main program for the travel-time package.
+	 * 
+	 * @param args Command line arguments (not used)
+	 * @throws Exception If the travel-time setup fails
+	 */
 	public static void main(String[] args) throws Exception {
 		// Simulate a session request.
 		String earthModel = "ak135";

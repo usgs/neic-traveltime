@@ -7,9 +7,21 @@ package gov.usgs.traveltime;
  *
  */
 public class ModConvert {
+	/**
+	 * Normalization for distance (delta and depth).
+	 */
 	public final double xNorm;		// Internal normalization constant for distance.
+	/**
+	 * Normalization for slowness and ray parameter.
+	 */
 	public final double pNorm;		// Internal normalization constant for slowness.
+	/**
+	 * Normalization for travel-time and tau.
+	 */
 	public final double tNorm;		// Internal normalization constant for time.
+	/**
+	 * Normalization for velocity (turns out to be the same as time).
+	 */
 	public final double vNorm;		// Internal normalization constant for velocity.
 	final double dTdDelta;				// Convert dT/dDelta to dimensional units.
 	final double deg2km;					// Convert degrees to kilometers.
