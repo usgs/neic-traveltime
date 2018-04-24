@@ -2,6 +2,12 @@ package gov.usgs.traveltime.tables;
 
 import gov.usgs.traveltime.TtStatus;
 
+/**
+ * Test main program for travel-time table generation.
+ * 
+ * @author Ray Buland
+ *
+ */
 public class ReModel {
 
 	/**
@@ -25,11 +31,10 @@ public class ReModel {
 		// Print it out.
 		if(status == TtStatus.SUCCESS) {
 			// Print out the radial version.
-			reModel.printModel(false);
-			reModel.printCritical(false);
+			reModel.printModel(false, false);
 			// Print out the Earth flattened version.
-			reModel.printModel(true);
-			reModel.printCritical(true);
+			reModel.printModel(true, true);
+			reModel.printCritical();
 		}
 	}
 }

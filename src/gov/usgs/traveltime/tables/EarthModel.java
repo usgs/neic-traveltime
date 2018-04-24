@@ -25,8 +25,8 @@ public class EarthModel {
 	ModelSample conrad;					// Model at the Conrad discontinuity
 	ModelSample surface;				// Model at the free surface
 	ArrayList<ModelSample> model;			// Model storage
-	ArrayList<ModelSample> critical;	// Critical points
 	ArrayList<ModelShell> shells;			// Model shell parameters
+	ArrayList<Double> critical;				// Critical slownesses
 	ModelInterp interp;
 	ModConvert convert;
 		
@@ -39,8 +39,8 @@ public class EarthModel {
 	public EarthModel(String earthModel, boolean isCubic) {
 		this.earthModel = earthModel;
 		model = new ArrayList<ModelSample>();
-		critical = new ArrayList<ModelSample>();
 		shells = new ArrayList<ModelShell>();
+		critical = new ArrayList<Double>();
 		interp = new ModelInterp(model, shells, isCubic);
 		// Set up the properties.
 		if(TauUtil.modelPath == null) {
@@ -93,14 +93,11 @@ public class EarthModel {
 			rMoho = scan.nextDouble();
 			rConrad = scan.nextDouble();
 		} else {
-			rSurface = 6371d;
-			rUpperMantle = 5961d;
-			rMoho = 6336d;
-			rConrad = 6351d;
+			rSurface = TablesUtil.DEFRADIUS;
+			rUpperMantle = TablesUtil.DEFUPPERMANTLE;
+			rMoho = TablesUtil.DEFMOHO;
+			rConrad = TablesUtil.DEFCONRAD;
 		}
-		
-		// Initialize the first shell to what it should be.
-//	shells.add(new ModelShell(0, 0d));
 		
 		// Read the model points.
 		while(scan.hasNextInt()) {
@@ -156,14 +153,25 @@ public class EarthModel {
 		printShells();
 		interp.interpVel();
 		refineBoundaries(rUpperMantle, rMoho, rConrad, rSurface);
-		findCritical();
 		convert = new ModConvert(upperMantle.r, moho.r, conrad.r, surface.r, surface.vs);
-		flatten(convert);
+		elimPKJKP();
+		flatten();
+		findCritical();
 		return TtStatus.SUCCESS;
 	}
 	
 	/**
-	 * Match the key radii provided with model discontinuities.
+	 * Getter for ModConvert.
+	 * 
+	 * @return ModConvert
+	 */
+	public ModConvert getConvert() {
+		return convert;
+	}
+	
+	/**
+	 * Match the key radii provided with model discontinuities.  This is necessary 
+	 * to figure out the phase codes.
 	 * 
 	 * @param rUpperMantle Preliminary radius of the upper mantle discontinuity 
 	 * in kilometers
@@ -173,7 +181,7 @@ public class EarthModel {
 	 */
 	private void refineBoundaries(double rUpperMantle, double rMoho, 
 			double rConrad, double rSurface) {
-		double rInnerCore = 1217d, rOuterCore = 3482d;
+		double rInnerCore = TablesUtil.DEFINNERCORE, rOuterCore = TablesUtil.DEFOUTERCORE;
 		double tempIC = TauUtil.DMAX, tempOC = TauUtil.DMAX, tempUM = TauUtil.DMAX, 
 				tempM = TauUtil.DMAX, tempC = TauUtil.DMAX, tempFS = TauUtil.DMAX;
 		double rDisc;
@@ -208,14 +216,15 @@ public class EarthModel {
 	}
 	
 	/**
-	 * Make a preliminary stab at collecting the critical points.  A 
-	 * critical point is a slowness that must be sampled exactly as it 
-	 * will be the end of a branch for a surface focus event.
+	 * Eliminate the poorly observed PKJKP phase in the inner core by 
+	 * replacing the S velocity with the P velocity.
 	 */
-	private void findCritical() {
-		for(int j=0; j<shells.size(); j++) {
-			critical.add(model.get(shells.get(j).indices[0]));
-			critical.add(model.get(shells.get(j).indices[1]));
+	private void elimPKJKP() {
+		ModelShell shell;
+		
+		shell = shells.get(0);
+		for(int j=shell.indices[0]; j<=shell.indices[1]; j++) {
+			model.get(j).elimPKJKP();
 		}
 	}
 	
@@ -225,9 +234,93 @@ public class EarthModel {
 	 * 
 	 * @param convert Model sensitive conversion constants
 	 */
-	private void flatten(ModConvert convert) {
+	private void flatten() {
 		for(int j=0; j<model.size(); j++) {
 			model.get(j).flatten(convert);
+		}
+	}
+	
+	/**
+	 * Collecting the critical points.  A critical point is a slowness that 
+	 * must be sampled exactly because it will be the end of a branch for a 
+	 * surface focus event.
+	 */
+	private void findCritical() {
+		boolean inLVZ;
+		ModelSample sample, lastSample;
+		ModelShell shell;
+		
+		// Do the discontinuities.
+		sample = model.get(shells.get(0).indices[1]);
+		// Loop over shells.
+		for(int j=1; j<shells.size(); j++) {
+			shell = shells.get(j);
+			lastSample = sample;
+			sample = model.get(shell.indices[0]);
+			critical.add(sample.slowP);
+			critical.add(lastSample.slowP);
+			critical.add(sample.slowS);
+			critical.add(lastSample.slowS);
+			sample = model.get(shell.indices[1]);
+		}
+		// Take care of the surface.
+		critical.add(sample.slowP);
+		critical.add(sample.slowS);
+		
+		/*
+		 * Now look for high slowness zones.  Note that this is not quite the 
+		 * same as low velocity zones because of the definition of slowness in 
+		 * the spherical earth.  First do the P-wave slowness.
+		 */
+		inLVZ = false;
+		for(int i=0; i<shells.size(); i++) {
+			shell = shells.get(i);
+			sample = model.get(shell.indices[0]);
+			for(int j=shell.indices[0]+1; j<shell.indices[1]; j++) {
+				lastSample = sample;
+				sample = model.get(j);
+				if(!inLVZ) {
+					if(sample.slowP <= lastSample.slowP) {
+						inLVZ = true;
+						critical.add(lastSample.slowP);
+					}
+				} else {
+					if(sample.slowP >= lastSample.slowP) {
+						inLVZ = false;
+						critical.add(lastSample.slowP);
+					}
+				}
+			}
+		}
+		// Now do the S-wave slowness.
+		inLVZ = false;
+		for(int i=0; i<shells.size(); i++) {
+			shell = shells.get(i);
+			sample = model.get(shell.indices[0]);
+			for(int j=shell.indices[0]+1; j<shell.indices[1]; j++) {
+				lastSample = sample;
+				sample = model.get(j);
+				if(!inLVZ) {
+					if(sample.slowS <= lastSample.slowS) {
+						inLVZ = true;
+						critical.add(lastSample.slowS);
+					}
+				} else {
+					if(sample.slowS >= lastSample.slowS) {
+						inLVZ = false;
+						critical.add(lastSample.slowS);
+					}
+				}
+			}
+		}
+		
+		// Now sort the critical slownesses into order.
+		critical.sort(null);
+		// And eliminate duplicates.
+		for(int j=1; j<critical.size(); j++) {
+			if(critical.get(j).equals(critical.get(j-1))) {
+				critical.remove(j--);
+			}
 		}
 	}
 	
@@ -277,8 +370,9 @@ public class EarthModel {
 	 * Print the model.
 	 * 
 	 * @param flat If true print the Earth flattened parameters
+	 * @param nice If true print dimensional depths
 	 */
-	public void printModel(boolean flat) {
+	public void printModel(boolean flat, boolean nice) {
 		
 		if(flat) {
 			System.out.format("\n%s %d %7.4f %7.4f %7.4f %7.4f %7.4f %7.4f\n", 
@@ -289,8 +383,19 @@ public class EarthModel {
 					earthModel, model.size(), innerCore.r, outerCore.r, upperMantle.r, 
 					moho.r, conrad.r, surface.r);
 		}
-		for(int j=0; j<model.size(); j++) {
-			model.get(j).printSample(j, flat);
+		if(flat) {
+			int n = model.size()-1;
+			for(int j=n; j>=0; j--) {
+				if(nice) {
+					model.get(j).printSample(n-j, true, convert);
+				} else {
+					model.get(j).printSample(n-j, true, null);
+				}
+			}
+		} else {
+			for(int j=0; j<model.size(); j++) {
+				model.get(j).printSample(j, false, null);
+			}
 		}
 	}
 	
@@ -307,12 +412,12 @@ public class EarthModel {
 	/**
 	 * Print the (potentially) critical points.
 	 * 
-	 * @param flat If true print the Earth flattened parameters
 	 */
-	public void printCritical(boolean flat) {
-		System.out.println("\n\t\tCritical points:");
-		for(int j=0; j<critical.size(); j++) {
-			critical.get(j).printSample(j, flat);
+	public void printCritical() {
+		System.out.println("\n\tCritical points:");
+		int n = critical.size()-1;
+		for(int j=n; j>=0; j--) {
+			System.out.format("\t  %3d %9.6f\n", n-j, critical.get(j));
 		}
 	}
 }

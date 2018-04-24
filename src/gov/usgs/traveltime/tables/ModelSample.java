@@ -32,10 +32,11 @@ public class ModelSample {
 	 * Create a (possibly) anisotropic model sample and it's isotropic equivalent.
 	 * 
 	 * @param r	Radius in kilometers
-	 * @param Vpv Vertically polarized P velocity in kilometers/second
-	 * @param Vph Horizontally polarized P velocity in kilometers/second
-	 * @param Vsv Vertically polarized S velocity in kilometers/second
-	 * @param Vsh Horizontally polarized S velocity in kilometers/second
+	 * @param vpv Vertically polarized P velocity in kilometers/second
+	 * @param vph Horizontally polarized P velocity in kilometers/second
+	 * @param vsv Vertically polarized S velocity in kilometers/second
+	 * @param vsh Horizontally polarized S velocity in kilometers/second
+	 * @param eta Anisotropy parameter
 	 * @param isDisc True if this sample is at a discontinuity
 	 */
 	public ModelSample(double r, double vpv, double vph, double vsv, double vsh, 
@@ -61,8 +62,16 @@ public class ModelSample {
 	/**
 	 * Set the discontinuity flag.
 	 */
-	public void setDisc() {
+	protected void setDisc() {
 		isDisc = true;
+	}
+	
+	/**
+	 * Eliminate the poorly observed PKJKP phase by replacing the S velocity 
+	 * in the inner core with the P velocity.
+	 */
+	protected void elimPKJKP() {
+		vs = vp;
 	}
 	
 	/**
@@ -81,11 +90,17 @@ public class ModelSample {
 	 * 
 	 * @param j Sample index
 	 * @param flat If true print the Earth flattened parameters
+	 * @param convert If not null, convert to dimensional depth
 	 */
-	public void printSample(int j, boolean flat) {
+	public void printSample(int j, boolean flat, ModConvert convert) {
 		
 		if(flat) {
-			System.out.format("\t%3d: %9.4f %7.4f %7.4f\n", j, z, slowP, slowS);
+			if(convert == null) {
+				System.out.format("\t%3d: %9.4f %9.6f %9.6f\n", j, z, slowP, slowS);
+			} else {
+				System.out.format("\t%3d: %9.2f %9.6f %9.6f\n", j, convert.realZ(z), 
+						slowP, slowS);
+			}
 		} else {
 			System.out.format("\t%3d: %9.2f %7.4f %7.4f\n", j, r, vp, vs);
 		}
