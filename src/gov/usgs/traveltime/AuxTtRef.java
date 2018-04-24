@@ -68,7 +68,9 @@ public class AuxTtRef {
 		EllipDeps eDepth;
 		
 		// Set up the properties.
-		TauUtil.getProperties();
+		if(TauUtil.modelPath == null) {
+			TauUtil.getProperties();
+		}
 		
 		// Open and read the phase groups file.
 		inGroup = new BufferedInputStream(new FileInputStream(TauUtil.model("groups.txt")));

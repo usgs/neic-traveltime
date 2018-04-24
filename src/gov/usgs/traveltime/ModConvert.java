@@ -7,10 +7,10 @@ package gov.usgs.traveltime;
  *
  */
 public class ModConvert {
-	final double xNorm;						// Internal normalization constant for distance.
-	final double pNorm;						// Internal normalization constant for slowness.
-	final double tNorm;						// Internal normalization constant for time.
-	final double vNorm;						// Internal normalization constant for velocity.
+	public final double xNorm;		// Internal normalization constant for distance.
+	public final double pNorm;		// Internal normalization constant for slowness.
+	public final double tNorm;		// Internal normalization constant for time.
+	public final double vNorm;		// Internal normalization constant for velocity.
 	final double dTdDelta;				// Convert dT/dDelta to dimensional units.
 	final double deg2km;					// Convert degrees to kilometers.
 	final double zUpperMantle;		// Depth of the upper mantle in kilometers.
@@ -21,12 +21,17 @@ public class ModConvert {
 	final double dTdDLg;					// dT/dDelta for Lg in seconds/degree.
 	final double dTdDLR;					// dT/dDelta for LR in seconds/degree.
 	
+	/**
+	 * Set constants from the Fortran generated *.hed file.
+	 * 
+	 * @param in Data from the *.hed and *.tbl files
+	 */
 	public ModConvert(ReadTau in) {
 		// Set up the normalization.
 		xNorm = in.xNorm;
 		pNorm = in.pNorm;
 		tNorm = in.tNorm;
-		// Compute a couple of useful constants.
+		// Compute some useful constants.
 		vNorm = xNorm*pNorm;
 		dTdDelta = Math.toRadians(1d/(vNorm));
 		rSurface = in.rSurface;
@@ -37,6 +42,36 @@ public class ModConvert {
 		zUpperMantle = rSurface-in.rUpperMantle;
 		zMoho = rSurface-in.rMoho;
 		zConrad = rSurface-in.rConrad;
+		zNewUp = zMoho;
+	}
+	
+	/**
+	 * Set constants from the Java generated model data.
+	 * 
+	 * @param rUpperMantle Radius of the upper mantle discontinuity in 
+	 * kilometers
+	 * @param rMoho Radius of the Moho discontinuity in kilometers
+	 * @param rConrad Radius of the Conrad discontinuity in kilometers
+	 * @param rSurface Radius of the Earth in kilometers
+	 * @param vsSurface Shear velocity in kilometers/second at the 
+	 * surface of the Earth
+	 */
+	public ModConvert(double rUpperMantle, double rMoho, double rConrad, 
+			double rSurface, double vsSurface) {
+		xNorm = 1d/rSurface;
+		pNorm = vsSurface;
+		// Compute some useful constants.
+		tNorm = xNorm*pNorm;
+		vNorm = tNorm;
+		dTdDelta = Math.toRadians(1d/(vNorm));
+		this.rSurface = rSurface;
+		deg2km = Math.PI*rSurface/180d;
+		dTdDLg = deg2km/TauUtil.LGGRPVEL;
+		dTdDLR = deg2km/TauUtil.LRGRPVEL;
+		// Compute some useful depths.
+		zUpperMantle = rSurface-rUpperMantle;
+		zMoho = rSurface-rMoho;
+		zConrad = rSurface-rConrad;
 		zNewUp = zMoho;
 	}
 	
