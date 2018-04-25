@@ -173,7 +173,7 @@ public class TauUtil {
 	/**
 	 * Paths for model and event files set in getProperties.
 	 */
-	private static String modelPath;
+	public static String modelPath;
 	
 	/**
 	 * Read the travel time properties file and set up paths to the model 

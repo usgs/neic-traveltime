@@ -6,19 +6,28 @@
 
     <!-- PROJECT PROPERTIES -->
 		<property name="src" location="src" />
+    <property name="lib" location="lib" />
 		<property name="build" location="build" />
 		<property name="dist" location="dist" />
 
     <!-- CLASSPATH -->
+    <fileset dir="${lib}" id="classpath.fileset">
+      <include name="commons-math3-3.6.1.jar" />
+    </fileset>
 
+    <path id="classpath">
+      <fileset refid="classpath.fileset" />
+          <fileset dir="${lib}">
+      </fileset>
+    </path>
 
     <!-- TARGETS -->
     <!-- compile -->
 		<target name="compile" description="Compile code">
 			<mkdir dir="${build}" />
-
 			<javac srcdir="${src}" destdir="${build}" source="1.7" target="1.7" includeAntRuntime="no" debug="${compile.debug}">
-			</javac>
+        <classpath refid="classpath" />
+      </javac>
 		</target>
 
     <!-- jar -->
@@ -30,6 +39,9 @@
 				<manifest>
 					<attribute name="Main-Class" value="gov.usgs.traveltime.session.TTSession" />
 				</manifest>
+        
+        <!-- Include dependencies in jar -->
+        <zipgroupfileset refid="classpath.fileset" />
 			</jar>
 
 			<!-- Build the zip distribution -->
@@ -42,6 +54,7 @@
     <target name="javadoc" depends="jar" description="Run JavaDoc">
 			<javadoc destdir="${dist}/javadoc" packagenames="gov.usgs.traveltime.*">
 				<fileset dir="${src}" excludes="**/*Test*" />
+        <classpath refid="classpath" />
 			</javadoc>
 		</target>
 

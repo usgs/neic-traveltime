@@ -22,6 +22,9 @@ public class TtPlot {
 	double observMax;			// Maximum observability for all branches
 	TreeMap<String, TtBranch> branches;
 	
+	/**
+	 * Initialize the travel-time plotting information.
+	 */
 	public TtPlot() {
 		ttMax = 0d;
 		spreadMax = 0d;
