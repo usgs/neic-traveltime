@@ -1,6 +1,5 @@
 # User-specific files
 .DS_Store
-/doc/
 
 # Build results
 *[Dd]ist*/
