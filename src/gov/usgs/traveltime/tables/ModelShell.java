@@ -8,6 +8,7 @@ package gov.usgs.traveltime.tables;
  *
  */
 public class ModelShell {
+	double delX;			// Non-dimensional ray distance increment target for this layer
 	int[] indices;
 	double[] rRange;
 	
@@ -64,7 +65,7 @@ public class ModelShell {
 	 * @param j Shell index
 	 */
 	public void printShell(int j) {
-		System.out.format("%3d:   %3d - %3d range: %7.2f - %7.2f\n", j, indices[0], 
-				indices[1], rRange[0], rRange[1]);
+		System.out.format("%3d:   %3d - %3d range: %7.2f - %7.2f delX: %9.6f\n", 
+				j, indices[0], indices[1], rRange[0], rRange[1], delX);
 	}
 }

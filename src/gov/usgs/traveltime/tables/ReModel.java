@@ -30,6 +30,8 @@ public class ReModel {
 		System.out.println("Read status = "+status);
 		// Print it out.
 		if(status == TtStatus.SUCCESS) {
+			// Print the shell summaries.
+			reModel.printShells();
 			// Print out the radial version.
 			reModel.printModel(false, false);
 			// Print out the Earth flattened version.

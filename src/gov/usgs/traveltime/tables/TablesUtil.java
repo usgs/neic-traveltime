@@ -16,8 +16,8 @@ public class TablesUtil {
 	 */
 	public static double DEFOUTERCORE = 3482d;
 	/**
-	 * Default upper mantle radius in kilometers.  This corresponds 
-	 * to the 410 kilometer depth discontinuity.
+	 * Default upper mantle radius in kilometers.  This corresponds to 
+	 * the 410 kilometer depth discontinuity.
 	 */
 	public static double DEFUPPERMANTLE = 5961d;
 	/**
@@ -36,4 +36,23 @@ public class TablesUtil {
 	 * value for a spherically averaged Earth.
 	 */
 	public static double DEFRADIUS = 6371d;
+	/**
+	 * Maximum non-dimensional increment between successive slowness 
+	 * samples.
+	 */
+	public static double DELPMAX = 0.01d;
+	/**
+	 * Maximum increment between successive radius samples in 
+	 * kilometers.
+	 */
+	public static double DELRMAX = 75d;
+	/**
+	 * Target increment between successive ray travel distances in 
+	 * kilometers.  Different targets are supported for different major 
+	 * shells in the order: inner core, outer core, lower mantle, upper 
+	 * mantle, lower crust, and upper crust.  The finer sampling at 
+	 * shallower depths is necessary to stabilize the results of  
+	 * complex regional models.
+	 */
+	public static double[] DELX = {300d, 300d, 150d, 150d, 100d, 100d};
 }

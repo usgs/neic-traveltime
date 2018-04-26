@@ -1,4 +1,8 @@
-package gov.usgs.traveltime;
+package gov.usgs.traveltime.tables;
+
+import gov.usgs.traveltime.ModConvert;
+import gov.usgs.traveltime.ModDataVol;
+import gov.usgs.traveltime.TauUtil;
 
 /**
  * Integrate tau and distance, x, along a ray path through 
@@ -9,22 +13,37 @@ package gov.usgs.traveltime;
  *
  */
 public class TauInt {
-	double xLayer = 0d, xSum = 0d;
-	ModDataVol model;
+	double xLayer = 0d, xSum = 0d, rBottom = Double.NaN;
+	ModDataVol tauModel = null;
+	EarthModel tabModel = null;
+	ModConvert convert = null;
 	static boolean debug = false;
 
 	/**
-	 * The constructor remembers the model data.  Note that this 
-	 * implies a separate tauInt for each model wave type.
+	 * The constructor remembers the model data output from the table generation.  
+	 * Note that this implies a separate tauInt for each model wave type.
 	 * 
-	 * @param model Model data ('P' or 'S')
+	 * @param tauModel Model data ('P' or 'S')
 	 */
-	public TauInt(ModDataVol model) {
-		this.model = model;
+	public TauInt(ModDataVol tauModel) {
+		this.tauModel = tauModel;
+	}
+
+	/**
+	 * The constructor remembers the model data input to the table generation.  
+	 * Note that this implies a separate tauInt for each model wave type.
+	 * 
+	 * @param tabModel Model data
+	 * @param convert Model dependent constants
+	 */
+	public TauInt(EarthModel tabModel, ModConvert convert) {
+		this.tabModel = tabModel;
+		this.convert = convert;
 	}
 	
 	/**
-	 * Integrate tau and distance over a range of model layers.
+	 * Integrate tau and distance over a range of model layers from the output 
+	 * of the model generation.
 	 * 
 	 * @param p Normalized ray parameter
 	 * @param start Starting model layer index
@@ -40,16 +59,16 @@ public class TauInt {
 		xSum = 0d;
 		// Loop over grid points accumulating the integrals.
 		for(int j=start; j<end; j++) {
-			tauSum = tauSum+intLayer(p, model.ref.pMod[j], model.ref.pMod[j+1], 
-					model.ref.zMod[j], model.ref.zMod[j+1]);
+			tauSum = tauSum+intLayer(p, tauModel.getP(j), tauModel.getP(j+1), 
+					tauModel.getZ(j), tauModel.getZ(j+1));
 			xSum += getXLayer();
 		}
 		return tauSum;
 	}
 	
 	/**
-	 * Integrate tau and distance over a range of model layers plus 
-	 * an additional increment at the end.
+	 * Integrate tau and distance over a range of model layers plus an additional 
+	 * increment at the end from the output of the model generation.
 	 * 
 	 * @param p Normalized ray parameter
 	 * @param start Starting model layer index
@@ -67,20 +86,20 @@ public class TauInt {
 		xSum = 0d;
 		// Loop over grid points accumulating the integrals.
 		for(int j=start; j<end; j++) {
-			tauSum += intLayer(p, model.ref.pMod[j], model.ref.pMod[j+1], 
-					model.ref.zMod[j], model.ref.zMod[j+1]);
+			tauSum += intLayer(p, tauModel.getP(j), tauModel.getP(j+1), 
+					tauModel.getZ(j), tauModel.getZ(j+1));
 			xSum += getXLayer();
 		}
 		// Add an increment at the end that's between grid points.
-		tauSum += intLayer(p, model.ref.pMod[end], pLast, model.ref.zMod[end], 
+		tauSum += intLayer(p, tauModel.getP(end), pLast, tauModel.getZ(end), 
 				zLast);
 		xSum += getXLayer();
 		return tauSum;
 	}
 	
 	/**
-	 * Integrate tau and distance over a range of model layers plus 
-	 * an additional increment at the beginning and the end.
+	 * Integrate tau and distance over a range of model layers plus an additional 
+	 * increment at the beginning and the end from the output of the model generation.
 	 * 
 	 * @param p Normalized ray parameter
 	 * @param start Starting model layer index
@@ -99,19 +118,100 @@ public class TauInt {
 		
 		// Start with an increment at the beginning that's between grid 
 		// points.
-		tauSum = intLayer(p, pFirst, model.ref.pMod[start], zFirst, 
-				model.ref.zMod[start]);
+		tauSum = intLayer(p, pFirst, tauModel.getP(start), zFirst, 
+				tauModel.getZ(start));
 		// Loop over grid points accumulating the integrals.
 		for(int j=start; j<end; j++) {
-			tauSum += intLayer(p, model.ref.pMod[j], model.ref.pMod[j+1], 
-					model.ref.zMod[j], model.ref.zMod[j+1]);
+			tauSum += intLayer(p, tauModel.getP(j), tauModel.getP(j+1), 
+					tauModel.getZ(j), tauModel.getZ(j+1));
 			xSum += getXLayer();
 		}
 		// Add an increment at the end that's between grid points.
-		tauSum += intLayer(p, model.ref.pMod[end], pLast, model.ref.zMod[end], 
+		tauSum += intLayer(p, tauModel.getP(end), pLast, tauModel.getZ(end), 
 				zLast);
 		xSum += getXLayer();
 		return tauSum;
+	}
+	
+	/**
+	 * Integrate tau and distance over a range of model layers plus an additional 
+	 * increment at the end from the input to the model generation.
+	 * 
+	 * @param type Slowness type (P = P slowness, S = S slowness)
+	 * @param p Normalized ray parameter
+	 * @return Normalized integrated tau
+	 * @throws Exception If tau or x is negative in any layer
+	 */
+	public double intX(char type, double p) throws Exception {
+		double tauSum, zLast;
+		int j;
+		
+		tauSum = 0d;
+		xSum = 0d;
+		// Check the type.
+		if(type == 'P') {
+			// Loop over grid points accumulating the P slowness integrals.
+			for(j=tabModel.size(); j>0; j--) {
+				if(p > tabModel.getSlowP(j-1)) break;
+				tauSum += intLayer(p, tabModel.getSlowP(j), tabModel.getSlowP(j-1), 
+						tabModel.getZ(j), tabModel.getZ(j-1));
+				xSum += getXLayer();
+			}
+			// Handle the last bit.
+			if(p > 0d) {
+				if(p > tabModel.getSlowP(j)) {
+					// Add an increment at the end that's between grid points.
+					rBottom = tabModel.getR(j)*Math.pow(p/tabModel.getSlowP(j), 
+							Math.log(tabModel.getR(j-1)/tabModel.getR(j))/
+							Math.log(tabModel.getSlowP(j-1)/tabModel.getSlowP(j)));
+					zLast = Math.log(convert.xNorm*rBottom);
+					tauSum += intLayer(p, tabModel.getSlowP(j), p, tabModel.getZ(j), 
+							zLast);
+					xSum += getXLayer();
+				} else {
+					// We ended on a model sample.
+					rBottom = tabModel.getR(j);
+				}
+			} else {
+				// Finish the straight through ray.
+				rBottom = 0d;
+				tauSum += intLayer(p, tabModel.getSlowP(j), tabModel.getSlowP(j-1), 
+						tabModel.getZ(j), tabModel.getZ(j-1));
+				xSum = getXLayer();		// In this case, we get all of X here.
+			}
+		} else {
+			// Loop over grid points accumulating the S slowness integrals.
+			for(j=tabModel.size(); j>0; j--) {
+				if(p > tabModel.getSlowS(j-1)) break;
+				tauSum += intLayer(p, tabModel.getSlowS(j), tabModel.getSlowS(j-1), 
+						tabModel.getZ(j), tabModel.getZ(j-1));
+				xSum += getXLayer();
+			}
+			// Handle the last bit.
+			if(p > 0d) {
+				if(p > tabModel.getSlowS(j)) {
+					// Add an increment at the end that's between grid points.
+					rBottom = tabModel.getR(j)*Math.pow(p/tabModel.getSlowS(j), 
+							Math.log(tabModel.getR(j-1)/tabModel.getR(j))/
+							Math.log(tabModel.getSlowS(j-1)/tabModel.getSlowS(j)));
+					zLast = Math.log(convert.xNorm*rBottom);
+					tauSum += intLayer(p, tabModel.getSlowS(j), p, tabModel.getZ(j), 
+							zLast);
+					xSum += getXLayer();
+				} else {
+					// We ended on a model sample.
+					rBottom = tabModel.getR(j);
+				}
+			} else {
+				// Finish the straight through ray.
+				rBottom = 0d;
+				tauSum += intLayer(p, tabModel.getSlowS(j), tabModel.getSlowS(j-1), 
+						tabModel.getZ(j), tabModel.getZ(j-1));
+				xSum = getXLayer();		// In this case, we get all of X here.
+			}
+		}
+		xSum *= 2d;
+		return 2d*tauSum;
 	}
 	
 	/**
@@ -267,6 +367,15 @@ public class TauInt {
 	 */
 	public double getXSum() {
 		return xSum;
+	}
+	
+	/**
+	 * Get the bottoming radius, R, for a range of layers.
+	 * 
+	 * @return The dimensional bottoming Earth radius in kilometers
+	 */
+	public double getRbottom() {
+		return rBottom;
 	}
 	
 	/**
