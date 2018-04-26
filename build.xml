@@ -35,14 +35,21 @@
 			<mkdir dir="${dist}" />
 
 			<!-- Build the jar file -->
-			<jar jarfile="${dist}/neic-traveltime/neic-traveltime.jar" basedir="${build}" excludes="**/*Test*">
+			<jar jarfile="${dist}/neic-traveltime.jar" basedir="${build}" excludes="**/*Test*">
 				<manifest>
 					<attribute name="Main-Class" value="gov.usgs.traveltime.session.TTSession" />
 				</manifest>
-        
+
         <!-- Include dependencies in jar -->
         <zipgroupfileset refid="classpath.fileset" />
 			</jar>
+
+      <!-- Copy the model files to dist-->
+      <copy todir="${dist}/models">
+        <fileset dir="models">
+          <include name="**/*.*"/>
+        </fileset>
+      </copy>
 
 			<!-- Build the zip distribution -->
 			<zip destfile="${dist}/neic-traveltime.zip" basedir="${dist}">
