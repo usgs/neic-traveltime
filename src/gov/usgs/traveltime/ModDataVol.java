@@ -135,6 +135,26 @@ public class ModDataVol {
 	}
 	
 	/**
+	 * Get an element of the depth array.
+	 * 
+	 * @param j Array index
+	 * @return Non-dimensional Earth flattened depth
+	 */
+	public double getZ(int j) {
+		return ref.zMod[j];
+	}
+	
+	/**
+	 * Get an element of the slowness array.
+	 * 
+	 * @param j Array index
+	 * @return Non-dimensional model slowness
+	 */
+	public double getP(int j) {
+		return ref.pMod[j];
+	}
+	
+	/**
 	 * Print the result of the latest findP or findZ call.
 	 * 
 	 * @param nice If true, convert the model to SI units

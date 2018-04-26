@@ -2,6 +2,8 @@ package gov.usgs.traveltime;
 
 import java.util.Arrays;
 
+import gov.usgs.traveltime.tables.TauInt;
+
 /**
  * Store volatile up-going branch data for one wave type.  Note that all 
  * data have been normalized.

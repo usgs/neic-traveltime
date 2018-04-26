@@ -150,7 +150,6 @@ public class EarthModel {
 		}
 		// OK. We're good (probably).
 		scan.close();
-		printShells();
 		interp.interpVel();
 		refineBoundaries(rUpperMantle, rMoho, rConrad, rSurface);
 		convert = new ModConvert(upperMantle.r, moho.r, conrad.r, surface.r, surface.vs);
@@ -186,6 +185,7 @@ public class EarthModel {
 				tempM = TauUtil.DMAX, tempC = TauUtil.DMAX, tempFS = TauUtil.DMAX;
 		double rDisc;
 		
+		// Find the closest boundary to target boundaries.
 		for(int j=0; j<shells.size(); j++) {
 			rDisc = shells.get(j).rRange[1];
 			if(Math.abs(rDisc-rInnerCore) < Math.abs(tempIC-rInnerCore)) {
@@ -211,6 +211,24 @@ public class EarthModel {
 			if(Math.abs(rDisc-rSurface) < Math.abs(tempFS-rSurface)) {
 				tempFS = rDisc;
 				surface = model.get(shells.get(j).indices[1]);
+			}
+		}
+		
+		// Go around again setting the target ray travel distance in each layer.
+		for(int j=0; j<shells.size(); j++) {
+			rDisc = shells.get(j).rRange[1];
+			if(rDisc <= rInnerCore) {
+				shells.get(j).delX = TablesUtil.DELX[0]/rSurface;
+			} else if(rDisc <= rOuterCore) {
+				shells.get(j).delX = TablesUtil.DELX[1]/rSurface;
+			} else if(rDisc <= rUpperMantle) {
+				shells.get(j).delX = TablesUtil.DELX[2]/rSurface;
+			} else if(rDisc <= rMoho) {
+				shells.get(j).delX = TablesUtil.DELX[3]/rSurface;
+			} else if(rDisc <= rConrad) {
+				shells.get(j).delX = TablesUtil.DELX[4]/rSurface;
+			} else {
+				shells.get(j).delX = TablesUtil.DELX[5]/rSurface;
 			}
 		}
 	}
@@ -364,6 +382,55 @@ public class EarthModel {
 	 */
 	public double getVs(int shell, double r) {
 		return interp.getVs(shell, r);
+	}
+	
+	/**
+	 * Get the size of the model.
+	 * 
+	 * @return The number of samples in the Earth model.
+	 */
+	public int size() {
+		return model.size();
+	}
+	
+	/**
+	 * Get the jth depth.
+	 * 
+	 * @param j Sample index
+	 * @return Non-dimensional Earth flattened depth
+	 */
+	public double getZ(int j) {
+		return model.get(j).z;
+	}
+	
+	/**
+	 * Get the jth radius.
+	 * 
+	 * @param j Sample index
+	 * @return Dimensional Earth radius in kilometers
+	 */
+	public double getR(int j) {
+		return model.get(j).r;
+	}
+	
+	/**
+	 * Get the jth P-wave slowness.
+	 * 
+	 * @param j Sample index
+	 * @return Non-dimensional P-wave slowness
+	 */
+	public double getSlowP(int j) {
+		return model.get(j).slowP;
+	}
+	
+	/**
+	 * Get the jth S-wave slowness.
+	 * 
+	 * @param j Sample index
+	 * @return Non-dimensional S-wave slowness
+	 */
+	public double getSlowS(int j) {
+		return model.get(j).slowS;
 	}
 	
 	/**
