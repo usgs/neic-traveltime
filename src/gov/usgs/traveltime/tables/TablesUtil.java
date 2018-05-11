@@ -37,6 +37,10 @@ public class TablesUtil {
 	 */
 	public static double DEFRADIUS = 6371d;
 	/**
+	 * Increment in radius to sample the reference Earth model.
+	 */
+	public static double RESAMPLE = 50d;
+	/**
 	 * Maximum non-dimensional increment between successive slowness 
 	 * samples.
 	 */
@@ -46,6 +50,21 @@ public class TablesUtil {
 	 * kilometers.
 	 */
 	public static double DELRMAX = 75d;
+	/**
+	 * Non-dimensional tolerance for sampling range (ray travel distance).
+	 */
+	public static double XTOL = 5e-6d;
+	/**
+	 * Maximum iterations for root finding algorithms (e.g., for 
+	 * finding caustics).
+	 */
+	public static int MAXEVAL = 30;
+	/**
+	 * Relative velocity tolerance.  If velocity is within this tolerance 
+	 * across an apparent Earth model discontinuity, make the velocity 
+	 * continuous.
+	 */
+	public static double VELOCITYTOL = 2e-5d;
 	/**
 	 * Target increment between successive ray travel distances in 
 	 * kilometers.  Different targets are supported for different major 

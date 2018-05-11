@@ -42,8 +42,7 @@ public class ModelInterp {
 	 * Interpolate the velocity model values.
 	 */
 	public void interpVel() {
-		int[] indices;
-		int n;
+		int n, iBot, iTop;
 		double[] r, v;
 		LinearInterpolator linear = null;
 		SplineInterpolator cubic = null;
@@ -54,9 +53,10 @@ public class ModelInterp {
 		
 		// Loop over shells doing the interpolation.
 		for(int i=0; i<shells.size(); i++) {
-			indices = shells.get(i).getIndices();
 			// Allocate some temporary storage.
-			n = indices[1]-indices[0]+1;
+			iBot = shells.get(i).iBot;
+			iTop = shells.get(i).iTop;
+			n = iTop-iBot+1;
 			r = new double[n];
 			v = new double[n];
 			// The cubic interpolation only works if there are more than 2 points.
@@ -64,28 +64,28 @@ public class ModelInterp {
 				// Use cubic splines.
 				if(cubic == null) cubic = new SplineInterpolator();
 				// Interpolate Vp.
-				for(int j=indices[0]; j<=indices[1]; j++) {
-					r[j-indices[0]] = model.get(j).r;
-					v[j-indices[0]] = model.get(j).vp;
+				for(int j=iBot; j<=iTop; j++) {
+					r[j-iBot] = model.get(j).r;
+					v[j-iBot] = model.get(j).vp;
 				}
 				interpVp[i] = cubic.interpolate(r, v);
 				// Interpolate Vs.
-				for(int j=indices[0]; j<=indices[1]; j++) {
-					v[j-indices[0]] = model.get(j).vs;
+				for(int j=iBot; j<=iTop; j++) {
+					v[j-iBot] = model.get(j).vs;
 				}
 				interpVs[i] = cubic.interpolate(r, v);
 			} else {
 				// The alternative is linear interpolation.
 				if(linear == null) linear = new LinearInterpolator();
 				// Interpolate Vp.
-				for(int j=indices[0]; j<=indices[1]; j++) {
-					r[j-indices[0]] = model.get(j).r;
-					v[j-indices[0]] = model.get(j).vp;
+				for(int j=iBot; j<=iTop; j++) {
+					r[j-iBot] = model.get(j).r;
+					v[j-iBot] = model.get(j).vp;
 				}
 				interpVp[i] = linear.interpolate(r, v);
 				// Interpolate Vs.
-				for(int j=indices[0]; j<=indices[1]; j++) {
-					v[j-indices[0]] = model.get(j).vs;
+				for(int j=iBot; j<=iTop; j++) {
+					v[j-iBot] = model.get(j).vs;
 				}
 				interpVs[i] = linear.interpolate(r, v);
 			}
@@ -145,7 +145,7 @@ public class ModelInterp {
 		shell = getShell(r);
 		if(shell >= 0) {
 			try {
-				return interpVp[shell].value(r);
+				return interpVs[shell].value(r);
 			} catch(OutOfRangeException e) {
 				return Double.NaN;
 			}
@@ -165,7 +165,7 @@ public class ModelInterp {
 		
 		if(shell >= 0 && shell < shells.size()) {
 			try {
-				return interpVp[shell].value(r);
+				return interpVs[shell].value(r);
 			} catch(OutOfRangeException e) {
 				return Double.NaN;
 			}

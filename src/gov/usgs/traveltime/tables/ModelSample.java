@@ -43,6 +43,7 @@ public class ModelSample {
 			double eta, boolean isDisc) {
 		
 		this.r = r;
+		this.isDisc = isDisc;
 		
 		// Create the isotropic version.
 		if(eta != 1d || vpv != vph || vsv != vsh) {
@@ -57,6 +58,39 @@ public class ModelSample {
 		}
 		// Mask fluid areas.
 		if(vs == 0d) vs = vp;
+	}
+	
+	/**
+	 * Create an isotropic model sample.
+	 * 
+	 * @param r	Radius in kilometers
+	 * @param vp P velocity in kilometers/second
+	 * @param vs S velocity in kilometers/second
+	 * @param isDisc True if this sample is at a discontinuity
+	 */
+	public ModelSample(double r, double vp, double vs, boolean isDisc) {
+		
+		this.r = r;
+		this.vp = vp;
+		this.vs = vs;
+		this.isDisc = isDisc;
+		// Mask fluid areas.
+		if(vs == 0d) vs = vp;
+	}
+	
+	/**
+	 * Create a model sample by copying from another model sample.
+	 * 
+	 * @param sample Reference model sample
+	 */
+	public ModelSample(ModelSample sample) {
+		isDisc = sample.isDisc;
+		r = sample.r;
+		vp = sample.vp;
+		vs = sample.vs;
+		z = sample.z;
+		slowP = sample.slowP;
+		slowS = sample.slowS;
 	}
 	
 	/**
@@ -86,6 +120,31 @@ public class ModelSample {
 	}
 	
 	/**
+	 * Recompute the slownesses and non-dimensionalize when the velocities 
+	 * change.
+	 * 
+	 * @param convert Model sensitive conversion constants
+	 */
+	public void reFlatten(ModConvert convert) {
+		slowP = r*convert.tNorm/vp;
+		slowS = r*convert.tNorm/vs;
+	}
+	
+	/**
+	 * Getter for slowness.
+	 * 
+	 * @param type Slowness type (P = P-wave, S = S-wave)
+	 * @return Non-dimensional Earth flattened slowness
+	 */
+	public double getSlow(char type) {
+		if(type == 'P') {
+			return slowP;
+		} else {
+			return slowS;
+		}
+	}
+	
+	/**
 	 * Print the model sample.
 	 * 
 	 * @param j Sample index
@@ -96,9 +155,9 @@ public class ModelSample {
 		
 		if(flat) {
 			if(convert == null) {
-				System.out.format("\t%3d: %9.4f %9.6f %9.6f\n", j, z, slowP, slowS);
+				System.out.format("\t%3d: %9.4f %8.6f %8.6f\n", j, z, slowP, slowS);
 			} else {
-				System.out.format("\t%3d: %9.2f %9.6f %9.6f\n", j, convert.realZ(z), 
+				System.out.format("\t%3d: %9.2f %8.6f %8.6f\n", j, convert.realZ(z), 
 						slowP, slowS);
 			}
 		} else {

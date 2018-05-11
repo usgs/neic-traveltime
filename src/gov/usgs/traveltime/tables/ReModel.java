@@ -1,5 +1,6 @@
 package gov.usgs.traveltime.tables;
 
+import gov.usgs.traveltime.ModConvert;
 import gov.usgs.traveltime.TtStatus;
 
 /**
@@ -18,25 +19,52 @@ public class ReModel {
 	 * be generated on the fly.
 	 * 
 	 * @param args Command line arguments
+	 * @throws Exception On an illegal integration interval
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		String earthModel = "ak135";
-		EarthModel reModel;
+		EarthModel refModel;
+		ModConvert convert;
+		InternalModel locModel;
+		TauModel tauModel;
+		SampleSlowness sample;
+		TauInt tauInt;
 		TtStatus status;
 		
-		reModel = new EarthModel(earthModel, true);
+		refModel = new EarthModel(earthModel, true);
 		// Read the model.
-		status = reModel.readModel();
-		System.out.println("Read status = "+status);
+		status = refModel.readModel();
 		// Print it out.
 		if(status == TtStatus.SUCCESS) {
 			// Print the shell summaries.
-			reModel.printShells();
+//		refModel.printShells();
 			// Print out the radial version.
-			reModel.printModel(false, false);
+//		refModel.printModel();
+			
+			// Interpolate the model.
+			convert = refModel.getConvert();
+			locModel = new InternalModel(refModel, convert);
+			locModel.interpolate();
+			// Print the shell summaries.
+			locModel.printShells();
+			// Print out the radial version.
+			locModel.printModel(false, false);
 			// Print out the Earth flattened version.
-			reModel.printModel(true, true);
-			reModel.printCritical();
+//		locModel.printModel(true, true);
+			locModel.printCritical();
+			
+			// Make the slowness sampling.
+			tauInt = new TauInt(locModel, convert);
+			tauModel = new TauModel();
+			sample = new SampleSlowness(locModel, tauModel, tauInt);
+			sample.sample('P');
+			tauModel.printModel('P');
+			sample.sample('S');
+			tauModel.printModel('S');
+			tauModel.merge();
+			tauModel.printMerge();
+		} else {
+			System.out.println("Read status = "+status);
 		}
 	}
 }

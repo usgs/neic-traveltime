@@ -8,9 +8,9 @@ package gov.usgs.traveltime.tables;
  *
  */
 public class ModelShell {
+	int iBot, iTop;
+	double rBot, rTop;
 	double delX;			// Non-dimensional ray distance increment target for this layer
-	int[] indices;
-	double[] rRange;
 	
 	/**
 	 * Initialize the shell with the parameters at the deep end.
@@ -19,10 +19,21 @@ public class ModelShell {
 	 * @param r Model sample radius in kilometers
 	 */
 	public ModelShell(int index, double r) {
-		indices = new int[2];
-		rRange = new double[2];
-		indices[0] = index;
-		rRange[0] = r;
+		iBot = index;
+		rBot = r;
+	}
+	
+	/**
+	 * Initialize the shell by copying from another shell.
+	 * 
+	 * @param shell Reference shell
+	 * @param index Sample index for the bottom of the model shell
+	 */
+	public ModelShell(ModelShell shell, int index) {
+		iBot = index;
+		rBot = shell.rBot;
+		delX = shell.delX;
+		
 	}
 	
 	/**
@@ -32,8 +43,8 @@ public class ModelShell {
 	 * @param r Model sample radius in kilometers
 	 */
 	public void addEnd(int index, double r) {
-		indices[1] = index;
-		rRange[1] = r;
+		iTop = index;
+		rTop = r;
 	}
 	
 	/**
@@ -43,7 +54,7 @@ public class ModelShell {
 	 * @return True if the sample falls inside this shell
 	 */
 	public boolean isInShell(double r) {
-		if(r >= rRange[0] && r <= rRange[1]) {
+		if(r >= rBot && r <= rTop) {
 			return true;
 		} else {
 			return false;
@@ -54,10 +65,10 @@ public class ModelShell {
 	 * Get the model shell indices.
 	 * 
 	 * @return Model shell indices
-	 */
+	 *
 	public int[] getIndices() {
 		return indices;
-	}
+	} */
 	
 	/**
 	 * Print out the shell limits.
@@ -66,6 +77,6 @@ public class ModelShell {
 	 */
 	public void printShell(int j) {
 		System.out.format("%3d:   %3d - %3d range: %7.2f - %7.2f delX: %9.6f\n", 
-				j, indices[0], indices[1], rRange[0], rRange[1], delX);
+				j, iBot, iTop, rBot, rTop, delX);
 	}
 }
