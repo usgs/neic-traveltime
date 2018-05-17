@@ -198,16 +198,15 @@ public class TauInt {
 	 * @return Normalized integrated tau
 	 */
 	public double intDxDp(char type, double p, int limit) {
-		double zLast, x;
+		double zLast, x, dXdPsum = 0d;
 		int j;
 		
-		xSum = 0d;
 		// Loop over grid points accumulating the P slowness integrals.
 		for(j=tabModel.size()-1; j>limit; j--) {
 			if(p > tabModel.getSlow(type, j-1)) break;
 			x = intDeriv(p, tabModel.getSlow(type, j), tabModel.getSlow(type, j-1), 
 					tabModel.getZ(j), tabModel.getZ(j-1));
-			xSum += x;
+			dXdPsum += x;
 //		System.out.format("GetDx: %8.6f %8.6f %8.6f %9.6f %9.6f %9.6f\n", p, 
 //				tabModel.getSlow(type, j), tabModel.getSlow(type, j-1), tabModel.getZ(j), 
 //				tabModel.getZ(j-1), x);
@@ -221,14 +220,14 @@ public class TauInt {
 			zLast = Math.log(convert.xNorm*rBottom);
 			x = intDeriv(p, tabModel.getSlow(type, j), p, tabModel.getZ(j), 
 					zLast);
-			xSum += x;
+			dXdPsum += x;
 //		System.out.format("GetDx: %8.6f %8.6f %8.6f %9.6f %9.6f %9.6f\n", p, 
 //				tabModel.getSlow(type, j), p, tabModel.getZ(j), zLast, x);
 		} else {
 			// We ended on a model sample.
 			rBottom = tabModel.getR(j);
 		}
-		return 2d*xSum;
+		return 2d*dXdPsum;
 	}
 	
 	/**

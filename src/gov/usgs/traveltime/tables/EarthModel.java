@@ -18,6 +18,12 @@ import gov.usgs.traveltime.TtStatus;
  */
 public class EarthModel {
 	String earthModel;					// Model name
+	double rInnerCore = ShellName.INNER_CORE.defRadius();
+	double rOuterCore = ShellName.OUTER_CORE.defRadius();
+	double rUpperMantle = ShellName.LOWER_MANTLE.defRadius();
+	double rMoho = ShellName.UPPER_MANTLE.defRadius();
+	double rConrad = ShellName.LOWER_CRUST.defRadius();
+	double rSurface = ShellName.UPPER_CRUST.defRadius();
 	ModelSample innerCore;			// Model at the inner core boundary
 	ModelSample outerCore;			// Model at the outer core boundary
 	ModelSample upperMantle;		// Model at the upper mantle discontinuity
@@ -54,9 +60,7 @@ public class EarthModel {
 	 */
 	public TtStatus readModel() {
 		String modelFile, modelName;
-		boolean disc;
 		int n, i = 0, last = 0;
-		double rUpperMantle, rMoho, rConrad, rSurface;
 		/*
 		 * We have to read everything in, but we don't need density, 
 		 * anisotropy, or attenuation for the travel-times.
@@ -90,11 +94,6 @@ public class EarthModel {
 			rUpperMantle = scan.nextDouble();
 			rMoho = scan.nextDouble();
 			rConrad = scan.nextDouble();
-		} else {
-			rSurface = TablesUtil.DEFRADIUS;
-			rUpperMantle = TablesUtil.DEFUPPERMANTLE;
-			rMoho = TablesUtil.DEFMOHO;
-			rConrad = TablesUtil.DEFCONRAD;
 		}
 		
 		// Read the model points.
@@ -122,16 +121,13 @@ public class EarthModel {
 			qKappa = scan.nextDouble();
 			// Trap discontinuities.
 			if(r == rLast) {
-				disc = true;
 				if(model.size() > 0) {
-					model.get(model.size()-1).setDisc();
 					shells.get(shells.size()-1).addEnd(model.size()-1, r);
+					shells.add(new ModelShell(model.size()-1, model.size(), r));
 				}
 				shells.add(new ModelShell(model.size(), r));
-			} else {
-				disc = false;
 			}
-			model.add(new ModelSample(r, vpv, vph, vsv, vsh, eta, disc));
+			model.add(new ModelSample(r, vpv, vph, vsv, vsh, eta));
 			rLast = r;
 		}
 		// Done, finalize the outermost shell.
@@ -153,10 +149,21 @@ public class EarthModel {
 		// Interpolate velocity.
 		interp.interpVel();
 		// Find important internal boundaries.
-		refineBoundaries(rUpperMantle, rMoho, rConrad, rSurface);
+		refineBoundaries();
 		// Initialize the model specific conversion constants.
 		convert = new ModConvert(upperMantle.r, moho.r, conrad.r, surface.r, surface.vs);
+		// Do the Earth flattening transformation.
+		flatten();
 		return TtStatus.SUCCESS;
+	}
+	
+	/**
+	 * Apply the Earth flattening transformation.
+	 */
+	private void flatten() {
+		for(int j=0; j<model.size(); j++) {
+			model.get(j).flatten(convert);
+		}
 	}
 	
 	/**
@@ -169,57 +176,105 @@ public class EarthModel {
 	 * @param rConrad Preliminary radius of the Conrad discontinuity in kilometers
 	 * @param rSurface Preliminary radius of the free surface in kilometers
 	 */
-	private void refineBoundaries(double rUpperMantle, double rMoho, 
-			double rConrad, double rSurface) {
-		double rInnerCore = TablesUtil.DEFINNERCORE, rOuterCore = TablesUtil.DEFOUTERCORE;
+	private void refineBoundaries() {
 		double tempIC = TauUtil.DMAX, tempOC = TauUtil.DMAX, tempUM = TauUtil.DMAX, 
 				tempM = TauUtil.DMAX, tempC = TauUtil.DMAX, tempFS = TauUtil.DMAX;
 		double rDisc;
+		int iTop;
+		ModelShell shell;
 		
 		// Find the closest boundary to target boundaries.
 		for(int j=0; j<shells.size(); j++) {
 			rDisc = shells.get(j).rTop;
+			iTop = shells.get(j).iTop;
 			if(Math.abs(rDisc-rInnerCore) < Math.abs(tempIC-rInnerCore)) {
 				tempIC = rDisc;
-				innerCore = model.get(shells.get(j).iTop);
+				innerCore = model.get(iTop);
 			}
 			if(Math.abs(rDisc-rOuterCore) < Math.abs(tempOC-rOuterCore)) {
 				tempOC = rDisc;
-				outerCore = model.get(shells.get(j).iTop);
+				outerCore = model.get(iTop);
 			}
 			if(Math.abs(rDisc-rUpperMantle) < Math.abs(tempUM-rUpperMantle)) {
 				tempUM = rDisc;
-				upperMantle = model.get(shells.get(j).iTop);
+				upperMantle = model.get(iTop);
 			}
 			if(Math.abs(rDisc-rMoho) < Math.abs(tempM-rMoho)) {
 				tempM = rDisc;
-				moho = model.get(shells.get(j).iTop);
+				moho = model.get(iTop);
 			}
 			if(Math.abs(rDisc-rConrad) < Math.abs(tempC-rConrad)) {
 				tempC = rDisc;
-				conrad = model.get(shells.get(j).iTop);
+				conrad = model.get(iTop);
 			}
 			if(Math.abs(rDisc-rSurface) < Math.abs(tempFS-rSurface)) {
 				tempFS = rDisc;
-				surface = model.get(shells.get(j).iTop);
+				surface = model.get(iTop);
 			}
 		}
 		
-		// Go around again setting the target ray travel distance in each layer.
+		// Set the radii.
+		rInnerCore = innerCore.r;
+		rOuterCore = outerCore.r;
+		rUpperMantle = upperMantle.r;
+		rMoho = moho.r;
+		rConrad = conrad.r;
+		rSurface = surface.r;
+		
+		// Go around again setting up the shells.
 		for(int j=0; j<shells.size(); j++) {
-			rDisc = shells.get(j).rTop;
-			if(rDisc <= rInnerCore) {
-				shells.get(j).delX = TablesUtil.DELX[0]/rSurface;
-			} else if(rDisc <= rOuterCore) {
-				shells.get(j).delX = TablesUtil.DELX[1]/rSurface;
-			} else if(rDisc <= rUpperMantle) {
-				shells.get(j).delX = TablesUtil.DELX[2]/rSurface;
-			} else if(rDisc <= rMoho) {
-				shells.get(j).delX = TablesUtil.DELX[3]/rSurface;
-			} else if(rDisc <= rConrad) {
-				shells.get(j).delX = TablesUtil.DELX[4]/rSurface;
-			} else {
-				shells.get(j).delX = TablesUtil.DELX[5]/rSurface;
+			shell = shells.get(j);
+			if(!shell.isDisc) {
+				rDisc = shell.rTop;
+				if(rDisc <= rInnerCore) {
+					shell.delX = TablesUtil.DELX[0]/rSurface;
+					shell.name = ShellName.INNER_CORE;
+				} else if(rDisc <= rOuterCore) {
+					shell.delX = TablesUtil.DELX[1]/rSurface;
+					shell.name = ShellName.OUTER_CORE;
+				} else if(rDisc <= rUpperMantle) {
+					shell.delX = TablesUtil.DELX[2]/rSurface;
+					shell.name = ShellName.LOWER_MANTLE;
+				} else if(rDisc <= rMoho) {
+					shell.delX = TablesUtil.DELX[3]/rSurface;
+					shell.name = ShellName.UPPER_MANTLE;
+				} else if(rDisc <= rConrad) {
+					shell.delX = TablesUtil.DELX[4]/rSurface;
+					shell.name = ShellName.LOWER_CRUST;
+				} else {
+					shell.delX = TablesUtil.DELX[5]/rSurface;
+					shell.name = ShellName.UPPER_CRUST;
+				}
+			}
+		}
+		
+		// Go around yet again setting up the discontinuities.
+		for(int j=0; j<shells.size(); j++) {
+			shell = shells.get(j);
+			if(shell.isDisc) {
+				rDisc = shell.rTop;
+				if(rDisc == rInnerCore) {
+					shell.delX = TablesUtil.DELX[1]/rSurface;
+					shell.name = ShellName.INNER_CORE_BOUNDARY;
+				} else if(rDisc == rOuterCore) {
+					shell.delX = TablesUtil.DELX[2]/rSurface;
+					shell.name = ShellName.CORE_MANTLE_BOUNDARY;
+				} else if(rDisc == rMoho) {
+					shell.delX = TablesUtil.DELX[4]/rSurface;
+					shell.name = ShellName.MOHO_DISCONTINUITY;
+				} else if(rDisc == rConrad) {
+					shell.delX = TablesUtil.DELX[5]/rSurface;
+					shell.name = ShellName.CONRAD_DISCONTINUITY;
+				} else {
+					if(rDisc < rUpperMantle) {
+						shell.delX = TablesUtil.DELX[2]/rSurface;
+					} else {
+						shell.delX = TablesUtil.DELX[3]/rSurface;
+					}
+					shell.name = null;
+					shell.altName = String.format("%d km discontinuity", 
+							(int) (rSurface-rDisc+.5d));
+				}
 			}
 		}
 	}

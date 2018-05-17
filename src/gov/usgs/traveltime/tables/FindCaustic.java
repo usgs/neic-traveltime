@@ -38,6 +38,15 @@ public class FindCaustic implements UnivariateFunction {
 	
 	@Override
 	public double value(double p) {
-		return tauInt.intDxDp(type, p, limit);
+		double dXdP;
+		
+		dXdP = tauInt.intDxDp(type, p, limit);
+		// dXdp blows up at the top of shells.  Back off until we get 
+		// a finite value.
+		while(Double.isNaN(dXdP)) {
+			p -= TablesUtil.SLOWOFF;
+			dXdP = tauInt.intDxDp(type, p, limit);
+		}
+		return dXdP;
 	}
 }

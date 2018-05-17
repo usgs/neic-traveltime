@@ -48,9 +48,9 @@ public class ReModel {
 			// Print the shell summaries.
 			locModel.printShells();
 			// Print out the radial version.
-			locModel.printModel(false, false);
+//		locModel.printModel(false, false);
 			// Print out the Earth flattened version.
-//		locModel.printModel(true, true);
+			locModel.printModel(true, true);
 			locModel.printCritical();
 			
 			// Make the slowness sampling.
@@ -58,11 +58,11 @@ public class ReModel {
 			tauModel = new TauModel();
 			sample = new SampleSlowness(locModel, tauModel, tauInt);
 			sample.sample('P');
-			tauModel.printModel('P');
+/*		tauModel.printModel('P');
 			sample.sample('S');
 			tauModel.printModel('S');
 			tauModel.merge();
-			tauModel.printMerge();
+			tauModel.printMerge(); */
 		} else {
 			System.out.println("Read status = "+status);
 		}

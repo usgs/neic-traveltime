@@ -78,11 +78,12 @@ public class SampleSlowness {
 	 * @throws Exception On an illegal integration interval
 	 */
 	public void sample(char type) throws Exception {
-		int iShell, newShell = -1, iCrit, nSamp, iBot, iTop;
+		int iShell, iCrit, nSamp, iTop;
 		double slowTop, xTop, rTop, slowBot, xBot, rBot, dSlow, slowMin, slow, 
 			pCaustic;
 		ModelShell shell;
-		CritSlowness crit, nextCrit;
+		CritSlowness crit;
+		TauSample sample0, sample1, sample2;
 		
 		// Initialize temporary variables.
 		iShell = shells.size()-1;
@@ -92,29 +93,22 @@ public class SampleSlowness {
 		/* 
 		 * Loop over critical points.  Because the critical points are branch 
 		 * ends, this strategy guarantees that all possible branches are 
-		 * reasonably well sampled.
+		 * sampled exactly at their ends.
 		 */
-		nextCrit = critical.get(critical.size()-2);
 		slowTop = model.get(shell.iTop).getSlow(type);
 		for(iCrit=critical.size()-2; iCrit>=0; iCrit--) {
-			crit = nextCrit;
-			if(iCrit > 0) nextCrit = critical.get(iCrit-1);
-			if(crit.type == type) {
-				newShell = crit.iShell;
-			} else {
-				if(crit.slowness == nextCrit.slowness && nextCrit.type == type) {
-						newShell = nextCrit.iShell;
-				}
-			}
+			crit = critical.get(iCrit);
 			if(crit.slowness < slowTop) {
-				if(newShell >= 0 && newShell != iShell) {
-					iShell = newShell;
-					shell = shells.get(iShell);
-					delX = shell.delX;
-					limit = shell.iBot;
-					System.out.format("\nShell: %3d %3d %8.6f\n", iShell, limit, delX);
+				iShell = crit.getShell(type);
+				shell = shells.get(iShell);
+				delX = shell.delX;
+				limit = shell.iBot;
+				if(shell.name == null) {
+					System.out.format("\nShell: %3d %3d %6.2f %s\n", iShell, limit, 
+							delX/convert.xNorm, shell.altName);
 				} else {
-					System.out.println();
+					System.out.format("\nShell: %3d %3d %6.2f %s\n", iShell, limit, 
+							delX/convert.xNorm, shell.name);
 				}
 				slowBot = crit.slowness;
 				// Sample the top and bottom of this layer.
@@ -123,7 +117,7 @@ public class SampleSlowness {
 				xTop = tauInt.getXSum();
 				rTop = tauInt.getRbottom();
 				// We can save this one now.
-				tmpModel.add(new TauSample(rTop, slowTop, xTop, Double.NaN));
+				tmpModel.add(new TauSample(rTop, slowTop, xTop));
 				tauInt.intX(type, slowBot, limit);
 				xBot = tauInt.getXSum();
 				rBot = tauInt.getRbottom();
@@ -136,33 +130,40 @@ public class SampleSlowness {
 					slow = slowTop - Math.max(k*k*dSlow, k*slowMin);
 					tauInt.intX(type, slow, limit);
 					tmpModel.add(new TauSample(tauInt.getRbottom(), slow, 
-							tauInt.getXSum(), tauInt.intDxDp(type, slow, limit)));
+							tauInt.getXSum()));
 				}
 				// Now save the bottom.
-				tmpModel.add(new TauSample(rBot, slowBot, xBot, 
-						tauInt.intDxDp(type, slowBot, limit)));
-				testSampling();
+				tmpModel.add(new TauSample(rBot, slowBot, xBot));
+				// Check for hidden caustics.
+				testSampling(type, dSlow);
 				// Print it out for testing purposes.
 				System.out.println("Temporary "+type+" slowness model:");
 				for(int j=0; j<tmpModel.size(); j++) {
 					System.out.format("%3d %s\n", j, tmpModel.get(j));
 				}
 				
-				// Look for caustics.
+				/* 
+				 * Look for caustics.  Using dX/dp = 0 is slick for refining the 
+				 * location of caustics, but it has problems.  First, it's infinite 
+				 * at the top of every shell, which may lead to missing small 
+				 * triplications.  Second, it has backwards compatibility problems 
+				 * making testing against the Fortran version more difficult.  The 
+				 * hybrid approach below isn't elegant, but resolves both issues.
+				 */
 				iTop = 0;
-				for(int j=2; j<tmpModel.size(); j++) {
-					if(tmpModel.get(j-1).dXdP*tmpModel.get(j).dXdP <= 0d) {
-						pCaustic = getCaustic(type, tmpModel.get(j).slow, 
-								tmpModel.get(j-1).slow, limit);
+				sample1 = tmpModel.get(0);
+				sample2 = tmpModel.get(1);
+				for(int iBot=1; iBot<tmpModel.size()-1; iBot++) {
+					sample0 = sample1;
+					sample1 = sample2;
+					sample2 = tmpModel.get(iBot+1);
+					if((sample1.x-sample0.x)*(sample2.x-sample1.x) <= 0d) {
+						pCaustic = getCaustic(type, sample2.slow, sample0.slow, limit);
 						tauInt.intX(type, pCaustic, limit);
-						if(pCaustic-tmpModel.get(j).slow > tmpModel.get(j-1).slow-pCaustic) {
-							iBot = j-1;
-						} else {
-							iBot = j;
-						}
-						tmpModel.set(iBot, new TauSample(tauInt.getRbottom(), pCaustic, 
-								tauInt.getXSum(), tauInt.intDxDp(type, pCaustic, limit)));
-						System.out.format("%3d %s\n", iBot, tmpModel.get(iBot));
+						sample1 = new TauSample(tauInt.getRbottom(), pCaustic, 
+								tauInt.getXSum());
+						tmpModel.set(iBot, sample1);
+						System.out.format("\n Caustic: %3d %s\n", iBot, sample1);
 						refineSampling(type, iTop, iBot);
 						iTop = iBot;
 					}
@@ -176,10 +177,26 @@ public class SampleSlowness {
 	
 	/**
 	 * If a shell only has two points, make sure there isn't a caustic hiding 
-	 * inside.
+	 * inside.  This is pretty crude, but seems to be adequate for the current 
+	 * range of models.
+	 * 
+	 * @param type Velocity/slowness type (P = P-wave, S = S-wave)
+	 * @param dSlow Non-dimensional slowness increment
+	 * @throws Exception 
 	 */
-	private void testSampling() {
+	private void testSampling(char type, double dSlow) throws Exception {
+		double slow, x;
 		
+		if(tmpModel.size() == 2) {
+			slow = tmpModel.get(0).slow-0.25d*dSlow;
+			tauInt.intX(type, slow, limit);
+			x = tauInt.getXSum();
+			System.out.format("    extra = %8.6f %8.6f\n", slow, x);
+			if((x-tmpModel.get(0).x)*(tmpModel.get(1).x-x) <= 0d) {
+				tmpModel.add(tmpModel.get(1));
+				tmpModel.set(1, new TauSample(tauInt.getRbottom(), slow, x));
+			}
+		}
 	}
 	
 	/**
@@ -207,13 +224,13 @@ public class SampleSlowness {
 		pBot = tmpModel.get(iBot).slow;
 		nSamp = Math.max((int) (Math.abs(xBot-xTarget)/delX+0.8), 1);
 		dX = (xBot-xTarget)/nSamp;
-		System.out.format("Samp: %3d %10.4e %10.4e\n", nSamp, xTarget, dX);
+		System.out.format("Samp: %2d %10.4e %10.4e\n", nSamp, xTarget, dX);
 		
 		/*
 		 *  Ambitious loop trying to optimize sampling in range, slowness, 
 		 *  and radius.
 		 */
-		iTmp = 1;
+		iTmp = iTop+1;
 		do {
 			// Make a step.
 			xTarget = xTarget+dX;
@@ -238,8 +255,8 @@ public class SampleSlowness {
 				pTarget = getRange(type, sample1.slow, sample0.slow, xTarget, limit);
 				tauInt.intX(type, pTarget, limit);
 				tauModel.add(type, new TauSample(tauInt.getRbottom(), pTarget, 
-						tauInt.getXSum(), tauInt.intDxDp(type, pTarget, limit)));
-				System.out.format("sol   %3d %s\n", tauModel.size(type)-1, 
+						tauInt.getXSum()));
+				System.out.format("sol     %3d %s\n", tauModel.size(type)-1, 
 						tauModel.getLast(type));
 			} else {
 				// Add the last sample, though this may not be the end...
@@ -257,15 +274,15 @@ public class SampleSlowness {
 				pTarget = sample0.slow+(pBot-sample0.slow)/nSamp;
 				tauInt.intX(type, pTarget, limit);
 				tauModel.setLast(type, new TauSample(tauInt.getRbottom(), pTarget, 
-						tauInt.getXSum(), tauInt.intDxDp(type, pTarget, limit)));
-				System.out.format(" dpmax %3d %s\n", tauModel.size(type)-1, 
+						tauInt.getXSum()));
+				System.out.format(" dpmax  %3d %s\n", tauModel.size(type)-1, 
 						tauModel.getLast(type));
 				// Reset the range sampling.
-				xTarget = tauInt.getXSum();
+				xTarget = tauModel.getLast(type).x;
 				nSamp = Math.max((int) (Math.abs(xBot-xTarget)/delX+0.8), 1);
 				dX = (xBot-xTarget)/nSamp;
-				System.out.format("Samp: %3d %10.4e %10.4e\n", nSamp, xTarget, dX);
-				iTmp = 1;
+//			System.out.format("Samp: %2d %10.4e %10.4e\n", nSamp, xTarget, dX);
+				iTmp = iTop+1;
 			}
 			
 			// Make sure our radius sampling is OK too.
@@ -289,18 +306,18 @@ public class SampleSlowness {
 				pTarget = sample0.slow+(pBot-sample0.slow)/nSamp;
 				tauInt.intX(type, pTarget, limit);
 				tauModel.setLast(type, new TauSample(tauInt.getRbottom(), pTarget, 
-						tauInt.getXSum(), tauInt.intDxDp(type, pTarget, limit)));
-				System.out.format(" drmax %3d %s\n", tauModel.size(type)-1, 
+						tauInt.getXSum()));
+				System.out.format(" drmax  %3d %s\n", tauModel.size(type)-1, 
 						tauModel.getLast(type));
 				// Reset the range sampling.
-				xTarget = tauInt.getXSum();
+				xTarget = tauModel.getLast(type).x;
 				nSamp = Math.max((int) (Math.abs(xBot-xTarget)/delX+0.8), 1);
 				dX = (xBot-xTarget)/nSamp;
-				System.out.format("Samp: %3d %10.4e %10.4e\n", nSamp, xTarget, dX);
-				iTmp = 1;
+				System.out.format("Samp: %2d %10.4e %10.4e\n", nSamp, xTarget, dX);
+				iTmp = iTop+1;
 			}
 		} while(Math.abs(xTarget-xBot) > TablesUtil.XTOL);
-		System.out.format("end   %3d %s\n", tauModel.size(type)-1, 
+		System.out.format("end     %3d %s\n", tauModel.size(type)-1, 
 				tauModel.getLast(type));
 	}
 	
@@ -341,8 +358,8 @@ public class SampleSlowness {
 		
 		findCaustic.setUp(type, limit);
 		pCaustic = solver.solve(TablesUtil.MAXEVAL, findCaustic, minP, maxP);
-		System.out.format("\tCaustic: %8.6f [%8.6f,%8.6f] %2d\n", pCaustic, 
-				minP, maxP, solver.getEvaluations());
+//	System.out.format("\tCaustic: %8.6f [%8.6f,%8.6f] %2d\n", pCaustic, 
+//			minP, maxP, solver.getEvaluations());
 		return pCaustic;
 	}
 	
@@ -365,8 +382,8 @@ public class SampleSlowness {
 		
 		findRange.setUp(type, xTarget, limit);
 		pRange = solver.solve(TablesUtil.MAXEVAL, findRange, minP, maxP);
-		System.out.format("\tRange: %8.6f [%8.6f,%8.6f] %2d\n", pRange, 
-				minP, maxP, solver.getEvaluations());
+//	System.out.format("\tRange: %8.6f [%8.6f,%8.6f] %2d\n", pRange, 
+//			minP, maxP, solver.getEvaluations());
 		return pRange;
 	}
 	

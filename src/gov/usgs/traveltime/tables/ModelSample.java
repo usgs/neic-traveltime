@@ -20,7 +20,6 @@ public class ModelSample {
 	 * oblateness is small enough (~1/300) to be considered a perturbation.
 	 * 
 	 */
-	boolean isDisc;	// True if this point is at a velocity discontinuity
 	double r;				// Radius in kilometers
 	double vp;			// Isotropic velocity in kilometers/second
 	double vs;			// Isotropic velocity in kilometers/second
@@ -37,13 +36,11 @@ public class ModelSample {
 	 * @param vsv Vertically polarized S velocity in kilometers/second
 	 * @param vsh Horizontally polarized S velocity in kilometers/second
 	 * @param eta Anisotropy parameter
-	 * @param isDisc True if this sample is at a discontinuity
 	 */
 	public ModelSample(double r, double vpv, double vph, double vsv, double vsh, 
-			double eta, boolean isDisc) {
+			double eta) {
 		
 		this.r = r;
-		this.isDisc = isDisc;
 		
 		// Create the isotropic version.
 		if(eta != 1d || vpv != vph || vsv != vsh) {
@@ -66,14 +63,12 @@ public class ModelSample {
 	 * @param r	Radius in kilometers
 	 * @param vp P velocity in kilometers/second
 	 * @param vs S velocity in kilometers/second
-	 * @param isDisc True if this sample is at a discontinuity
 	 */
-	public ModelSample(double r, double vp, double vs, boolean isDisc) {
+	public ModelSample(double r, double vp, double vs) {
 		
 		this.r = r;
 		this.vp = vp;
 		this.vs = vs;
-		this.isDisc = isDisc;
 		// Mask fluid areas.
 		if(vs == 0d) vs = vp;
 	}
@@ -84,20 +79,12 @@ public class ModelSample {
 	 * @param sample Reference model sample
 	 */
 	public ModelSample(ModelSample sample) {
-		isDisc = sample.isDisc;
 		r = sample.r;
 		vp = sample.vp;
 		vs = sample.vs;
 		z = sample.z;
 		slowP = sample.slowP;
 		slowS = sample.slowS;
-	}
-	
-	/**
-	 * Set the discontinuity flag.
-	 */
-	protected void setDisc() {
-		isDisc = true;
 	}
 	
 	/**
@@ -115,17 +102,6 @@ public class ModelSample {
 	 */
 	public void flatten(ModConvert convert) {
 		z = Math.log(r*convert.xNorm);
-		slowP = r*convert.tNorm/vp;
-		slowS = r*convert.tNorm/vs;
-	}
-	
-	/**
-	 * Recompute the slownesses and non-dimensionalize when the velocities 
-	 * change.
-	 * 
-	 * @param convert Model sensitive conversion constants
-	 */
-	public void reFlatten(ModConvert convert) {
 		slowP = r*convert.tNorm/vp;
 		slowS = r*convert.tNorm/vs;
 	}

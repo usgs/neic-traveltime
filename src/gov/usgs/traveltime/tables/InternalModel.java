@@ -49,25 +49,30 @@ public class InternalModel {
 		r1 = 0d;
 		for(int i=0; i<refModel.shells.size(); i++) {
 			refShell = refModel.shells.get(i);
-			// Figure how many samples we'll need.
-			r0 = r1;
-			r1 = refShell.rTop;
-			nSamp = (int)((r1-r0)/TablesUtil.RESAMPLE-0.5d);
-			dr = (r1-r0)/(nSamp+1);
 			// Initialize the interpolated model shell.
-			newShell = new ModelShell(refShell, model.size());
-			shells.add(newShell);
-			model.add(new ModelSample(refModel.model.get(refShell.iBot)));
-			bridgeVel(model.size()-1);
-			// Fill in the interpolated model.
-			for(int j=1; j<=nSamp; j++) {
-				r = r0+j*dr;
-				model.add(new ModelSample(r, refModel.getVel('P', i, r), 
-						refModel.getVel('S', i, r), false));
+			if(!refShell.isDisc) {
+				newShell = new ModelShell(refShell, model.size());
+				model.add(new ModelSample(refModel.model.get(refShell.iBot)));
+				bridgeVel(model.size()-1);
+				// Figure how many samples we'll need.
+				r0 = r1;
+				r1 = refShell.rTop;
+				nSamp = (int)((r1-r0)/TablesUtil.RESAMPLE-0.5d);
+				dr = (r1-r0)/(nSamp+1);
+				// Fill in the interpolated model.
+				for(int j=1; j<=nSamp; j++) {
+					r = r0+j*dr;
+					model.add(new ModelSample(r, refModel.getVel('P', i, r), 
+							refModel.getVel('S', i, r)));
+				}
+				// Add the top of the shell.
+				newShell.addEnd(model.size(), r1);
+				model.add(new ModelSample(refModel.model.get(refShell.iTop)));
+			} else {
+				newShell = new ModelShell(refShell, model.size()-1);
+				newShell.addEnd(model.size(), r1);
 			}
-			// Add the top of the shell.
-			newShell.addEnd(model.size(), r1);
-			model.add(new ModelSample(refModel.model.get(refShell.iTop)));
+			shells.add(newShell);
 		}
 		// Apply the Earth flattening transformation.
 		flatten();
@@ -172,24 +177,25 @@ public class InternalModel {
 	 */
 	private void findCritical() {
 		boolean inLVZ;
-		int n, pShell = -1, sShell = -1;
+//	int pShell = -1, sShell = -1;
 		ModelSample sample, lastSample;
-		ModelShell shell;
+		ModelShell shell = null;
 		
-		// Do the discontinuities.
-		for(int j=0; j<shells.size()-1; j++) {
+		// The slownesses above and below each discontinuity in the model 
+		// will be a branch end point.
+		for(int j=0; j<shells.size(); j++) {
 			shell = shells.get(j);
-			critical.add(new CritSlowness('P', j, model.get(shell.iBot).slowP));
-			critical.add(new CritSlowness('S', j, model.get(shell.iBot).slowS));
-			critical.add(new CritSlowness('P', j+1, model.get(shell.iTop).slowP));
-			critical.add(new CritSlowness('S', j+1, model.get(shell.iTop).slowS));
+			critical.add(new CritSlowness('P', j, (shell.isDisc ? 
+					ShellLoc.BOUNDARY:ShellLoc.SHELL), model.get(shell.iBot).slowP));
+			if(model.get(shell.iBot).slowP != model.get(shell.iBot).slowS) {
+				critical.add(new CritSlowness('S', j, (shell.isDisc ? 
+					ShellLoc.BOUNDARY:ShellLoc.SHELL), model.get(shell.iBot).slowS));
+			}
 		}
-		n = shells.size()-1;
-		shell = shells.get(n);
-		critical.add(new CritSlowness('P', n, model.get(shell.iBot).slowP));
-		critical.add(new CritSlowness('S', n, model.get(shell.iBot).slowS));
-		critical.add(new CritSlowness('P', n, model.get(shell.iTop).slowP));
-		critical.add(new CritSlowness('S', n, model.get(shell.iTop).slowS));
+		critical.add(new CritSlowness('P', shells.size()-1, ShellLoc.SHELL, 
+				model.get(shell.iTop).slowP));
+		critical.add(new CritSlowness('S', shells.size()-1, ShellLoc.SHELL, 
+				model.get(shell.iTop).slowS));
 		
 		/*
 		 * Now look for high slowness zones.  Note that this is not quite the 
@@ -206,12 +212,14 @@ public class InternalModel {
 				if(!inLVZ) {
 					if(sample.slowP <= lastSample.slowP) {
 						inLVZ = true;
-						critical.add(new CritSlowness('P', i, lastSample.slowP));
+						critical.add(new CritSlowness('P', i, ShellLoc.SHELL, 
+								lastSample.slowP));
 					}
 				} else {
 					if(sample.slowP >= lastSample.slowP) {
 						inLVZ = false;
-						critical.add(new CritSlowness('P', i, lastSample.slowP));
+						critical.add(new CritSlowness('P', i, ShellLoc.SHELL, 
+								lastSample.slowP));
 					}
 				}
 			}
@@ -227,19 +235,31 @@ public class InternalModel {
 				if(!inLVZ) {
 					if(sample.slowS <= lastSample.slowS) {
 						inLVZ = true;
-						critical.add(new CritSlowness('S', i, lastSample.slowS));
+						critical.add(new CritSlowness('S', i, ShellLoc.SHELL, 
+								lastSample.slowS));
 					}
 				} else {
 					if(sample.slowS >= lastSample.slowS) {
 						inLVZ = false;
-						critical.add(new CritSlowness('S', i, lastSample.slowS));
+						critical.add(new CritSlowness('S', i, ShellLoc.SHELL, 
+								lastSample.slowS));
 					}
 				}
 			}
 		}
 		
-		// Now sort the critical slownesses into order.
+		// Add the missing shells.
+		fixShells();
+		// Sort the critical slownesses into order.
 		critical.sort(null);
+		// And remove duplicates.
+		for(int j=1; j<critical.size(); j++) {
+			if(critical.get(j).isSame(critical.get(j-1))) {
+				critical.remove(j);
+				j--;
+			}
+		}
+/*	printCritical();
 		// And rationalize shell indices.
 		for(int j=0; j<critical.size(); j++) {
 			if(critical.get(j).type == 'P') {
@@ -255,6 +275,39 @@ public class InternalModel {
 					critical.get(j).iShell = sShell;
 				}
 			}
+		} */
+	}
+	
+	/**
+	 * Add the shell indices for the model velocities for which the 
+	 * critical slownesses aren't actually critical.  For example, if a 
+	 * critical slowness corresponds to the end of a P-wave branch, we 
+	 * will need to add the S-wave shell that the slowness falls into.  
+	 * At the same time fix any out of order critical points (typically 
+	 * due to low velocity zones).
+	 */
+	private void fixShells() {
+		ModelShell shell;
+		CritSlowness crit;
+		
+		for(int i=0; i<critical.size(); i++) {
+			crit = critical.get(i);
+			// Add or check/fix P slowness shells.
+			for(int j=shells.size()-1; j>=0; j--) {
+				shell = shells.get(j);
+				if(crit.slowness >= model.get(shell.iBot).slowP) {
+					crit.addShell('P', j);
+					break;
+				}
+			}
+			// Add or check/fix S slowness shells.
+			for(int j=shells.size()-1; j>=0; j--) {
+				shell = shells.get(j);
+				if(crit.slowness >= model.get(shell.iBot).slowS) {
+					crit.addShell('S', j);
+					break;
+				}
+			}
 		}
 	}
 	
@@ -267,17 +320,21 @@ public class InternalModel {
 	public void printModel(boolean flat, boolean nice) {
 		
 		if(flat) {
-			System.out.format("\n%s %d %7.4f %7.4f %7.4f %7.4f %7.4f %7.4f\n", 
-					refModel.earthModel, model.size(), refModel.innerCore.z, 
-					refModel.outerCore.z, refModel.upperMantle.z, refModel.moho.z, 
-					refModel.conrad.z, refModel.surface.z);
-		} else {
-			System.out.format("\n%s %d %7.2f %7.2f %7.2f %7.2f %7.2f %7.2f\n", 
-					refModel.earthModel, model.size(), refModel.innerCore.r, 
-					refModel.outerCore.r, refModel.upperMantle.r, refModel.moho.r, 
-					refModel.conrad.r, refModel.surface.r);
-		}
-		if(flat) {
+			if(nice) {
+				System.out.format("\n%s %d %7.2f %7.2f %7.2f %7.2f %7.2f %7.2f\n", 
+						refModel.earthModel, model.size(), 
+						convert.realZ(refModel.surface.z), 
+						convert.realZ(refModel.conrad.z), 
+						convert.realZ(refModel.moho.z), 
+						convert.realZ(refModel.upperMantle.z), 
+						convert.realZ(refModel.outerCore.z), 
+						convert.realZ(refModel.innerCore.z));
+			} else {
+				System.out.format("\n%s %d %7.4f %7.4f %7.4f %7.4f %7.4f %7.4f\n", 
+						refModel.earthModel, model.size(), refModel.surface.z, 
+						refModel.conrad.z, refModel.moho.z, refModel.upperMantle.z, 
+						refModel.outerCore.z, refModel.innerCore.z);
+			}
 			int n = model.size()-1;
 			for(int j=n; j>=0; j--) {
 				if(nice) {
@@ -287,6 +344,10 @@ public class InternalModel {
 				}
 			}
 		} else {
+			System.out.format("\n%s %d %7.2f %7.2f %7.2f %7.2f %7.2f %7.2f\n", 
+					refModel.earthModel, model.size(), refModel.innerCore.r, 
+					refModel.outerCore.r, refModel.upperMantle.r, refModel.moho.r, 
+					refModel.conrad.r, refModel.surface.r);
 			for(int j=0; j<model.size(); j++) {
 				model.get(j).printSample(j, false, null);
 			}

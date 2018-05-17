@@ -53,41 +53,43 @@ public class ModelInterp {
 		
 		// Loop over shells doing the interpolation.
 		for(int i=0; i<shells.size(); i++) {
-			// Allocate some temporary storage.
-			iBot = shells.get(i).iBot;
-			iTop = shells.get(i).iTop;
-			n = iTop-iBot+1;
-			r = new double[n];
-			v = new double[n];
-			// The cubic interpolation only works if there are more than 2 points.
-			if(isCubic && n > 2) {
-				// Use cubic splines.
-				if(cubic == null) cubic = new SplineInterpolator();
-				// Interpolate Vp.
-				for(int j=iBot; j<=iTop; j++) {
-					r[j-iBot] = model.get(j).r;
-					v[j-iBot] = model.get(j).vp;
+			if(!shells.get(i).isDisc) {
+				// Allocate some temporary storage.
+				iBot = shells.get(i).iBot;
+				iTop = shells.get(i).iTop;
+				n = iTop-iBot+1;
+				r = new double[n];
+				v = new double[n];
+				// The cubic interpolation only works if there are more than 2 points.
+				if(isCubic && n > 2) {
+					// Use cubic splines.
+					if(cubic == null) cubic = new SplineInterpolator();
+					// Interpolate Vp.
+					for(int j=iBot; j<=iTop; j++) {
+						r[j-iBot] = model.get(j).r;
+						v[j-iBot] = model.get(j).vp;
+					}
+					interpVp[i] = cubic.interpolate(r, v);
+					// Interpolate Vs.
+					for(int j=iBot; j<=iTop; j++) {
+						v[j-iBot] = model.get(j).vs;
+					}
+					interpVs[i] = cubic.interpolate(r, v);
+				} else {
+					// The alternative is linear interpolation.
+					if(linear == null) linear = new LinearInterpolator();
+					// Interpolate Vp.
+					for(int j=iBot; j<=iTop; j++) {
+						r[j-iBot] = model.get(j).r;
+						v[j-iBot] = model.get(j).vp;
+					}
+					interpVp[i] = linear.interpolate(r, v);
+					// Interpolate Vs.
+					for(int j=iBot; j<=iTop; j++) {
+						v[j-iBot] = model.get(j).vs;
+					}
+					interpVs[i] = linear.interpolate(r, v);
 				}
-				interpVp[i] = cubic.interpolate(r, v);
-				// Interpolate Vs.
-				for(int j=iBot; j<=iTop; j++) {
-					v[j-iBot] = model.get(j).vs;
-				}
-				interpVs[i] = cubic.interpolate(r, v);
-			} else {
-				// The alternative is linear interpolation.
-				if(linear == null) linear = new LinearInterpolator();
-				// Interpolate Vp.
-				for(int j=iBot; j<=iTop; j++) {
-					r[j-iBot] = model.get(j).r;
-					v[j-iBot] = model.get(j).vp;
-				}
-				interpVp[i] = linear.interpolate(r, v);
-				// Interpolate Vs.
-				for(int j=iBot; j<=iTop; j++) {
-					v[j-iBot] = model.get(j).vs;
-				}
-				interpVs[i] = linear.interpolate(r, v);
 			}
 		}
 	}

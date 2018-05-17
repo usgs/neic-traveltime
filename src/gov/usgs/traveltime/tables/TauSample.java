@@ -13,7 +13,6 @@ public class TauSample {
 	double z;				// Non-dimensional depth
 	double slow;		// Non-dimensional model slowness
 	double x;				// Non-dimensional ray travel distance
-	double dXdP;		// Derivative of distance by ray parameter
 	
 	/**
 	 * Initialize this sample.
@@ -21,14 +20,12 @@ public class TauSample {
 	 * @param r Dimensional Earth radius in kilometers
 	 * @param slow Non-dimensional slowness
 	 * @param x Non-dimensional ray travel distance
-	 * @param dXdP Non-dimensional derivative of distance with 
 	 * respect to slowness
 	 */
-	public TauSample(double r, double slow, double x, double dXdP) {
+	public TauSample(double r, double slow, double x) {
 		this.r = r;
 		this.slow = slow;
 		this.x = x;
-		this.dXdP = dXdP;
 	}
 	
 	/**
@@ -45,6 +42,6 @@ public class TauSample {
 	
 	@Override
 	public String toString() {
-		return String.format("%7.2f %8.6f %8.6f %9.4f", r, slow, x, dXdP);
+		return String.format("%7.2f %8.6f %8.6f", r, slow, x);
 	}
 }

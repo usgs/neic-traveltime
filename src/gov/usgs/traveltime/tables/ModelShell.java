@@ -1,5 +1,7 @@
 package gov.usgs.traveltime.tables;
 
+import java.util.ArrayList;
+
 /**
  * Keep track of one range between model discontinuities 
  * (i.e., one shell of the Earth model).
@@ -8,9 +10,12 @@ package gov.usgs.traveltime.tables;
  *
  */
 public class ModelShell {
+	ShellName name;
+	String altName;
+	boolean isDisc;
 	int iBot, iTop;
 	double rBot, rTop;
-	double delX;			// Non-dimensional ray distance increment target for this layer
+	double delX;			// Non-dimensional range increment target for this layer
 	
 	/**
 	 * Initialize the shell with the parameters at the deep end.
@@ -19,8 +24,24 @@ public class ModelShell {
 	 * @param r Model sample radius in kilometers
 	 */
 	public ModelShell(int index, double r) {
+		isDisc = false;
 		iBot = index;
 		rBot = r;
+	}
+	
+	/**
+	 * Create a discontinuity.
+	 * 
+	 * @param iBot Model sample index for the bottom
+	 * @param iTop Model sample index for the top
+	 * @param r Model sample radius in kilometers
+	 */
+	public ModelShell(int iBot, int iTop, double r) {
+		isDisc = true;
+		this.iBot = iBot;
+		this.iTop = iTop;
+		rBot = r;
+		rTop = r;
 	}
 	
 	/**
@@ -31,9 +52,11 @@ public class ModelShell {
 	 */
 	public ModelShell(ModelShell shell, int index) {
 		iBot = index;
+		isDisc = shell.isDisc;
 		rBot = shell.rBot;
 		delX = shell.delX;
-		
+		name = shell.name;
+		altName = shell.altName;
 	}
 	
 	/**
@@ -51,7 +74,7 @@ public class ModelShell {
 	 * Determine if a sample radius is in this shell.
 	 * 
 	 * @param r Sample radius in kilometers
-	 * @return True if the sample falls inside this shell
+	 * @return True if the radius is inside this shell
 	 */
 	public boolean isInShell(double r) {
 		if(r >= rBot && r <= rTop) {
@@ -62,13 +85,33 @@ public class ModelShell {
 	}
 	
 	/**
-	 * Get the model shell indices.
+	 * Determine if a sample slowness is in this shell.
 	 * 
-	 * @return Model shell indices
-	 *
-	public int[] getIndices() {
-		return indices;
-	} */
+	 * @param type Wave type (P = compressional, S = shear)
+	 * @param slow Non-dimensional slowness
+	 * @param model Earth model
+	 * @return True if the slowness is in this shell
+	 */
+	public boolean isInShell(char type, double slow, 
+			ArrayList<ModelSample> model) {
+		if(type == 'P') {
+			if(slow >= model.get(iBot).slowP && slow <= 
+					model.get(iTop).slowP) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		} else {
+			if(slow >= model.get(iBot).slowS && slow <= 
+					model.get(iTop).slowS) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+	}
 	
 	/**
 	 * Print out the shell limits.
@@ -76,7 +119,12 @@ public class ModelShell {
 	 * @param j Shell index
 	 */
 	public void printShell(int j) {
-		System.out.format("%3d:   %3d - %3d range: %7.2f - %7.2f delX: %9.6f\n", 
-				j, iBot, iTop, rBot, rTop, delX);
+		if(name == null) {
+			System.out.format("%3d:   %3d - %3d range: %7.2f - %7.2f delX: %9.6f %s\n", 
+					j, iBot, iTop, rBot, rTop, delX, altName);
+		} else {
+			System.out.format("%3d:   %3d - %3d range: %7.2f - %7.2f delX: %9.6f %s\n", 
+					j, iBot, iTop, rBot, rTop, delX, name);
+		}
 	}
 }
