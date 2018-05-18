@@ -19,10 +19,33 @@ public class TauSample {
 	 * 
 	 * @param r Dimensional Earth radius in kilometers
 	 * @param slow Non-dimensional slowness
-	 * @param x Non-dimensional ray travel distance
-	 * respect to slowness
+	 * @param x Non-dimensional ray travel distance (range)
 	 */
 	public TauSample(double r, double slow, double x) {
+		this.r = r;
+		this.slow = slow;
+		this.x = x;
+	}
+	
+	/**
+	 * Initialize this sample from another sample.
+	 * 
+	 * @param sample Existing tau sample
+	 */
+	public TauSample(TauSample sample) {
+		this.r = sample.r;
+		this.slow = sample.slow;
+		this.x = sample.x;
+	}
+	
+	/**
+	 * Update this sample.
+	 * 
+	 * @param r Dimensional Earth radius in kilometers
+	 * @param slow Non-dimensional slowness
+	 * @param x Non-dimensional ray travel distance (range)
+	 */
+	public void update(double r, double slow, double x) {
 		this.r = r;
 		this.slow = slow;
 		this.x = x;

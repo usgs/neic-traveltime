@@ -31,6 +31,7 @@ import gov.usgs.traveltime.ModConvert;
 public class SampleSlowness {
 	int limit;			// Index of the deepest Earth model sample for this shell
 	double delX;		// Non-dimensional step length in range
+	double rLast;		// Not quite the last radius in kilometers
 	EarthModel refModel;
 	InternalModel locModel;
 	TauModel tauModel;
@@ -116,6 +117,8 @@ public class SampleSlowness {
 				tauInt.intX(type, slowTop, limit);
 				xTop = tauInt.getXSum();
 				rTop = tauInt.getRbottom();
+				rLast = rTop;
+				
 				// We can save this one now.
 				tmpModel.add(new TauSample(rTop, slowTop, xTop));
 				tauInt.intX(type, slowBot, limit);
@@ -159,12 +162,18 @@ public class SampleSlowness {
 					sample2 = tmpModel.get(iBot+1);
 					if((sample1.x-sample0.x)*(sample2.x-sample1.x) <= 0d) {
 						pCaustic = getCaustic(type, sample2.slow, sample0.slow, limit);
+				/*	if(pCaustic < 0.11d) {
+							double pNew = 0.10535d;
+							System.out.format("Hijack: %9.6f => %9.6f\n", pCaustic, pNew);
+							pCaustic = pNew;
+						} */
 						tauInt.intX(type, pCaustic, limit);
 						sample1 = new TauSample(tauInt.getRbottom(), pCaustic, 
 								tauInt.getXSum());
 						tmpModel.set(iBot, sample1);
 						System.out.format("\n Caustic: %3d %s\n", iBot, sample1);
 						refineSampling(type, iTop, iBot);
+						System.out.println();
 						iTop = iBot;
 					}
 				}
@@ -172,7 +181,7 @@ public class SampleSlowness {
 				slowTop = slowBot;
 			}
 		}
-		refineRadius(type);
+//	refineRadius(type);
 	}
 	
 	/**
@@ -210,7 +219,7 @@ public class SampleSlowness {
 	 * @throws Exception On an illegal integration interval
 	 */
 	private void refineSampling(char type, int iTop, int iBot) throws Exception {
-		int nSamp, iTmp, iTau, iRadius;
+		int nSamp, iTmp, iRadius;
 		double xTarget, dX, xBot, pBot, pTarget, rTarget, dSlow;
 		ModelSample model0, model1;
 		TauSample sample0 = null, sample1;
@@ -263,22 +272,20 @@ public class SampleSlowness {
 				tauModel.add(type, tmpModel.get(iBot));
 			}
 			
-			iTau = tauModel.size(type)-1;
-			sample0=tauModel.getSample(type, iTau-1);
+			sample0 = tauModel.getSample(type, tauModel.size(type)-2);
+			sample1 = tauModel.getLast(type);
 			// Make sure our slowness sampling is OK.
-			if(Math.abs(tauModel.getSample(type, iTau).slow-sample0.slow) > 
-					TablesUtil.DELPMAX) {
+			if(Math.abs(sample1.slow-sample0.slow) > TablesUtil.DELPMAX) {
 				// Oops!  Fix the last sample.
 				nSamp = Math.max((int) (Math.abs(pBot-sample0.slow)/
 						TablesUtil.DELPMAX+0.99d), 1);
 				pTarget = sample0.slow+(pBot-sample0.slow)/nSamp;
 				tauInt.intX(type, pTarget, limit);
-				tauModel.setLast(type, new TauSample(tauInt.getRbottom(), pTarget, 
-						tauInt.getXSum()));
+				sample1.update(tauInt.getRbottom(), pTarget, tauInt.getXSum());
 				System.out.format(" dpmax  %3d %s\n", tauModel.size(type)-1, 
-						tauModel.getLast(type));
+						sample1);
 				// Reset the range sampling.
-				xTarget = tauModel.getLast(type).x;
+				xTarget = sample1.x;
 				nSamp = Math.max((int) (Math.abs(xBot-xTarget)/delX+0.8), 1);
 				dX = (xBot-xTarget)/nSamp;
 //			System.out.format("Samp: %2d %10.4e %10.4e\n", nSamp, xTarget, dX);
@@ -286,36 +293,38 @@ public class SampleSlowness {
 			}
 			
 			// Make sure our radius sampling is OK too.
-			if(Math.abs(tauModel.getSample(type, iTau).r-sample0.r) > 
-					TablesUtil.DELRMAX) {
+			if(Math.abs(sample1.r-rLast) > TablesUtil.DELRMAX) {
 				// Oops!  Fix the last sample.
 				rTarget = sample0.r-TablesUtil.DELRMAX;
 				iRadius = tauInt.getIbottom();
 				while(rTarget > locModel.getR(iRadius)) {
-					iRadius--;
+					iRadius++;
 				}
 				// Turn the target radius into a slowness increment.
 				model0 = locModel.model.get(iRadius);
-				model1 = locModel.model.get(iRadius+1);
+				model1 = locModel.model.get(iRadius-1);
+//			System.out.format("R: %7.2f %7.2f %7.2f\n", model0.r, rTarget, model1.r);
 				dSlow = Math.abs(sample0.slow-model0.getSlow(type)*
 						Math.pow(rTarget/model0.r, Math.log(model1.getSlow(type)/
 						model0.getSlow(type))/Math.log(model1.r/model0.r)));
+//			System.out.format("U: %9.6f %9.6f %9.6f\n", model0.slowP, sample0.slow-dSlow, 
+//					model1.slowP);
 				// Do the fixing.
 				nSamp = Math.max((int) (Math.abs(pBot-sample0.slow)/dSlow+0.99d), 
 						1);
 				pTarget = sample0.slow+(pBot-sample0.slow)/nSamp;
 				tauInt.intX(type, pTarget, limit);
-				tauModel.setLast(type, new TauSample(tauInt.getRbottom(), pTarget, 
-						tauInt.getXSum()));
+				sample1.update(tauInt.getRbottom(), pTarget, tauInt.getXSum());
 				System.out.format(" drmax  %3d %s\n", tauModel.size(type)-1, 
 						tauModel.getLast(type));
 				// Reset the range sampling.
-				xTarget = tauModel.getLast(type).x;
+				xTarget = sample1.x;
 				nSamp = Math.max((int) (Math.abs(xBot-xTarget)/delX+0.8), 1);
 				dX = (xBot-xTarget)/nSamp;
-				System.out.format("Samp: %2d %10.4e %10.4e\n", nSamp, xTarget, dX);
+//			System.out.format("Samp: %2d %10.4e %10.4e\n", nSamp, xTarget, dX);
 				iTmp = iTop+1;
 			}
+			rLast = sample1.r;
 		} while(Math.abs(xTarget-xBot) > TablesUtil.XTOL);
 		System.out.format("end     %3d %s\n", tauModel.size(type)-1, 
 				tauModel.getLast(type));

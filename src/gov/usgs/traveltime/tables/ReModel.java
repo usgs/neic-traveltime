@@ -58,8 +58,8 @@ public class ReModel {
 			tauModel = new TauModel();
 			sample = new SampleSlowness(locModel, tauModel, tauInt);
 			sample.sample('P');
-/*		tauModel.printModel('P');
-			sample.sample('S');
+			tauModel.printModel('P');
+/*		sample.sample('S');
 			tauModel.printModel('S');
 			tauModel.merge();
 			tauModel.printMerge(); */

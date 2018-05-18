@@ -29,9 +29,9 @@ public class TauModel {
 	 */
 	public void add(char type, TauSample sample) {
 		if(type == 'P') {
-			pModel.add(sample);
+			pModel.add(new TauSample(sample));
 		} else {
-			sModel.add(sample);
+			sModel.add(new TauSample(sample));
 		}
 	}
 	
@@ -72,9 +72,9 @@ public class TauModel {
 	 */
 	public void setLast(char type, TauSample sample) {
 		if(type == 'P') {
-			pModel.set(pModel.size()-1, sample);
+			pModel.set(pModel.size()-1, new TauSample(sample));
 		} else {
-			sModel.set(sModel.size()-1, sample);
+			sModel.set(sModel.size()-1, new TauSample(sample));
 		}
 	}
 	
