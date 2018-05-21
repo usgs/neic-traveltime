@@ -59,10 +59,10 @@ public class ReModel {
 			sample = new SampleSlowness(locModel, tauModel, tauInt);
 			sample.sample('P');
 			tauModel.printModel('P');
-/*		sample.sample('S');
+			sample.sample('S');
 			tauModel.printModel('S');
-			tauModel.merge();
-			tauModel.printMerge(); */
+			tauModel.merge(locModel);
+			tauModel.printMerge();
 		} else {
 			System.out.println("Read status = "+status);
 		}

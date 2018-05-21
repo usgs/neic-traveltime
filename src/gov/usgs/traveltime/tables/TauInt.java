@@ -165,9 +165,13 @@ public class TauInt {
 			iBottom = j;
 			if(p < tabModel.getSlow(type, j)) {
 				// Add an increment at the end that's between grid points.
-				rBottom = tabModel.getR(j)*Math.pow(p/tabModel.getSlow(type, j), 
-						Math.log(tabModel.getR(j-1)/tabModel.getR(j))/
-						Math.log(tabModel.getSlow(type, j-1)/tabModel.getSlow(type, j)));
+				if(tabModel.getR(j-1) > 0d) {
+					rBottom = tabModel.getR(j)*Math.pow(p/tabModel.getSlow(type, j), 
+							Math.log(tabModel.getR(j-1)/tabModel.getR(j))/
+							Math.log(tabModel.getSlow(type, j-1)/tabModel.getSlow(type, j)));
+				} else {
+					rBottom = tabModel.getR(j)*(p/tabModel.getSlow(type, j));
+				}
 				zLast = Math.log(convert.xNorm*rBottom);
 				tauSum += intLayer(p, tabModel.getSlow(type, j), p, tabModel.getZ(j), 
 						zLast);

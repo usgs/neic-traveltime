@@ -93,18 +93,49 @@ public class TauModel {
 	}
 	
 	/**
-	 * Merge the P- and S-wave slownesses into a single list.
+	 * Merge the P- and S-wave slownesses into a single list.  To 
+	 * avoid making the spacing very non-uniform, the merge is done 
+	 * between critical slownesses.  For each interval, the sampling 
+	 * that seems most complete (judging by the number of samples) 
+	 * is used.
+	 * 
+	 * @param locModel Internal Earth model
 	 */
-	public void merge() {
-		int pIndex = 0;
+	public void merge(InternalModel locModel) {
+		int pBeg = 1, pEnd, sBeg = 0, sEnd;
+		ArrayList<CritSlowness> critical;
+		CritSlowness crit0, crit1;
+		
+		critical = locModel.critical;
 		slowness = new ArrayList<Double>();
-		for(int sIndex=0; sIndex<sModel.size(); sIndex++) {
-			while(sModel.get(sIndex).slow <= pModel.get(pIndex).slow) {
-				slowness.add(pModel.get(pIndex).slow);
+		crit1 = critical.get(critical.size()-1);
+		for(int iCrit=critical.size()-2; iCrit>=0; iCrit--) {
+			crit0 = crit1;
+			crit1 = critical.get(iCrit);
+			System.out.format("\tInterval: %8.6f %8.6f\n", crit0.slowness, crit1.slowness);
+			if(crit0.slowness <= pModel.get(pBeg-1).slow) {
+				for(pEnd=pBeg; pEnd<pModel.size(); pEnd++) {
+					if(crit1.slowness == pModel.get(pEnd).slow) break;
+				}
+			} else {
+				pEnd = 0;
 			}
-			if(sModel.get(sIndex).slow > pModel.get(pIndex).slow) {
-				slowness.add(sModel.get(sIndex).slow);
+			for(sEnd=sBeg; sEnd<sModel.size(); sEnd++) {
+				if(crit1.slowness == sModel.get(sEnd).slow) break;
 			}
+			
+			System.out.format("\tIndices: P: %d %d S: %d %d\n", pBeg, pEnd, sBeg, sEnd);
+			if(pEnd-pBeg > sEnd-sBeg) {
+				for(int j=pBeg; j<=pEnd; j++) {
+					slowness.add(pModel.get(j).slow);
+				}
+			} else {
+				for(int j=sBeg; j<=sEnd; j++) {
+					slowness.add(sModel.get(j).slow);
+				}
+			}
+			pBeg = ++pEnd;
+			sBeg = ++sEnd;
 		}
 	}
 	
@@ -120,7 +151,7 @@ public class TauModel {
 				System.out.format("%3d %s\n", j, pModel.get(j));
 			}
 		} else {
-			for(int j=0; j<pModel.size(); j++) {
+			for(int j=0; j<sModel.size(); j++) {
 				System.out.format("%3d %s\n", j, sModel.get(j));
 			}
 		}
