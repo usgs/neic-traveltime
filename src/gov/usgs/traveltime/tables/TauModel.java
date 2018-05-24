@@ -112,7 +112,8 @@ public class TauModel {
 		for(int iCrit=critical.size()-2; iCrit>=0; iCrit--) {
 			crit0 = crit1;
 			crit1 = critical.get(iCrit);
-			System.out.format("\tInterval: %8.6f %8.6f\n", crit0.slowness, crit1.slowness);
+			if(TablesUtil.deBugLevel > 1) System.out.format("\tInterval: "+
+					"%8.6f %8.6f\n", crit0.slowness, crit1.slowness);
 			if(crit0.slowness <= pModel.get(pBeg-1).slow) {
 				for(pEnd=pBeg; pEnd<pModel.size(); pEnd++) {
 					if(crit1.slowness == pModel.get(pEnd).slow) break;
@@ -124,7 +125,8 @@ public class TauModel {
 				if(crit1.slowness == sModel.get(sEnd).slow) break;
 			}
 			
-			System.out.format("\tIndices: P: %d %d S: %d %d\n", pBeg, pEnd, sBeg, sEnd);
+			if(TablesUtil.deBugLevel > 1) System.out.format("\tIndices: "+
+					"P: %d %d S: %d %d\n", pBeg, pEnd, sBeg, sEnd);
 			if(pEnd-pBeg > sEnd-sBeg) {
 				for(int j=pBeg; j<=pEnd; j++) {
 					slowness.add(pModel.get(j).slow);
@@ -143,9 +145,15 @@ public class TauModel {
 	 * Print out the slowness model.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param tau If true print the slowness model header, if false print the 
+	 * depth model header
 	 */
-	public void printModel(char type) {
-		System.out.println("\nTau model for "+type+" slowness");
+	public void printModel(char type, boolean tau) {
+		if(tau) {
+			System.out.println("\nTau model for "+type+" slowness");
+		} else {
+			System.out.println("\nDepth model for "+type+" slowness");
+		}
 		if(type == 'P') {
 			for(int j=0; j<pModel.size(); j++) {
 				System.out.format("%3d %s\n", j, pModel.get(j));

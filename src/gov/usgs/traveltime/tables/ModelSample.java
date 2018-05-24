@@ -131,10 +131,11 @@ public class ModelSample {
 		
 		if(flat) {
 			if(convert == null) {
-				System.out.format("\t%3d: %9.4f %8.6f %8.6f\n", j, z, slowP, slowS);
-			} else {
-				System.out.format("\t%3d: %9.2f %8.6f %8.6f\n", j, convert.realZ(z), 
+				System.out.format("\t%3d: %7.2f %9.4f %8.6f %8.6f\n", j, r, z, 
 						slowP, slowS);
+			} else {
+				System.out.format("\t%3d: %8.2f %7.2f %8.6f %8.6f\n", j, r, 
+						convert.realZ(z), slowP, slowS);
 			}
 		} else {
 			System.out.format("\t%3d: %9.2f %7.4f %7.4f\n", j, r, vp, vs);

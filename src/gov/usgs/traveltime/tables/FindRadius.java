@@ -15,6 +15,7 @@ import gov.usgs.traveltime.ModConvert;
  */
 public class FindRadius implements UnivariateFunction {
 	char type;
+	int iShell;
 	double pTarget;
 	EarthModel refModel;
 	ModConvert convert;
@@ -34,15 +35,17 @@ public class FindRadius implements UnivariateFunction {
 	 * Set up the root finding environment.
 	 * 
 	 * @param type Wave type (P = P-waves, S = S-waves)
+	 * @param iShell Shell index
 	 * @param pTarget Non-dimensional target ray parameter
 	 */
-	public void setUp(char type, double pTarget) {
+	public void setUp(char type, int iShell, double pTarget) {
 		this.type = type;
+		this.iShell = iShell;
 		this.pTarget = pTarget;
 	}
 
 	@Override
 	public double value(double r) {
-		return r*convert.tNorm/refModel.getVel(type, r)-pTarget;
+		return r*convert.tNorm/refModel.getVel(type, iShell, r)-pTarget;
 	}
 }

@@ -49,4 +49,8 @@ public class TablesUtil {
 	 * Non-dimensional back off when dXdP is infinite (at the top of shells).
 	 */
 	public static double SLOWOFF = 1e-6d;
+	/**
+	 * The higher the debug level, the more output you get.
+	 */
+	public static int deBugLevel = 0;
 }

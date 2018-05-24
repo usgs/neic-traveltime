@@ -1,5 +1,7 @@
 package gov.usgs.traveltime.tables;
 
+import gov.usgs.traveltime.ModConvert;
+
 /**
  * One sample in the alternative view of the Earth model suitable 
  * for the tau-p travel-time calculation.
@@ -25,6 +27,22 @@ public class TauSample {
 		this.r = r;
 		this.slow = slow;
 		this.x = x;
+		z = Double.NaN;
+	}
+	
+	/**
+	 * Initialize this sample.  For some purposes, we don't need 
+	 * range.
+	 * 
+	 * @param r Dimensional Earth radius in kilometers
+	 * @param slow Non-dimensional slowness
+	 * @param convert Model dependent constants
+	 */
+	public TauSample(double r, double slow, ModConvert convert) {
+		this.r = r;
+		this.slow = slow;
+		x = Double.NaN;
+		z = Math.log(r*convert.xNorm);
 	}
 	
 	/**
@@ -36,6 +54,7 @@ public class TauSample {
 		this.r = sample.r;
 		this.slow = sample.slow;
 		this.x = sample.x;
+		this.z = sample.z;
 	}
 	
 	/**
@@ -65,6 +84,12 @@ public class TauSample {
 	
 	@Override
 	public String toString() {
-		return String.format("%7.2f %8.6f %8.6f", r, slow, x);
+		if(!Double.isNaN(x)) {
+			return String.format("%7.2f %8.6f %8.6f", r, slow, x);
+		} else if(!Double.isNaN(z)) {
+			return String.format("%7.2f %8.6f %8.6f", r, slow, z);
+		} else {
+			return String.format("%7.2f %8.6f", r, slow);
+		}
 	}
 }

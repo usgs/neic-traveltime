@@ -31,6 +31,7 @@ public class ReModel {
 		TauInt tauInt;
 		TtStatus status;
 		
+		TablesUtil.deBugLevel = 1;
 		refModel = new EarthModel(earthModel, true);
 		// Read the model.
 		status = refModel.readModel();
@@ -55,14 +56,18 @@ public class ReModel {
 			
 			// Make the slowness sampling.
 			tauInt = new TauInt(locModel, convert);
-			tauModel = new TauModel();
-			sample = new SampleSlowness(locModel, tauModel, tauInt);
+			sample = new SampleSlowness(locModel, tauInt);
 			sample.sample('P');
-			tauModel.printModel('P');
+			sample.printModel('P', true);
 			sample.sample('S');
-			tauModel.printModel('S');
-			tauModel.merge(locModel);
-			tauModel.printMerge();
+			sample.printModel('S', true);
+			sample.merge();
+			sample.printMerge();
+			sample.depthModel('P');
+			sample.printModel('P', false);
+			sample.depthModel('S');
+			sample.printModel('S', false);
+			tauModel = sample.getDepthModel();
 		} else {
 			System.out.println("Read status = "+status);
 		}
