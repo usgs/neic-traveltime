@@ -229,23 +229,17 @@ public class EarthModel {
 			if(!shell.isDisc) {
 				rDisc = shell.rTop;
 				if(rDisc <= rInnerCore) {
-					shell.delX = TablesUtil.DELX[0]/rSurface;
-					shell.name = ShellName.INNER_CORE;
+					shell.addName(ShellName.INNER_CORE, Double.NaN, TablesUtil.DELX[0]);
 				} else if(rDisc <= rOuterCore) {
-					shell.delX = TablesUtil.DELX[1]/rSurface;
-					shell.name = ShellName.OUTER_CORE;
+					shell.addName(ShellName.OUTER_CORE, Double.NaN, TablesUtil.DELX[1]);
 				} else if(rDisc <= rUpperMantle) {
-					shell.delX = TablesUtil.DELX[2]/rSurface;
-					shell.name = ShellName.LOWER_MANTLE;
+					shell.addName(ShellName.LOWER_MANTLE, Double.NaN, TablesUtil.DELX[2]);
 				} else if(rDisc <= rMoho) {
-					shell.delX = TablesUtil.DELX[3]/rSurface;
-					shell.name = ShellName.UPPER_MANTLE;
+					shell.addName(ShellName.UPPER_MANTLE, Double.NaN, TablesUtil.DELX[3]);
 				} else if(rDisc <= rConrad) {
-					shell.delX = TablesUtil.DELX[4]/rSurface;
-					shell.name = ShellName.LOWER_CRUST;
+					shell.addName(ShellName.LOWER_CRUST, Double.NaN, TablesUtil.DELX[4]);
 				} else {
-					shell.delX = TablesUtil.DELX[5]/rSurface;
-					shell.name = ShellName.UPPER_CRUST;
+					shell.addName(ShellName.UPPER_CRUST, Double.NaN, TablesUtil.DELX[5]);
 				}
 			}
 		}
@@ -256,26 +250,23 @@ public class EarthModel {
 			if(shell.isDisc) {
 				rDisc = shell.rTop;
 				if(rDisc == rInnerCore) {
-					shell.delX = TablesUtil.DELX[1]/rSurface;
-					shell.name = ShellName.INNER_CORE_BOUNDARY;
+					shell.addName(ShellName.INNER_CORE_BOUNDARY, Double.NaN, 
+							TablesUtil.DELX[1]);
 				} else if(rDisc == rOuterCore) {
-					shell.delX = TablesUtil.DELX[2]/rSurface;
-					shell.name = ShellName.CORE_MANTLE_BOUNDARY;
+					shell.addName(ShellName.CORE_MANTLE_BOUNDARY, Double.NaN, 
+							TablesUtil.DELX[2]);
 				} else if(rDisc == rMoho) {
-					shell.delX = TablesUtil.DELX[4]/rSurface;
-					shell.name = ShellName.MOHO_DISCONTINUITY;
+					shell.addName(ShellName.MOHO_DISCONTINUITY, Double.NaN, 
+							TablesUtil.DELX[4]);
 				} else if(rDisc == rConrad) {
-					shell.delX = TablesUtil.DELX[5]/rSurface;
-					shell.name = ShellName.CONRAD_DISCONTINUITY;
+					shell.addName(ShellName.CONRAD_DISCONTINUITY, rSurface-rDisc, 
+							TablesUtil.DELX[5]);
 				} else {
 					if(rDisc < rUpperMantle) {
-						shell.delX = TablesUtil.DELX[2]/rSurface;
+						shell.addName(null, rSurface-rDisc, TablesUtil.DELX[2]);
 					} else {
-						shell.delX = TablesUtil.DELX[3]/rSurface;
+						shell.addName(null, rSurface-rDisc, TablesUtil.DELX[3]);
 					}
-					shell.name = null;
-					shell.altName = String.format("%d km discontinuity", 
-							(int) (rSurface-rDisc+.5d));
 				}
 			}
 		}
@@ -386,7 +377,8 @@ public class EarthModel {
 				earthModel, model.size(), innerCore.r, outerCore.r, upperMantle.r, 
 				moho.r, conrad.r, surface.r);
 		for(int j=0; j<model.size(); j++) {
-			System.out.format("\t%3d: %s\n", j, model.get(j).printSample(false, null));
+			System.out.format("\t%3d: %s\n", j, 
+					model.get(j).printSample(false, null));
 		}
 	}
 	
@@ -396,7 +388,7 @@ public class EarthModel {
 	public void printShells() {
 		System.out.println("\n\t\tShells:");
 		for(int j=0; j<shells.size(); j++) {
-			System.out.format("%3d   %s\n", j, shells.get(j).printShell(convert));
+			System.out.format("%3d   %s\n", j, shells.get(j).toString());
 		}
 	}
 }

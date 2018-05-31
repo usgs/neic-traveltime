@@ -2,8 +2,6 @@ package gov.usgs.traveltime.tables;
 
 import java.util.ArrayList;
 
-import gov.usgs.traveltime.ModConvert;
-
 /**
  * Keep track of one range between model discontinuities 
  * (i.e., one shell of the Earth model).
@@ -12,12 +10,15 @@ import gov.usgs.traveltime.ModConvert;
  *
  */
 public class ModelShell {
-	ShellName name;
-	String altName;
-	boolean isDisc;
-	int iBot, iTop;
-	double rBot, rTop;
-	double delX;			// Non-dimensional range increment target for this layer
+	String name;			// Alternate name for unnamed discontinuities
+	String pCode;			// Temporary P-wave phase code
+	String sCode;			// Temporary S-wave phase code
+	boolean isDisc;		// True if this is a discontinuity
+	int iBot;					// Index of the deepest sample in this region 
+	int iTop;					// Index of the shallowest sample in this region
+	double rBot;			// Radius of the deepest sample in this region in kilometers
+	double rTop;			// Radius of the shallowest sample in this region in kilometers
+	double delX;			// Range increment target for this layer in kilometers
 	
 	/**
 	 * Initialize the shell with the parameters at the deep end.
@@ -29,6 +30,9 @@ public class ModelShell {
 		isDisc = false;
 		iBot = index;
 		rBot = r;
+		name = null;
+		pCode = null;
+		sCode = null;
 	}
 	
 	/**
@@ -44,6 +48,9 @@ public class ModelShell {
 		this.iTop = iTop;
 		rBot = r;
 		rTop = r;
+		name = null;
+		pCode = null;
+		sCode = null;
 	}
 	
 	/**
@@ -58,7 +65,8 @@ public class ModelShell {
 		rBot = shell.rBot;
 		delX = shell.delX;
 		name = shell.name;
-		altName = shell.altName;
+		pCode = shell.pCode;
+		sCode = shell.sCode;
 	}
 	
 	/**
@@ -70,6 +78,31 @@ public class ModelShell {
 	public void addEnd(int index, double r) {
 		iTop = index;
 		rTop = r;
+	}
+	
+	/**
+	 * Add a convenience name to the shell and keep track of the target 
+	 * range increment.
+	 * 
+	 * @param name Shell name enumeration
+	 * @param depth Depth of the top of the shell in kilometers
+	 * @param delX Target range increment for this shell
+	 */
+	public void addName(ShellName name, double depth, double delX) {
+		if(name != null) {
+			this.name = name.toString();
+			pCode = name.tmpPcode();
+			sCode = name.tmpScode();
+			if(pCode == null && sCode == null) {
+				pCode = String.format("rPd%dP", (int) (depth+.5d));
+				sCode = String.format("rSd%dS", (int) (depth+.5d));
+			}
+		} else {
+			this.name = String.format("%d km discontinuity", (int) (depth+.5d));
+			pCode = String.format("rPd%dP", (int) (depth+.5d));
+			sCode = String.format("rSd%dS", (int) (depth+.5d));
+		}
+		this.delX = delX;
 	}
 	
 	/**
@@ -116,19 +149,32 @@ public class ModelShell {
 	}
 	
 	/**
-	 * Format the information in this shell for printing.
+	 * Print this wave type specific shell for the depth model.
 	 * 
-	 * @param convert Model dependent conversions
-	 * @return String describing this shell
+	 * @param type Wave type (P = compressional, S = shear)
+	 * @return String representing this shell
 	 */
-	public String printShell(ModConvert convert) {
-		
-		if(name == null) {
-			return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %s", 
-					iBot, iTop, rBot, rTop, convert.dimR(delX), altName);
+	public String printTau(char type) {
+		if(type == 'P') {
+			if(pCode != null) {
+				return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %-8s %s", 
+						iBot, iTop, rBot, rTop, delX, pCode, name);
+			} else {
+				return null;
+			}
 		} else {
-			return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %s", 
-					iBot, iTop, rBot, rTop, convert.dimR(delX), name);
+			if(sCode != null) {
+				return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %-8s %s", 
+						iBot, iTop, rBot, rTop, delX, sCode, name);
+			} else {
+				return null;
+			}
 		}
+	}
+	
+@Override
+	public String toString() {
+		return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %-8s %-8s %s", 
+				iBot, iTop, rBot, rTop, delX, pCode, sCode, name);
 	}
 }

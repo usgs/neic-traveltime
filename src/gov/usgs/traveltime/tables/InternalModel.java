@@ -344,7 +344,7 @@ public class InternalModel {
 	public void printShells() {
 		System.out.println("\n\t\tShells:");
 		for(int j=0; j<shells.size(); j++) {
-			System.out.format("%3d   %s\n", j, shells.get(j).printShell(convert));
+			System.out.format("%3d   %s\n", j, shells.get(j).toString());
 		}
 	}
 	

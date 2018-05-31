@@ -68,6 +68,8 @@ public class ReModel {
 			sample.depthModel('S');
 			sample.printModel('S', false);
 			tauModel = sample.getDepthModel();
+			tauModel.printDepShells('P');
+			tauModel.printDepShells('S');
 		} else {
 			System.out.println("Read status = "+status);
 		}

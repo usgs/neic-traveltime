@@ -12,16 +12,20 @@ import gov.usgs.traveltime.ModConvert;
  *
  */
 public class TauModel {
+	EarthModel refModel;
 	ArrayList<TauSample> pModel, sModel;
 	ArrayList<Double> slowness;
+	ArrayList<ModelShell> pShells = null, sShells = null;
 	ModConvert convert;
 	
 	/**
 	 * Allocate lists for independent P and S models.
 	 * 
+	 * @param refModel Reference Earth model
 	 * @param convert Model dependent conversions
 	 */
-	public TauModel(ModConvert convert) {
+	public TauModel(EarthModel refModel, ModConvert convert) {
+		this.refModel = refModel;
 		this.convert = convert;
 		pModel = new ArrayList<TauSample>();
 		sModel = new ArrayList<TauSample>();
@@ -180,6 +184,75 @@ public class TauModel {
 	}
 	
 	/**
+	 * Make yet another set of shells.  This time, the shell indices are 
+	 * into the P- and S-wave tau models, so the indices will be different 
+	 * for each model.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 */
+	public void makeDepShells(char type) {
+		int iBeg, iEnd;
+		double slowTop;
+		ModelShell refShell, newShell, lastShell = null;
+		
+		if(type == 'P') {
+			pShells = new ArrayList<ModelShell>();
+			iEnd = pModel.size()-1;
+			for(int i=0; i<refModel.shells.size(); i++) {
+				refShell = refModel.shells.get(i);
+				slowTop = refModel.getSlow(type, refShell.iTop);
+				iBeg = iEnd;
+				for(iEnd=iBeg; iEnd>=0; iEnd--) {
+					if(pModel.get(iEnd).slow == slowTop) break;
+				}
+				newShell = new ModelShell(refShell, iBeg);
+				newShell.addEnd(iEnd, refShell.rTop);
+				if(slowTop > refModel.getSlow(type, refShell.iBot)) {
+					if(lastShell != null) {
+						if(!lastShell.pCode.equals(newShell.pCode)) {
+							pShells.add(newShell);
+							lastShell = newShell;
+						} else {
+							lastShell.iTop = iEnd;
+							lastShell.rTop = newShell.rTop;
+						}
+					} else {
+						pShells.add(newShell);
+						lastShell = newShell;
+					}
+				}
+			}
+		} else {
+			sShells = new ArrayList<ModelShell>();
+			iEnd = sModel.size()-1;
+			for(int i=0; i<refModel.shells.size(); i++) {
+				refShell = refModel.shells.get(i);
+				slowTop = refModel.getSlow(type, refShell.iTop);
+				iBeg = iEnd;
+				for(iEnd=iBeg; iEnd>=0; iEnd--) {
+					if(sModel.get(iEnd).slow == slowTop) break;
+				}
+				newShell = new ModelShell(refShell, iBeg);
+				newShell.addEnd(iEnd, refShell.rTop);
+				if(slowTop > refModel.getSlow(type, refShell.iBot)) {
+					if(lastShell != null) {
+						if(!lastShell.sCode.equals(newShell.sCode)) {
+							sShells.add(newShell);
+							lastShell = newShell;
+						} else {
+							lastShell.iTop = iEnd;
+							lastShell.rTop = newShell.rTop;
+						}
+					} else {
+						sShells.add(newShell);
+						lastShell = newShell;
+					}
+				}
+			}
+		}
+	}
+	
+	/**
 	 * Print out the slowness model.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)
@@ -210,6 +283,28 @@ public class TauModel {
 		System.out.println("\n Merged slownesses");
 		for(int j=0; j<slowness.size(); j++) {
 			System.out.format("%3d %8.6f\n", j, slowness.get(j));
+		}
+	}
+	
+	/**
+	 * Print the wave type specific shells for the depth model.
+	 * 
+	 * @param type Wave type (P = compressional, S = shear)
+	 */
+	public void printDepShells(char type) {
+		String shellLine;
+		
+		System.out.println("\n\t"+type+" Model Shells:");
+		if(type == 'P') {
+			for(int j=0; j<pShells.size(); j++) {
+				shellLine = pShells.get(j).printTau(type);
+				if(shellLine != null) System.out.format("%3d   %s\n", j, shellLine);
+			}
+		} else {
+			for(int j=0; j<sShells.size(); j++) {
+				shellLine = sShells.get(j).printTau(type);
+				if(shellLine != null) System.out.format("%3d   %s\n", j, shellLine);
+			}
 		}
 	}
 }

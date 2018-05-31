@@ -70,8 +70,8 @@ public class SampleSlowness {
 		shells = locModel.shells;
 		critical = locModel.getCritical();
 		this.tauInt = tauInt;
-		tauModel = new TauModel(convert);
-		depModel = new TauModel(convert);
+		tauModel = new TauModel(refModel, convert);
+		depModel = new TauModel(refModel, convert);
 		tmpModel = new ArrayList<TauSample>();
 		solver = new PegasusSolver();
 		findCaustic = new FindCaustic(tauInt);
@@ -109,16 +109,11 @@ public class SampleSlowness {
 				// Set up limits for this shell.
 				iShell = crit.getShell(type);
 				shell = shells.get(iShell);
-				delX = shell.delX;
+				delX = convert.normR(shell.delX);
 				limit = shell.iBot;
 				if(TablesUtil.deBugLevel > 0) {
-					if(shell.name == null) {
-						System.out.format("\nShell: %3d %3d %6.2f %s\n", iShell, limit, 
-								convert.dimR(delX), shell.altName);
-					} else {
-						System.out.format("\nShell: %3d %3d %6.2f %s\n", iShell, limit, 
-								convert.dimR(delX), shell.name);
-					}
+					System.out.format("\nShell: %3d %3d %6.2f %s\n", iShell, limit, 
+							shell.delX, shell.name);
 				}
 				slowBot = crit.slowness;
 				// Sample the top and bottom of this layer.
@@ -453,13 +448,8 @@ public class SampleSlowness {
 						slowness.get(iEnd));
 				// Do this shell.
 				if(TablesUtil.deBugLevel > 0) {
-					if(shell.name == null) {
-						System.out.format("Shell: %3d %8.6f %8.6f %s\n", iShell, 
-								slowTop, slowBot, shell.altName);
-					} else {
-						System.out.format("Shell: %3d %8.6f %8.6f %s\n", iShell, 
-								slowTop, slowBot, shell.name);
-					}
+					System.out.format("Shell: %3d %8.6f %8.6f %s\n", iShell, 
+							slowTop, slowBot, shell.name);
 				}
 				iCur = shell.iTop-1;
 				locSlow = locModel.getSlow(type, iCur);
@@ -504,6 +494,7 @@ public class SampleSlowness {
 				iBeg = ++iEnd;
 			}
 		}
+		depModel.makeDepShells(type);
 	}
 	
 	/**
@@ -573,5 +564,14 @@ public class SampleSlowness {
 	 */
 	public void printMerge() {
 		tauModel.printMerge();
+	}
+	
+	/**
+	 * Print the wave type specific shells for the depth model.
+	 * 
+	 * @param type Slowness type (P = P slowness, S = S slowness)
+	 */
+	public void printShells(char type) {
+		depModel.printDepShells(type);
 	}
 }

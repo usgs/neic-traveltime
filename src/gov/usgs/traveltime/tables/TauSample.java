@@ -72,18 +72,6 @@ public class TauSample {
 		this.x = x;
 	}
 	
-	/**
-	 * Complete the model by adding depth and an index into tau versus 
-	 * depth storage.
-	 * 
-	 * @param z Non-dimensional Earth flattened depth
-	 * @param index Index into tau(z) storage
-	 */
-	public void addZ(double z, int index) {
-		this.z = z;
-		this.index = index;
-	}
-	
 	@Override
 	public String toString() {
 		if(!Double.isNaN(x)) {
