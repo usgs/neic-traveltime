@@ -2,6 +2,8 @@ package gov.usgs.traveltime.tables;
 
 import java.util.ArrayList;
 
+import gov.usgs.traveltime.ModConvert;
+
 /**
  * An alternative version of the earth model with sampling suitable 
  * for the tau-p travel-time calculation.
@@ -12,13 +14,49 @@ import java.util.ArrayList;
 public class TauModel {
 	ArrayList<TauSample> pModel, sModel;
 	ArrayList<Double> slowness;
+	ModConvert convert;
 	
 	/**
 	 * Allocate lists for independent P and S models.
+	 * 
+	 * @param convert Model dependent conversions
 	 */
-	public TauModel() {
+	public TauModel(ModConvert convert) {
+		this.convert = convert;
 		pModel = new ArrayList<TauSample>();
 		sModel = new ArrayList<TauSample>();
+	}
+	
+	/**
+	 * Add a sample to the model.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param r Dimensional Earth radius in kilometers
+	 * @param slow Non-dimensional slowness
+	 * @param x Non-dimensional ray travel distance (range)
+	 */
+	public void add(char type, double r, double slow, double x) {
+		if(type == 'P') {
+			pModel.add(new TauSample(r, slow, x));
+		} else {
+			sModel.add(new TauSample(r, slow, x));
+		}
+	}
+	
+	/**
+	 * Add a sample to the model.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param r Dimensional Earth radius in kilometers
+	 * @param slow Non-dimensional slowness
+	 * @param index Index into the merged slownesses
+	 */
+	public void add(char type, double r, double slow, int index) {
+		if(type == 'P') {
+			pModel.add(new TauSample(r, slow, index, convert));
+		} else {
+			sModel.add(new TauSample(r, slow, index, convert));
+		}
 	}
 	
 	/**

@@ -19,10 +19,6 @@ public class ModConvert {
 	 * Normalization for travel-time and tau.
 	 */
 	public final double tNorm;		// Internal normalization constant for time.
-	/**
-	 * Normalization for velocity (turns out to be the same as time).
-	 */
-	public final double vNorm;		// Internal normalization constant for velocity.
 	final double dTdDelta;				// Convert dT/dDelta to dimensional units.
 	final double deg2km;					// Convert degrees to kilometers.
 	final double zUpperMantle;		// Depth of the upper mantle in kilometers.
@@ -44,8 +40,7 @@ public class ModConvert {
 		pNorm = in.pNorm;
 		tNorm = in.tNorm;
 		// Compute some useful constants.
-		vNorm = xNorm*pNorm;
-		dTdDelta = Math.toRadians(1d/(vNorm));
+		dTdDelta = Math.toRadians(tNorm);
 		rSurface = in.rSurface;
 		deg2km = Math.PI*rSurface/180d;
 		dTdDLg = deg2km/TauUtil.LGGRPVEL;
@@ -74,8 +69,7 @@ public class ModConvert {
 		pNorm = vsSurface;
 		// Compute some useful constants.
 		tNorm = xNorm*pNorm;
-		vNorm = tNorm;
-		dTdDelta = Math.toRadians(1d/(vNorm));
+		dTdDelta = Math.toRadians(tNorm);
 		this.rSurface = rSurface;
 		deg2km = Math.PI*rSurface/180d;
 		dTdDLg = deg2km/TauUtil.LGGRPVEL;
@@ -122,6 +116,27 @@ public class ModConvert {
 	}
 	
 	/**
+	 * Normalize radius (or depth) into units of the radius of the 
+	 * Earth
+	 * 
+	 * @param r Radius or depth in kilometers
+	 * @return Non-dimensional radius or depth
+	 */
+	public double normR(double r) {
+		return xNorm*r;
+	}	
+	
+	/**
+	 * Convert non-dimensional radius (or depth) into kilometers.
+	 * 
+	 * @param r Non-dimensional radius or depth
+	 * @return Dimensional radius or depth in kilometers
+	 */
+	public double dimR(double r) {
+		return r/xNorm;
+	}
+	
+	/**
 	 * Given a dimensional radius, return the normalized, Earth 
 	 * flattened depth.
 	 * 
@@ -141,6 +156,6 @@ public class ModConvert {
 	 * @return Normalized slowness
 	 */
 	public double flatP(double v, double r) {
-		return vNorm*r/v;
+		return tNorm*r/v;
 	}
 }

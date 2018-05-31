@@ -18,7 +18,6 @@ public class TauInt {
 	ModDataVol tauModel = null;
 	InternalModel tabModel = null;
 	ModConvert convert = null;
-	static boolean debug = false;
 
 	/**
 	 * The constructor remembers the model data output from the table generation.  
@@ -276,7 +275,7 @@ public class TauInt {
 			return pTop;
 		}
 		b = pTop-(pBot-pTop)/(Math.exp(zBot-zTop)-1d);
-		if(debug) System.out.println("b: "+pTop+" "+pBot+" "+
+		if(TablesUtil.deBugLevel > 2) System.out.println("b: "+pTop+" "+pBot+" "+
 				(float)(pBot-pTop)+" "+(float)(zBot-zTop)+" "+
 				(float)(Math.exp(zBot-zTop)-1d)+" "+(float)b);
 		// Handle the straight through ray elsewhere.
@@ -334,8 +333,8 @@ public class TauInt {
 		pTop2 = Math.sqrt(Math.abs(Math.pow(pTop, 2d)-p2));
 		bSq = Math.pow(b, 2d);
 		b2 = Math.sqrt(Math.abs(bSq-p2));
-		if(debug) System.out.println("b p2 pBot2 pTop2 b2 = "+(float)b+" "+
-				(float)p2+" "+(float)pBot2+" "+(float)pTop2+" "+(float)b2);
+		if(TablesUtil.deBugLevel > 2) System.out.println("b p2 pBot2 pTop2 b2 = "+
+		(float)b+" "+(float)p2+" "+(float)pBot2+" "+(float)pTop2+" "+(float)b2);
 		if(b2 <= TauUtil.DMIN) {
 			xInt = 0d;
 			xLayer = p*(Math.sqrt(Math.abs((pBot+b)/(pBot-b)))-
@@ -343,7 +342,7 @@ public class TauInt {
 		} else if(bSq >= p2) {
 			xInt = Math.log(Math.max((pTop-b)*(b2*pBot2+b*pBot-p2)/
 					((pBot-b)*(b2*pTop2+b*pTop-p2)), TauUtil.DMIN));
-			if(debug) System.out.println("bSq >= p2: "+
+			if(TablesUtil.deBugLevel > 2) System.out.println("bSq >= p2: "+
 					(float)((pTop-b)*(b2*pBot2+b*pBot-p2))+" "+
 					(float)((pBot-b)*(b2*pTop2+b*pTop-p2))+" "+
 					(float)Math.log((pTop-b)*(b2*pBot2+b*pBot-p2)/
@@ -354,7 +353,7 @@ public class TauInt {
 					(p*Math.abs(pBot-b)), 1d), -1d))-
 					Math.asin(Math.max(Math.min((b*pTop-p2)/
 					(p*Math.abs(pTop-b)), 1d), -1d));
-			if(debug){
+			if(TablesUtil.deBugLevel > 2){
 				System.out.println("Bot: "+(float)(b*pBot-p2)+" "+
 						(float)(p*Math.abs(pBot-b))+" "+
 						(float)Math.asin(b*pBot-p2)/(p*Math.abs(pBot-b)));
@@ -365,7 +364,7 @@ public class TauInt {
 			xLayer = -p*xInt/b2;				
 		}
 		tau = -(pBot2-pTop2+b*Math.log((pBot+pBot2)/(pTop+pTop2))-b2*xInt);
-		if(debug) System.out.println("tau xInt xLayer = "+(float)tau+" "+
+		if(TablesUtil.deBugLevel > 2) System.out.println("tau xInt xLayer = "+(float)tau+" "+
 				(float)xInt+" "+(float)xLayer);
 		tauTest(p, pTop, pBot, zTop, zBot, tau);
 		return tau;

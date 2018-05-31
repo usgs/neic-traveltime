@@ -70,8 +70,8 @@ public class SampleSlowness {
 		shells = locModel.shells;
 		critical = locModel.getCritical();
 		this.tauInt = tauInt;
-		tauModel = new TauModel();
-		depModel = new TauModel();
+		tauModel = new TauModel(convert);
+		depModel = new TauModel(convert);
 		tmpModel = new ArrayList<TauSample>();
 		solver = new PegasusSolver();
 		findCaustic = new FindCaustic(tauInt);
@@ -114,10 +114,10 @@ public class SampleSlowness {
 				if(TablesUtil.deBugLevel > 0) {
 					if(shell.name == null) {
 						System.out.format("\nShell: %3d %3d %6.2f %s\n", iShell, limit, 
-								delX/convert.xNorm, shell.altName);
+								convert.dimR(delX), shell.altName);
 					} else {
 						System.out.format("\nShell: %3d %3d %6.2f %s\n", iShell, limit, 
-								delX/convert.xNorm, shell.name);
+								convert.dimR(delX), shell.name);
 					}
 				}
 				slowBot = crit.slowness;
@@ -409,13 +409,14 @@ public class SampleSlowness {
 	 * @throws Exception On an illegal integration interval
 	 */
 	public void depthModel(char type) throws Exception {
-		int iBeg, iEnd, iCur;
-		double slowMax, slowTop, slowBot, locSlow, mergeSlow;
+		int iBeg, iEnd, iCur, n;
+		double slowMax, slowTop, slowBot, locSlow, mergeSlow, rFound;
 		ModelShell shell = null;
 		ArrayList<Double> slowness;
 		
 		// Initialize temporary variables.
 		slowness = tauModel.slowness;
+		n = slowness.size()-1;
 		iCur = shells.get(shells.size()-1).iTop;
 		slowMax = locModel.getSlow(type, iCur);
 		// Find the starting slowness.
@@ -423,8 +424,7 @@ public class SampleSlowness {
 			if(slowness.get(iBeg).equals(slowMax)) break;
 		}
 		// Add the top point of the model.
-		depModel.add(type, new TauSample(locModel.getR(iCur), slowMax, 
-				convert));
+		depModel.add(type, locModel.getR(iCur), slowMax, n-iBeg);
 		iBeg++;
 		
 		/* 
@@ -448,16 +448,16 @@ public class SampleSlowness {
 						if(slowness.get(iEnd).equals(slowBot)) break;
 					}
 				}
-				if(TablesUtil.deBugLevel > 0) System.out.format("Merged indices: "+
+				if(TablesUtil.deBugLevel > 0) System.out.format("\nMerged indices: "+
 						"%3d %3d %8.6f %8.6f\n", iBeg, iEnd, slowness.get(iBeg), 
 						slowness.get(iEnd));
 				// Do this shell.
 				if(TablesUtil.deBugLevel > 0) {
 					if(shell.name == null) {
-						System.out.format("\nShell: %3d %8.6f %8.6f %s\n", iShell, 
+						System.out.format("Shell: %3d %8.6f %8.6f %s\n", iShell, 
 								slowTop, slowBot, shell.altName);
 					} else {
-						System.out.format("\nShell: %3d %8.6f %8.6f %s\n", iShell, 
+						System.out.format("Shell: %3d %8.6f %8.6f %s\n", iShell, 
 								slowTop, slowBot, shell.name);
 					}
 				}
@@ -470,35 +470,34 @@ public class SampleSlowness {
 						mergeSlow = slowness.get(j);
 						while(mergeSlow < locSlow) {
 							locSlow = locModel.getSlow(type, --iCur);
-	//						if(mergeSlow < 0.272d) System.out.format("\t====> %3d %8.6f\n", 
-	//								iCur, locSlow);
 						}
-						System.out.format("\tlocSlow = %8.6f mergeSlow = %8.6f\n", 
-								locSlow, mergeSlow);
-						depModel.add(type, new TauSample(getRadius(type, iShell, 
-								locModel.getR(iCur), locModel.getR(iCur+1), mergeSlow), 
-								mergeSlow, convert));
+						if(TablesUtil.deBugLevel > 2) System.out.format("\tlocSlow = "+
+								"%8.6f mergeSlow = %8.6f\n", locSlow, mergeSlow);
+						rFound = getRadius(type, iShell, locModel.getR(iCur), 
+								locModel.getR(iCur+1), mergeSlow);
+						depModel.add(type, rFound, mergeSlow, n-j);
+						if(TablesUtil.deBugLevel > 1) System.out.format("\tAdd: %3d "+
+								"%7.2f %8.6f\n", j, rFound, slowness.get(j));
 					}
 					// The last point is the bottom of the shell.
 					iCur = shell.iBot;
-					depModel.add(type, new TauSample(locModel.getR(iCur), 
-							slowness.get(iEnd), convert));
+					depModel.add(type, locModel.getR(iCur), slowness.get(iEnd), n-iEnd);
+					if(TablesUtil.deBugLevel > 1) System.out.format("\tAdd: %3d %7.2f "+
+							"%8.6f\n", iEnd, locModel.getR(iCur), slowness.get(iEnd));
 				} else {
 					// It's a lot easier for discontinuities.
 					iCur = shell.iBot;
 					if(iEnd > iBeg) {
 						for(int j=iBeg; j<=iEnd; j++) {
-							depModel.add(type, new TauSample(locModel.getR(iCur), 
-									slowness.get(j), convert));
-							System.out.format("\tAdd: %3d %7.2f %8.6f\n", j, 
-									locModel.getR(iCur), slowness.get(j));
+							depModel.add(type, locModel.getR(iCur), slowness.get(j), n-j);
+							if(TablesUtil.deBugLevel > 1) System.out.format("\tAdd: %3d "+
+									"%7.2f %8.6f\n", j, locModel.getR(iCur), slowness.get(j));
 						}
 					} else {
 						for(int j=iBeg-2; j>=iEnd; j--) {
-							depModel.add(type, new TauSample(locModel.getR(iCur), 
-									slowness.get(j), convert));
-							System.out.format("\tAdd: %3d %7.2f %8.6f\n", j, 
-									locModel.getR(iCur), slowness.get(j));
+							depModel.add(type, locModel.getR(iCur), slowness.get(j), n-j);
+							if(TablesUtil.deBugLevel > 1) System.out.format("\tAdd: %3d "+
+									"%7.2f %8.6f\n", j, locModel.getR(iCur), slowness.get(j));
 						}
 					}
 				}
@@ -528,14 +527,11 @@ public class SampleSlowness {
 	 */
 	private double getRadius(char type, int iShell, double minR, double maxR, 
 			double pTarget) {
-		double radius, minP, maxP;
+		double radius;
 		
 		findRadius.setUp(type, iShell, pTarget);
-		minP = minR*convert.tNorm/refModel.getVel(type, iShell, minR);
-		maxP = maxR*convert.tNorm/refModel.getVel(type, iShell, maxR);
-		System.out.format("\tTarget: %8.6f [%8.6f,%8.6f]\n", pTarget, minP, maxP);
 		radius = solver.solve(TablesUtil.MAXEVAL, findRadius, minR, maxR);
-		if(TablesUtil.deBugLevel > 0) System.out.format("\tRadius: %7.2f "+
+		if(TablesUtil.deBugLevel > 2) System.out.format("\tRadius: %7.2f "+
 				"[%7.2f,%7.2f] %2d\n", radius, minR, maxR, solver.getEvaluations());
 		return radius;
 	}
@@ -566,9 +562,9 @@ public class SampleSlowness {
 	 */
 	public void printModel(char type, boolean tau) {
 		if(tau) {
-			tauModel.printModel(type, tau);
+			tauModel.printModel(type, true);
 		} else {
-			depModel.printModel(type, tau);
+			depModel.printModel(type, false);
 		}
 	}
 	

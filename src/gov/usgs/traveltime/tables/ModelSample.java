@@ -101,9 +101,9 @@ public class ModelSample {
 	 * @param convert Model sensitive conversion constants
 	 */
 	public void flatten(ModConvert convert) {
-		z = Math.log(r*convert.xNorm);
-		slowP = r*convert.tNorm/vp;
-		slowS = r*convert.tNorm/vs;
+		z = convert.flatZ(r);
+		slowP = convert.flatP(vp, r);
+		slowS = convert.flatP(vs, r);
 	}
 	
 	/**
@@ -123,22 +123,22 @@ public class ModelSample {
 	/**
 	 * Print the model sample.
 	 * 
-	 * @param j Sample index
 	 * @param flat If true print the Earth flattened parameters
 	 * @param convert If not null, convert to dimensional depth
+	 * @return String describing this model sample
 	 */
-	public void printSample(int j, boolean flat, ModConvert convert) {
+	public String printSample(boolean flat, ModConvert convert) {
 		
 		if(flat) {
 			if(convert == null) {
-				System.out.format("\t%3d: %7.2f %9.4f %8.6f %8.6f\n", j, r, z, 
+				return String.format("%7.2f %9.4f %8.6f %8.6f", r, z, 
 						slowP, slowS);
 			} else {
-				System.out.format("\t%3d: %8.2f %7.2f %8.6f %8.6f\n", j, r, 
+				return String.format("%8.2f %7.2f %8.6f %8.6f", r, 
 						convert.realZ(z), slowP, slowS);
 			}
 		} else {
-			System.out.format("\t%3d: %9.2f %7.4f %7.4f\n", j, r, vp, vs);
+			return String.format("%9.2f %7.4f %7.4f", r, vp, vs);
 		}
 	}
 }

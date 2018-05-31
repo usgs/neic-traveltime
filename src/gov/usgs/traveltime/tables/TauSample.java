@@ -36,13 +36,15 @@ public class TauSample {
 	 * 
 	 * @param r Dimensional Earth radius in kilometers
 	 * @param slow Non-dimensional slowness
+	 * @param index Index into the merged slownesses
 	 * @param convert Model dependent constants
 	 */
-	public TauSample(double r, double slow, ModConvert convert) {
+	public TauSample(double r, double slow, int index, ModConvert convert) {
 		this.r = r;
 		this.slow = slow;
+		this.index = index;
 		x = Double.NaN;
-		z = Math.log(r*convert.xNorm);
+		z = convert.flatZ(r);
 	}
 	
 	/**
@@ -87,9 +89,9 @@ public class TauSample {
 		if(!Double.isNaN(x)) {
 			return String.format("%7.2f %8.6f %8.6f", r, slow, x);
 		} else if(!Double.isNaN(z)) {
-			return String.format("%7.2f %8.6f %8.6f", r, slow, z);
+			return String.format("%7.2f %8.6f %8.6f %3d", r, slow, z, index);
 		} else {
-			return String.format("%7.2f %8.6f", r, slow);
+			return String.format("%7.2f %8.6f   NaN    %3d", r, slow, index);
 		}
 	}
 }

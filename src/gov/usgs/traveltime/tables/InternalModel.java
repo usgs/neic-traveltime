@@ -177,7 +177,6 @@ public class InternalModel {
 	 */
 	private void findCritical() {
 		boolean inLVZ;
-//	int pShell = -1, sShell = -1;
 		ModelSample sample, lastSample;
 		ModelShell shell = null;
 		
@@ -259,23 +258,6 @@ public class InternalModel {
 				j--;
 			}
 		}
-/*	printCritical();
-		// And rationalize shell indices.
-		for(int j=0; j<critical.size(); j++) {
-			if(critical.get(j).type == 'P') {
-				if(critical.get(j).iShell >= pShell) {
-					pShell = critical.get(j).iShell;
-				} else {
-					critical.get(j).iShell = pShell;
-				}
-			} else {
-				if(critical.get(j).iShell >= sShell) {
-					sShell = critical.get(j).iShell;
-				} else {
-					critical.get(j).iShell = sShell;
-				}
-			}
-		} */
 	}
 	
 	/**
@@ -338,9 +320,11 @@ public class InternalModel {
 			int n = model.size()-1;
 			for(int j=n; j>=0; j--) {
 				if(nice) {
-					model.get(j).printSample(n-j, true, convert);
+					System.out.format("\t%3d: %s\n", n-j, model.get(j).printSample(true, 
+							convert));
 				} else {
-					model.get(j).printSample(n-j, true, null);
+					System.out.format("\t%3d: %s\n", n-j, model.get(j).printSample(true, 
+							null));
 				}
 			}
 		} else {
@@ -349,7 +333,7 @@ public class InternalModel {
 					refModel.outerCore.r, refModel.upperMantle.r, refModel.moho.r, 
 					refModel.conrad.r, refModel.surface.r);
 			for(int j=0; j<model.size(); j++) {
-				model.get(j).printSample(j, false, null);
+				System.out.format("\t%3d: %s\n", j, model.get(j).printSample(false, null));
 			}
 		}
 	}
@@ -360,7 +344,7 @@ public class InternalModel {
 	public void printShells() {
 		System.out.println("\n\t\tShells:");
 		for(int j=0; j<shells.size(); j++) {
-			shells.get(j).printShell(j);
+			System.out.format("%3d   %s\n", j, shells.get(j).printShell(convert));
 		}
 	}
 	

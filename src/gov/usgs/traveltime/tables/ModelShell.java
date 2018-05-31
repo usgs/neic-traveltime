@@ -2,6 +2,8 @@ package gov.usgs.traveltime.tables;
 
 import java.util.ArrayList;
 
+import gov.usgs.traveltime.ModConvert;
+
 /**
  * Keep track of one range between model discontinuities 
  * (i.e., one shell of the Earth model).
@@ -114,17 +116,19 @@ public class ModelShell {
 	}
 	
 	/**
-	 * Print out the shell limits.
+	 * Format the information in this shell for printing.
 	 * 
-	 * @param j Shell index
+	 * @param convert Model dependent conversions
+	 * @return String describing this shell
 	 */
-	public void printShell(int j) {
+	public String printShell(ModConvert convert) {
+		
 		if(name == null) {
-			System.out.format("%3d:   %3d - %3d range: %7.2f - %7.2f delX: %9.6f %s\n", 
-					j, iBot, iTop, rBot, rTop, delX, altName);
+			return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %s", 
+					iBot, iTop, rBot, rTop, convert.dimR(delX), altName);
 		} else {
-			System.out.format("%3d:   %3d - %3d range: %7.2f - %7.2f delX: %9.6f %s\n", 
-					j, iBot, iTop, rBot, rTop, delX, name);
+			return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %s", 
+					iBot, iTop, rBot, rTop, convert.dimR(delX), name);
 		}
 	}
 }

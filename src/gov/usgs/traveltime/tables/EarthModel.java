@@ -151,7 +151,8 @@ public class EarthModel {
 		// Find important internal boundaries.
 		refineBoundaries();
 		// Initialize the model specific conversion constants.
-		convert = new ModConvert(upperMantle.r, moho.r, conrad.r, surface.r, surface.vs);
+		convert = new ModConvert(upperMantle.r, moho.r, conrad.r, surface.r, 
+				surface.vs);
 		// Do the Earth flattening transformation.
 		flatten();
 		return TtStatus.SUCCESS;
@@ -167,13 +168,14 @@ public class EarthModel {
 	}
 	
 	/**
-	 * Match the key radii provided with model discontinuities.  This is necessary 
-	 * to figure out the phase codes.
+	 * Match the key radii provided with model discontinuities.  This is 
+	 * necessary to figure out the phase codes.
 	 * 
-	 * @param rUpperMantle Preliminary radius of the upper mantle discontinuity 
-	 * in kilometers
+	 * @param rUpperMantle Preliminary radius of the upper mantle 
+	 * discontinuity in kilometers
 	 * @param rMoho Preliminary radius of the Moho discontinuity in kilometers
-	 * @param rConrad Preliminary radius of the Conrad discontinuity in kilometers
+	 * @param rConrad Preliminary radius of the Conrad discontinuity in 
+	 * kilometers
 	 * @param rSurface Preliminary radius of the free surface in kilometers
 	 */
 	private void refineBoundaries() {
@@ -384,7 +386,7 @@ public class EarthModel {
 				earthModel, model.size(), innerCore.r, outerCore.r, upperMantle.r, 
 				moho.r, conrad.r, surface.r);
 		for(int j=0; j<model.size(); j++) {
-			model.get(j).printSample(j, false, null);
+			System.out.format("\t%3d: %s\n", j, model.get(j).printSample(false, null));
 		}
 	}
 	
@@ -394,7 +396,7 @@ public class EarthModel {
 	public void printShells() {
 		System.out.println("\n\t\tShells:");
 		for(int j=0; j<shells.size(); j++) {
-			shells.get(j).printShell(j);
+			System.out.format("%3d   %s\n", j, shells.get(j).printShell(convert));
 		}
 	}
 }

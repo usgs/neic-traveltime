@@ -893,8 +893,7 @@ public class AllBrnVol {
 	public void dumpHead() {
 		System.out.println("\n     "+ref.modelName);
 		System.out.format("Normalization: xNorm =%11.4e  pNorm =%11.4e  "+
-				"tNorm =%11.4e vNorm =%11.4e\n", cvt.xNorm, cvt.pNorm, cvt.tNorm, 
-				cvt.vNorm);
+				"tNorm =%11.4e\n", cvt.xNorm, cvt.pNorm, cvt.tNorm);
 		System.out.format("Boundaries: zUpperMantle =%7.1f  zMoho =%7.1f  "+
 				"zConrad =%7.1f\n", cvt.zUpperMantle, cvt.zMoho, cvt.zConrad);
 		System.out.format("Derived: rSurface =%8.1f  zNewUp = %7.1f  "+
