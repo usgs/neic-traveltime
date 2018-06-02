@@ -77,9 +77,19 @@ public class TauSample {
 		if(!Double.isNaN(x)) {
 			return String.format("%7.2f %8.6f %8.6f", r, slow, x);
 		} else if(!Double.isNaN(z)) {
-			return String.format("%7.2f %8.6f %8.6f %3d", r, slow, z, index);
+			if(TablesUtil.deBugOrder) {
+				return String.format("%7.2f %8.6f %8.6f %3d", r, slow, z, 
+						TablesUtil.deBugOffset-index);
+			} else {
+				return String.format("%7.2f %8.6f %8.6f %3d", r, slow, z, index);
+			}
 		} else {
-			return String.format("%7.2f %8.6f   NaN    %3d", r, slow, index);
+			if(TablesUtil.deBugOrder) {
+				return String.format("%7.2f %8.6f   NaN    %3d", r, slow, 
+						TablesUtil.deBugOffset-index);
+			} else {
+				return String.format("%7.2f %8.6f   NaN    %3d", r, slow, index);
+			}
 		}
 	}
 }

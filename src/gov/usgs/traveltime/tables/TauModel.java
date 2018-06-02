@@ -135,6 +135,35 @@ public class TauModel {
 	}
 	
 	/**
+	 * Get a depth model shell.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param index Depth model shell index
+	 * @return Depth model shell
+	 */
+	public ModelShell getShell(char type, int index) {
+		if(type == 'P') {
+			return pShells.get(index);
+		} else {
+			return sShells.get(index);
+		}
+	}
+	
+	/**
+	 * Get the number of shells.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @return Number of shells
+	 */
+	public int shellSize(char type) {
+		if(type == 'P') {
+			return pShells.size();
+		} else {
+			return sShells.size();
+		}
+	}
+	
+	/**
 	 * Merge the P- and S-wave slownesses into a single list.  To 
 	 * avoid making the spacing very non-uniform, the merge is done 
 	 * between critical slownesses.  For each interval, the sampling 
@@ -184,6 +213,16 @@ public class TauModel {
 	}
 	
 	/**
+	 * The merged slownesses are created in tau model, but are needed in 
+	 * depth model as well.
+	 * 
+	 * @param slowness Merged list of non-dimensional slownesses
+	 */
+	public void putSlowness(ArrayList<Double> slowness) {
+		this.slowness = slowness;
+	}
+	
+	/**
 	 * Make yet another set of shells.  This time, the shell indices are 
 	 * into the P- and S-wave tau models, so the indices will be different 
 	 * for each model.
@@ -205,15 +244,16 @@ public class TauModel {
 				for(iEnd=iBeg; iEnd>=0; iEnd--) {
 					if(pModel.get(iEnd).slow == slowTop) break;
 				}
-				newShell = new ModelShell(refShell, iBeg);
-				newShell.addEnd(iEnd, refShell.rTop);
+				newShell = new ModelShell(refShell, pModel.get(iBeg).index);
+				newShell.addEnd(pModel.get(iEnd).index, refShell.rTop);
 				if(slowTop > refModel.getSlow(type, refShell.iBot)) {
 					if(lastShell != null) {
 						if(!lastShell.pCode.equals(newShell.pCode)) {
+							lastShell.iTop = newShell.iBot;
 							pShells.add(newShell);
 							lastShell = newShell;
 						} else {
-							lastShell.iTop = iEnd;
+							lastShell.iTop = newShell.iTop;
 							lastShell.rTop = newShell.rTop;
 						}
 					} else {
@@ -232,15 +272,15 @@ public class TauModel {
 				for(iEnd=iBeg; iEnd>=0; iEnd--) {
 					if(sModel.get(iEnd).slow == slowTop) break;
 				}
-				newShell = new ModelShell(refShell, iBeg);
-				newShell.addEnd(iEnd, refShell.rTop);
+				newShell = new ModelShell(refShell, sModel.get(iBeg).index);
+				newShell.addEnd(sModel.get(iEnd).index, refShell.rTop);
 				if(slowTop > refModel.getSlow(type, refShell.iBot)) {
 					if(lastShell != null) {
 						if(!lastShell.sCode.equals(newShell.sCode)) {
 							sShells.add(newShell);
 							lastShell = newShell;
 						} else {
-							lastShell.iTop = iEnd;
+							lastShell.iTop = sModel.get(iEnd).index;
 							lastShell.rTop = newShell.rTop;
 						}
 					} else {
@@ -261,9 +301,14 @@ public class TauModel {
 	 */
 	public void printModel(char type, boolean tau) {
 		if(tau) {
-			System.out.println("\nTau model for "+type+" slowness");
+			System.out.println("\n   Tau model for "+type+" slowness");
+			System.out.println("      R     slowness    X");
 		} else {
-			System.out.println("\nDepth model for "+type+" slowness");
+			System.out.println("\n     Depth model for "+type+" slowness");
+			System.out.println("      R     slowness      Z");
+			if(TablesUtil.deBugOrder) {
+				TablesUtil.deBugOffset = slowness.size()-1;
+			}
 		}
 		if(type == 'P') {
 			for(int j=0; j<pModel.size(); j++) {
@@ -280,9 +325,9 @@ public class TauModel {
 	 * Print out the merged slownesses.
 	 */
 	public void printMerge() {
-		System.out.println("\n Merged slownesses");
+		System.out.println("\n\tMerged slownesses");
 		for(int j=0; j<slowness.size(); j++) {
-			System.out.format("%3d %8.6f\n", j, slowness.get(j));
+			System.out.format("\t%3d %8.6f\n", j, slowness.get(j));
 		}
 	}
 	
@@ -295,6 +340,9 @@ public class TauModel {
 		String shellLine;
 		
 		System.out.println("\n\t"+type+" Model Shells:");
+		if(TablesUtil.deBugOrder) {
+			TablesUtil.deBugOffset = slowness.size()-1;
+		}
 		if(type == 'P') {
 			for(int j=0; j<pShells.size(); j++) {
 				shellLine = pShells.get(j).printTau(type);

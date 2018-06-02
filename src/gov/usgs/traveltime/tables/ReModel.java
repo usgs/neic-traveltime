@@ -28,10 +28,13 @@ public class ReModel {
 		InternalModel locModel;
 		TauModel tauModel;
 		SampleSlowness sample;
+		Integrate integrate;
 		TauInt tauInt;
 		TtStatus status;
 		
 		TablesUtil.deBugLevel = 1;
+		TablesUtil.deBugOrder = true;
+		
 		refModel = new EarthModel(earthModel, true);
 		// Read the model.
 		status = refModel.readModel();
@@ -70,6 +73,11 @@ public class ReModel {
 			tauModel = sample.getDepthModel();
 			tauModel.printDepShells('P');
 			tauModel.printDepShells('S');
+			
+			// Do the integrals.
+			integrate = new Integrate(refModel, tauModel, convert);
+			integrate.doTauIntegrals('P');
+			integrate.doTauIntegrals('S');
 		} else {
 			System.out.println("Read status = "+status);
 		}

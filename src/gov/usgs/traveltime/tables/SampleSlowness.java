@@ -404,14 +404,14 @@ public class SampleSlowness {
 	 * @throws Exception On an illegal integration interval
 	 */
 	public void depthModel(char type) throws Exception {
-		int iBeg, iEnd, iCur, n;
+		int iBeg, iEnd, iCur;
 		double slowMax, slowTop, slowBot, locSlow, mergeSlow, rFound;
 		ModelShell shell = null;
 		ArrayList<Double> slowness;
 		
 		// Initialize temporary variables.
 		slowness = tauModel.slowness;
-		n = slowness.size()-1;
+//	n = slowness.size()-1;
 		iCur = shells.get(shells.size()-1).iTop;
 		slowMax = locModel.getSlow(type, iCur);
 		// Find the starting slowness.
@@ -419,7 +419,7 @@ public class SampleSlowness {
 			if(slowness.get(iBeg).equals(slowMax)) break;
 		}
 		// Add the top point of the model.
-		depModel.add(type, locModel.getR(iCur), slowMax, n-iBeg);
+		depModel.add(type, locModel.getR(iCur), slowMax, iBeg);
 		iBeg++;
 		
 		/* 
@@ -465,13 +465,13 @@ public class SampleSlowness {
 								"%8.6f mergeSlow = %8.6f\n", locSlow, mergeSlow);
 						rFound = getRadius(type, iShell, locModel.getR(iCur), 
 								locModel.getR(iCur+1), mergeSlow);
-						depModel.add(type, rFound, mergeSlow, n-j);
+						depModel.add(type, rFound, mergeSlow, j);
 						if(TablesUtil.deBugLevel > 1) System.out.format("\tAdd: %3d "+
 								"%7.2f %8.6f\n", j, rFound, slowness.get(j));
 					}
 					// The last point is the bottom of the shell.
 					iCur = shell.iBot;
-					depModel.add(type, locModel.getR(iCur), slowness.get(iEnd), n-iEnd);
+					depModel.add(type, locModel.getR(iCur), slowness.get(iEnd), iEnd);
 					if(TablesUtil.deBugLevel > 1) System.out.format("\tAdd: %3d %7.2f "+
 							"%8.6f\n", iEnd, locModel.getR(iCur), slowness.get(iEnd));
 				} else {
@@ -479,13 +479,13 @@ public class SampleSlowness {
 					iCur = shell.iBot;
 					if(iEnd > iBeg) {
 						for(int j=iBeg; j<=iEnd; j++) {
-							depModel.add(type, locModel.getR(iCur), slowness.get(j), n-j);
+							depModel.add(type, locModel.getR(iCur), slowness.get(j), j);
 							if(TablesUtil.deBugLevel > 1) System.out.format("\tAdd: %3d "+
 									"%7.2f %8.6f\n", j, locModel.getR(iCur), slowness.get(j));
 						}
 					} else {
 						for(int j=iBeg-2; j>=iEnd; j--) {
-							depModel.add(type, locModel.getR(iCur), slowness.get(j), n-j);
+							depModel.add(type, locModel.getR(iCur), slowness.get(j), j);
 							if(TablesUtil.deBugLevel > 1) System.out.format("\tAdd: %3d "+
 									"%7.2f %8.6f\n", j, locModel.getR(iCur), slowness.get(j));
 						}
@@ -494,6 +494,7 @@ public class SampleSlowness {
 				iBeg = ++iEnd;
 			}
 		}
+		depModel.putSlowness(tauModel.slowness);
 		depModel.makeDepShells(type);
 	}
 	

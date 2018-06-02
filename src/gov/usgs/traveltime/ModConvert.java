@@ -10,24 +10,51 @@ public class ModConvert {
 	/**
 	 * Normalization for distance (delta and depth).
 	 */
-	public final double xNorm;		// Internal normalization constant for distance.
+	public final double xNorm;
 	/**
 	 * Normalization for slowness and ray parameter.
 	 */
-	public final double pNorm;		// Internal normalization constant for slowness.
+	public final double pNorm;
 	/**
 	 * Normalization for travel-time and tau.
 	 */
-	public final double tNorm;		// Internal normalization constant for time.
-	final double dTdDelta;				// Convert dT/dDelta to dimensional units.
-	final double deg2km;					// Convert degrees to kilometers.
-	final double zUpperMantle;		// Depth of the upper mantle in kilometers.
-	final double zMoho;						// Depth of the Moho in kilometers.
-	final double zConrad;					// Depth of the Conrad discontinuity in kilometers.
-	final double rSurface;				// Radius of the free surface of the Earth in kilometers.
-	final double zNewUp;					// Up-going branch replacement depth.
-	final double dTdDLg;					// dT/dDelta for Lg in seconds/degree.
-	final double dTdDLR;					// dT/dDelta for LR in seconds/degree.
+	public final double tNorm;
+	/**
+	 * Conver dT/dDelta to dimensional units.
+	 */
+	public final double dTdDelta;
+	/**
+	 * Convert degrees to kilometers.
+	 */
+	public final double deg2km;
+	/**
+	 * Depth of the upper mantle in kilometers.
+	 */
+	public final double zUpperMantle;
+	/**
+	 * Depth of the Moho in kilometers.
+	 */
+	public final double zMoho;
+	/**
+	 * Depth of the Conrad discontinuity in kilometers.
+	 */
+	public final double zConrad;
+	/**
+	 * Radius of the free surface of the Earth in kilometers.
+	 */
+	public final double rSurface;
+	/**
+	 * Up-going branch replacement depth.
+	 */
+	public final double zNewUp;
+	/**
+	 * Typical dT/dDelta for Lg in seconds/degree.
+	 */
+	public final double dTdDLg;
+	/**
+	 * Typical dT/dDelta for LR in seconds/degree.
+	 */
+	public final double dTdDLR;
 	
 	/**
 	 * Set constants from the Fortran generated *.hed file.

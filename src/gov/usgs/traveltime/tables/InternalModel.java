@@ -311,20 +311,32 @@ public class InternalModel {
 						convert.realZ(refModel.upperMantle.z), 
 						convert.realZ(refModel.outerCore.z), 
 						convert.realZ(refModel.innerCore.z));
+				System.out.println("\t        R         Z    slowP    slowS");
 			} else {
 				System.out.format("\n%s %d %7.4f %7.4f %7.4f %7.4f %7.4f %7.4f\n", 
 						refModel.earthModel, model.size(), refModel.surface.z, 
 						refModel.conrad.z, refModel.moho.z, refModel.upperMantle.z, 
 						refModel.outerCore.z, refModel.innerCore.z);
+				System.out.println("\t        R         Z    slowP    slowS");
 			}
 			int n = model.size()-1;
 			for(int j=n; j>=0; j--) {
 				if(nice) {
-					System.out.format("\t%3d: %s\n", n-j, model.get(j).printSample(true, 
-							convert));
+					if(TablesUtil.deBugOrder) {
+						System.out.format("\t%3d: %s\n", j, model.get(j).printSample(true, 
+								convert));
+					} else {
+						System.out.format("\t%3d: %s\n", n-j, model.get(j).printSample(true, 
+								convert));
+					}
 				} else {
-					System.out.format("\t%3d: %s\n", n-j, model.get(j).printSample(true, 
-							null));
+					if(TablesUtil.deBugOrder) {
+						System.out.format("\t%3d: %s\n", j, model.get(j).printSample(true, 
+								null));
+					} else {
+						System.out.format("\t%3d: %s\n", n-j, model.get(j).printSample(true, 
+								null));
+					}
 				}
 			}
 		} else {
@@ -332,6 +344,7 @@ public class InternalModel {
 					refModel.earthModel, model.size(), refModel.innerCore.r, 
 					refModel.outerCore.r, refModel.upperMantle.r, refModel.moho.r, 
 					refModel.conrad.r, refModel.surface.r);
+			System.out.println("     R     Vp     Vs");
 			for(int j=0; j<model.size(); j++) {
 				System.out.format("\t%3d: %s\n", j, model.get(j).printSample(false, null));
 			}
@@ -353,7 +366,7 @@ public class InternalModel {
 	 * 
 	 */
 	public void printCritical() {
-		System.out.println("\n\tCritical points:");
+		System.out.println("\n\t\t  Critical points:");
 		int n = critical.size()-1;
 		for(int j=n; j>=0; j--) {
 			System.out.format("\t  %3d %s\n", n-j, critical.get(j));

@@ -157,15 +157,27 @@ public class ModelShell {
 	public String printTau(char type) {
 		if(type == 'P') {
 			if(pCode != null) {
-				return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %-8s %s", 
-						iBot, iTop, rBot, rTop, delX, pCode, name);
+				if(TablesUtil.deBugOrder) {
+					return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %-8s %s", 
+							TablesUtil.deBugOffset-iBot, TablesUtil.deBugOffset-iTop, rBot, rTop, 
+							delX, pCode, name);
+				} else {
+					return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %-8s %s", 
+							iBot, iTop, rBot, rTop, delX, pCode, name);
+				}
 			} else {
 				return null;
 			}
 		} else {
 			if(sCode != null) {
-				return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %-8s %s", 
-						iBot, iTop, rBot, rTop, delX, sCode, name);
+				if(TablesUtil.deBugOrder) {
+					return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %-8s %s", 
+							TablesUtil.deBugOffset-iBot, TablesUtil.deBugOffset-iTop, rBot, rTop, 
+							delX, sCode, name);
+				} else {
+					return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %-8s %s", 
+							iBot, iTop, rBot, rTop, delX, sCode, name);
+				}
 			} else {
 				return null;
 			}

@@ -53,4 +53,15 @@ public class TablesUtil {
 	 * The higher the debug level, the more output you get.
 	 */
 	public static int deBugLevel = 0;
+	/**
+	 * If true apply the deBugOffset to various printouts for easier 
+	 * comparison with the Fortran output.
+	 */
+	public static boolean deBugOrder = false;
+	/**
+	 * The order that things are stored in between the Fortran and Java 
+	 * versions are different.  This offset is used in various places 
+	 * to make comparisons easier.
+	 */
+	public static int deBugOffset = 0;
 }
