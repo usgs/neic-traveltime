@@ -78,6 +78,21 @@ public class TauModel {
 	}
 	
 	/**
+	 * Add a sample with an index to the model.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param sample Complete sample created externally
+	 * @param index Index
+	 */
+	public void add(char type, TauSample sample, int index) {
+		if(type == 'P') {
+			pModel.add(new TauSample(sample, index));
+		} else {
+			sModel.add(new TauSample(sample, index));
+		}
+	}
+	
+	/**
 	 * Get a tau model sample.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)

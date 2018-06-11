@@ -1,5 +1,7 @@
 package gov.usgs.traveltime.tables;
 
+import java.util.ArrayList;
+
 import gov.usgs.traveltime.ModConvert;
 import gov.usgs.traveltime.TauUtil;
 
@@ -13,24 +15,31 @@ import gov.usgs.traveltime.TauUtil;
  *
  */
 public class Integrate {
+	int nRec = 0;
 	double zMax;				// Non-dimensional flattened maximum earthquake depth
 	double zOuterCore;	// Non-dimensional flattened outer core depth
 	double zInnerCore;	// Non-dimensional flattened inner core depth
 	EarthModel refModel;
-	TauModel depModel;
+	TauModel depModel, finModel;
+	TauXints integrals;
+	TauInt tauInt;
 	ModConvert convert;
+	ArrayList<Double> slowness;
 
 	/**
 	 * Remember various incarnations of the model.
 	 * 
-	 * @param refModel Reference Earth model
 	 * @param depModel Slowness depth model
-	 * @param convert Model dependent conversions
 	 */
-	public Integrate(EarthModel refModel, TauModel depModel, ModConvert convert) {
-		this.refModel = refModel;
+	public Integrate(TauModel depModel) {
 		this.depModel = depModel;
-		this.convert = convert;
+		refModel = depModel.refModel;
+		convert = depModel.convert;
+		finModel = new TauModel(refModel, convert);
+		integrals = new TauXints();
+		tauInt = new TauInt();
+		slowness = depModel.slowness;
+		finModel.putSlowness(slowness);
 		zMax = convert.flatZ(convert.rSurface-TauUtil.MAXDEPTH);
 		zOuterCore = refModel.outerCore.z;
 		zInnerCore = refModel.innerCore.z;
@@ -42,13 +51,117 @@ public class Integrate {
 	 * Do all the tau and range integrals we'll need later.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @throws Exception If the tau integration interval is invalid
 	 */
-	public void doTauIntegrals(char type) {
-		int mm, n1;
+	public void doTauIntegrals(char type) throws Exception {
+		boolean disc = false;
+		int n1, iRay = 0;
+		double zLim, zLast;
+		double[] tau, x;
+		TauSample sample0, sample1;
 		
-		mm = depModel.size(type);
+		zLim = modelDepth(type);
 		n1 = depModel.getShell(type, 0).iBot-depModel.getShell(type, 
 				depModel.shellSize(type)-1).iTop;
-		System.out.format("mm = %d n1 = %d\n", mm, n1);
+		System.out.format("\nmm = %d n1 = %d\n\n", depModel.size(type), n1);
+		tau = new double[n1];
+		x = new double[n1];
+		
+		sample1 = depModel.getSample(type, 0);
+		finModel.add(type, sample1, -1);
+		zLast = sample1.z;
+		// Loop over depth intervals.
+		for(int i=1; i<depModel.size(type); i++) {
+			sample0 = sample1;
+			sample1 = depModel.getSample(type, i);
+			if(sample0.z != sample1.z) {
+				// Normal interval: do integrals for all ray parameters.
+				if(disc) {
+					disc = false;
+					finModel.add(type, sample0, nRec);
+				}
+				iRay = 0;
+				for(int j=slowness.size()-1; j>=0; j--) {
+					tau[iRay] += tauInt.intLayer(slowness.get(j), sample0.slow, 
+							sample1.slow, sample0.z, sample1.z);
+					x[iRay++] += tauInt.getXLayer();
+					if(sample1.slow == slowness.get(j)) break;
+				}
+				if(sample0.z >= zLim) {
+					if(sample0.z >= zMax) {
+						nRec++;
+						integrals.add(type, new TauXsample(sample1, iRay, tau, x));
+						System.out.format("lev1 %c %3d %s\n", type, finModel.size(type), 
+								integrals.stringLast(type));
+					}
+					finModel.add(type, sample1, nRec);
+				}
+				zLast = sample0.z;
+			} else {
+				// We're in a discontinuity.
+				if(sample1.z != zLast) {
+					// Save the integrals at the bottom of the mantle and outer core.
+					if(sample1.z == zOuterCore || sample1.z == zInnerCore) {
+						nRec++;
+						if(sample1.z == zOuterCore) {
+							integrals.add(type, "mantle", new TauXsample(sample1, n1, tau, x));
+						} else {
+							integrals.add(type, "outercore", new TauXsample(sample1, n1, tau, x));
+						}
+						System.out.format("lev2 %c %3d %3d %9.6f %8.6f\n", type, 
+								finModel.size(type), iRay, sample1.z, sample1.slow);
+						finModel.add(type, sample1, nRec);
+					} else {
+						disc = true;
+					}
+					// Flag high slowness zones below discontinuities.
+					if(sample1.slow > sample0.slow) {
+						integrals.setLvz(type);
+						System.out.format("lvz  %c %3d %8.6f %8.6f\n", type, iRay, tau[iRay-1], 
+								x[iRay-1]);
+					}
+					zLast = sample0.z;
+				}
+			}
+		}
+		// Save the integrals down to the center of the Earth.
+		nRec++;
+		integrals.add(type, "innercore", new TauXsample(sample1, n1, tau, x));
+		System.out.format("lev3 %c %3d %3d %9.6f %8.6f\n", type, 
+				finModel.size(type), iRay, sample1.z, sample1.slow);
+		finModel.add(type, sample1, nRec);
+		finModel.printModel(type, false);
+	}
+	
+	/**
+	 * Find the bottoming depth of converted mantle phases.  Because the P velocity 
+	 * is higher than the S velocity, phases from the deepest source depth can't 
+	 * bottom any deeper.  However, P to S conversions can go much deeper (nearly to 
+	 * the core).
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @return The deepest depth that needs to be remembered for the travel-time 
+	 * computation
+	 */
+	private double modelDepth(char type) {
+		int j;
+		double pLim;
+		
+		if(type == 'P') {
+			return zMax;
+		} else {
+			for(j=0; j<depModel.size('P'); j++) {
+				if(depModel.getSample('P', j).z < zMax) break;
+			}
+			pLim = depModel.getSample('P', j).slow;
+			System.out.format("\ni zMax pLim zm = %3d %9.6f %8.6f %9.6f\n", j, zMax, 
+					pLim, depModel.getSample('P', j).z);
+			for(j=0; j<depModel.size('S'); j++) {
+				if(depModel.getSample('S', j).slow <= pLim) break;
+			}
+			System.out.format("i pLim zLim = %3d %8.6f %9.6f\n", j, pLim, 
+					depModel.getSample('S', j).z);
+			return depModel.getSample('S', j).z;
+		}
 	}
 }

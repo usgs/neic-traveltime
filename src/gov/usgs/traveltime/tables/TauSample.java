@@ -60,6 +60,20 @@ public class TauSample {
 	}
 	
 	/**
+	 * Initialize this sample from another sample and add an index.
+	 * 
+	 * @param sample Existing tau sample
+	 * @param index Index
+	 */
+	public TauSample(TauSample sample, int index) {
+		this.r = sample.r;
+		this.slow = sample.slow;
+		this.x = sample.x;
+		this.z = sample.z;
+		this.index = index;
+	}
+	
+	/**
 	 * Update this sample.
 	 * 
 	 * @param r Dimensional Earth radius in kilometers

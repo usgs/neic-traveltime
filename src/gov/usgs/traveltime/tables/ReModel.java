@@ -29,7 +29,6 @@ public class ReModel {
 		TauModel tauModel;
 		SampleSlowness sample;
 		Integrate integrate;
-		TauInt tauInt;
 		TtStatus status;
 		
 		TablesUtil.deBugLevel = 1;
@@ -58,8 +57,7 @@ public class ReModel {
 			locModel.printCritical();
 			
 			// Make the slowness sampling.
-			tauInt = new TauInt(locModel, convert);
-			sample = new SampleSlowness(locModel, tauInt);
+			sample = new SampleSlowness(locModel);
 			sample.sample('P');
 			sample.printModel('P', true);
 			sample.sample('S');
@@ -75,7 +73,8 @@ public class ReModel {
 			tauModel.printDepShells('S');
 			
 			// Do the integrals.
-			integrate = new Integrate(refModel, tauModel, convert);
+			TablesUtil.deBugOrder = false;
+			integrate = new Integrate(tauModel);
 			integrate.doTauIntegrals('P');
 			integrate.doTauIntegrals('S');
 		} else {

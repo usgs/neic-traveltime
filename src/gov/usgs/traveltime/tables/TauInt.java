@@ -20,10 +20,19 @@ public class TauInt {
 	ModConvert convert = null;
 
 	/**
+	 * This form of the tau-range integration only allows direct calls to 
+	 * intLayer and intDeriv.  This is used in table generation for creating the 
+	 * raw tau and x integrals.
+	 */
+	public TauInt() {}
+	
+	/**
 	 * The constructor remembers the model data output from the table generation.  
-	 * Note that this implies a separate tauInt for each model wave type.
+	 * Note that this implies a separate tauInt for each model wave type.  This 
+	 * form allows range integration used in the travel-time computation for 
+	 * depth correction.
 	 * 
-	 * @param tauModel Model data ('P' or 'S')
+	 * @param tauModel Model data
 	 */
 	public TauInt(ModDataVol tauModel) {
 		this.tauModel = tauModel;
@@ -31,7 +40,9 @@ public class TauInt {
 
 	/**
 	 * The constructor remembers the model data input to the table generation.  
-	 * Note that this implies a separate tauInt for each model wave type.
+	 * The internal model knows both velocity models.  This form allows intX 
+	 * and intDxDp used in table generation for constructing the slowness 
+	 * sampling.
 	 * 
 	 * @param tabModel Model data
 	 * @param convert Model dependent constants
@@ -398,15 +409,11 @@ public class TauInt {
 		if(Math.abs(p-pBot) <= TauUtil.DTOL) {
 			return (zBot-zTop)*(1d/Math.sqrt(Math.abs(pTop2-p2)))/
 					Math.log(pTop/pBot);
-//		return -(zBot-zTop)*(Math.acos(p/pTop))/
-//				Math.log(pTop/pBot);
 		}
 		// Do the general case.
 		pBot2 = Math.pow(pBot, 2d);
 		return (zBot-zTop)*(1d/Math.sqrt(Math.abs(pTop2-p2))-
 				1d/Math.sqrt(Math.abs(pBot2-p2)))/Math.log(pTop/pBot);
-//	return -(zBot-zTop)*(Math.acos(p/pTop)-
-//			Math.acos(p/pBot))/Math.log(pTop/pBot);
 	}
 	
 	/**

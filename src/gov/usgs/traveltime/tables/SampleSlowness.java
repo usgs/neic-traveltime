@@ -59,9 +59,8 @@ public class SampleSlowness {
 	 * possible phases).
 	 * 
 	 * @param locModel Re-sampled Earth model
-	 * @param tauInt Integration logic
 	 */
-	public SampleSlowness(InternalModel locModel, TauInt tauInt) {
+	public SampleSlowness(InternalModel locModel) {
 		this.locModel = locModel;
 		rSurface = locModel.getR(locModel.size()-1);
 		refModel = locModel.refModel;
@@ -69,7 +68,7 @@ public class SampleSlowness {
 		model = locModel.model;
 		shells = locModel.shells;
 		critical = locModel.getCritical();
-		this.tauInt = tauInt;
+		tauInt = new TauInt(locModel, convert);
 		tauModel = new TauModel(refModel, convert);
 		depModel = new TauModel(refModel, convert);
 		tmpModel = new ArrayList<TauSample>();
