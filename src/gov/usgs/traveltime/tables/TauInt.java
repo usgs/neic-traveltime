@@ -16,7 +16,7 @@ public class TauInt {
 	int iBottom = -1;
 	double xLayer = 0d, xSum = 0d, rBottom = Double.NaN;
 	ModDataVol tauModel = null;
-	InternalModel tabModel = null;
+	EarthModel tabModel = null;
 	ModConvert convert = null;
 
 	/**
@@ -47,7 +47,7 @@ public class TauInt {
 	 * @param tabModel Model data
 	 * @param convert Model dependent constants
 	 */
-	public TauInt(InternalModel tabModel, ModConvert convert) {
+	public TauInt(EarthModel tabModel, ModConvert convert) {
 		this.tabModel = tabModel;
 		this.convert = convert;
 	}

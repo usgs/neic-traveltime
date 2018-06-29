@@ -33,8 +33,7 @@ public class SampleSlowness {
 	double delX;		// Non-dimensional step length in range
 	double rLast;		// Not quite the last radius in kilometers
 	double rSurface;
-	EarthModel refModel;
-	InternalModel locModel;
+	EarthModel refModel, locModel;
 	TauModel tauModel, depModel;
 	ModConvert convert;
 	TauInt tauInt;
@@ -60,7 +59,7 @@ public class SampleSlowness {
 	 * 
 	 * @param locModel Re-sampled Earth model
 	 */
-	public SampleSlowness(InternalModel locModel) {
+	public SampleSlowness(EarthModel locModel) {
 		this.locModel = locModel;
 		rSurface = locModel.getR(locModel.size()-1);
 		refModel = locModel.refModel;
@@ -548,15 +547,10 @@ public class SampleSlowness {
 	 * Print the slowness Earth model.
 	 * 
 	 * @param type Slowness type (P = P slowness, S = S slowness)
-	 * @param tau If true print the slowness model, if false print the 
-	 * depth model
+	 * @param ver Model version ("Tau", "Depth", or "Final")
 	 */
-	public void printModel(char type, boolean tau) {
-		if(tau) {
-			tauModel.printModel(type, true);
-		} else {
-			depModel.printModel(type, false);
-		}
+	public void printModel(char type, String ver) {
+		tauModel.printModel(type, ver);
 	}
 	
 	/**

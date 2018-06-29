@@ -11,6 +11,10 @@ package gov.usgs.traveltime.tables;
 public enum ShellName {
 	// Shell names:
 	/**
+	 * Placeholder for integrals bottoming at all source depths.
+	 */
+	CENTER (0d, "", ""),
+	/**
 	 * Default radius of the inner core in kilometers.
 	 */
 	INNER_CORE (1217d, "tPKPdf", "tSKSdf"),

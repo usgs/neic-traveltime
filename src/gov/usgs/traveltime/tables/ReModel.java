@@ -23,9 +23,8 @@ public class ReModel {
 	 */
 	public static void main(String[] args) throws Exception {
 		String earthModel = "ak135";
-		EarthModel refModel;
+		EarthModel refModel, locModel;
 		ModConvert convert;
-		InternalModel locModel;
 		TauModel tauModel;
 		SampleSlowness sample;
 		Integrate integrate;
@@ -46,7 +45,7 @@ public class ReModel {
 			
 			// Interpolate the model.
 			convert = refModel.getConvert();
-			locModel = new InternalModel(refModel, convert);
+			locModel = new EarthModel(refModel, convert);
 			locModel.interpolate();
 			// Print the shell summaries.
 			locModel.printShells();
@@ -59,15 +58,15 @@ public class ReModel {
 			// Make the slowness sampling.
 			sample = new SampleSlowness(locModel);
 			sample.sample('P');
-			sample.printModel('P', true);
+			sample.printModel('P', "Tau");
 			sample.sample('S');
-			sample.printModel('S', true);
+			sample.printModel('S', "Tau");
 			sample.merge();
 			sample.printMerge();
 			sample.depthModel('P');
-			sample.printModel('P', false);
+			sample.printModel('P', "Depth");
 			sample.depthModel('S');
-			sample.printModel('S', false);
+			sample.printModel('S', "Depth");
 			tauModel = sample.getDepthModel();
 			tauModel.printDepShells('P');
 			tauModel.printDepShells('S');
