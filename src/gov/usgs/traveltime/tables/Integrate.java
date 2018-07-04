@@ -37,7 +37,6 @@ public class Integrate {
 		convert = depModel.convert;
 		finModel = new TauModel(refModel, convert);
 		finModel.initIntegrals();
-//	integrals = new TauXints();
 		tauInt = new TauInt();
 		slowness = depModel.slowness;
 		finModel.putSlowness(slowness);
@@ -91,7 +90,6 @@ public class Integrate {
 				if(sample0.z >= zLim) {
 					if(sample0.z >= zMax) {
 						nRec++;
-//					integrals.add(type, new TauXsample(sample1, iRay, tau, x));
 						finModel.add(type, sample1, nRec, new TauXsample(iRay, tau, x, 
 								ShellName.UPPER_MANTLE));
 						System.out.format("lev1 %c %3d %s\n", type, finModel.size(type)-1, 
@@ -116,13 +114,11 @@ public class Integrate {
 						}
 						System.out.format("lev2 %c %3d %3d %9.6f %8.6f\n", type, 
 								finModel.size(type)-1, iRay, sample1.z, sample1.slow);
-//					finModel.add(type, sample1, nRec);
 					} else {
 						disc = true;
 					}
 					// Flag high slowness zones below discontinuities.
 					if(sample1.slow > sample0.slow) {
-//					integrals.setLvz(type);
 						finModel.setLvz(type);
 						System.out.format("lvz  %c %3d %8.6f %8.6f\n", type, iRay, tau[iRay-1], 
 								x[iRay-1]);
@@ -134,11 +130,11 @@ public class Integrate {
 		// Save the integrals down to the center of the Earth.
 		nRec++;
 		finModel.add(type, sample1, nRec, new TauXsample(n1, tau, x, ShellName.CENTER));
-//	integrals.add(type, "innercore", new TauXsample(sample1, n1, tau, x));
 		System.out.format("lev3 %c %3d %3d %9.6f %8.6f\n", type, 
 				finModel.size(type)-1, iRay, sample1.z, sample1.slow);
-//	finModel.add(type, sample1, nRec);
 		finModel.printModel(type, "Final");
+		// We'll still need access to the merged slownesses.
+		finModel.putSlowness(depModel.slowness);
 	}
 	
 	/**

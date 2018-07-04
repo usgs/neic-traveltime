@@ -360,6 +360,21 @@ public class TauModel {
 	}
 	
 	/**
+	 * Get one of the integral sets by index.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param index Depth index
+	 * @return Tau integrals for all ray parameters
+	 */
+	public double[] getTauInt(char type, int index) {
+		if(type == 'P') {
+			return pInts.get(index).tau;
+		} else {
+			return sInts.get(index).tau;
+		}
+	}
+	
+	/**
 	 * Get one of the special integral sets by name.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)
@@ -385,6 +400,21 @@ public class TauModel {
 			}
 		}
 		return null;
+	}
+	
+	/**
+	 * Get one of the integral sets by index.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param index Depth index
+	 * @return Tau integrals for all ray parameters
+	 */
+	public double[] getXInt(char type, int index) {
+		if(type == 'P') {
+			return pInts.get(index).x;
+		} else {
+			return sInts.get(index).x;
+		}
 	}
 	
 	/**
@@ -463,6 +493,74 @@ public class TauModel {
 					} else {
 						System.out.format("%3d %s null\n", j, sModel.get(j));
 					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Print out the slowness model.
+	 * 
+	 * @param ver Model version ("Tau", "Depth", or "Final")
+	 */
+	public void printModel(String ver) {
+		if(ver.equals("Depth")) {
+			System.out.println("\n     Depth model");
+			System.out.println("      R     slowness      Z     slowness"+
+					"      Z");
+			if(TablesUtil.deBugOrder) {
+				TablesUtil.deBugOffset = slowness.size()-1;
+			}
+		} else if(ver.equals("Final")) {
+			System.out.println("\n     Final model");
+			System.out.println("      R     slowness      Z       length"+
+					"     slowness      Z       length");
+		} else {
+			System.out.println("\n   Tau model");
+			System.out.println("      R     slowness    X     slowness    X");
+		}
+		if(!ver.equals("Final")) {
+			for(int j=0; j<pModel.size(); j++) {
+				System.out.format("%3d %s %s\n", j, pModel.get(j), sModel.get(j));
+			}
+			if(!ver.equals("Depth")) {
+				for(int j=pModel.size(); j<sModel.size(); j++) {
+					System.out.format("%3d                           %s\n", j, 
+							pModel.get(j), sModel.get(j));
+				}
+			} else {
+				for(int j=pModel.size(); j<sModel.size(); j++) {
+					System.out.format("%3d                               %s\n", j, 
+							pModel.get(j), sModel.get(j));
+				}
+			}
+		} else {
+			for(int j=0; j<pModel.size(); j++) {
+				if(pInts.get(j) != null) {
+					if(sInts.get(j) != null) {
+						System.out.format("%3d %s  %3d %s  %3d\n", j, pModel.get(j), 
+								pInts.get(j).tau.length, sModel.get(j), sInts.get(j).tau.length);
+					} else {
+						System.out.format("%3d %s  %3d %s null\n", j, pModel.get(j), 
+								pInts.get(j).tau.length, sModel.get(j));
+					}
+				} else {
+					if(sInts.get(j) != null) {
+						System.out.format("%3d %s null %s  %3d\n", j, pModel.get(j), 
+								sModel.get(j), sInts.get(j).tau.length);
+					} else {
+						System.out.format("%3d %s null %s null\n", j, pModel.get(j), 
+								sModel.get(j));
+					}
+				}
+			}
+			for(int j=pModel.size(); j<sModel.size(); j++) {
+				if(sInts.get(j) != null) {
+					System.out.format("%3d                                    %s  %3d\n", 
+							j, sModel.get(j), sInts.get(j).tau.length);
+				} else {
+					System.out.format("%3d                                    %s null\n", 
+							j, sModel.get(j));
 				}
 			}
 		}

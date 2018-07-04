@@ -57,7 +57,7 @@ public class EarthModel {
 
 	/**
 	 * In this version, we already have a reference Earth model and we're 
-	 * going to reinterpolate it.
+	 * going to re-interpolate it.
 	 * 
 	 * @param refModel Reference Earth model information
 	 * @param convert Model dependent constants
