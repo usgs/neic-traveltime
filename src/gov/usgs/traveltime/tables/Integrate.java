@@ -62,7 +62,7 @@ public class Integrate {
 		
 		zLim = modelDepth(type);
 		n1 = depModel.getShell(type, 0).iBot-depModel.getShell(type, 
-				depModel.shellSize(type)-1).iTop;
+				depModel.shellSize(type)-1).iTop+1;
 		System.out.format("\nmm = %d n1 = %d\n\n", depModel.size(type), n1);
 		tau = new double[n1];
 		x = new double[n1];
@@ -135,6 +135,15 @@ public class Integrate {
 		finModel.printModel(type, "Final");
 		// We'll still need access to the merged slownesses.
 		finModel.putSlowness(depModel.slowness);
+	}
+	
+	/**
+	 * Get the final model (pared down and with integrals).
+	 * 
+	 * @return Final tau model
+	 */
+	public TauModel getFinalModel() {
+		return finModel;
 	}
 	
 	/**

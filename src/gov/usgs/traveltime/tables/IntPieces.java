@@ -34,24 +34,36 @@ public class IntPieces {
 	public IntPieces(char type, TauModel finModel) {
 		this.finModel = finModel;
 		convert = finModel.convert;
+		this.type = type;
 		if(type == 'P') {
 			ints = finModel.pInts;
 		} else {
 			ints = finModel.sInts;
 		}
+		setShellInts(type);
+		initDecimation(type);
 	}
 	
 	/**
 	 * Create the tau and range partial integrals by major shells rather 
 	 * than the cumulative integrals computed in Integrate.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
 	 */
-	public void setShellInts() {
+	private void setShellInts(char type) {
+		// Get the pieces we need.
 		mantleTau = finModel.getTauInt(type, ShellName.CORE_MANTLE_BOUNDARY);
 		mantleX = finModel.getXInt(type, ShellName.CORE_MANTLE_BOUNDARY);
 		ocCumTau = finModel.getTauInt(type, ShellName.INNER_CORE_BOUNDARY);
 		ocCumX = finModel.getXInt(type, ShellName.INNER_CORE_BOUNDARY);
 		icCumTau = finModel.getTauInt(type, ShellName.CENTER);
 		icCumX = finModel.getXInt(type, ShellName.CENTER);
+		// Initialize the difference arrays.
+		innerCoreTau = new double[mantleTau.length];
+		innerCoreX = new double[mantleTau.length];
+		outerCoreTau = new double[mantleTau.length];
+		outerCoreX = new double[mantleTau.length];
+		// Do the differences.
 		for(int j=0; j<mantleTau.length; j++) {
 			innerCoreTau[j] = icCumTau[j]-ocCumTau[j];
 			innerCoreX[j] = icCumX[j]-ocCumX[j];
@@ -64,9 +76,11 @@ public class IntPieces {
 	 * To decimate the up-going branches, we need a proxy for the range 
 	 * spacing at all source depths so that the ray parameter spacing is 
 	 * common.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
 	 */
-	public void initDecimation() {
-		int n;
+	private void initDecimation(char type) {
+		int n, n1, m;
 		double[] x;
 		ArrayList<Double> slowness;
 		
@@ -78,25 +92,32 @@ public class IntPieces {
 		/**
 		 * Create the proxy ranges.
 		 */
-		proxyX = new double[mantleX.length];
+		n1 = mantleX.length;
+		proxyX = new double[n1];
 		Arrays.fill(proxyX, 0d);
 		n = finModel.size(type);
 		// Put together a list of maximum range differences.
-		for(int i=0; i<n-3; i++) {
+		for(int i=1; i<n-3; i++) {
 			x = finModel.getXInt(type, i);
-			for(int j=1; j<x.length; j++) {
-				proxyX[j] = Math.max(proxyX[j], Math.abs(x[j-1]-x[j]));
+			if(x != null) {
+				m = x.length;
+				for(int j=1; j<m; j++) {
+					proxyX[j] = Math.max(proxyX[j], Math.abs(x[j-1]-x[j]));
+				}
+				if(m+1 == n1) {
+					proxyX[n1-1] = x[m-1];
+				}
 			}
-	/*	if(x.length == n-1) {
-				proxyX[n-1] = x[x.length-1];
-			} */
 		}
 		// Now put the range differences back together to sort of look 
 		// like a range.
 		slowness = finModel.slowness;
+		n = slowness.size()-1;
+		p = new double[proxyX.length];
+		proxyP = new double[proxyX.length];
 		for(int j=1; j<proxyX.length; j++) {
-			p[j] = slowness.get(j);
-			proxyP[j] = slowness.get(j);
+			p[j] = slowness.get(n-j);
+			proxyP[j] = slowness.get(n-j);
 			proxyX[j] = proxyX[j-1]+proxyX[j];
 		}
 	}
@@ -121,7 +142,11 @@ public class IntPieces {
 	 * Print out the shell integrals.
 	 */
 	public void printShellInts() {
-		System.out.println("\n\tShell Integrals");
+		System.out.format("\n\t\tShell Integrals for %c-waves\n",type);
+		System.out.println("                        Tau                    "+
+				"   X");
+		System.out.println("        p     Mantle     OC       IC     Mantle"+
+				"   OC     IC");
 		for(int j=0; j<mantleTau.length; j++) {
 			System.out.format("%3d %8.6f %8.6f %8.6f %8.6f %6.2f %6.2f %6.2f\n", 
 					j, p[j], mantleTau[j], outerCoreTau[j], innerCoreTau[j], 

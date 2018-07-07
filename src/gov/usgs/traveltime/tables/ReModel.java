@@ -25,9 +25,10 @@ public class ReModel {
 		String earthModel = "ak135";
 		EarthModel refModel, locModel;
 		ModConvert convert;
-		TauModel tauModel;
+		TauModel tauModel, finModel;
 		SampleSlowness sample;
 		Integrate integrate;
+		TablePieces pieces;
 		TtStatus status;
 		
 		TablesUtil.deBugLevel = 1;
@@ -76,6 +77,12 @@ public class ReModel {
 			integrate = new Integrate(tauModel);
 			integrate.doTauIntegrals('P');
 			integrate.doTauIntegrals('S');
+			finModel = integrate.getFinalModel();
+			// Reorganize the integral data.
+			pieces = new TablePieces(finModel);
+			pieces.printProxy();
+			pieces.printShellInts('P');
+			pieces.printShellInts('S');
 		} else {
 			System.out.println("Read status = "+status);
 		}

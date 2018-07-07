@@ -368,9 +368,17 @@ public class TauModel {
 	 */
 	public double[] getTauInt(char type, int index) {
 		if(type == 'P') {
-			return pInts.get(index).tau;
+			if(pInts.get(index) != null) {
+				return pInts.get(index).tau;
+			} else {
+				return null;
+			}
 		} else {
-			return sInts.get(index).tau;
+			if(sInts.get(index) != null) {
+				return sInts.get(index).tau;
+			} else {
+				return null;
+			}
 		}
 	}
 	
@@ -411,9 +419,17 @@ public class TauModel {
 	 */
 	public double[] getXInt(char type, int index) {
 		if(type == 'P') {
-			return pInts.get(index).x;
+			if(pInts.get(index) != null) {
+				return pInts.get(index).x;
+			} else {
+				return null;
+			}
 		} else {
-			return sInts.get(index).x;
+			if(sInts.get(index) != null) {
+				return sInts.get(index).x;
+			} else {
+				return null;
+			}
 		}
 	}
 	
