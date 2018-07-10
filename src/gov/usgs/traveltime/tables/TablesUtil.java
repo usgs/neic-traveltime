@@ -8,7 +8,7 @@ package gov.usgs.traveltime.tables;
  */
 public class TablesUtil {
 	/**
-	 * Increment in radius to sample the reference Earth model.
+	 * Increment in radius in kilometers to sample the reference Earth model.
 	 */
 	public static double RESAMPLE = 50d;
 	/**
@@ -30,6 +30,21 @@ public class TablesUtil {
 	 * complex regional models.
 	 */
 	public static double[] DELX = {300d, 300d, 150d, 150d, 100d, 100d};
+	/**
+	 * The target range spacing for the up-going branch proxy in kilometers.
+	 */
+	public static double DELXUP = 400d;
+	/**
+	 * Sets the dividing line (as a ratio) between trusting the default 
+	 * up-going decimation and keeping some additional ray parameters.
+	 */
+	public static double PLIM = 0.7d;
+	/**
+	 * Ray parameters closer together than this non-dimensional tolerance 
+	 * will use the default up-going decimation even if we're looking to keep 
+	 * some additional ray parameters.
+	 */
+	public static double PTOL = 0.03d;
 	/**
 	 * Maximum iterations for root finding algorithms (e.g., for 
 	 * finding caustics).

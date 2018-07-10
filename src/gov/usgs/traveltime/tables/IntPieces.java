@@ -20,7 +20,7 @@ public class IntPieces {
 	double[] outerCoreTau, outerCoreX;	// Integrals through the outer core
 	double[] innerCoreTau, innerCoreX;	// Integrals through the inner core
 	double[] ocCumTau, ocCumX, icCumTau, icCumX;
-	double[] proxyX, proxyP;
+	double[] proxyP, proxyX;
 	TauModel finModel;
 	ModConvert convert;
 	ArrayList<TauXsample> ints;
@@ -42,6 +42,19 @@ public class IntPieces {
 		}
 		setShellInts(type);
 		initDecimation(type);
+	}
+	
+	/**
+	 * Update the proxy ray parameters and ranges with the 
+	 * decimated versions.
+	 * 
+	 * @param len Length of the arrays
+	 * @param pNew Update ray parameter sampling
+	 * @param xNew Updated range sampling
+	 */
+	public void update(int len, double[] pNew, double[] xNew) {
+		proxyP = Arrays.copyOf(pNew, len);
+		proxyX = Arrays.copyOf(xNew, len);
 	}
 	
 	/**
@@ -126,16 +139,24 @@ public class IntPieces {
 	 * Print out the proxy ranges.
 	 */
 	public void printProxy() {
-		int n;
-		
-		System.out.println("\nProxy Ranges");
-		n = proxyX.length;
-		for(int j=0; j<n-1; j++) {
+		System.out.format("\n\tProxy Ranges for %c\n", type);
+		System.out.println("    slowness      X       delX");
+		System.out.format("%3d %8.6f %8.2f\n", 0, proxyP[0], 
+				convert.dimR(proxyX[0]));
+		for(int j=1; j<proxyX.length; j++) {
 			System.out.format("%3d %8.6f %8.2f %8.2f\n", j, proxyP[j], 
-					convert.dimR(proxyX[j]), convert.dimR(proxyX[j+1]-proxyX[j]));
+					convert.dimR(proxyX[j]), convert.dimR(proxyX[j]-proxyX[j-1]));
 		}
-		System.out.format("%3d %8.6f %8.2f\n", n, proxyP[n], 
-				convert.dimR(proxyX[n]));
+	}
+	/**
+	 * Print the ray parameter decimation.
+	 */
+	public void printDec() {
+		System.out.format("\nDecimation for %c\n", type);
+		System.out.println("    slowness  keep");
+		for(int j=0; j<p.length; j++) {
+			System.out.format("%3d %8.6f %b\n", j, p[j], keep[j]);
+		}
 	}
 	
 	/**

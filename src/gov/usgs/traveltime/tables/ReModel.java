@@ -29,6 +29,7 @@ public class ReModel {
 		SampleSlowness sample;
 		Integrate integrate;
 		TablePieces pieces;
+		DecTTbranch decimate;
 		TtStatus status;
 		
 		TablesUtil.deBugLevel = 1;
@@ -80,9 +81,13 @@ public class ReModel {
 			finModel = integrate.getFinalModel();
 			// Reorganize the integral data.
 			pieces = new TablePieces(finModel);
+//		pieces.printShellInts('P');
+//		pieces.printShellInts('S');
 			pieces.printProxy();
-			pieces.printShellInts('P');
-			pieces.printShellInts('S');
+			decimate = new DecTTbranch(convert);
+			decimate.upGoingDec(pieces.pPieces);
+			pieces.pPieces.printProxy();
+//		pieces.pPieces.printDec();
 		} else {
 			System.out.println("Read status = "+status);
 		}

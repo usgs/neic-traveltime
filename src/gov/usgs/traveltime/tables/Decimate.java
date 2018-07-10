@@ -3,22 +3,17 @@ package gov.usgs.traveltime.tables;
 import java.util.Arrays;
 
 /**
- * In order to sample the Earth and the ranges for both P 
- * and S waves adequately on one set of slownesses, the 
- * slownesses for any particular phase will be sampled very 
- * inhomogeneously in range.  In order for the interpolation 
- * to be stable, the slownesses must be decimated so that 
- * range is evenly sampled.
+ * Compute a decimation that makes the samples of an array approximately 
+ * evenly spaced (at a predefined spacing).
  * 
  * @author Ray Buland
  *
  */
 public class Decimate {
-	int m;						// Number of data to keep
+	int m;						// Current number of data to keep
 	int newM;					// Trial number of data to keep
 	double xTarget;		// Desired spacing of x array values
 	double var;				// Current variance of residuals
-	boolean[] keep;		// True if this x element will be kept
 	double[] x;				// Array to be decimated
 	
 	/**
@@ -31,10 +26,13 @@ public class Decimate {
 	 * @param x Array to be decimated
 	 * @param xTarget Target difference between successive elements of 
 	 * x after decimation
+	 * @return keep An array of booleans, one for each element of x--if an 
+	 * element is true, keep the corresponding element of x
 	 */
-	public void decEst(double[] x, double xTarget) {
+	public boolean[] decEst(double[] x, double xTarget) {
 		int k0, k1, k2, kb = 0, nch, m1, m2;
 		double dx1, dx2, var1, var2;
+		boolean[] keep;		// True if this x element will be kept
 		
 		this.x = x;
 		this.xTarget = xTarget;
@@ -111,6 +109,7 @@ public class Decimate {
 				} while(nch > 0 && m > 1);
 			}
 		}
+		return keep;
 	}
 	
 	/**
@@ -127,14 +126,14 @@ public class Decimate {
 		
 		dx1 = Math.abs(x[k0]-x[k1])-xTarget;
 		dx2 = Math.abs(x[k1]-x[k2])-xTarget;
-		newVar = var-(Math.pow(dx1, 2d)+Math.pow(dx2, 2d));
-		if(kt > k1 && kt < k2) {
+		newVar = var-(Math.pow(dx1, 2d)-Math.pow(dx2, 2d));
+		if(kt > k0 && kt < k2) {
 			dx1 = Math.abs(x[k0]-x[kt])-xTarget;
 			dx2 = Math.abs(x[kt]-x[k2])-xTarget;
 			newVar += Math.pow(dx1, 2d)+Math.pow(dx2, 2d);
 			newM = m;
 		} else {
-			dx1 = Math.abs(x[k0]-x[k1])-xTarget;
+			dx1 = Math.abs(x[k0]-x[k2])-xTarget;
 			newVar += Math.pow(dx1, 2d);
 			newM = m-1;
 		}
