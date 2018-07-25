@@ -187,6 +187,31 @@ public class TauModel {
 			return sModel.size();
 		}
 	}
+	/**
+	 * Get the index of the model sample with the specified 
+	 * slowness.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param slow Non-dimensional slowness
+	 * @return The model index associated with slow
+	 */
+	public int getIndex(char type, double slow) {
+		if(type == 'P') {
+			for(int j=0; j<pModel.size(); j++) {
+				if(pModel.get(j).slow == slow) {
+					return j;
+				}
+			}
+			return -1;
+		} else {
+			for(int j=0; j<sModel.size(); j++) {
+				if(sModel.get(j).slow == slow) {
+					return j;
+				}
+			}
+			return -1;
+		}
+	}
 	
 	/**
 	 * Merge the P- and S-wave slownesses into a single list.  To 
@@ -318,7 +343,22 @@ public class TauModel {
 	}
 	
 	/**
-	 * Get a depth model shell.
+	 * The final shells are created in depth model, but are needed in 
+	 * final model as well.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param shells Model shells
+	 */
+	public void putShells(char type, ArrayList<ModelShell> shells) {
+		if(type == 'P') {
+			pShells = shells;
+		} else {
+			sShells = shells;
+		}
+	}
+	
+	/**
+	 * Get a depth model shell by index.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)
 	 * @param index Depth model shell index
@@ -329,6 +369,70 @@ public class TauModel {
 			return pShells.get(index);
 		} else {
 			return sShells.get(index);
+		}
+	}
+	
+	/**
+	 * Get the last depth model shell (i.e., the one starting at the 
+	 * surface).
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @return Depth model shell
+	 */
+	public ModelShell getLastShell(char type) {
+		if(type == 'P') {
+			return pShells.get(pShells.size()-1);
+		} else {
+			return sShells.get(sShells.size()-1);
+		}
+	}
+	
+	/**
+	 * Get a depth model shell index by name.  If the name is not found, 
+	 * return -1;
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param name Depth model shell name
+	 * @return Depth model shell index
+	 */
+	public int getShell(char type, ShellName name) {
+		if(type == 'P') {
+			for(int j=0; j<pShells.size(); j++) {
+				if(pShells.get(j).name.equals(name.name())) return j;
+			}
+		} else {
+			for(int j=0; j<sShells.size(); j++) {
+				if(sShells.get(j).name.equals(name.name())) return j;
+			}
+		}
+		return -1;
+	}
+	
+	/**
+	 * Get a depth model shell index by name.  If the name is not found 
+	 * return -1;
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param name Generic shell name
+	 * @return Depth model shell index
+	 */
+	public int getShellIndex(char type, ShellName name) {
+		int index;
+		
+		// First try some special names needed to make branches.
+		if(name == ShellName.SURFACE) {
+			return shellSize(type)-1;
+		} else if(name == ShellName.MANTLE_BOTTOM) {
+			index = getShell(type, ShellName.CORE_MANTLE_BOUNDARY);
+			if(index < 0) {
+				index = getShell(type, ShellName.OUTER_CORE);
+			}
+			return index;
+		} else if(name == ShellName.CORE_TOP) {
+			return getShell(type, ShellName.OUTER_CORE);
+		} else {
+			// If that fails, just try the name.
+			return getShell(type, name);
 		}
 	}
 	
@@ -356,6 +460,34 @@ public class TauModel {
 			pInts.get(pInts.size()-1).lvz = true;
 		} else {
 			sInts.get(sInts.size()-1).lvz = true;
+		}
+	}
+	
+	/**
+	 * Get the low velocity zone (really high slowness zone) flag.  
+	 * Note that this is done by slowness rather than index because 
+	 * the final model is so fragmentary.  It is assumed that there 
+	 * are no low velocity zones where the final model is missing 
+	 * samples (i.e., the lower mantle).  The core-mantle boundary 
+	 * is, of course, a special case.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param index Model index
+	 * @return True if this level corresponds to a low velocity zone
+	 */
+	public boolean getLvz(char type, int index) {
+		if(type == 'P') {
+			if(pInts.get(index) != null) {
+				return pInts.get(index).lvz;
+			} else {
+				return false;
+			}
+		} else {
+			if(sInts.get(index) != null) {
+				return sInts.get(index).lvz;
+			} else {
+				return false;
+			}
 		}
 	}
 	
@@ -606,12 +738,12 @@ public class TauModel {
 		}
 		if(type == 'P') {
 			for(int j=0; j<pShells.size(); j++) {
-				shellString = pShells.get(j).printTau(type);
+				shellString = pShells.get(j).printShell(type);
 				if(shellString != null) System.out.format("%3d   %s\n", j, shellString);
 			}
 		} else {
 			for(int j=0; j<sShells.size(); j++) {
-				shellString = sShells.get(j).printTau(type);
+				shellString = sShells.get(j).printShell(type);
 				if(shellString != null) System.out.format("%3d   %s\n", j, shellString);
 			}
 		}
@@ -675,6 +807,46 @@ public class TauModel {
 			}
 			System.out.format("Lev3 %3d %3d %9.6f %8.6f\n", n-1, 
 					sInts.get(n-1).tau.length, sModel.get(n-1).z, sModel.get(n-1).slow);
+		}
+	}
+	
+	/**
+	 * Print out the shell integrals.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 */
+	public void printShellInts(char type) {
+		int n;
+		TauXsample mantle, outerCore, innerCore;
+		
+		System.out.format("\n\t\tShell Integrals for %c-waves\n",type);
+		System.out.println("                        Tau                    "+
+				"   X");
+		System.out.println("        p     Mantle     OC       IC     Mantle"+
+				"   OC     IC");
+		if(type == 'P') {
+			n = pInts.size();
+			mantle = pInts.get(n-3);
+			outerCore = pInts.get(n-2);
+			innerCore = pInts.get(n-1);
+			for(int j=0, k=slowness.size()-1; j<mantle.tau.length; j++, k--) {
+				System.out.format("%3d %8.6f %8.6f %8.6f %8.6f %6.2f %6.2f %6.2f\n", 
+						j, slowness.get(k), mantle.tau[j], outerCore.tau[j], innerCore.tau[j], 
+						Math.toDegrees(mantle.x[j]), Math.toDegrees(outerCore.x[j]), 
+						Math.toDegrees(innerCore.x[j]));
+			}
+		} else {
+			n = sInts.size();
+			mantle = sInts.get(n-3);
+			outerCore = sInts.get(n-2);
+			innerCore = sInts.get(n-1);
+			n = mantle.tau.length-1;
+			for(int j=n, k=slowness.size()-1; j>=0; j--, k--) {
+				System.out.format("%3d %8.6f %8.6f %8.6f %8.6f %6.2f %6.2f %6.2f\n", 
+						n-j, slowness.get(k), mantle.tau[j], outerCore.tau[j], innerCore.tau[j], 
+						Math.toDegrees(mantle.x[j]), Math.toDegrees(outerCore.x[j]), 
+						Math.toDegrees(innerCore.x[j]));
+			}
 		}
 	}
 }

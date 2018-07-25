@@ -1,5 +1,7 @@
 package gov.usgs.traveltime.tables;
 
+import java.util.ArrayList;
+
 import gov.usgs.traveltime.ModConvert;
 
 /**
@@ -11,6 +13,7 @@ import gov.usgs.traveltime.ModConvert;
  */
 public class TablePieces {
 	IntPieces pPieces, sPieces;
+	ArrayList<ModelShell> pShells, sShells;
 	ModConvert convert;
 
 	/**
@@ -20,8 +23,144 @@ public class TablePieces {
 	 */
 	public TablePieces(TauModel finModel) {
 		convert = finModel.convert;
+		pShells = finModel.pShells;
+		sShells = finModel.sShells;
 		pPieces = new IntPieces('P', finModel);
 		sPieces = new IntPieces('S', finModel);
+	}
+	
+	/**
+	 * Get the integral pieces for one phase type.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @return Integral pieces
+	 */
+	public IntPieces getPiece(char type) {
+		if(type == 'P') {
+			return pPieces;
+		} else {
+			return sPieces;
+		}
+	}
+	
+	/**
+	 * Get a ray parameter by index.  Note that the S-wave ray 
+	 * parameters include the P-wave ray parameters.
+	 * 
+	 * @param index Ray parameter index
+	 * @return Ray parameter
+	 */
+	public double getP(int index) {
+		return sPieces.p[index];
+	}
+	
+	/**
+	 * Get a major shell tau value by index.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param index Tau index
+	 * @param shell Major shell index (0 = mantle, 1 = outer 
+	 * core, 2 = inner core)
+	 * @return Tau value
+	 */
+	public double getTau(char type, int index, int shell) {
+		switch (shell) {
+		case 0:
+			if(type == 'P') {
+				return pPieces.mantleTau[index];
+			} else {
+				return sPieces.mantleTau[index];
+			}
+		case 1:
+			if(type == 'P') {
+				return pPieces.outerCoreTau[index];
+			} else {
+				return sPieces.outerCoreTau[index];
+			}
+		case 2:
+			if(type == 'P') {
+				return pPieces.innerCoreTau[index];
+			} else {
+				return sPieces.innerCoreTau[index];
+			}
+		default:
+			return Double.NaN;
+		}
+	}
+	
+	/**
+	 * Get a major shell range value by index.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param index Range index
+	 * @param shell Major shell index (0 = mantle, 1 = outer 
+	 * core, 2 = inner core)
+	 * @return Range value
+	 */
+	public double getX(char type, int index, int shell) {
+		switch (shell) {
+		case 0:
+			if(type == 'P') {
+				return pPieces.mantleX[index];
+			} else {
+				return sPieces.mantleX[index];
+			}
+		case 1:
+			if(type == 'P') {
+				return pPieces.outerCoreX[index];
+			} else {
+				return sPieces.outerCoreX[index];
+			}
+		case 2:
+			if(type == 'P') {
+				return pPieces.innerCoreX[index];
+			} else {
+				return sPieces.innerCoreX[index];
+			}
+		default:
+			return Double.NaN;
+		}
+	}
+	
+	/**
+	 * Get the radial sampling interval associated with a shell by 
+	 * index.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param index Shell index
+	 * @return Non-dimensional radial sampling
+	 */
+	public double getDelX(char type, int index) {
+		if(type == 'P') {
+			return convert.normR(pShells.get(index).delX);
+		} else {
+			return convert.normR(sShells.get(index).delX);
+		}
+	}
+	
+	/**
+	 * Get the radial sampling interval associated with the shell 
+	 * above the current one.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param index Shell index
+	 * @return Non-dimensional radial sampling
+	 */
+	public double getNextDelX(char type, int index) {
+		if(type == 'P') {
+			for(int j=index+1; j<pShells.size(); j++) {
+				if(!pShells.get(j).isDisc) {
+					return convert.normR(pShells.get(j).delX);
+				}
+			}
+		} else {
+			for(int j=index+1; j<sShells.size(); j++) {
+				if(!sShells.get(j).isDisc) {
+					return convert.normR(sShells.get(j).delX);
+				}
+			}
+		}
+		return Double.NaN;
 	}
 	
 	/**

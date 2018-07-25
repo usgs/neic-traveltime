@@ -126,7 +126,7 @@ public class IntPieces {
 		// like a range.
 		slowness = finModel.slowness;
 		n = slowness.size()-1;
-		p = new double[proxyX.length];
+		p = new double[n1];
 		proxyP = new double[proxyX.length];
 		for(int j=1; j<proxyX.length; j++) {
 			p[j] = slowness.get(n-j);

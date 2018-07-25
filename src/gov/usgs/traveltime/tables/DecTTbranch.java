@@ -1,5 +1,7 @@
 package gov.usgs.traveltime.tables;
 
+import java.util.Arrays;
+
 import gov.usgs.traveltime.ModConvert;
 import gov.usgs.traveltime.TauUtil;
 
@@ -19,37 +21,42 @@ import gov.usgs.traveltime.TauUtil;
  */
 public class DecTTbranch {
 	Decimate dec;
+	TablePieces pieces;
 	ModConvert convert;
 	
 	/**
 	 * Instantiate the general decimation class.
 	 * 
+	 * @param pieces Integral pieces
 	 * @param convert Model dependent conversions
 	 */
-	public DecTTbranch(ModConvert convert) {
+	public DecTTbranch(TablePieces pieces, ModConvert convert) {
+		this.pieces = pieces;
 		this.convert = convert;
 		dec = new Decimate();
 	}
 	
 	/**
-	 * Figure the decimation for a proxy for the up-going 
-	 * branches range spacing.  Note that the eventual up-going 
-	 * decimation will be an and of the decimation figured here 
-	 * and the decimations for all the other branches.
+	 * Figure the decimation for a proxy for the up-going branches 
+	 * range spacing.  Note that the eventual over all decimation 
+	 * will be a logical AND of the decimation figured here and the 
+	 * decimations for all the other branches.
 	 * 
-	 * @param piece Proxy range sampling
+	 * @param type Model type (P = P slowness, S = S slowness)
 	 */
-	public void upGoingDec(IntPieces piece) {
+	public void upGoingDec(char type) {
 		int k = -1, jLast = 0, iMin;
 		double pLim, pTarget, pDiff;
 		boolean[] keep, upKeep;
 		double[] pOld, xOld, pNew, xNew;
+		IntPieces piece;
 		
 		// Run the decimation algorithm.
+		piece = pieces.getPiece(type);
 		keep = piece.keep;
 		pOld = piece.proxyP;
 		xOld = piece.proxyX;
-		upKeep = dec.decEst(xOld, convert.normR(TablesUtil.DELXUP));
+		upKeep = dec.figureDecimation(xOld, convert.normR(TablesUtil.DELXUP));
 		
 		// Do some setup.
 		pLim = TablesUtil.PLIM*pOld[pOld.length-1];
@@ -98,5 +105,74 @@ public class DecTTbranch {
 			}
 		}
 		piece.update(k+1, pNew, xNew);
+	}
+	
+	/**
+	 * Figure the decimation for a down-going branch range spacing.  
+	 * Note that the eventual over all decimation will be a logical 
+	 * AND of the decimation figured here and the decimations for all 
+	 * the other branches.
+	 * 
+	 * @param branch Branch data
+	 * @param xTarget Non-dimensional range spacing target
+	 * @param pOffset Base slowness index in the merged slowness array
+	 */
+	public void downGoingDec(BrnData branch, double xTarget, int pOffset) {
+		int beg = 0, k = -1;
+		boolean[] keep, downKeep;
+		double[] pOld, tauOld, xOld, pNew, tauNew, xNew;
+		IntPieces piece;
+		
+		// Set up.
+		piece = pieces.getPiece(branch.typeSeg[0]);
+		keep = piece.keep;
+		pOld = branch.p;
+		tauOld = branch.tau;
+		xOld = branch.x;
+		pNew = new double[pOld.length];
+		tauNew = new double[tauOld.length];
+		xNew = new double[xOld.length];
+		
+		// Look for caustics.
+		for(int i=1; i<xOld.length-1; i++) {
+			if((xOld[i+1]-xOld[i])*(xOld[i]-xOld[i-1]) <= 0d) {
+				// Got one.  Decimate the branch up to the caustic.
+				if(i-2 > beg) {
+					downKeep = dec.figureDecimation(Arrays.copyOfRange(xOld, beg, i-1), 
+							xTarget);
+					for(int j=beg, l=0; j<i-1; j++, l++) {
+						if(downKeep[l]) {
+							pNew[++k] = pOld[j];
+							tauNew[k] = tauOld[j];
+							xNew[k] = xOld[j];
+							keep[j+pOffset] = true;
+						}
+					}
+					// Add in the few points we're going to take no matter what.
+					beg = Math.min(i+2, xOld.length);
+					for(int j=i-1; j<beg; j++) {
+						pNew[++k] = pOld[j];
+						tauNew[k] = tauOld[j];
+						xNew[k] = xOld[j];
+						keep[j+pOffset] = true;
+					}
+					i = beg;
+				}
+			}
+		}
+		// Decimate after the last caustic (or the whole branch if there 
+		// are no caustics.
+		downKeep = dec.figureDecimation(Arrays.copyOfRange(xOld, beg, xOld.length), 
+				xTarget);
+		for(int j=beg, l=0; j<xOld.length; j++, l++) {
+			if(downKeep[l]) {
+				pNew[++k] = pOld[j];
+				tauNew[k] = tauOld[j];
+				xNew[k] = xOld[j];
+				keep[j+pOffset] = true;
+			}
+		}
+		// Update the branch data with the decimated versions.
+		branch.update(k+1, pNew, tauNew, xNew);
 	}
 }

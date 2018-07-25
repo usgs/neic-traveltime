@@ -25,11 +25,12 @@ public class ReModel {
 		String earthModel = "ak135";
 		EarthModel refModel, locModel;
 		ModConvert convert;
-		TauModel tauModel, finModel;
+		TauModel depModel, finModel;
 		SampleSlowness sample;
 		Integrate integrate;
 		TablePieces pieces;
 		DecTTbranch decimate;
+		MakeBranches layout;
 		TtStatus status;
 		
 		TablesUtil.deBugLevel = 1;
@@ -69,25 +70,37 @@ public class ReModel {
 			sample.printModel('P', "Depth");
 			sample.depthModel('S');
 			sample.printModel('S', "Depth");
-			tauModel = sample.getDepthModel();
-			tauModel.printDepShells('P');
-			tauModel.printDepShells('S');
+			depModel = sample.getDepthModel();
+//		depModel.printDepShells('P');
+//		depModel.printDepShells('S');
 			
 			// Do the integrals.
 			TablesUtil.deBugOrder = false;
-			integrate = new Integrate(tauModel);
+			integrate = new Integrate(depModel);
 			integrate.doTauIntegrals('P');
 			integrate.doTauIntegrals('S');
 			finModel = integrate.getFinalModel();
+//		finModel.printShellInts('P');
+//		finModel.printShellInts('S');
 			// Reorganize the integral data.
 			pieces = new TablePieces(finModel);
-//		pieces.printShellInts('P');
-//		pieces.printShellInts('S');
-			pieces.printProxy();
-			decimate = new DecTTbranch(convert);
-			decimate.upGoingDec(pieces.pPieces);
-			pieces.pPieces.printProxy();
+			pieces.printShellInts('P');
+			pieces.printShellInts('S');
+//		pieces.printProxy();
+			decimate = new DecTTbranch(pieces, convert);
+			decimate.upGoingDec('P');
+			decimate.upGoingDec('S');
 //		pieces.pPieces.printDec();
+//		pieces.sPieces.printDec();
+			pieces.printProxy();
+			
+			// Make the branches.
+			finModel.printDepShells('P');
+			finModel.printDepShells('S');
+			layout = new MakeBranches(finModel, pieces, decimate);
+			layout.readPhases();
+			layout.printPhases();
+			layout.printBranches(false, true);
 		} else {
 			System.out.println("Read status = "+status);
 		}

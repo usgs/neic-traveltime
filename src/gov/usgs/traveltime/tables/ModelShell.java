@@ -149,21 +149,35 @@ public class ModelShell {
 	}
 	
 	/**
+	 * Get the temporary phase code associated with this shell.
+	 * 
+	 * @param type Wave type (P = compressional, S = shear)
+	 * @return Temporary phase code
+	 */
+	public String getCode(char type) {
+		if(type == 'P') {
+			return pCode;
+		} else {
+			return sCode;
+		}
+	}
+	
+	/**
 	 * Print this wave type specific shell for the depth model.
 	 * 
 	 * @param type Wave type (P = compressional, S = shear)
 	 * @return String representing this shell
 	 */
-	public String printTau(char type) {
+	public String printShell(char type) {
 		if(type == 'P') {
 			if(pCode != null) {
 				if(TablesUtil.deBugOrder) {
-					return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %-8s %s", 
+					return String.format("%3d - %3d range: %7.2f - %7.2f %5b delX: %6.2f %-8s %s", 
 							TablesUtil.deBugOffset-iBot, TablesUtil.deBugOffset-iTop, rBot, rTop, 
-							delX, pCode, name);
+							isDisc, delX, pCode, name);
 				} else {
-					return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %-8s %s", 
-							iBot, iTop, rBot, rTop, delX, pCode, name);
+					return String.format("%3d - %3d range: %7.2f - %7.2f %5b delX: %6.2f %-8s %s", 
+							iBot, iTop, rBot, rTop, isDisc, delX, pCode, name);
 				}
 			} else {
 				return null;
@@ -171,12 +185,12 @@ public class ModelShell {
 		} else {
 			if(sCode != null) {
 				if(TablesUtil.deBugOrder) {
-					return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %-8s %s", 
+					return String.format("%3d - %3d range: %7.2f - %7.2f %5b delX: %6.2f %-8s %s", 
 							TablesUtil.deBugOffset-iBot, TablesUtil.deBugOffset-iTop, rBot, rTop, 
-							delX, sCode, name);
+							isDisc, delX, sCode, name);
 				} else {
-					return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %-8s %s", 
-							iBot, iTop, rBot, rTop, delX, sCode, name);
+					return String.format("%3d - %3d range: %7.2f - %7.2f %5b delX: %6.2f %-8s %s", 
+							iBot, iTop, rBot, rTop, isDisc, delX, sCode, name);
 				}
 			} else {
 				return null;
@@ -186,7 +200,7 @@ public class ModelShell {
 	
 @Override
 	public String toString() {
-		return String.format("%3d - %3d range: %7.2f - %7.2f delX: %6.2f %-8s %-8s %s", 
-				iBot, iTop, rBot, rTop, delX, pCode, sCode, name);
+		return String.format("%3d - %3d range: %7.2f - %7.2f %5b delX: %6.2f %-8s %-8s %s", 
+				iBot, iTop, rBot, rTop, isDisc, delX, pCode, sCode, name);
 	}
 }

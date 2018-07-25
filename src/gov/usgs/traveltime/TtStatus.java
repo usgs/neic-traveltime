@@ -26,7 +26,11 @@ public enum TtStatus {
 	 * Unable to do the tau-x partial integrals due to a bad model 
 	 * interval.
 	 */
-	BAD_TAU_INTERVAL (204);
+	BAD_TAU_INTERVAL (204),		// Screwed up tau model
+	/**
+	 * Unable to open the phase list file or it's empty.
+	 */
+	BAD_PHASE_LIST (205);			// Phase list is messed up
 	
 	private final int status;	// Exit flag
 	

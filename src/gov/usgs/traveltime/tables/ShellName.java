@@ -60,7 +60,24 @@ public enum ShellName {
 	/**
 	 * Conrad radius in kilometers.
 	 */
-	CONRAD_DISCONTINUITY (6351d, null, null);
+	CONRAD_DISCONTINUITY (6351d, null, null),
+	/**
+	 * Place holder for the free surface.
+	 */
+	SURFACE (6371d, "", ""),
+	
+	// Handy handles.
+	/**
+	 * Associate with the maximum slowness associated with the core.  
+	 * This is trickier than it might seem because of the velocity 
+	 * drop in P and the velocity increase in S.
+	 */
+	CORE_TOP (3482d, "", ""),
+	/**
+	 * Associate with the minimum slowness at the base of the mantle.  
+	 * Again, we have to be careful because of the velocity drop in P.
+	 */
+	MANTLE_BOTTOM (3482d, "", "");
 	
 	private final double defRadius;
 	private final String pPhase;

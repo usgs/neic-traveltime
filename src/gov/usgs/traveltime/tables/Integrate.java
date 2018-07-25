@@ -21,7 +21,6 @@ public class Integrate {
 	double zInnerCore;	// Non-dimensional flattened inner core depth
 	EarthModel refModel;
 	TauModel depModel, finModel;
-//TauXints integrals;
 	TauInt tauInt;
 	ModConvert convert;
 	ArrayList<Double> slowness;
@@ -40,6 +39,8 @@ public class Integrate {
 		tauInt = new TauInt();
 		slowness = depModel.slowness;
 		finModel.putSlowness(slowness);
+		finModel.putShells('P', depModel.pShells);
+		finModel.putShells('S', depModel.sShells);
 		zMax = convert.flatZ(convert.rSurface-TauUtil.MAXDEPTH);
 		zOuterCore = refModel.outerCore.z;
 		zInnerCore = refModel.innerCore.z;
@@ -55,7 +56,7 @@ public class Integrate {
 	 */
 	public void doTauIntegrals(char type) throws Exception {
 		boolean disc = false;
-		int n1, iRay = 0;
+		int n1, n, iRay = 0, nP = 0;
 		double zLim, zLast;
 		double[] tau, x;
 		TauSample sample0, sample1;
@@ -66,6 +67,8 @@ public class Integrate {
 		System.out.format("\nmm = %d n1 = %d\n\n", depModel.size(type), n1);
 		tau = new double[n1];
 		x = new double[n1];
+		n = n1;
+		nP = slowness.size()-1;
 		
 		sample1 = depModel.getSample(type, 0);
 		finModel.add(type, sample1, -1);
@@ -80,12 +83,28 @@ public class Integrate {
 					disc = false;
 					finModel.add(type, sample0, nRec);
 				}
+				/**
+				 * This loop is central to everything as this is where the integrals 
+				 * are finally done.  It is confusing though because instead of  
+				 * integrating for each ray parameter from the surface to the turning 
+				 * point, the integrals are done for all legal ray parameters through 
+				 * each layer of the model (i.e., the radial interval between two 
+				 * slowness samples).  This organization allows the separation of tau-x 
+				 * contributions from the mantle, outer core, and inner core needed 
+				 * to construct phases like PcP and PKKP.  Note that the limit n, while 
+				 * it may seem superfluous is actually critical as it limits the ray 
+				 * penetration into low velocity zones beneath discontinuities 
+				 * (as Dr. Who said, "Ponder that").
+				 */
 				iRay = 0;
-				for(int j=slowness.size()-1; j>=0; j--) {
+				for(int j=nP; j>=0 && iRay<n; j--, iRay++) {
+					if(sample1.slow < slowness.get(j)) {
+						n = iRay;
+						break;
+					}
 					tau[iRay] += tauInt.intLayer(slowness.get(j), sample0.slow, 
 							sample1.slow, sample0.z, sample1.z);
-					x[iRay++] += tauInt.getXLayer();
-					if(sample1.slow == slowness.get(j)) break;
+					x[iRay] += tauInt.getXLayer();
 				}
 				if(sample0.z >= zLim) {
 					if(sample0.z >= zMax) {
@@ -101,19 +120,19 @@ public class Integrate {
 				zLast = sample0.z;
 			} else {
 				// We're in a discontinuity.
-				if(sample1.z != zLast) {
+				if(sample0.z != zLast) {
 					// Save the integrals at the bottom of the mantle and outer core.
-					if(sample1.z == zOuterCore || sample1.z == zInnerCore) {
+					if(sample0.z == zOuterCore || sample0.z == zInnerCore) {
 						nRec++;
-						if(sample1.z == zOuterCore) {
-							finModel.add(type, sample1, nRec, new TauXsample(n1, tau, x, 
+						if(sample0.z == zOuterCore) {
+							finModel.add(type, sample0, nRec, new TauXsample(n1, tau, x, 
 									ShellName.CORE_MANTLE_BOUNDARY));
 						} else {
-							finModel.add(type, sample1, nRec, new TauXsample(n1, tau, x, 
+							finModel.add(type, sample0, nRec, new TauXsample(n1, tau, x, 
 									ShellName.INNER_CORE_BOUNDARY));
 						}
 						System.out.format("lev2 %c %3d %3d %9.6f %8.6f\n", type, 
-								finModel.size(type)-1, iRay, sample1.z, sample1.slow);
+								finModel.size(type)-1, iRay, sample0.z, sample0.slow);
 					} else {
 						disc = true;
 					}

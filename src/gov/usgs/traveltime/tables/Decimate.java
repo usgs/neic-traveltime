@@ -29,7 +29,7 @@ public class Decimate {
 	 * @return keep An array of booleans, one for each element of x--if an 
 	 * element is true, keep the corresponding element of x
 	 */
-	public boolean[] decEst(double[] x, double xTarget) {
+	public boolean[] figureDecimation(double[] x, double xTarget) {
 		int k0, k1, k2, kb = 0, nch, m1, m2;
 		double dx1, dx2, var1, var2;
 		boolean[] keep;		// True if this x element will be kept
