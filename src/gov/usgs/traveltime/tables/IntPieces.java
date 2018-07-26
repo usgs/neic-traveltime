@@ -58,6 +58,24 @@ public class IntPieces {
 	}
 	
 	/**
+	 * Decimate the ray parameter array.  Note that keep is an AND of all 
+	 * the branch decimations.  That is, if a ray parameter is needed for 
+	 * any branch, it will be kept.
+	 */
+	public void decimateP() {
+		int k = 0;
+		double[] decP;
+		
+		decP = new double[p.length];
+		for(int j=0; j<p.length; j++) {
+			if(keep[j]) {
+				decP[k++] = p[j];
+			}
+		}
+		p = Arrays.copyOf(decP, k);
+	}
+	
+	/**
 	 * Create the tau and range partial integrals by major shells rather 
 	 * than the cumulative integrals computed in Integrate.
 	 * 

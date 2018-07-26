@@ -86,6 +86,35 @@ public class TauSample {
 		this.x = x;
 	}
 	
+	/**
+	 * Get the model depth.
+	 * 
+	 * @return Non-dimensional Earth flattened depth
+	 */
+	public double getZ() {
+		return z;
+	}
+	
+	/**
+	 * Get the model slowness.
+	 * 
+	 * @return Non-dimensional slowness
+	 */
+	public double getSlow() {
+		return slow;
+	}
+	
+	/**
+	 * Get the depth index.  This used to be a direct access file 
+	 * record number.  Now it is used to access the correct up-going 
+	 * tau and range for depth correction.
+	 * 
+	 * @return The depth index
+	 */
+	public int getIndex() {
+		return index;
+	}
+	
 	@Override
 	public String toString() {
 		if(!Double.isNaN(x)) {

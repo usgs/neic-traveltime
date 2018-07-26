@@ -399,7 +399,6 @@ public class MakeBranches {
 						pieces.getDelX(typeSeg[2], shIndex));
 				decimate.downGoingDec(branch, xTarget, begP);
 				// Create the interpolation basis functions.
-				basis = new double[5][p.length];
 				spline.basisSet(p, basis);
 				// We need to name each sub-branch.
 				branch.phCode = makePhCode(shellCounts, shell.getCode(typeSeg[1]), 
@@ -453,7 +452,6 @@ public class MakeBranches {
 				pieces.getNextDelX(typeSeg[2], endShell));
 		decimate.downGoingDec(branch, xTarget, 0);
 		// Create the interpolation basis functions.
-		basis = new double[5][p.length];
 		spline.basisSet(p, basis);
 		System.out.format("     %2d %-8s %3d %3d %3.0f\n", branches.size(), 
 				branch.phCode, 0, endP, convert.dimR(xTarget));
@@ -568,7 +566,6 @@ public class MakeBranches {
 								pieces.getDelX(typeSeg[2], shIndex2));
 						decimate.downGoingDec(branch, xTarget, minBrnP);
 						// Create the interpolation basis functions.
-						basis = new double[5][p.length];
 						spline.basisSet(p, basis);
 						// We need to name each sub-branch.
 						branch.phCode = makePhCode(shellCounts, shell1.getCode(typeSeg[1]), 
@@ -681,6 +678,7 @@ public class MakeBranches {
 		branch.p = new double[n];
 		branch.tau = new double[n];
 		branch.x = new double[n];
+		branch.basis = new double[5][n];
 		// Make the branch data arrays local for convenience.
 		p = branch.p;
 		tau = branch.tau;

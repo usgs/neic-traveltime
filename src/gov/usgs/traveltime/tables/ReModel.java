@@ -58,14 +58,18 @@ public class ReModel {
 			locModel.printModel(true, true);
 			locModel.printCritical();
 			
-			// Make the slowness sampling.
+			// Make the initial slowness sampling.
 			sample = new SampleSlowness(locModel);
 			sample.sample('P');
 			sample.printModel('P', "Tau");
 			sample.sample('S');
 			sample.printModel('S', "Tau");
+			// We need a merged set of slownesses for converted branches 
+			// (e.g., ScP).
 			sample.merge();
 			sample.printMerge();
+			// Fiddle with the sampling so that low velocity zones are 
+			// better sampled.
 			sample.depthModel('P');
 			sample.printModel('P', "Depth");
 			sample.depthModel('S');
@@ -79,6 +83,8 @@ public class ReModel {
 			integrate = new Integrate(depModel);
 			integrate.doTauIntegrals('P');
 			integrate.doTauIntegrals('S');
+			// The final model only includes depth samples that will be 
+			// of interest for earthquake location.
 			finModel = integrate.getFinalModel();
 //		finModel.printShellInts('P');
 //		finModel.printShellInts('S');
@@ -86,21 +92,27 @@ public class ReModel {
 			pieces = new TablePieces(finModel);
 			pieces.printShellInts('P');
 			pieces.printShellInts('S');
-//		pieces.printProxy();
+//		pieces.printProxy();		// Proxy depth sampling before decimation
+			// Decimate the default sampling for the up-going branches.
 			decimate = new DecTTbranch(pieces, convert);
 			decimate.upGoingDec('P');
 			decimate.upGoingDec('S');
 //		pieces.pPieces.printDec();
 //		pieces.sPieces.printDec();
-			pieces.printProxy();
+			pieces.printProxy();		// Proxy depth sampling after decimation
 			
 			// Make the branches.
-			finModel.printDepShells('P');
-			finModel.printDepShells('S');
 			layout = new MakeBranches(finModel, pieces, decimate);
-			layout.readPhases();
+			layout.readPhases();		// Read the desired phases from a file
 			layout.printPhases();
 			layout.printBranches(false, true);
+			// Do the final decimation.
+			pieces.decimateP();
+			pieces.printP();
+			finModel.decimateTauX('P', pieces.getDecimation('P'));
+			finModel.decimateTauX('S', pieces.getDecimation('S'));
+			// Print the final branches.
+			layout.printBranches(true, true);
 		} else {
 			System.out.println("Read status = "+status);
 		}

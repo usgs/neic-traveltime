@@ -132,6 +132,24 @@ public class TauModel {
 	}
 	
 	/**
+	 * Get the Earth model name.
+	 * 
+	 * @return The Earth model name
+	 */
+	public String getModelName() {
+		return refModel.earthModel;
+	}
+	
+	/**
+	 * Get the model dependent conversions.
+	 * 
+	 * @return A pointer to the model dependent conversion class
+	 */
+	public ModConvert getConvert() {
+		return convert;
+	}
+	
+	/**
 	 * Get a tau model sample.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)
@@ -464,6 +482,51 @@ public class TauModel {
 	}
 	
 	/**
+	 * Decimate the up-going tau and range arrays in parallel with 
+	 * decimating the master ray parameter arrays in the integral 
+	 * pieces.  Note that there are two sets of up-going branches 
+	 * with different sampling.  The up-going branches here are used 
+	 * to correct all the other branches for source depth.  The 
+	 * up-going branch sampling that will be used to actually generate 
+	 * the up-going branch travel times was done with the proxy 
+	 * sampling.  These branches are stubs in the sense that they have 
+	 * a sampling, but tau and range are zero as is appropriate for a 
+	 * surface focus source.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param keep Master array of decimation flags
+	 */
+	public void decimateTauX(char type, boolean[] keep) {
+		int k;
+		double[] tau, x, decTau = null, decX = null;
+		
+		// Loop over the up-going branches.
+		for(int i=0; i<intsSize(type)-3; i++) {
+			// Some of the integrals don't exist.
+			tau = getTauInt(type, i);
+			if(tau != null) {
+				x = getXInt(type, i);
+				// Allocate temporary arrays on the shallowest integrals 
+				// because they are the longest.
+				if(decTau == null) {
+					decTau = new double[tau.length];
+					decX = new double[x.length];
+				}
+				// Do the decimation.
+				k = 0;
+				for(int j=0; j<tau.length; j++) {
+					if(keep[j]) {
+						decTau[k] = tau[j];
+						decX[k++] = x[j];
+					}
+				}
+				// Update the integral arrays with the decimated versions.
+				update(type, i, k, decTau, decX);
+			}
+		}
+	}
+	
+	/**
 	 * Get the low velocity zone (really high slowness zone) flag.  
 	 * Note that this is done by slowness rather than index because 
 	 * the final model is so fragmentary.  It is assumed that there 
@@ -591,6 +654,38 @@ public class TauModel {
 			}
 		}
 		return null;
+	}
+	
+	/**
+	 * Update tau and range arrays with their decimated versions.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param index Integral index
+	 * @param len Length of the decimated arrays
+	 * @param newTau Decimated tau array
+	 * @param newX Decimated range array
+	 */
+	public void update(char type, int index, int len, double[] newTau, 
+			double[] newX) {
+		if(type == 'P') {
+			pInts.get(index).update(len, newTau, newX);
+		} else {
+			sInts.get(index).update(len, newTau, newX);
+		}
+	}
+	
+	/**
+	 * Get the size of the integral lists.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @return The size of the integral list
+	 */
+	public int intsSize(char type) {
+		if(type == 'P') {
+			return pInts.size();
+		} else {
+			return sInts.size();
+		}
 	}
 	
 	/**

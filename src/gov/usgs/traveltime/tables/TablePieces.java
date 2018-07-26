@@ -30,6 +30,15 @@ public class TablePieces {
 	}
 	
 	/**
+	 * Decimate the ray parameter arrays for both the P and S 
+	 * models.
+	 */
+	public void decimateP() {
+		pPieces.decimateP();
+		sPieces.decimateP();
+	}
+	
+	/**
 	 * Get the integral pieces for one phase type.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)
@@ -164,6 +173,20 @@ public class TablePieces {
 	}
 	
 	/**
+	 * Get the master decimation array.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @return The master decimation array
+	 */
+	public boolean[] getDecimation(char type) {
+		if(type == 'P') {
+			return pPieces.keep;
+		} else {
+			return sPieces.keep;
+		}
+	}
+	
+	/**
 	 * Print out the proxy ranges.
 	 */
 	public void printProxy() {
@@ -203,6 +226,20 @@ public class TablePieces {
 			pPieces.printShellInts();
 		} else {
 			sPieces.printShellInts();
+		}
+	}
+	
+	/**
+	 * Print the ray parameter arrays for both the P and S branches.
+	 */
+	public void printP() {
+		System.out.println("\nMaster Ray Parameters");
+		System.out.println("       P        S");
+		for(int j=0; j<pPieces.p.length; j++) {
+			System.out.format("%3d %8.6f %8.6f\n", j, pPieces.p[j], sPieces.p[j]);
+		}
+		for(int j=pPieces.p.length; j<sPieces.p.length; j++) {
+			System.out.format("%3d          %8.6f\n", j, sPieces.p[j]);
 		}
 	}
 }

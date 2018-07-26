@@ -107,12 +107,13 @@ public class BrnData {
 			System.out.format("%-8s %2d %c %c %c %1d %5b\n", phCode, signSeg, 
 					typeSeg[0], typeSeg[1], typeSeg[2], countSeg, isUpGoing);
 		} else {
+			if(full) System.out.println();
 			if(!nice) {
 				System.out.format("%-8s %2d %c %c %c %1d %5b %8.6f %8.6f %8.6f %8.6f %3d\n", 
 						phCode, signSeg, typeSeg[0], typeSeg[1], typeSeg[2], countSeg, 
 						isUpGoing, pRange[0], pRange[1], xRange[0], xRange[1], p.length);
 				if(full) {
-					System.out.println("\n         p       tau      X                "+
+					System.out.println("         p       tau      X                "+
 							"basis function coefficients");
 					if(x != null) {
 						for(int j=0; j<p.length; j++) {
@@ -134,7 +135,7 @@ public class BrnData {
 						isUpGoing, pRange[0], pRange[1], Math.toDegrees(xRange[0]), 
 						Math.toDegrees(xRange[1]), p.length);
 				if(full) {
-					System.out.println("\n         p       tau      X                "+
+					System.out.println("         p       tau      X                "+
 							"basis function coefficients");
 					if(x != null) {
 						for(int j=0; j<p.length; j++) {

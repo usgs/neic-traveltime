@@ -31,4 +31,16 @@ public class TauXsample {
 		this.name = name;
 		lvz = false;
 	}
+	
+	/**
+	 * Update the tau and range arrays with decimated versions.
+	 * 
+	 * @param len New array lengths
+	 * @param newTau Decimated tau array
+	 * @param newX Decimated range array
+	 */
+	public void update(int len, double[] newTau, double[] newX) {
+		tau = Arrays.copyOf(newTau, len);
+		x = Arrays.copyOf(newX, len);
+	}
 }
