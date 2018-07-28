@@ -1,5 +1,11 @@
 package gov.usgs.traveltime;
 
+import java.util.ArrayList;
+
+import gov.usgs.traveltime.tables.BrnData;
+import gov.usgs.traveltime.tables.TablePieces;
+import gov.usgs.traveltime.tables.TauModel;
+
 /**
  * Umbrella storage for all non-volatile travel-time data.  
  * Currently, the data is loaded into appropriate classes 
@@ -72,6 +78,44 @@ public class AllBrnRef {
 		// Set up the up-going branch data.
 		pUp = new UpDataRef(in, 'P');
 		sUp = new UpDataRef(in, 'S');
+	}
+	
+	/**
+	 * Load data from the tau-p table generation classes into the classes 
+	 * supporting the actual travel-time generation.  Note that this two 
+	 * step process provides the flexibility to get the data from various 
+	 * places and also allows the reference classes to make all the data 
+	 * final.
+	 * 
+	 * @param finModel Travel-time table generation final tau model
+	 * @param pieces Travel-time table generation integration pieces
+	 * @param brnData Travel-time table generation branch data
+	 * @param auxtt The auxiliary data source
+	 */
+	public AllBrnRef(TauModel finModel, TablePieces pieces, ArrayList<BrnData> brnData, 
+			AuxTtRef auxtt) {
+		// Remember the input data.
+		this.modelName = finModel.getModelName();
+		this.auxtt = auxtt;
+		
+		// Set up the conversion constants, etc.
+		cvt = finModel.getConvert();
+		
+		// Set up the Earth model.
+		pModel = new ModDataRef(finModel, cvt, 'P');
+		sModel = new ModDataRef(finModel, cvt, 'S');
+		
+		// Load the branch data.
+		branches = new BrnDataRef[brnData.size()];
+		ExtraPhases extra = new ExtraPhases(auxtt);
+		// Loop over branches setting them up.
+		for(int j=0; j<branches.length; j++) {
+			branches[j] = new BrnDataRef(brnData.get(j), j, extra, auxtt);
+		}
+		
+		// Set up the up-going branch data.
+		pUp = new UpDataRef(finModel, pieces, 'P');
+		sUp = new UpDataRef(finModel, pieces, 'S');
 	}
 
 	/**

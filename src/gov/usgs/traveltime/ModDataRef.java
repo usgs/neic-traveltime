@@ -2,6 +2,9 @@ package gov.usgs.traveltime;
 
 import java.util.Arrays;
 
+import gov.usgs.traveltime.tables.TauModel;
+import gov.usgs.traveltime.tables.TauSample;
+
 /**
  * Store Earth model data for one wave type.  Note that the model is 
  * normalized and the depths have undergone a flat Earth transformation.  
@@ -47,6 +50,35 @@ public class ModDataRef {
 			for(int j=indexUp.length-1; j>=1; j--) {
 				indexUp[j] = indexUp[j]-indexUp[1];
 			}
+		}
+	}
+	
+	/**
+	 * Load data for the Earth model for one wave type from the table 
+	 * generation process.  
+	 * 
+	 * @param finModel Travel-time table generation final tau model
+	 * @param cvt The Earth model units converter
+	 * @param typeMod Wave type ('P' or 'S')
+	 */
+	public ModDataRef(TauModel finModel, ModConvert cvt, char typeMod) {
+		int n, indexOffset;
+		TauSample sample;
+		
+		this.typeMod = typeMod;
+		this.cvt = cvt;
+		
+		n = finModel.size(typeMod)-3;
+		zMod = new double[n];
+		pMod = new double[n];
+		indexUp = new int[n];
+		sample = finModel.getSample(typeMod, 1);
+		indexOffset = sample.getIndex();
+		for(int j=0; j<n; j++) {
+			sample = finModel.getSample(typeMod, j);
+			zMod[j] = sample.getZ();
+			pMod[j] = sample.getSlow();
+			indexUp[j] = sample.getIndex()-indexOffset;
 		}
 	}
 	

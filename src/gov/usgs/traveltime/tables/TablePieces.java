@@ -64,6 +64,15 @@ public class TablePieces {
 	}
 	
 	/**
+	 * Get all the ray parameters.
+	 * 
+	 * @return Ray parameter array
+	 */
+	public double[] getP() {
+		return sPieces.p;
+	}
+	
+	/**
 	 * Get a major shell tau value by index.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)

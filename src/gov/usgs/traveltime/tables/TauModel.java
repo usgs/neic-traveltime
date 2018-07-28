@@ -1,6 +1,8 @@
 package gov.usgs.traveltime.tables;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.TreeSet;
 
 import gov.usgs.traveltime.ModConvert;
 
@@ -20,6 +22,7 @@ public class TauModel {
 	ArrayList<Double> slowness;
 	ArrayList<ModelShell> pShells = null, sShells = null;
 	ArrayList<TauXsample> pInts = null, sInts = null;
+	ArrayList<TauSample> pXUp, sXUp;
 	ModConvert convert;
 	
 	/**
@@ -686,6 +689,126 @@ public class TauModel {
 		} else {
 			return sInts.size();
 		}
+	}
+	
+	/**
+	 * The the size of the integrals list, counting only the non-null, 
+	 * upper mantle integrals.  These are the integrals used for depth 
+	 * correction.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @return The non-null number of upper mantle integrals
+	 */
+	public int intsRealSize(char type) {
+		int size = 0;
+		
+		if(type == 'P') {
+			for(int j=0; j<pInts.size()-3; j++) {
+				if(pInts.get(j) != null) size++;
+			}
+		} else {
+			for(int j=0; j<sInts.size()-3; j++) {
+				if(sInts.get(j) != null) size++;
+			}
+		}
+		return size;
+	}
+	
+	/**
+	 * Because of the way the interpolation is done in the travel-time 
+	 * calculation, we need the ray travel distances at the branch 
+	 * ends.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param ends A sorted list of branch end ray parameter values
+	 */
+	public void makeXUp(char type, TreeSet<Double> ends) {
+		int j = 0;
+		double pEnd;
+		Iterator<Double> iter;
+		
+		// Get an iterator for the tree set.
+		iter = ends.iterator();
+		
+		// Match the branch ends with the model.
+		if(type == 'P') {
+			pXUp = new ArrayList<TauSample>();
+			while(iter.hasNext()) {
+				pEnd = iter.next();
+				for(; j<pModel.size(); j++) {
+					if(pModel.get(j).slow == pEnd) {
+						pXUp.add(pModel.get(j));
+						break;
+					}
+				}
+				break;
+			}
+		} else {
+			sXUp = new ArrayList<TauSample>();
+			while(iter.hasNext()) {
+				pEnd = iter.next();
+				for(; j<sModel.size(); j++) {
+					if(sModel.get(j).slow == pEnd) {
+						sXUp.add(sModel.get(j));
+						break;
+					}
+				}
+				break;
+			}
+		}
+	}
+	
+	/**
+	 * We need the xUp values in the final model to create UpDataRef, 
+	 * but the model itself isn't complete.  To get around this limitation, 
+	 * we need to create the xUp values in the depth model and then set 
+	 * them in the final model.
+	 * 
+	 * @param depModel The depth tau model
+	 */
+	public void setXUp(TauModel depModel) {
+		pXUp = depModel.pXUp;
+		sXUp = depModel.sXUp;
+	}
+	
+	/**
+	 * Get the ray parameters associated with the branch ends.  Note that 
+	 * the S-wave ray parameters are a superset of the P-wave ray 
+	 * parameters.
+	 * 
+	 * @return Array of branch end ray parameters.
+	 */
+	public double[] getPxUp() {
+		double[] pXUp;
+		
+		pXUp = new double[sXUp.size()];
+		for(int j=0; j<pXUp.length; j++) {
+			pXUp[j] = sXUp.get(j).slow;
+		}
+		return pXUp;
+	}
+	
+	/**
+	 * Get the ray travel distances (ranges) at the branch ends.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @return Array of branch end ranges
+	 */
+	public double[] getXUp(char type) {
+		double[] xUp;
+		
+		if(type == 'P') {
+			xUp = new double[pXUp.size()];
+			for(int j=0; j< xUp.length; j++) {
+				xUp[j] = pXUp.get(j).x;
+			}
+		} else {
+			xUp = new double[sXUp.size()];
+			for(int j=0; j< xUp.length; j++) {
+				xUp[j] = sXUp.get(j).x;
+			}
+		}
+		return xUp;
 	}
 	
 	/**

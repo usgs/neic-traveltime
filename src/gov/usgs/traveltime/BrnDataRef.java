@@ -2,6 +2,8 @@ package gov.usgs.traveltime;
 
 import java.util.Arrays;
 
+import gov.usgs.traveltime.tables.BrnData;
+
 /**
  * Store all non-volatile information associated with one travel-time 
  * branch.  Note that all data are normalized and transformed for internal 
@@ -47,24 +49,16 @@ public class BrnDataRef {
 	public BrnDataRef(ReadTau in, int indexBrn, int indexSeg, String segCode, 
 			ExtraPhases extra, AuxTtRef auxtt) {
 		
-		// Do phase code.
-		phCode = in.phCode[indexBrn];
-		uniqueCode = new String[2];
-		uniqueCode[0] = TauUtil.uniqueCode(phCode);
-		if(phCode.contains("ab")) {
-			uniqueCode[1] = uniqueCode[0].replace("ab", "bc");
-		} else {
-			uniqueCode[1] = null;
-		}
-		
 		// Remember the auxiliary data and the branch statistics and ellipticity.
 		this.auxtt = auxtt;
+		
+		// Do phase code.
+		phCode = in.phCode[indexBrn];
 		
 		// Do segment summary information.
 		phSeg = segCode;
 		if(in.typeSeg[indexSeg][1] <= 0) isUpGoing = true;
 		else isUpGoing = false;
-		isUseless = auxtt.isChaff(phCode);
 		// The three types are: 1) initial, 2) down-going, and 3) up-coming.
 		// For example, sP would be S, P, P, while ScP would be S, S, P.
 		typeSeg = new char[3];
@@ -99,7 +93,36 @@ public class BrnDataRef {
 			pRange[j] = in.pBrn[indexBrn][j];
 			xRange[j] = in.xBrn[indexBrn][j];
 		}
-				
+
+		// Set up the branch specification.
+		int start = in.indexBrn[indexBrn][0]-1;
+		int end = in.indexBrn[indexBrn][1];
+		pBrn = Arrays.copyOfRange(in.pSpec, start, end);
+		tauBrn = Arrays.copyOfRange(in.tauSpec, start, end);
+		basis = new double[5][];
+		for(int k=0; k<5; k++) {
+			basis[k] = Arrays.copyOfRange(in.basisSpec[k], start, end);
+		}
+		
+		/*
+		 * This section draws only on preset information within the 
+		 * Java code (i.e., not the model).  Although it is the same for 
+		 * any constructor, it must be duplicated because the variables 
+		 * being set are final.
+		 */
+		
+		// Set up the unique code (for plotting).
+		uniqueCode = new String[2];
+		uniqueCode[0] = TauUtil.uniqueCode(phCode);
+		if(phCode.contains("ab")) {
+			uniqueCode[1] = uniqueCode[0].replace("ab", "bc");
+		} else {
+			uniqueCode[1] = null;
+		}
+		
+		// Set the useless phase flag.
+		isUseless = auxtt.isChaff(phCode);
+		
 		// Set up diffracted and add-on phases.
 		if(!isUpGoing) {
 			hasDiff = extra.hasDiff(phCode);
@@ -149,15 +172,119 @@ public class BrnDataRef {
 			phRefl = null;
 			convRefl = null;
 		}
+	}
+	
+	/**
+	 * Load data from the tau-p table generation branch data into this 
+	 * class supporting the actual travel-time generation.
+	 * 
+	 * @param brnData Travel-time table generation branch data
+	 * @param indexBrn FORTRAN branch index
+	 * @param extra List of extra phases
+	 * @param auxtt Auxiliary data source
+	 */
+	public BrnDataRef(BrnData brnData, int indexBrn, ExtraPhases extra, 
+			AuxTtRef auxtt) {
+		
+		// Remember the auxiliary data and the branch statistics and ellipticity.
+		this.auxtt = auxtt;
+		
+		// Do phase code.
+		phCode = brnData.getPhCode();
+		
+		// Do segment summary information.
+		phSeg = brnData.getPhSeg();
+		isUpGoing = brnData.getIsUpGoing();
+		// The three types are: 1) initial, 2) down-going, and 3) up-coming.
+		// For example, sP would be S, P, P, while ScP would be S, S, P.
+		typeSeg = Arrays.copyOf(brnData.getTypeSeg(), 3);
+		// We need to know whether to add or subtract the up-going correction.
+		// For example, the up-going correction would be subtracted for P, but 
+		// added for pP.
+		signSeg = brnData.getSignSeg();
+		// We might need to add or subtract the up-going correction more than 
+		// once.
+		countSeg = brnData.getCountSeg();
+		
+		// Do branch summary information.
+		pRange = Arrays.copyOf(brnData.getPrange(), 2);
+		xRange = Arrays.copyOf(brnData.getXrange(), 2);
 
 		// Set up the branch specification.
-		int start = in.indexBrn[indexBrn][0]-1;
-		int end = in.indexBrn[indexBrn][1];
-		pBrn = Arrays.copyOfRange(in.pSpec, start, end);
-		tauBrn = Arrays.copyOfRange(in.tauSpec, start, end);
+		pBrn = Arrays.copyOf(brnData.getP(), brnData.getP().length);
+		tauBrn = Arrays.copyOf(brnData.getTau(), brnData.getTau().length);
 		basis = new double[5][];
 		for(int k=0; k<5; k++) {
-			basis[k] = Arrays.copyOfRange(in.basisSpec[k], start, end);
+			basis[k] = Arrays.copyOf(brnData.getBasis(k), brnData.getBasis(k).length);
+		}
+		
+		/*
+		 * This section draws only on preset information within the 
+		 * Java code (i.e., not the model).  Although it is the same for 
+		 * any constructor, it must be duplicated because the variables 
+		 * being set are final.
+		 */
+		
+		// Set up the unique code (for plotting).
+		uniqueCode = new String[2];
+		uniqueCode[0] = TauUtil.uniqueCode(phCode);
+		if(phCode.contains("ab")) {
+			uniqueCode[1] = uniqueCode[0].replace("ab", "bc");
+		} else {
+			uniqueCode[1] = null;
+		}
+		
+		// Set the useless phase flag.
+		isUseless = auxtt.isChaff(phCode);
+		
+		// Set up diffracted and add-on phases.
+		if(!isUpGoing) {
+			hasDiff = extra.hasDiff(phCode);
+			hasAddOn = extra.hasAddOn(phCode, xRange[1]);
+		} else {
+			hasDiff = false;
+			hasAddOn = false;
+		}
+		
+		// Handle a diffracted branch.
+		if(hasDiff) {
+			phDiff = extra.getPhDiff();
+			xDiff = extra.getPhLim();
+		} else {
+			phDiff = "";
+			xDiff = 0d;
+		}
+		
+		// Handle an add-on phase.
+		if(hasAddOn) {
+			phAddOn = extra.getPhAddOn();
+			// Add-on flags can be different than the base phase.
+		} else {
+			phAddOn = "";
+		}
+		
+		// Set up the type of surface reflection, if any.
+		if(signSeg > 0 && !isUpGoing) {
+			if(typeSeg[0] == 'P') {
+				if(typeSeg[1] == 'P') phRefl = "pP";
+				else phRefl = "pS";
+			} else {
+				if(typeSeg[1] == 'P') phRefl = "sP";
+				else phRefl = "sS";
+			}
+			convRefl = phRefl.toUpperCase();
+		} else if(countSeg > 1) {
+			if(typeSeg[1] == 'P') {
+				if(typeSeg[2] == 'P') phRefl = "PP";
+				else phRefl = "PS";
+			} else {
+				if(typeSeg[2] == 'P') phRefl = "SP";
+				else phRefl = "SS";
+			}
+			convRefl = phRefl.toUpperCase();
+		} else {
+			phRefl = null;
+			convRefl = null;
 		}
 	}
 	

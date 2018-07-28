@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
+import java.util.TreeSet;
 
 import gov.usgs.traveltime.ModConvert;
 import gov.usgs.traveltime.Spline;
@@ -311,6 +312,33 @@ public class MakeBranches {
 						") *****\n");
 			}
 		}
+	}
+	
+	/**
+	 * Build a list of branch end ray parameter values.  The final 
+	 * list will be sorted into ascending order and each value will 
+	 * be unique.
+	 * 
+	 * @return List of branch end ray parameters.
+	 */
+	public TreeSet<Double> getBranchEnds() {
+		TreeSet<Double> ends;
+		
+		ends = new TreeSet<Double>();
+		for(int j=0; j<branches.size(); j++) {
+			ends.add(branches.get(j).pRange[0]);
+			ends.add(branches.get(j).pRange[1]);
+		}
+		return ends;
+	}
+	
+	/**
+	 * Get the travel-time branches we just constructed.
+	 * 
+	 * @return Travel-time branch data
+	 */
+	public ArrayList<BrnData> getBranches() {
+		return branches;
 	}
 	
 	/**

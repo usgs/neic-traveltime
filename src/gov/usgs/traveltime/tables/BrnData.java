@@ -11,6 +11,7 @@ import java.util.Arrays;
 public class BrnData {
 	// Header:
 	String phCode;					// Branch phase code
+	String phSeg;						// Segment code
 	boolean isUpGoing;			// True if this is an up-going branch
 	char[] typeSeg;					// Phase type for correction, descending, ascending
 	int signSeg;						// Sign of the up-going correction
@@ -30,6 +31,7 @@ public class BrnData {
 	 */
 	public BrnData(char upType) {
 		phCode = ""+upType;
+		phSeg = phCode;
 		isUpGoing = true;
 		typeSeg = new char[3];
 		signSeg = 1;
@@ -47,6 +49,7 @@ public class BrnData {
 	 */
 	public BrnData(String phCode, char[] typeSeg, int countSeg) {
 		this.phCode = phCode;
+		phSeg = phCode;
 		isUpGoing = false;
 		this.typeSeg = Arrays.copyOf(typeSeg, typeSeg.length);
 		if(typeSeg[0] == 'p' || typeSeg[0] == 's') {
@@ -95,6 +98,67 @@ public class BrnData {
 		xRange[0] = x[0];
 		xRange[1] = x[x.length-1];
 	}
+	
+	/**
+	 * @return Phase code
+	 */
+	public String getPhCode() {return phCode;}
+	
+	/**
+	 * @return Segment code
+	 */
+	public String getPhSeg() {return phSeg;}
+	
+	/**
+	 * @return The up-going branch flag
+	 */
+	public boolean getIsUpGoing() {return isUpGoing;}
+	
+	/**
+	 * @return The ray segment type array
+	 */
+	public char[] getTypeSeg() {return typeSeg;}
+	
+	/**
+	 * @return The sign of the up-going depth correction
+	 */
+	public int getSignSeg() {return signSeg;}
+	
+	/**
+	 * @return The count of the up-going depth correction
+	 */
+	public int getCountSeg() {return countSeg;}
+	
+	/**
+	 * @return The summary non-dimensional ray parameter range
+	 */
+	public double[] getPrange() {return pRange;}
+	
+	/**
+	 * @return The summary non-dimensional distance range
+	 */
+	public double[] getXrange() {return xRange;}
+	
+	/**
+	 * @return The non-dimensional ray parameter sampling
+	 */
+	public double[] getP() {return p;}
+	
+	/**
+	 * @return The non-dimensional tau values
+	 */
+	public double[] getTau() {return tau;}
+	
+	/**
+	 * @return The non-dimensional ray travel distances
+	 */
+	public double[] getX() {return x;}
+	
+	/**
+	 * @param k The basis function row to return
+	 * @return One row of the interpolation basis functions
+	 */
+	public double[] getBasis(int k) {return basis[k];}
 	
 	/**
 	 * Print this branch.
