@@ -315,14 +315,14 @@ public class BrnDataRef {
 	 */
 	public void dumpBrn(boolean full) {
 		if(isUpGoing) {
-			System.out.format("\n          phase = %s up  %s  ", phCode, uniqueCode);
+			System.out.format("\n          phase = %s up  %s  ", phCode, uniqueCode[0]);
 			if(hasDiff) System.out.format("diff = %s  ", phDiff);
 			if(hasAddOn) System.out.format("add-on = %s  ", phAddOn);
 			System.out.format("isUseless = %b\n", isUseless);
 			System.out.format("Segment: code = %s  type = %c        sign = %2d"+
 					"  count = %d\n", phSeg, typeSeg[0], signSeg, countSeg);
 		} else {
-			System.out.format("\n          phase = %s  %s  ", phCode, uniqueCode);
+			System.out.format("\n          phase = %s  %s  ", phCode, uniqueCode[0]);
 			if(hasDiff) System.out.format("diff = %s  ", phDiff);
 			if(hasAddOn) System.out.format("add-on = %s  ", phAddOn);
 			System.out.format("isUseless = %b\n", isUseless);

@@ -177,11 +177,11 @@ public class AllBrnVol {
 					// Note that a source depth of zero is intrinsically different 
 					// from any positive depth (i.e., no up-going phases).
 					zSource = 0d;
-					dTdDepth = 1d/cvt.pNorm;
+					dTdDepth = 1d/cvt.vNorm;
 				} else {
 					zSource = Math.min(Math.log(Math.max(1d-dSource*cvt.xNorm, 
 							TauUtil.DMIN)), 0d);
-					dTdDepth = 1d/(cvt.pNorm*(1d-dSource*cvt.xNorm));
+					dTdDepth = 1d/(cvt.vNorm*(1d-dSource*cvt.xNorm));
 				}
 				
 				// See if we want all phases.
@@ -892,8 +892,8 @@ public class AllBrnVol {
 	 */
 	public void dumpHead() {
 		System.out.println("\n     "+ref.modelName);
-		System.out.format("Normalization: xNorm =%11.4e  pNorm =%11.4e  "+
-				"tNorm =%11.4e\n", cvt.xNorm, cvt.pNorm, cvt.tNorm);
+		System.out.format("Normalization: xNorm =%11.4e  vNorm =%11.4e  "+
+				"tNorm =%11.4e\n", cvt.xNorm, cvt.vNorm, cvt.tNorm);
 		System.out.format("Boundaries: zUpperMantle =%7.1f  zMoho =%7.1f  "+
 				"zConrad =%7.1f\n", cvt.zUpperMantle, cvt.zMoho, cvt.zConrad);
 		System.out.format("Derived: rSurface =%8.1f  zNewUp = %7.1f  "+

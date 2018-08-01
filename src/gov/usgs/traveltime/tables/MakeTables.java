@@ -1,7 +1,6 @@
 package gov.usgs.traveltime.tables;
 
 import java.util.ArrayList;
-import java.util.TreeSet;
 
 import gov.usgs.traveltime.AllBrnRef;
 import gov.usgs.traveltime.AuxTtRef;
@@ -16,7 +15,6 @@ import gov.usgs.traveltime.TtStatus;
  */
 public class MakeTables {
 	TauModel finModel;
-	TablePieces pieces;
 	ArrayList<BrnData> brnData;
 
 	/**
@@ -34,7 +32,6 @@ public class MakeTables {
 		Integrate integrate;
 		DecTTbranch decimate;
 		MakeBranches layout;
-		TreeSet<Double> ends;
 		TtStatus status;
 		
 		refModel = new EarthModel(earthModel, true);
@@ -80,7 +77,6 @@ public class MakeTables {
 //		depModel.printDepShells('S');
 			
 			// Do the integrals.
-			TablesUtil.deBugOrder = false;
 			integrate = new Integrate(depModel);
 			integrate.doTauIntegrals('P');
 			integrate.doTauIntegrals('S');
@@ -90,36 +86,33 @@ public class MakeTables {
 //		finModel.printShellInts('P');
 //		finModel.printShellInts('S');
 			// Reorganize the integral data.
-			pieces = new TablePieces(finModel);
-			pieces.printShellInts('P');
-			pieces.printShellInts('S');
+			finModel.makePieces();
+			finModel.printShellSpec('P');
+			finModel.printShellSpec('S');
 //		pieces.printProxy();		// Proxy depth sampling before decimation
 			// Decimate the default sampling for the up-going branches.
-			decimate = new DecTTbranch(pieces, convert);
+			decimate = new DecTTbranch(finModel, convert);
 			decimate.upGoingDec('P');
 			decimate.upGoingDec('S');
 //		pieces.pPieces.printDec();
 //		pieces.sPieces.printDec();
-			pieces.printProxy();		// Proxy depth sampling after decimation
+			finModel.printProxy();		// Proxy depth sampling after decimation
 			
 			// Make the branches.
-			layout = new MakeBranches(finModel, pieces, decimate);
+			layout = new MakeBranches(finModel, decimate);
 			layout.readPhases();		// Read the desired phases from a file
 			layout.printPhases();
 			layout.printBranches(false, true);
 			brnData = layout.getBranches();
 			// Do the final decimation.
-			pieces.decimateP();
-			pieces.printP();
-			finModel.decimateTauX('P', pieces.getDecimation('P'));
-			finModel.decimateTauX('S', pieces.getDecimation('S'));
+			finModel.decimateP();
+			finModel.printP();
+			finModel.decimateTauX('P');
+			finModel.decimateTauX('S');
 			// Print the final branches.
-			layout.printBranches(true, true);
+//		layout.printBranches(true, true);
 			// Build the branch end ranges.
-			ends = layout.getBranchEnds();
-			depModel.makeXUp('P', ends);
-			depModel.makeXUp('S', ends);
-			finModel.setXUp(depModel);
+			finModel.setEnds(layout.getBranchEnds());
 		}
 		return status;
 	}
@@ -132,6 +125,6 @@ public class MakeTables {
 	 * @return The reference data for all branches
 	 */
 	public AllBrnRef fillAllBrnRef(AuxTtRef auxTT) {
-		return new AllBrnRef(finModel, pieces, brnData, auxTT);
+		return new AllBrnRef(finModel, brnData, auxTT);
 	}
 }

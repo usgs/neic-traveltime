@@ -21,17 +21,17 @@ import gov.usgs.traveltime.TauUtil;
  */
 public class DecTTbranch {
 	Decimate dec;
-	TablePieces pieces;
+	TauModel finModel;
 	ModConvert convert;
 	
 	/**
 	 * Instantiate the general decimation class.
 	 * 
-	 * @param pieces Integral pieces
+	 * @param finModel Final model
 	 * @param convert Model dependent conversions
 	 */
-	public DecTTbranch(TablePieces pieces, ModConvert convert) {
-		this.pieces = pieces;
+	public DecTTbranch(TauModel finModel, ModConvert convert) {
+		this.finModel = finModel;
 		this.convert = convert;
 		dec = new Decimate();
 	}
@@ -52,7 +52,7 @@ public class DecTTbranch {
 		IntPieces piece;
 		
 		// Run the decimation algorithm.
-		piece = pieces.getPiece(type);
+		piece = finModel.getPiece(type);
 		keep = piece.keep;
 		pOld = piece.proxyP;
 		xOld = piece.proxyX;
@@ -124,7 +124,7 @@ public class DecTTbranch {
 		IntPieces piece;
 		
 		// Set up.
-		piece = pieces.getPiece(branch.typeSeg[0]);
+		piece = finModel.getPiece(branch.typeSeg[0]);
 		keep = piece.keep;
 		pOld = branch.p;
 		tauOld = branch.tau;

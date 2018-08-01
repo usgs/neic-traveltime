@@ -3,7 +3,6 @@ package gov.usgs.traveltime;
 import java.util.ArrayList;
 
 import gov.usgs.traveltime.tables.BrnData;
-import gov.usgs.traveltime.tables.TablePieces;
 import gov.usgs.traveltime.tables.TauModel;
 
 /**
@@ -88,11 +87,10 @@ public class AllBrnRef {
 	 * final.
 	 * 
 	 * @param finModel Travel-time table generation final tau model
-	 * @param pieces Travel-time table generation integration pieces
 	 * @param brnData Travel-time table generation branch data
 	 * @param auxtt The auxiliary data source
 	 */
-	public AllBrnRef(TauModel finModel, TablePieces pieces, ArrayList<BrnData> brnData, 
+	public AllBrnRef(TauModel finModel, ArrayList<BrnData> brnData, 
 			AuxTtRef auxtt) {
 		// Remember the input data.
 		this.modelName = finModel.getModelName();
@@ -114,8 +112,8 @@ public class AllBrnRef {
 		}
 		
 		// Set up the up-going branch data.
-		pUp = new UpDataRef(finModel, pieces, 'P');
-		sUp = new UpDataRef(finModel, pieces, 'S');
+		pUp = new UpDataRef(finModel, 'P');
+		sUp = new UpDataRef(finModel, 'S');
 	}
 
 	/**
@@ -132,8 +130,8 @@ public class AllBrnRef {
 	 */
 	public void dumpHead() {
 		System.out.println("\n     "+modelName);
-		System.out.format("Normalization: xNorm =%11.4e  pNorm =%11.4e  "+
-				"tNorm =%11.4e\n", cvt.xNorm, cvt.pNorm, cvt.tNorm);
+		System.out.format("Normalization: xNorm =%11.4e  vNorm =%11.4e  "+
+				"tNorm =%11.4e\n", cvt.xNorm, cvt.vNorm, cvt.tNorm);
 		System.out.format("Boundaries: zUpperMantle =%7.1f  zMoho =%7.1f  "+
 				"zConrad =%7.1f\n", cvt.zUpperMantle, cvt.zMoho, cvt.zConrad);
 		System.out.format("Derived: rSurface =%8.1f  zNewUp = %7.1f  "+

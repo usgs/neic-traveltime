@@ -68,17 +68,17 @@ public class ModDataRef {
 		this.typeMod = typeMod;
 		this.cvt = cvt;
 		
-		n = finModel.size(typeMod)-3;
+		n = finModel.size(typeMod);
 		zMod = new double[n];
 		pMod = new double[n];
-		indexUp = new int[n];
+		indexUp = new int[n-3];
 		sample = finModel.getSample(typeMod, 1);
 		indexOffset = sample.getIndex();
 		for(int j=0; j<n; j++) {
 			sample = finModel.getSample(typeMod, j);
 			zMod[j] = sample.getZ();
 			pMod[j] = sample.getSlow();
-			indexUp[j] = sample.getIndex()-indexOffset;
+			if(j < n-3) indexUp[j] = Math.max(sample.getIndex()-indexOffset, -1);
 		}
 	}
 	

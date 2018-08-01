@@ -69,6 +69,10 @@ public class BrnData {
 	 * Do a partial update for the up-going branch.
 	 */
 	public void update() {
+		tau = new double[p.length];
+		x = new double[p.length];
+		Arrays.fill(tau, 0d);
+		Arrays.fill(x, 0d);
 		pRange = new double[2];
 		pRange[0] = p[0];
 		pRange[1] = p[p.length-1];

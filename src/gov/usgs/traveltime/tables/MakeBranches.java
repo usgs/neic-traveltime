@@ -40,7 +40,6 @@ public class MakeBranches {
 	ArrayList<BrnData> branches;
 	TauModel finModel;
 	ModConvert convert;
-	TablePieces pieces;
 	DecTTbranch decimate;
 	Spline spline;
 	
@@ -48,15 +47,12 @@ public class MakeBranches {
 	 * Get the pieces we'll need in the following.
 	 * 
 	 * @param finModel Final tau model of the Earth
-	 * @param pieces Tau and range for major shells within the Earth
 	 * @param decimate Branch decimation class
 	 */
-	public MakeBranches(TauModel finModel, TablePieces pieces, 
-			DecTTbranch decimate) {
+	public MakeBranches(TauModel finModel, DecTTbranch decimate) {
 		this.finModel = finModel;
 		convert = finModel.convert;
-		this.pieces = pieces;
-		slowOffset = pieces.sPieces.p.length-1;
+		slowOffset = finModel.sPieces.p.length-1;
 		this.decimate = decimate;
 		spline = new Spline();
 	}
@@ -329,6 +325,11 @@ public class MakeBranches {
 			ends.add(branches.get(j).pRange[0]);
 			ends.add(branches.get(j).pRange[1]);
 		}
+/*	System.out.println("\nBranch End Ray Parameters:");
+		Iterator<Double> iter = ends.iterator();
+		while(iter.hasNext()) {
+			System.out.format("     %8.6f\n", iter.next());
+		} */
 		return ends;
 	}
 	
@@ -389,12 +390,12 @@ public class MakeBranches {
 				branch = newBranch(phCode, typeSeg, (int)shellCounts[0], maxBrnP-begP+1);
 				// Add up the branch data.
 				for(int i=begP, k=0; i<=maxBrnP; i++, k++) {
-					p[k] = pieces.getP(i);
+					p[k] = finModel.getP(i);
 					for(int j=0; j<shellCounts.length; j++) {
-						tau[k] += shellCounts[j]*(pieces.getTau(typeSeg[1], i, j) +
-								pieces.getTau(typeSeg[2], i, j));
-						x[k] += shellCounts[j]*(pieces.getX(typeSeg[1], i, j) +
-								pieces.getX(typeSeg[2], i, j));
+						tau[k] += shellCounts[j]*(finModel.getTauSpec(typeSeg[1], i, j) +
+								finModel.getTauSpec(typeSeg[2], i, j));
+						x[k] += shellCounts[j]*(finModel.getXspec(typeSeg[1], i, j) +
+								finModel.getXspec(typeSeg[2], i, j));
 					}
 				}
 				// Deal with low velocity zones at discontinuities.
@@ -403,8 +404,8 @@ public class MakeBranches {
 					if(finModel.getLvz(typeSeg[1], lvzIndex)) {
 						// We have a low velocity zone on the down-going ray.
 						for(int j=0; j<shellCounts.length; j++) {
-							tau[0] -= shellCounts[j]*pieces.getTau(typeSeg[1], begP, j);
-							x[0] -= shellCounts[j]*pieces.getX(typeSeg[1], begP, j);
+							tau[0] -= shellCounts[j]*finModel.getTauSpec(typeSeg[1], begP, j);
+							x[0] -= shellCounts[j]*finModel.getXspec(typeSeg[1], begP, j);
 						}
 						tau[0] += shellCounts[0]*finModel.getTauInt(typeSeg[1], lvzIndex)[begP];
 						x[0] += shellCounts[0]*finModel.getXInt(typeSeg[1], lvzIndex)[begP];
@@ -415,16 +416,16 @@ public class MakeBranches {
 					if(finModel.getLvz(typeSeg[2], lvzIndex)) {
 						// We have a low velocity zone on the returning ray.
 						for(int j=0; j<shellCounts.length; j++) {
-							tau[0] -= shellCounts[j]*pieces.getTau(typeSeg[2], begP, j);
-							x[0] -= shellCounts[j]*pieces.getX(typeSeg[2], begP, j);
+							tau[0] -= shellCounts[j]*finModel.getTauSpec(typeSeg[2], begP, j);
+							x[0] -= shellCounts[j]*finModel.getXspec(typeSeg[2], begP, j);
 						}
 						tau[0] += shellCounts[0]*finModel.getTauInt(typeSeg[2], lvzIndex)[begP];
 						x[0] += shellCounts[0]*finModel.getXInt(typeSeg[2], lvzIndex)[begP];
 					}
 				}
 				// Do the decimation.
-				xTarget = xFactor*Math.max(pieces.getDelX(typeSeg[1], shIndex), 
-						pieces.getDelX(typeSeg[2], shIndex));
+				xTarget = xFactor*Math.max(finModel.getDelX(typeSeg[1], shIndex), 
+						finModel.getDelX(typeSeg[2], shIndex));
 				decimate.downGoingDec(branch, xTarget, begP);
 				// Create the interpolation basis functions.
 				spline.basisSet(p, basis);
@@ -466,18 +467,18 @@ public class MakeBranches {
 		
 		// Create the branch.
 		for(int i=0; i<=endP; i++) {
-			p[i] = pieces.getP(i);
+			p[i] = finModel.getP(i);
 			for(int j=0; j<shellCounts.length; j++) {
-				tau[i] += shellCounts[j]*(pieces.getTau(typeSeg[1], i, j) +
-						pieces.getTau(typeSeg[2], i, j));
-				x[i] += shellCounts[j]*(pieces.getX(typeSeg[1], i, j) +
-						pieces.getX(typeSeg[2], i, j));
+				tau[i] += shellCounts[j]*(finModel.getTauSpec(typeSeg[1], i, j) +
+						finModel.getTauSpec(typeSeg[2], i, j));
+				x[i] += shellCounts[j]*(finModel.getXspec(typeSeg[1], i, j) +
+						finModel.getXspec(typeSeg[2], i, j));
 			}
 		}
 		// Decimate the branch.
 		xTarget = decFactor(shellCounts, true)*
-				Math.max(pieces.getNextDelX(typeSeg[1], endShell), 
-				pieces.getNextDelX(typeSeg[2], endShell));
+				Math.max(finModel.getNextDelX(typeSeg[1], endShell), 
+				finModel.getNextDelX(typeSeg[2], endShell));
 		decimate.downGoingDec(branch, xTarget, 0);
 		// Create the interpolation basis functions.
 		spline.basisSet(p, basis);
@@ -556,12 +557,12 @@ public class MakeBranches {
 								maxBrnP-minBrnP+1);
 						// Add up the branch data.
 						for(int i=minBrnP, k=0; i<=maxBrnP; i++, k++) {
-							p[k] = pieces.getP(i);
+							p[k] = finModel.getP(i);
 							for(int j=0; j<shellCounts.length; j++) {
-								tau[k] += shellCounts[j]*(pieces.getTau(typeSeg[1], i, j) +
-										pieces.getTau(typeSeg[2], i, j));
-								x[k] += shellCounts[j]*(pieces.getX(typeSeg[1], i, j) +
-										pieces.getX(typeSeg[2], i, j));
+								tau[k] += shellCounts[j]*(finModel.getTauSpec(typeSeg[1], i, j) +
+										finModel.getTauSpec(typeSeg[2], i, j));
+								x[k] += shellCounts[j]*(finModel.getXspec(typeSeg[1], i, j) +
+										finModel.getXspec(typeSeg[2], i, j));
 							}
 						}
 						// Deal with low velocity zones at discontinuities.
@@ -570,8 +571,8 @@ public class MakeBranches {
 							if(finModel.getLvz(typeSeg[1], lvzIndex)) {
 								// We have a low velocity zone on the down-going ray.
 								for(int j=0; j<shellCounts.length; j++) {
-									tau[0] -= shellCounts[j]*pieces.getTau(typeSeg[1], minBrnP, j);
-									x[0] -= shellCounts[j]*pieces.getX(typeSeg[1], minBrnP, j);
+									tau[0] -= shellCounts[j]*finModel.getTauSpec(typeSeg[1], minBrnP, j);
+									x[0] -= shellCounts[j]*finModel.getXspec(typeSeg[1], minBrnP, j);
 								}
 								tau[0] += shellCounts[0]*finModel.getTauInt(typeSeg[1], lvzIndex)[minBrnP];
 								x[0] += shellCounts[0]*finModel.getXInt(typeSeg[1], lvzIndex)[minBrnP];
@@ -582,16 +583,16 @@ public class MakeBranches {
 							if(finModel.getLvz(typeSeg[2], lvzIndex)) {
 								// We have a low velocity zone on the returning ray.
 								for(int j=0; j<shellCounts.length; j++) {
-									tau[0] -= shellCounts[j]*pieces.getTau(typeSeg[2], minBrnP, j);
-									x[0] -= shellCounts[j]*pieces.getX(typeSeg[2], minBrnP, j);
+									tau[0] -= shellCounts[j]*finModel.getTauSpec(typeSeg[2], minBrnP, j);
+									x[0] -= shellCounts[j]*finModel.getXspec(typeSeg[2], minBrnP, j);
 								}
 								tau[0] += shellCounts[0]*finModel.getTauInt(typeSeg[2], lvzIndex)[minBrnP];
 								x[0] += shellCounts[0]*finModel.getXInt(typeSeg[2], lvzIndex)[minBrnP];
 							}
 						}
 						// Do the decimation.
-						xTarget = xFactor*Math.max(pieces.getDelX(typeSeg[1], shIndex1), 
-								pieces.getDelX(typeSeg[2], shIndex2));
+						xTarget = xFactor*Math.max(finModel.getDelX(typeSeg[1], shIndex1), 
+								finModel.getDelX(typeSeg[2], shIndex2));
 						decimate.downGoingDec(branch, xTarget, minBrnP);
 						// Create the interpolation basis functions.
 						spline.basisSet(p, basis);
@@ -675,9 +676,9 @@ public class MakeBranches {
 		
 		// Set up the ray parameter arrays.
 		if(upType == 'P') {
-			branch.p = pieces.pPieces.proxyP;
+			branch.p = finModel.pPieces.proxyP;
 		} else {
-			branch.p = pieces.sPieces.proxyP;
+			branch.p = finModel.sPieces.proxyP;
 		}
 		branch.basis = new double[5][branch.p.length];
 		spline.basisSet(branch.p, branch.basis);

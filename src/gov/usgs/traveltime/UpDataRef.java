@@ -1,8 +1,8 @@
 package gov.usgs.traveltime;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
-import gov.usgs.traveltime.tables.TablePieces;
 import gov.usgs.traveltime.tables.TauModel;
 
 /**
@@ -65,36 +65,35 @@ public class UpDataRef {
 	 * class supporting the actual travel-time generation.
 	 * 
 	 * @param finModel Travel-time branch input data source
-	 * @param pieces Integral pieces
 	 * @param typeUp Wave type ('P' or 'S')
 	 */
-	public UpDataRef(TauModel finModel, TablePieces pieces, char typeUp) {
-		int n;
-		double pEnd;
-		double[] xUpMaster;
+	public UpDataRef(TauModel finModel, char typeUp) {
+		int n, k = -1;
+		ArrayList<Double> xUpTmp;
 		
 		this.typeUp = typeUp;
 		
 		// Set up the ray parameter sampling.  This is common to all depths.
-		pTauUp = Arrays.copyOf(pieces.getP(), finModel.getTauInt(typeUp, 0).length);
-		xUpMaster = finModel.getXUp(typeUp);
-		pXUp = Arrays.copyOf(finModel.getPxUp(), xUpMaster.length);
+		pTauUp = Arrays.copyOf(finModel.getP(typeUp), finModel.getTauInt(typeUp, 1).length);
+		pXUp = Arrays.copyOf(finModel.getPxUp(), finModel.getPxUp().length);
 		
 		// Set the outer dimension.
-		tauUp = new double[finModel.intsRealSize(typeUp)][];
-		xUp = new double[finModel.intsRealSize(typeUp)][];
+		n = finModel.intsRealSize(typeUp);
+		tauUp = new double[n][];
+		xUp = new double[n][];
 		
 		// Fill in the arrays.
-		for(int i=0; i<finModel.intsSize(typeUp); i++) {
+		for(int i=0; i<finModel.intsSize(typeUp)-3; i++) {
 			if(finModel.getTauInt(typeUp, i) != null) {
+				// Tau is easy.
 				n = finModel.getTauInt(typeUp, i).length;
-				tauUp[i] = Arrays.copyOf(finModel.getTauInt(typeUp, i), n);
-				pEnd = pTauUp[n-1];
-				for(int j=0; j<xUpMaster.length; j++) {
-					if(pXUp[j] == pEnd) {
-						xUp[i] = Arrays.copyOf(xUpMaster, j+1);
-						break;
-					}
+				tauUp[++k] = Arrays.copyOf(finModel.getTauInt(typeUp, i), n);
+				// We have to do this the hard way since we can't use toArray to go 
+				// from Double to double.
+				xUpTmp = finModel.getXUp(typeUp, i);
+				xUp[k] = new double[xUpTmp.size()];
+				for(int j=0; j<xUpTmp.size(); j++) {
+					xUp[k][j] = xUpTmp.get(j);
 				}
 			}
  		}

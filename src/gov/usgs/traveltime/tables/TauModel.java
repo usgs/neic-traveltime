@@ -17,12 +17,13 @@ import gov.usgs.traveltime.ModConvert;
  *
  */
 public class TauModel {
+	double[] pEnds;
 	EarthModel refModel;
 	ArrayList<TauSample> pModel, sModel;
 	ArrayList<Double> slowness;
 	ArrayList<ModelShell> pShells = null, sShells = null;
 	ArrayList<TauXsample> pInts = null, sInts = null;
-	ArrayList<TauSample> pXUp, sXUp;
+	IntPieces pPieces, sPieces;
 	ModConvert convert;
 	
 	/**
@@ -182,6 +183,32 @@ public class TauModel {
 	}
 	
 	/**
+	 * Get the index of the model sample with the specified 
+	 * slowness.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param slow Non-dimensional slowness
+	 * @return The model index associated with slow
+	 */
+	public int getIndex(char type, double slow) {
+		if(type == 'P') {
+			for(int j=0; j<pModel.size(); j++) {
+				if(pModel.get(j).slow == slow) {
+					return j;
+				}
+			}
+			return -1;
+		} else {
+			for(int j=0; j<sModel.size(); j++) {
+				if(sModel.get(j).slow == slow) {
+					return j;
+				}
+			}
+			return -1;
+		}
+	}
+	
+	/**
 	 * Replace the last sample in the model.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)
@@ -206,31 +233,6 @@ public class TauModel {
 			return pModel.size();
 		} else {
 			return sModel.size();
-		}
-	}
-	/**
-	 * Get the index of the model sample with the specified 
-	 * slowness.
-	 * 
-	 * @param type Model type (P = P slowness, S = S slowness)
-	 * @param slow Non-dimensional slowness
-	 * @return The model index associated with slow
-	 */
-	public int getIndex(char type, double slow) {
-		if(type == 'P') {
-			for(int j=0; j<pModel.size(); j++) {
-				if(pModel.get(j).slow == slow) {
-					return j;
-				}
-			}
-			return -1;
-		} else {
-			for(int j=0; j<sModel.size(); j++) {
-				if(sModel.get(j).slow == slow) {
-					return j;
-				}
-			}
-			return -1;
 		}
 	}
 	
@@ -472,16 +474,74 @@ public class TauModel {
 	}
 	
 	/**
-	 * Set the low velocity zone (really high slowness zone) flag.
+	 * Make integral pieces from the raw integrals in pInts and sInts.
+	 */
+	public void makePieces() {
+		pPieces = new IntPieces('P', this);
+		sPieces = new IntPieces('S', this);
+	}
+	
+	/**
+	 * Get the integral pieces for one phase type.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @return Integral pieces
 	 */
-	public void setLvz(char type) {
+	public IntPieces getPiece(char type) {
 		if(type == 'P') {
-			pInts.get(pInts.size()-1).lvz = true;
+			return pPieces;
 		} else {
-			sInts.get(sInts.size()-1).lvz = true;
+			return sPieces;
 		}
+	}
+	
+	/**
+	 * Get the master (possibly decimated) ray parameter array.  Note that 
+	 * the S-wave ray parameters are a super set the P-wave ray parameters.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @return Ray parameter array
+	 */
+	public double[] getP(char type) {
+		if(type == 'P') {
+			return pPieces.p;
+		} else {
+			return sPieces.p;
+		}
+	}
+	
+	/**
+	 * Get a ray parameter by index from the master (possibly decimated) 
+	 * array.
+	 * 
+	 * @param index Ray parameter index
+	 * @return Ray parameter
+	 */
+	public double getP(int index) {
+		return sPieces.p[index];
+	}
+	
+	/**
+	 * Get the master decimation array.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @return The master decimation array
+	 */
+	public boolean[] getDecimation(char type) {
+		if(type == 'P') {
+			return pPieces.keep;
+		} else {
+			return sPieces.keep;
+		}
+	}
+	
+	/**
+	 * Decimate the ray parameter arrays for both the P and S 
+	 * models.
+	 */
+	public void decimateP() {
+		pPieces.decimateP();
+		sPieces.decimateP();
 	}
 	
 	/**
@@ -497,11 +557,13 @@ public class TauModel {
 	 * surface focus source.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)
-	 * @param keep Master array of decimation flags
 	 */
-	public void decimateTauX(char type, boolean[] keep) {
+	public void decimateTauX(char type) {
 		int k;
+		boolean[] keep;
 		double[] tau, x, decTau = null, decX = null;
+		
+		keep = getDecimation(type);
 		
 		// Loop over the up-going branches.
 		for(int i=0; i<intsSize(type)-3; i++) {
@@ -526,6 +588,19 @@ public class TauModel {
 				// Update the integral arrays with the decimated versions.
 				update(type, i, k, decTau, decX);
 			}
+		}
+	}
+	
+	/**
+	 * Set the low velocity zone (really high slowness zone) flag.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 */
+	public void setLvz(char type) {
+		if(type == 'P') {
+			pInts.get(pInts.size()-1).lvz = true;
+		} else {
+			sInts.get(sInts.size()-1).lvz = true;
 		}
 	}
 	
@@ -660,6 +735,78 @@ public class TauModel {
 	}
 	
 	/**
+	 * Get a major shell tau value by index.  Note that because 
+	 * these values are drawn from the pieces, the integrals are 
+	 * specific to a region rather than cumulative as for getTauInt.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param index Tau index
+	 * @param shell Major shell index (0 = mantle, 1 = outer 
+	 * core, 2 = inner core)
+	 * @return Tau value
+	 */
+	public double getTauSpec(char type, int index, int shell) {
+		switch (shell) {
+		case 0:
+			if(type == 'P') {
+				return pPieces.mantleTau[index];
+			} else {
+				return sPieces.mantleTau[index];
+			}
+		case 1:
+			if(type == 'P') {
+				return pPieces.outerCoreTau[index];
+			} else {
+				return sPieces.outerCoreTau[index];
+			}
+		case 2:
+			if(type == 'P') {
+				return pPieces.innerCoreTau[index];
+			} else {
+				return sPieces.innerCoreTau[index];
+			}
+		default:
+			return Double.NaN;
+		}
+	}
+	
+	/**
+	 * Get a major shell range value by index.  Note that because 
+	 * these values are drawn from the pieces, the integrals are 
+	 * specific to a region rather than cumulative as for getTauInt.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param index Range index
+	 * @param shell Major shell index (0 = mantle, 1 = outer 
+	 * core, 2 = inner core)
+	 * @return Range value
+	 */
+	public double getXspec(char type, int index, int shell) {
+		switch (shell) {
+		case 0:
+			if(type == 'P') {
+				return pPieces.mantleX[index];
+			} else {
+				return sPieces.mantleX[index];
+			}
+		case 1:
+			if(type == 'P') {
+				return pPieces.outerCoreX[index];
+			} else {
+				return sPieces.outerCoreX[index];
+			}
+		case 2:
+			if(type == 'P') {
+				return pPieces.innerCoreX[index];
+			} else {
+				return sPieces.innerCoreX[index];
+			}
+		default:
+			return Double.NaN;
+		}
+	}
+	
+	/**
 	 * Update tau and range arrays with their decimated versions.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)
@@ -675,6 +822,47 @@ public class TauModel {
 		} else {
 			sInts.get(index).update(len, newTau, newX);
 		}
+	}
+	
+	/**
+	 * Get the radial sampling interval associated with a shell by 
+	 * index.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param index Shell index
+	 * @return Non-dimensional radial sampling
+	 */
+	public double getDelX(char type, int index) {
+		if(type == 'P') {
+			return convert.normR(pShells.get(index).delX);
+		} else {
+			return convert.normR(sShells.get(index).delX);
+		}
+	}
+	
+	/**
+	 * Get the radial sampling interval associated with the shell 
+	 * above the current one.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param index Shell index
+	 * @return Non-dimensional radial sampling
+	 */
+	public double getNextDelX(char type, int index) {
+		if(type == 'P') {
+			for(int j=index+1; j<pShells.size(); j++) {
+				if(!pShells.get(j).isDisc) {
+					return convert.normR(pShells.get(j).delX);
+				}
+			}
+		} else {
+			for(int j=index+1; j<sShells.size(); j++) {
+				if(!sShells.get(j).isDisc) {
+					return convert.normR(sShells.get(j).delX);
+				}
+			}
+		}
+		return Double.NaN;
 	}
 	
 	/**
@@ -715,97 +903,70 @@ public class TauModel {
 	}
 	
 	/**
-	 * Because of the way the interpolation is done in the travel-time 
-	 * calculation, we need the ray travel distances at the branch 
-	 * ends.
+	 * Copy the list of ray parameters associated with branch ends to 
+	 * an internal array.
 	 * 
-	 * @param type Model type (P = P slowness, S = S slowness)
-	 * @param ends A sorted list of branch end ray parameter values
+	 * @param ends List of non-dimensional ray parameters associated 
+	 * with branch ends
 	 */
-	public void makeXUp(char type, TreeSet<Double> ends) {
+	public void setEnds(TreeSet<Double> ends) {
 		int j = 0;
-		double pEnd;
 		Iterator<Double> iter;
 		
-		// Get an iterator for the tree set.
+		pEnds = new double[ends.size()];
 		iter = ends.iterator();
 		
-		// Match the branch ends with the model.
-		if(type == 'P') {
-			pXUp = new ArrayList<TauSample>();
-			while(iter.hasNext()) {
-				pEnd = iter.next();
-				for(; j<pModel.size(); j++) {
-					if(pModel.get(j).slow == pEnd) {
-						pXUp.add(pModel.get(j));
-						break;
-					}
-				}
-				break;
-			}
-		} else {
-			sXUp = new ArrayList<TauSample>();
-			while(iter.hasNext()) {
-				pEnd = iter.next();
-				for(; j<sModel.size(); j++) {
-					if(sModel.get(j).slow == pEnd) {
-						sXUp.add(sModel.get(j));
-						break;
-					}
-				}
-				break;
-			}
+		while(iter.hasNext()) {
+			pEnds[j++] = iter.next();
 		}
 	}
 	
 	/**
-	 * We need the xUp values in the final model to create UpDataRef, 
-	 * but the model itself isn't complete.  To get around this limitation, 
-	 * we need to create the xUp values in the depth model and then set 
-	 * them in the final model.
-	 * 
-	 * @param depModel The depth tau model
-	 */
-	public void setXUp(TauModel depModel) {
-		pXUp = depModel.pXUp;
-		sXUp = depModel.sXUp;
-	}
-	
-	/**
-	 * Get the ray parameters associated with the branch ends.  Note that 
-	 * the S-wave ray parameters are a superset of the P-wave ray 
-	 * parameters.
+	 * Get the ray parameters associated with the branch ends.
 	 * 
 	 * @return Array of branch end ray parameters.
 	 */
 	public double[] getPxUp() {
-		double[] pXUp;
-		
-		pXUp = new double[sXUp.size()];
-		for(int j=0; j<pXUp.length; j++) {
-			pXUp[j] = sXUp.get(j).slow;
-		}
-		return pXUp;
+		return pEnds;
 	}
 	
 	/**
 	 * Get the ray travel distances (ranges) at the branch ends.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param index Depth index
 	 * @return Array of branch end ranges
 	 */
-	public double[] getXUp(char type) {
-		double[] xUp;
+	public ArrayList<Double> getXUp(char type, int index) {
+		int i = 0;
+		double[] p, x;
+		ArrayList<Double> xUp;
 		
+		xUp = new ArrayList<Double>();
+		p = getP(type);
 		if(type == 'P') {
-			xUp = new double[pXUp.size()];
-			for(int j=0; j< xUp.length; j++) {
-				xUp[j] = pXUp.get(j).x;
+			if(pInts.get(index) != null) {
+				x = pInts.get(index).x;
+				for(int j=0; j<x.length; j++) {
+					if(pEnds[i] == p[j]) {
+						xUp.add(x[j]);
+						i++;
+					}
+				}
+			} else {
+				return null;
 			}
 		} else {
-			xUp = new double[sXUp.size()];
-			for(int j=0; j< xUp.length; j++) {
-				xUp[j] = sXUp.get(j).x;
+			if(sInts.get(index) != null) {
+				x = sInts.get(index).x;
+				for(int j=0; j<x.length; j++) {
+					if(pEnds[i] == p[j]) {
+						xUp.add(x[j]);
+						i++;
+					}
+				}
+			} else {
+				return null;
 			}
 		}
 		return xUp;
@@ -1029,7 +1190,8 @@ public class TauModel {
 	}
 	
 	/**
-	 * Print out the shell integrals.
+	 * Print out the shell integrals.  Note that these are the raw cumulative 
+	 * integrals.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)
 	 */
@@ -1065,6 +1227,65 @@ public class TauModel {
 						Math.toDegrees(mantle.x[j]), Math.toDegrees(outerCore.x[j]), 
 						Math.toDegrees(innerCore.x[j]));
 			}
+		}
+	}
+	
+	/**
+	 * Print out the proxy ranges.
+	 */
+	public void printProxy() {
+		int nP, nS;
+		
+		System.out.println("\n\t\t\tProxy Ranges");
+		System.out.println("                  P                            S");
+		System.out.println("    slowness      X       delX   slowness"+
+				"      X       delX");
+		nP = pPieces.proxyX.length;
+		nS = sPieces.proxyX.length;
+		System.out.format("%3d %8.6f %8.2f            %8.6f %8.2f\n", 
+				0, pPieces.proxyP[0], convert.dimR(pPieces.proxyX[0]), 
+				sPieces.proxyP[0], convert.dimR(sPieces.proxyX[0]));
+		for(int j=1; j<nP; j++) {
+			System.out.format("%3d %8.6f %8.2f %8.2f   %8.6f %8.2f %8.2f\n", 
+					j, pPieces.proxyP[j], convert.dimR(pPieces.proxyX[j]), 
+					convert.dimR(pPieces.proxyX[j]-pPieces.proxyX[j-1]), 
+					sPieces.proxyP[j], convert.dimR(sPieces.proxyX[j]), 
+					convert.dimR(sPieces.proxyX[j+1]-sPieces.proxyX[j]));
+		}
+		for(int j=nP; j<nS; j++) {
+			System.out.format("%3d                              "+
+					"%8.6f %8.2f %8.2f\n", j, 
+					sPieces.proxyP[j], convert.dimR(sPieces.proxyX[j]), 
+					convert.dimR(sPieces.proxyX[j]-sPieces.proxyX[j-1]));
+		}
+	}
+	
+	/**
+	 * Print the integrals for the whole mantle, outer core, and inner core.  
+	 * Note that these are the partial integrals specific to a major shell 
+	 * of the Earth.
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 */
+	public void printShellSpec(char type) {
+		if(type == 'P') {
+			pPieces.printShellInts();
+		} else {
+			sPieces.printShellInts();
+		}
+	}
+	
+	/**
+	 * Print the ray parameter arrays for both the P and S branches.
+	 */
+	public void printP() {
+		System.out.println("\nMaster Ray Parameters");
+		System.out.println("       P        S");
+		for(int j=0; j<pPieces.p.length; j++) {
+			System.out.format("%3d %8.6f %8.6f\n", j, pPieces.p[j], sPieces.p[j]);
+		}
+		for(int j=pPieces.p.length; j<sPieces.p.length; j++) {
+			System.out.format("%3d          %8.6f\n", j, sPieces.p[j]);
 		}
 	}
 }

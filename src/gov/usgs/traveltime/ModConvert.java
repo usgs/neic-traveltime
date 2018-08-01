@@ -8,19 +8,30 @@ package gov.usgs.traveltime;
  */
 public class ModConvert {
 	/**
-	 * Normalization for distance (delta and depth).
+	 * Normalization for distance (delta and depth).  Note that 
+	 * this is Xn in the Fortran programs.  You need to multiply 
+	 * the distance by Xn to normalize it.
 	 */
 	public final double xNorm;
 	/**
-	 * Normalization for slowness and ray parameter.
+	 * Normalization for velocity.  Called Pn in the Fortran code, 
+	 * this constant was intended as the normalization for slowness.  
+	 * Dividing velocity by Pn normalizes it.
 	 */
-	public final double pNorm;
+	public final double vNorm;
 	/**
-	 * Normalization for travel-time and tau.
+	 * Normalization for travel-time and tau.  This is Tn in the 
+	 * Fortran code to compute travel times, but 1/Tn in the code 
+	 * to generate the tables (yuck!).
 	 */
 	public final double tNorm;
 	/**
-	 * Conver dT/dDelta to dimensional units.
+	 * Normalization for slowness and ray parameter.  This is a new 
+	 * constant to resolve the dichotomy in Tn.
+	 */
+	public final double pNorm;
+	/**
+	 * Convert dT/dDelta to dimensional units.
 	 */
 	public final double dTdDelta;
 	/**
@@ -64,9 +75,10 @@ public class ModConvert {
 	public ModConvert(ReadTau in) {
 		// Set up the normalization.
 		xNorm = in.xNorm;
-		pNorm = in.pNorm;
+		vNorm = in.pNorm;
 		tNorm = in.tNorm;
 		// Compute some useful constants.
+		pNorm = 1d/tNorm;
 		dTdDelta = Math.toRadians(tNorm);
 		rSurface = in.rSurface;
 		deg2km = Math.PI*rSurface/180d;
@@ -93,9 +105,10 @@ public class ModConvert {
 	public ModConvert(double rUpperMantle, double rMoho, double rConrad, 
 			double rSurface, double vsSurface) {
 		xNorm = 1d/rSurface;
-		pNorm = vsSurface;
+		vNorm = vsSurface;
 		// Compute some useful constants.
-		tNorm = xNorm*pNorm;
+		pNorm = xNorm*vNorm;
+		tNorm = 1d/pNorm;
 		dTdDelta = Math.toRadians(tNorm);
 		this.rSurface = rSurface;
 		deg2km = Math.PI*rSurface/180d;
@@ -139,7 +152,7 @@ public class ModConvert {
 	 * @return Velocity at that depth in kilometers/second
 	 */
 	public double realV(double p, double z) {
-		return realR(z)/(tNorm*p);
+		return pNorm*realR(z)/p;
 	}
 	
 	/**
@@ -183,6 +196,6 @@ public class ModConvert {
 	 * @return Normalized slowness
 	 */
 	public double flatP(double v, double r) {
-		return tNorm*r/v;
+		return pNorm*r/v;
 	}
 }
