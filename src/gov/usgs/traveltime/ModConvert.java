@@ -27,7 +27,8 @@ public class ModConvert {
 	public final double tNorm;
 	/**
 	 * Normalization for slowness and ray parameter.  This is a new 
-	 * constant to resolve the dichotomy in Tn.
+	 * constant to resolve the dichotomy in Tn.  It corresponds to 
+	 * Tn in the table generation.
 	 */
 	public final double pNorm;
 	/**

@@ -60,9 +60,11 @@ public class Decimate {
 			dx1 = Math.abs(x[k1]-x[x.length-1])-xTarget;
 			var += Math.pow(dx1, 2d);
 			m++;
+//		System.out.format("\nInit: %9.3e %9.3e\n", var/m, doVar(keep));
 			
 			// second pass.
 			if(m > 1) {
+//			int pass = 0;
 				do {
 					k1 = 0;
 					k2 = kb;
@@ -85,10 +87,12 @@ public class Decimate {
 									keep[--k1] = true;
 									var = var1;
 									m = m1;
+//								System.out.format("Var1: %9.3e %9.3e %d\n", var/m, doVar(keep), pass);
 								} else if(var1/m1 > var2/m2) {
 									keep[++k1] = true;
 									var = var2;
 									m = m2;
+//								System.out.format("Var2: %9.3e %9.3e %d\n", var/m, doVar(keep), pass);
 								} else {
 									// If the variances are equal, keep the smallest 
 									// number of data.
@@ -96,16 +100,19 @@ public class Decimate {
 										keep[--k1] = true;
 										var = var1;
 										m = m1;
+//									System.out.format("M1:   %9.3e %9.3e %d\n", var/m, doVar(keep), pass);
 									} else {
 										keep[++k1] = true;
 										var = var2;
 										m = m2;
+//									System.out.format("M2:   %9.3e %9.3e %d\n", var/m, doVar(keep), pass);
 									}
 								}
 							}
 							if(k0 == 0) kb = k1;
 						}
 					}
+//				pass++;
 				} while(nch > 0 && m > 1);
 			}
 		}
@@ -126,7 +133,7 @@ public class Decimate {
 		
 		dx1 = Math.abs(x[k0]-x[k1])-xTarget;
 		dx2 = Math.abs(x[k1]-x[k2])-xTarget;
-		newVar = var-(Math.pow(dx1, 2d)-Math.pow(dx2, 2d));
+		newVar = var-(Math.pow(dx1, 2d)+Math.pow(dx2, 2d));
 		if(kt > k0 && kt < k2) {
 			dx1 = Math.abs(x[k0]-x[kt])-xTarget;
 			dx2 = Math.abs(x[kt]-x[k2])-xTarget;
@@ -138,5 +145,28 @@ public class Decimate {
 			newM = m-1;
 		}
 		return newVar;
+	}
+	
+	/**
+	 * Compute the variance from scratch for testing purposes.
+	 * 
+	 * @param keep For each element, if true, keep the corresponding 
+	 * x value
+	 * @return Variance of absolute differences between kept x values 
+	 * minus the target difference
+	 */
+	@SuppressWarnings("unused")
+	private double doVar(boolean[] keep) {
+		int i = 0, m = 0;
+		double var = 0d;
+		
+		for(int j=1; j<x.length; j++) {
+			if(keep[j]) {
+				var += Math.pow(Math.abs(x[j]-x[i])-xTarget, 2d);
+				i = j;
+				m++;
+			}
+		}
+		return var/m;
 	}
 }

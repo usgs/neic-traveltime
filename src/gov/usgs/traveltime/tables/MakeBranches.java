@@ -428,7 +428,7 @@ public class MakeBranches {
 						finModel.getDelX(typeSeg[2], shIndex));
 				decimate.downGoingDec(branch, xTarget, begP);
 				// Create the interpolation basis functions.
-				spline.basisSet(p, basis);
+				spline.basisSet(branch.p, branch.basis);
 				// We need to name each sub-branch.
 				branch.phCode = makePhCode(shellCounts, shell.getCode(typeSeg[1]), 
 						shell.getCode(typeSeg[2]), typeSeg[0]);
@@ -481,7 +481,7 @@ public class MakeBranches {
 				finModel.getNextDelX(typeSeg[2], endShell));
 		decimate.downGoingDec(branch, xTarget, 0);
 		// Create the interpolation basis functions.
-		spline.basisSet(p, basis);
+		spline.basisSet(branch.p, branch.basis);
 		System.out.format("     %2d %-8s %3d %3d %3.0f\n", branches.size(), 
 				branch.phCode, 0, endP, convert.dimR(xTarget));
 		// Add it to the branch list.
@@ -595,7 +595,7 @@ public class MakeBranches {
 								finModel.getDelX(typeSeg[2], shIndex2));
 						decimate.downGoingDec(branch, xTarget, minBrnP);
 						// Create the interpolation basis functions.
-						spline.basisSet(p, basis);
+						spline.basisSet(branch.p, branch.basis);
 						// We need to name each sub-branch.
 						branch.phCode = makePhCode(shellCounts, shell1.getCode(typeSeg[1]), 
 								shell2.getCode(typeSeg[2]), typeSeg[0]);
@@ -721,7 +721,8 @@ public class MakeBranches {
 	
 	/**
 	 * The decimation factor is partly based on the number of traversals of the 
-	 * major model shells except for reflected phases.
+	 * major model shells except for reflected phases.  Note that this is 
+	 * purely based on experience and guess work.
 	 * 
 	 * @param reflected True if this is a reflected phase.
 	 * @return Decimation factor
@@ -732,7 +733,11 @@ public class MakeBranches {
 			xFactor = Math.max(0.75d*(double) Math.max(shellCounts[0], 
 					Math.max(shellCounts[1], shellCounts[2])), 1d);
 		} else {
-			xFactor = 1.5d;
+			if(shellCounts[1] > 0) {
+				xFactor = 1.5d;
+			} else {
+				xFactor = 1d;
+			}
 		}
 		return xFactor;
 	}

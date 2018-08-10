@@ -36,12 +36,12 @@ public class ReModel {
 			// Build the branch reference classes.
 			auxTT = new AuxTtRef(true, false, false);
 			allRef = make.fillAllBrnRef(auxTT);
-			allRef.dumpHead();
-			allRef.dumpMod('P', true);
-			allRef.dumpMod('S', true);
-			allRef.dumpBrn(false);
-			allRef.dumpUp('P', 10);
-			allRef.dumpUp('S', 10);
+//		allRef.dumpHead();
+//		allRef.dumpMod('P', true);
+//		allRef.dumpMod('S', true);
+			allRef.dumpBrn(true);
+//		allRef.dumpUp('P', 10);
+//		allRef.dumpUp('S', 10);
 		} else {
 			System.out.println("Read status = "+status);
 		}
