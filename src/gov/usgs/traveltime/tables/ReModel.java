@@ -39,9 +39,9 @@ public class ReModel {
 //		allRef.dumpHead();
 //		allRef.dumpMod('P', true);
 //		allRef.dumpMod('S', true);
-			allRef.dumpBrn(true);
-//		allRef.dumpUp('P', 10);
-//		allRef.dumpUp('S', 10);
+//		allRef.dumpBrn(true);
+//		allRef.dumpUp('P');
+//		allRef.dumpUp('S');
 		} else {
 			System.out.println("Read status = "+status);
 		}

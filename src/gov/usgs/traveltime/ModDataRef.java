@@ -83,6 +83,21 @@ public class ModDataRef {
 	}
 	
 	/**
+	 * Get the non-dimensional depth corresponding to an up-going branch.
+	 * 
+	 * @param iUp Index of the up-going branch
+	 * @return Non-dimensional depth
+	 */
+	public double getDepth(int iUp) {
+		for(int j=0; j<indexUp.length; j++) {
+			if(iUp == indexUp[j]) {
+				return zMod[j];
+			}
+		}
+		return Double.NaN;
+	}
+	
+	/**
 	 * Print out model data for debugging purposes.
 	 * 
 	 * @param nice If true print in dimensional units.

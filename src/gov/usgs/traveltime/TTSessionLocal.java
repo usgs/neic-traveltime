@@ -163,8 +163,12 @@ public class TTSessionLocal{
 				
 				// Reorganize the reference data.
 				allRef = new AllBrnRef(readTau, auxTT);
-				allRef.dumpUp('P', 10);
-				allRef.dumpUp('S', 10);
+//			allRef.dumpHead();
+//			allRef.dumpMod('P', true);
+//			allRef.dumpMod('S', true);
+//			allRef.dumpBrn(true);
+//			allRef.dumpUp('P');
+//			allRef.dumpUp('S');
 				modelData.put(earthModel, allRef);
 			}
 			

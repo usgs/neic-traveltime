@@ -115,4 +115,25 @@ public class UpDataRef {
 			System.out.format("%3d  %8.6f  %8.6f\n",k,pTauUp[k],tauUp[rec][k]);
 		}
 	}
+	
+	/**
+	 * Print out the up-going branch data for all depths.
+	 * 
+	 * @param model Earth model corresponding to the up-going branches
+	 * @param convert Model dependent constants and conversions
+	 */
+	public void dumpUp(ModDataRef model, ModConvert convert) {
+		for(int rec=0; rec<tauUp.length; rec++) {
+			System.out.format("\n     Up-going %c record %2d at depth %6.2f\n", 
+					typeUp, rec, convert.realZ(model.getDepth(rec)));
+			System.out.println("          p        tau        p           X");
+			for(int k=0; k<xUp[rec].length; k++) {
+				System.out.format("%3d  %8.6f  %8.6f  %8.6f  %9.6f\n",k,
+						pTauUp[k],tauUp[rec][k],pXUp[k],xUp[rec][k]);
+			}
+			for(int k=xUp[rec].length; k<tauUp[rec].length; k++) {
+				System.out.format("%3d  %8.6f  %8.6f\n",k,pTauUp[k],tauUp[rec][k]);
+			}
+		}
+	}
 }

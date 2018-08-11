@@ -201,4 +201,17 @@ public class AllBrnRef {
 			sUp.dumpUp(iUp);
 		}
 	}
+	
+	/**
+	 * Print data for all up-going branches for debugging purposes.
+	 * 
+	 * @param typeUp Wave type ('P' or 'S')
+	 */
+	public void dumpUp(char typeUp) {
+		if(typeUp == 'P') {
+			pUp.dumpUp(pModel, cvt);
+		} else if(typeUp == 'S') {
+			sUp.dumpUp(sModel, cvt);
+		}
+	}
 }
