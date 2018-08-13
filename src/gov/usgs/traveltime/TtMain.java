@@ -43,6 +43,8 @@ public class TtMain {
 		
 		// Initialize the local travel-time manager.
 		ttLocal = new TTSessionLocal(true, true, true);
+		// Set up for the Java table generation.
+		ttLocal.setModelInput(false);
 		
 //	TauUtil.noCorr = true;
 		try {

@@ -39,7 +39,7 @@ public class ReModel {
 //		allRef.dumpHead();
 //		allRef.dumpMod('P', true);
 //		allRef.dumpMod('S', true);
-//		allRef.dumpBrn(true);
+			allRef.dumpBrn(false);
 //		allRef.dumpUp('P');
 //		allRef.dumpUp('S');
 		} else {

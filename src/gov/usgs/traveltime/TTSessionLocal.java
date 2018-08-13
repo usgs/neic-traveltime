@@ -3,6 +3,9 @@ package gov.usgs.traveltime;
 import java.io.IOException;
 import java.util.TreeMap;
 
+import gov.usgs.traveltime.tables.MakeTables;
+import gov.usgs.traveltime.tables.TablesUtil;
+
 /**
  * Manage travel-time calculations locally, but in a manner similar to 
  * the travel time server pool.
@@ -11,10 +14,17 @@ import java.util.TreeMap;
  *
  */
 public class TTSessionLocal{
+	/**
+	 * This is a temporary hack for side-by-side testing of the Java generated 
+	 * tables versus the Fortran tables.
+	 */
+	boolean file = true;		// Use the Fortran tables by default
+	String lastModel = "";
 	TreeMap<String, AllBrnRef> modelData;
+	MakeTables make;
+	TtStatus status;
 	AuxTtRef auxTT;
 	AllBrnVol allBrn;
-	String lastModel = "";
 
 	/**
 	 * Initialize auxiliary data common to all models.
@@ -34,6 +44,15 @@ public class TTSessionLocal{
 			e1.printStackTrace();
 			System.exit(201);
 		}
+	}
+	
+	/**
+	 * Temporary method to specify how the tables are read in or generated.
+	 * 
+	 * @param file True if the data should be read from the Fortran files
+	 */
+	public void setModelInput(boolean file) {
+		this.file = file;
 	}
 	
 	/**
@@ -152,17 +171,36 @@ public class TTSessionLocal{
 			
 			// If not, set it up.
 			if(allRef == null) {
-				try {
-					readTau = new ReadTau(earthModel);
-					readTau.readHeader();
-					readTau.readTable();
-				} catch(IOException e) {
-					System.out.println("Unable to read Earth model "+earthModel);
-					System.exit(202);
+				if(file) {
+					// Read the tables from the Fortran files.
+					try {
+						readTau = new ReadTau(earthModel);
+						readTau.readHeader();
+						readTau.readTable();
+					} catch(IOException e) {
+						System.out.println("Unable to read Earth model "+earthModel);
+						System.exit(202);
+					}
+					// Reorganize the reference data.
+					allRef = new AllBrnRef(readTau, auxTT);
+				} else {
+					// Generate the tables.
+					TablesUtil.deBugLevel = 1;
+					make = new MakeTables();
+					try {
+						status = make.buildModel(earthModel);
+					} catch (Exception e) {
+						System.out.println("Unable to generate Earth model "+earthModel);
+					}
+					if(status == TtStatus.SUCCESS) {
+						// Build the branch reference classes.
+						allRef = make.fillAllBrnRef(auxTT);
+					} else {
+						System.out.println("Unable to generate Earth model "+earthModel+
+								" ("+status+")");
+						System.exit(202);
+					}
 				}
-				
-				// Reorganize the reference data.
-				allRef = new AllBrnRef(readTau, auxTT);
 //			allRef.dumpHead();
 //			allRef.dumpMod('P', true);
 //			allRef.dumpMod('S', true);
@@ -174,7 +212,7 @@ public class TTSessionLocal{
 			
 			// Set up the (depth dependent) volatile part.
 			allBrn = new AllBrnVol(allRef);
-	//	allBrn.dumpHead();
+//		allBrn.dumpHead();
 		}
 	}
 	
