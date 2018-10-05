@@ -56,7 +56,7 @@ public class DecTTbranch {
 		keep = piece.keep;
 		pOld = piece.proxyP;
 		xOld = piece.proxyX;
-		upKeep = dec.figureDecimation(xOld, convert.normR(TablesUtil.DELXUP));
+		upKeep = dec.slowDecimation(xOld, convert.normR(TablesUtil.DELXUP));
 		
 		// Do some setup.
 		pLim = TablesUtil.PLIM*pOld[pOld.length-1];
@@ -94,7 +94,6 @@ public class DecTTbranch {
 						// Add the rescued sample plus the current one.
 						keep[iMin] = true;
 						pNew[++k] = pOld[iMin];
-//					xNew[k] = 0d;
 						xNew[k] = xOld[iMin];
 						jLast = j;
 						keep[j] = true;
@@ -138,7 +137,7 @@ public class DecTTbranch {
 			if((xOld[i+1]-xOld[i])*(xOld[i]-xOld[i-1]) <= 0d) {
 				// Got one.  Decimate the branch up to the caustic.
 				if(i-2 > beg) {
-					downKeep = dec.figureDecimation(Arrays.copyOfRange(xOld, beg, i-1), 
+					downKeep = dec.slowDecimation(Arrays.copyOfRange(xOld, beg, i-1), 
 							xTarget);
 					for(int j=beg, l=0; j<i-1; j++, l++) {
 						if(downKeep[l]) {
@@ -162,7 +161,7 @@ public class DecTTbranch {
 		}
 		// Decimate after the last caustic (or the whole branch if there 
 		// are no caustics.
-		downKeep = dec.figureDecimation(Arrays.copyOfRange(xOld, beg, xOld.length), 
+		downKeep = dec.slowDecimation(Arrays.copyOfRange(xOld, beg, xOld.length), 
 				xTarget);
 		for(int j=beg, l=0; j<xOld.length; j++, l++) {
 			if(downKeep[l]) {

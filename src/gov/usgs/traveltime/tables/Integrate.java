@@ -44,8 +44,10 @@ public class Integrate {
 		zMax = convert.flatZ(convert.rSurface-TauUtil.MAXDEPTH);
 		zOuterCore = refModel.outerCore.z;
 		zInnerCore = refModel.innerCore.z;
-		System.out.format("\n\tzMax zOC zIC %8.6f %8.6f %8.6f\n", zMax, zOuterCore, 
-				zInnerCore);
+		if(TablesUtil.deBugLevel > 0) {
+			System.out.format("\n\tzMax zOC zIC %8.6f %8.6f %8.6f\n", zMax, 
+					zOuterCore, zInnerCore);
+		}
 	}
 	
 	/**
@@ -64,7 +66,9 @@ public class Integrate {
 		zLim = modelDepth(type);
 		n1 = depModel.getShell(type, 0).iBot-depModel.getShell(type, 
 				depModel.shellSize(type)-1).iTop+1;
-		System.out.format("\nmm = %d n1 = %d\n\n", depModel.size(type), n1);
+		if(TablesUtil.deBugLevel > 0) {
+			System.out.format("\nmm = %d n1 = %d\n\n", depModel.size(type), n1);
+		}
 		tau = new double[n1];
 		x = new double[n1];
 		n = n1;
@@ -111,8 +115,10 @@ public class Integrate {
 						nRec++;
 						finModel.add(type, sample1, nRec, new TauXsample(iRay, tau, x, 
 								ShellName.UPPER_MANTLE));
-						System.out.format("lev1 %c %3d %s\n", type, finModel.size(type)-1, 
-								finModel.stringLast(type));
+						if(TablesUtil.deBugLevel > 0) {
+							System.out.format("lev1 %c %3d %s\n", type, finModel.size(type)-1, 
+									finModel.stringLast(type));
+						}
 					} else {
 						finModel.add(type, sample1, nRec);
 					}
@@ -131,16 +137,20 @@ public class Integrate {
 							finModel.add(type, sample0, nRec, new TauXsample(n1, tau, x, 
 									ShellName.INNER_CORE_BOUNDARY));
 						}
-						System.out.format("lev2 %c %3d %3d %9.6f %8.6f\n", type, 
-								finModel.size(type)-1, iRay, sample0.z, sample0.slow);
+						if(TablesUtil.deBugLevel > 0) {
+							System.out.format("lev2 %c %3d %3d %9.6f %8.6f\n", type, 
+									finModel.size(type)-1, iRay, sample0.z, sample0.slow);
+						}
 					} else {
 						disc = true;
 					}
 					// Flag high slowness zones below discontinuities.
 					if(sample1.slow > sample0.slow) {
 						finModel.setLvz(type);
-						System.out.format("lvz  %c %3d %8.6f %8.6f\n", type, iRay, tau[iRay-1], 
-								x[iRay-1]);
+						if(TablesUtil.deBugLevel > 0) {
+							System.out.format("lvz  %c %3d %8.6f %8.6f\n", type, iRay, 
+									tau[iRay-1], x[iRay-1]);
+						}
 					}
 					zLast = sample0.z;
 				}
@@ -149,9 +159,11 @@ public class Integrate {
 		// Save the integrals down to the center of the Earth.
 		nRec++;
 		finModel.add(type, sample1, nRec, new TauXsample(n1, tau, x, ShellName.CENTER));
-		System.out.format("lev3 %c %3d %3d %9.6f %8.6f\n", type, 
-				finModel.size(type)-1, iRay, sample1.z, sample1.slow);
-		finModel.printModel(type, "Final");
+		if(TablesUtil.deBugLevel > 0) {
+			System.out.format("lev3 %c %3d %3d %9.6f %8.6f\n", type, 
+					finModel.size(type)-1, iRay, sample1.z, sample1.slow);
+			finModel.printModel(type, "Final");
+		}
 		// We'll still need access to the merged slownesses.
 		finModel.putSlowness(depModel.slowness);
 	}
@@ -186,13 +198,17 @@ public class Integrate {
 				if(depModel.getSample('P', j).z < zMax) break;
 			}
 			pLim = depModel.getSample('P', j).slow;
-			System.out.format("\ni zMax pLim zm = %3d %9.6f %8.6f %9.6f\n", j, zMax, 
-					pLim, depModel.getSample('P', j).z);
+			if(TablesUtil.deBugLevel > 0) {
+				System.out.format("\ni zMax pLim zm = %3d %9.6f %8.6f %9.6f\n", j, zMax, 
+						pLim, depModel.getSample('P', j).z);
+			}
 			for(j=0; j<depModel.size('S'); j++) {
 				if(depModel.getSample('S', j).slow <= pLim) break;
 			}
-			System.out.format("i pLim zLim = %3d %8.6f %9.6f\n", j, pLim, 
-					depModel.getSample('S', j).z);
+			if(TablesUtil.deBugLevel > 0) {
+				System.out.format("i pLim zLim = %3d %8.6f %9.6f\n", j, pLim, 
+						depModel.getSample('S', j).z);
+			}
 			return depModel.getSample('S', j).z;
 		}
 	}

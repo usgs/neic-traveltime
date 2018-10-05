@@ -233,7 +233,12 @@ public class SampleSlowness {
 		pCaustic = solver.solve(TablesUtil.MAXEVAL, findCaustic, minP, maxP);
 		if(TablesUtil.deBugLevel > 2) System.out.format("\tCaustic: %8.6f "+
 				"[%8.6f,%8.6f] %2d\n", pCaustic, minP, maxP, solver.getEvaluations());
-		return pCaustic;
+//	if(pCaustic <0.11d) {
+//		System.out.println("Core caustic override");
+//		return 0.105349d;
+//	} else {
+			return pCaustic;
+//	}
 	}
 	
 	/**
