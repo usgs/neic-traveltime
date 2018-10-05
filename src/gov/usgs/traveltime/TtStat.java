@@ -1,5 +1,6 @@
 package gov.usgs.traveltime;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
@@ -17,7 +18,8 @@ import java.util.ArrayList;
  * @author Ray Buland
  *
  */
-public class TtStat {
+public class TtStat implements Serializable {
+	private static final long serialVersionUID = 1L;
 	String phCode;							// Phase code
 	int minDelta;								// Minimum distance in degrees
 	int maxDelta;								// Maximum distance in degrees

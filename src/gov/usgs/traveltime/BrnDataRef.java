@@ -1,5 +1,6 @@
 package gov.usgs.traveltime;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 import gov.usgs.traveltime.tables.BrnData;
@@ -12,7 +13,8 @@ import gov.usgs.traveltime.tables.BrnData;
  * @author Ray Buland
  *
  */
-public class BrnDataRef {
+public class BrnDataRef implements Serializable {
+	private static final long serialVersionUID = 1L;
 	final String phCode;					// Branch phase code
 	final String[] uniqueCode;		// Unique phase codes (oxymoron?)
 	final String phSeg;						// Generic phase code for all branches in this segment

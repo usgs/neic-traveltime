@@ -1,5 +1,6 @@
 package gov.usgs.traveltime;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
@@ -18,7 +19,8 @@ import java.util.ArrayList;
  * @author Ray Buland
  *
  */
-public class PhGroup {
+public class PhGroup implements Serializable {
+	private static final long serialVersionUID = 1L;
 	String groupName;							// Name of the phase group
 	ArrayList<String> phases;			// List of phases in the group
 

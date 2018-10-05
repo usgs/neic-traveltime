@@ -1,5 +1,6 @@
 package gov.usgs.traveltime;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -12,7 +13,8 @@ import gov.usgs.traveltime.tables.TauModel;
  * @author Ray Buland
  *
  */
-public class UpDataRef {
+public class UpDataRef implements Serializable {
+	private static final long serialVersionUID = 1L;
 	final char typeUp;							// Type of up-going branches
 	final double[] pTauUp;					// Slowness grid for this branch
 	final double[][] tauUp;					// Tau for up-going branches by depth

@@ -1,5 +1,7 @@
 package gov.usgs.traveltime;
 
+import java.io.Serializable;
+
 /**
  * Virtual array of topographic sample latitudes.  It would have 
  * been nicer to have used the limits in the topography file 
@@ -12,7 +14,8 @@ package gov.usgs.traveltime;
  * @author Ray Buland
  *
  */
-public class TopoLats implements GenIndex {
+public class TopoLats implements GenIndex, Serializable {
+	private static final long serialVersionUID = 1L;
 	final double minLat = -89.8333333d, maxLat = 89.8333333d, 
 			dLat = 0.3333333d;
 	final int maxInd = 538;

@@ -1,5 +1,10 @@
 package gov.usgs.traveltime;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
 import gov.usgs.traveltime.tables.BrnData;
@@ -28,15 +33,16 @@ public class AllBrnRef {
 	/**
 	 * Load all data from TauRead into more convenient Java classes.
 	 * 
+	 * @param serName Name of the model serialization file
 	 * @param in The TauRead data source
 	 * @param auxtt The auxiliary data source
+	 * @throws IOException If serialization file write fails
 	 */
-	public AllBrnRef(ReadTau in, AuxTtRef auxtt) {
+	public AllBrnRef(String serName, ReadTau in, AuxTtRef auxtt) throws IOException {
 		String[] segCode;
 		
+		// Remember the input data.
 		this.modelName = in.modelName;
-		
-		// Remember the auxiliary data.
 		this.auxtt = auxtt;
 		
 		// Set up the conversion constants, etc.
@@ -77,6 +83,9 @@ public class AllBrnRef {
 		// Set up the up-going branch data.
 		pUp = new UpDataRef(in, 'P');
 		sUp = new UpDataRef(in, 'S');
+		
+		// Serialize the model out.
+		if(serName != null) serialOut(serName);
 	}
 	
 	/**
@@ -86,34 +95,71 @@ public class AllBrnRef {
 	 * places and also allows the reference classes to make all the data 
 	 * final.
 	 * 
+	 * @param serName Name of the model serialization file
 	 * @param finModel Travel-time table generation final tau model
 	 * @param brnData Travel-time table generation branch data
 	 * @param auxtt The auxiliary data source
+	 * @throws IOException If serialization file write fails
 	 */
-	public AllBrnRef(TauModel finModel, ArrayList<BrnData> brnData, 
-			AuxTtRef auxtt) {
+	public AllBrnRef(String serName, TauModel finModel, ArrayList<BrnData> brnData, 
+			AuxTtRef auxtt) throws IOException {
+		
 		// Remember the input data.
 		this.modelName = finModel.getModelName();
 		this.auxtt = auxtt;
 		
-		// Set up the conversion constants, etc.
-		cvt = finModel.getConvert();
+			// Set up the conversion constants, etc.
+			cvt = finModel.getConvert();
+			
+			// Set up the Earth model.
+			pModel = new ModDataRef(finModel, cvt, 'P');
+			sModel = new ModDataRef(finModel, cvt, 'S');
+			
+			// Load the branch data.
+			branches = new BrnDataRef[brnData.size()];
+			ExtraPhases extra = new ExtraPhases(auxtt);
+			// Loop over branches setting them up.
+			for(int j=0; j<branches.length; j++) {
+				branches[j] = new BrnDataRef(brnData.get(j), j, extra, auxtt);
+			}
+			
+			// Set up the up-going branch data.
+			pUp = new UpDataRef(finModel, 'P');
+			sUp = new UpDataRef(finModel, 'S');
+			
+			// Serialize the model out.
+			if(serName != null) serialOut(serName);
+	}
+	
+	/**
+	 * Load data from the model serialization file.
+	 * 
+	 * @param serName Name of the model serialization file
+	 * @param modelName Earth model name
+	 * @param auxtt The auxiliary data source
+	 * @throws IOException If serialization read fails
+	 * @throws ClassNotFoundException Serialization object mismatch
+	 */
+	public AllBrnRef(String serName, String modelName, AuxTtRef auxtt) 
+			throws IOException, ClassNotFoundException {
+		FileInputStream serIn;
+		ObjectInputStream objIn;
 		
-		// Set up the Earth model.
-		pModel = new ModDataRef(finModel, cvt, 'P');
-		sModel = new ModDataRef(finModel, cvt, 'S');
+		// Remember the input data.
+		this.modelName = modelName;
+		this.auxtt = auxtt;
 		
-		// Load the branch data.
-		branches = new BrnDataRef[brnData.size()];
-		ExtraPhases extra = new ExtraPhases(auxtt);
-		// Loop over branches setting them up.
-		for(int j=0; j<branches.length; j++) {
-			branches[j] = new BrnDataRef(brnData.get(j), j, extra, auxtt);
-		}
-		
-		// Set up the up-going branch data.
-		pUp = new UpDataRef(finModel, 'P');
-		sUp = new UpDataRef(finModel, 'S');
+		// Read the model.
+		serIn = new FileInputStream(serName);
+		objIn = new ObjectInputStream(serIn);
+		cvt = (ModConvert)objIn.readObject();
+		pModel = (ModDataRef)objIn.readObject();
+		sModel = (ModDataRef)objIn.readObject();
+		branches = (BrnDataRef[])objIn.readObject();
+		pUp = (UpDataRef)objIn.readObject();
+		sUp = (UpDataRef)objIn.readObject();
+		objIn.close();
+		serIn.close();
 	}
 
 	/**
@@ -123,6 +169,36 @@ public class AllBrnRef {
 	 */
 	public int getNoBranches() {
 		return branches.length;
+	}
+	
+	/**
+	 * Serialize the model classes out to a file.
+	 * 
+	 * @param serName Name of the model serialization file
+	 * @throws IOException On any serialization IO error
+	 */
+	private void serialOut(String serName) throws IOException {
+		FileOutputStream serOut;
+		ObjectOutputStream objOut;
+		
+		// Write out the serialized file.
+		serOut = new FileOutputStream(serName);
+		objOut = new ObjectOutputStream(serOut);
+		/*
+		 * The auxiliary data can be read and written very quickly, so for persistent 
+		 * applications such as the travel time or location server, serialization is 
+		 * not necessary.  However, if the travel times are needed for applications 
+		 * that start and stop frequently, the serialization should save some set up 
+		 * time.
+		 */
+		objOut.writeObject(cvt);
+		objOut.writeObject(pModel);
+		objOut.writeObject(sModel);
+		objOut.writeObject(branches);
+		objOut.writeObject(pUp);
+		objOut.writeObject(sUp);
+		objOut.close();
+		serOut.close();
 	}
 	
 	/**

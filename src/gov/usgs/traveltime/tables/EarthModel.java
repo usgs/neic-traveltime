@@ -75,10 +75,11 @@ public class EarthModel {
 	 * Read the Earth model file, set up shells, refine internal boundaries, 
 	 * and initialize critical points.
 	 * 
+	 * @param modelFile Name of the Earth model file
 	 * @return Travel-time status
 	 */
-	public TtStatus readModel() {
-		String modelFile, modelName;
+	public TtStatus readModel(String modelFile) {
+		String modelCheck;
 		int n, i = 0, last = 0;
 		/*
 		 * We have to read everything in, but we don't need density, 
@@ -91,19 +92,17 @@ public class EarthModel {
 		
 		// Open and read the phase groups file.
 		try {
-			modelFile = "m"+earthModel+".mod";
-			inModel = new BufferedInputStream(new FileInputStream(
-					TauUtil.model(modelFile)));
+			inModel = new BufferedInputStream(new FileInputStream(modelFile));
 		} catch (FileNotFoundException e) {
 			return TtStatus.BAD_MODEL_READ;
 		}
 		scan = new Scanner(inModel);
 		
 		// Read the header.
-		modelName = scan.next();
-		if(!modelName.equals(earthModel)) {
+		modelCheck = scan.next();
+		if(!modelCheck.equals(earthModel)) {
 			System.out.println("\n***** Error: model name mismatch (" +
-					earthModel + " != " + modelName + ") *****\n");
+					earthModel + " != " + modelCheck + ") *****\n");
 			scan.close();
 			return TtStatus.BAD_MODEL_FILE;
 		}

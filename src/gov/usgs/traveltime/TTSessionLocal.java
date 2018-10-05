@@ -14,17 +14,15 @@ import gov.usgs.traveltime.tables.TablesUtil;
  *
  */
 public class TTSessionLocal{
-	/**
-	 * This is a temporary hack for side-by-side testing of the Java generated 
-	 * tables versus the Fortran tables.
-	 */
-	boolean file = true;		// Use the Fortran tables by default
 	String lastModel = "";
 	TreeMap<String, AllBrnRef> modelData;
 	MakeTables make;
 	TtStatus status;
 	AuxTtRef auxTT;
 	AllBrnVol allBrn;
+	// Set up serialization.
+	String serName;											// Serialized file name for this model
+	String[] fileNames;									// Raw input file names for this model
 
 	/**
 	 * Initialize auxiliary data common to all models.
@@ -39,20 +37,11 @@ public class TTSessionLocal{
 		// Read in data common to all models.
 		try {
 			auxTT = new AuxTtRef(readStats, readEllip, readTopo);
-		} catch (IOException e1) {
+		} catch (IOException | ClassNotFoundException e1) {
 			System.out.println("Unable to read auxiliary data.");
 			e1.printStackTrace();
 			System.exit(201);
 		}
-	}
-	
-	/**
-	 * Temporary method to specify how the tables are read in or generated.
-	 * 
-	 * @param file True if the data should be read from the Fortran files
-	 */
-	public void setModelInput(boolean file) {
-		this.file = file;
 	}
 	
 	/**
@@ -171,33 +160,50 @@ public class TTSessionLocal{
 			
 			// If not, set it up.
 			if(allRef == null) {
-				if(file) {
-					// Read the tables from the Fortran files.
-					try {
-						readTau = new ReadTau(earthModel);
-						readTau.readHeader();
-						readTau.readTable();
-					} catch(IOException e) {
-						System.out.println("Unable to read Earth model "+earthModel);
-						System.exit(202);
-					}
-					// Reorganize the reference data.
-					allRef = new AllBrnRef(readTau, auxTT);
-				} else {
-					// Generate the tables.
-					TablesUtil.deBugLevel = 1;
-					make = new MakeTables();
-					try {
-						status = make.buildModel(earthModel);
-					} catch (Exception e) {
-						System.out.println("Unable to generate Earth model "+earthModel);
-					}
-					if(status == TtStatus.SUCCESS) {
-						// Build the branch reference classes.
-						allRef = make.fillAllBrnRef(auxTT);
+				if(modelChanged(earthModel)) {
+					if(TauUtil.useFortranFiles) {
+						// Read the tables from the Fortran files.
+						try {
+							readTau = new ReadTau(earthModel);
+							readTau.readHeader(fileNames[0]);
+							readTau.readTable(fileNames[1]);
+						} catch(IOException e) {
+							System.out.println("Unable to read Earth model "+earthModel+".");
+							System.exit(202);
+						}
+						// Reorganize the reference data.
+						try {
+							allRef = new AllBrnRef(serName, readTau, auxTT);
+						} catch (IOException e) {
+							System.out.println("Unable to write Earth model "+earthModel+
+									" serialization file.");
+						}
 					} else {
-						System.out.println("Unable to generate Earth model "+earthModel+
-								" ("+status+")");
+						// Generate the tables.
+						TablesUtil.deBugLevel = 1;
+						make = new MakeTables();
+						try {
+							status = make.buildModel(earthModel, fileNames[0], fileNames[1]);
+						} catch (Exception e) {
+							System.out.println("Unable to generate Earth model "+earthModel+
+									" ("+status+").");
+							System.exit(202);
+						}
+						// Build the branch reference classes.
+						try {
+							allRef = make.fillAllBrnRef(serName, auxTT);
+						} catch (IOException e) {
+							System.out.println("Unable to write Earth model "+earthModel+
+									" serialization file.");
+						}
+					}
+				} else {
+					// If the model input hasn't changed, just serialize the model in.
+					try {
+						allRef = new AllBrnRef(serName, earthModel, auxTT);
+					} catch (ClassNotFoundException | IOException e) {
+						System.out.println("Unable to read Earth model "+earthModel+
+								" serialization file.");
 						System.exit(202);
 					}
 				}
@@ -214,6 +220,29 @@ public class TTSessionLocal{
 			allBrn = new AllBrnVol(allRef);
 //		allBrn.dumpHead();
 		}
+	}
+	
+	/**
+	 * Determine if the input files have changed.
+	 * 
+	 * @param earthModel Earth model name
+	 * @return True if the input files have changed
+	 */
+	private boolean modelChanged(String earthModel) {
+		// We need two files in eithe case.
+		fileNames = new String[2];
+		if(TauUtil.useFortranFiles) {
+			// Names for the Fortran files.
+			serName = earthModel+"_for.ser";
+			fileNames[0] = TauUtil.model(earthModel+".hed");
+			fileNames[0] = TauUtil.model(earthModel+".tbl");
+		} else {
+			// Names for generating the model.
+			serName = earthModel+"_gen.ser";
+			fileNames[0] = TauUtil.model("m"+earthModel+".mod");
+			fileNames[1] = TauUtil.model("phases.txt");
+		}
+		return FileChanged.isChanged(TauUtil.model(serName), fileNames);
 	}
 	
 	/**

@@ -20,7 +20,7 @@ public class TtMain {
 	public static void main(String[] args) throws Exception {
 		// Simulate a session request.
 		String earthModel = "ak135";
-		double sourceDepth = 10d;
+		double sourceDepth = 60d;
 		String[] phList = null;
 //	String[] phList = {"PKP", "SKP"};
 		boolean useful = true;
@@ -43,8 +43,6 @@ public class TtMain {
 		
 		// Initialize the local travel-time manager.
 		ttLocal = new TTSessionLocal(true, true, true);
-		// Set up for the Java table generation.
-		ttLocal.setModelInput(false);
 		
 //	TauUtil.noCorr = true;
 		try {

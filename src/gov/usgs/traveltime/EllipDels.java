@@ -1,5 +1,7 @@
 package gov.usgs.traveltime;
 
+import java.io.Serializable;
+
 /**
  * Virtual array of ellipticity correction sample distances.  This 
  * is needed for the bilinear interpolation because the ellipticity 
@@ -9,7 +11,8 @@ package gov.usgs.traveltime;
  * @author Ray Buland
  *
  */
-public class EllipDels implements GenIndex {
+public class EllipDels implements GenIndex, Serializable {
+	private static final long serialVersionUID = 1L;
 	final double dDel = 5d;					// Ellipticity distance increment 
 	double minDelta;								// Minimum distance in degrees
 	double maxDelta;								// Maximum distance in degrees

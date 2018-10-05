@@ -1,12 +1,15 @@
 package gov.usgs.traveltime;
 
+import java.io.Serializable;
+
 /**
  * Earth model dependent unit conversions and constants.
  * 
  * @author Ray Buland
  *
  */
-public class ModConvert {
+public class ModConvert implements Serializable {
+	private static final long serialVersionUID = 1L;
 	/**
 	 * Normalization for distance (delta and depth).  Note that 
 	 * this is Xn in the Fortran programs.  You need to multiply 

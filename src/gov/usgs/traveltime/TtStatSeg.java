@@ -1,5 +1,7 @@
 package gov.usgs.traveltime;
 
+import java.io.Serializable;
+
 /**
  * Holds one travel-time statistics linear interpolation segment 
  * for one statistics variable.
@@ -7,7 +9,8 @@ package gov.usgs.traveltime;
  * @author Ray Buland
  *
  */
-public class TtStatSeg {
+public class TtStatSeg implements Serializable {
+	private static final long serialVersionUID = 1L;
 	double minDelta;						// Minimum distance in degrees
 	double maxDelta;						// Maximum distance in degrees
 	double slope;								// Slope of linear interpolation

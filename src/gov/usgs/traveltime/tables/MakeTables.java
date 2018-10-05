@@ -1,5 +1,6 @@
 package gov.usgs.traveltime.tables;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import gov.usgs.traveltime.AllBrnRef;
@@ -21,10 +22,13 @@ public class MakeTables {
 	 * Create the travel-time tables out of whole cloth.
 	 * 
 	 * @param earthModel Name of the Earth model
+	 * @param modelFile Name of the Earth model file
+	 * @param phaseFile Name of the file of desired phases
 	 * @return Model read status
 	 * @throws Exception If an integration interval is illegal
 	 */
-	public TtStatus buildModel(String earthModel) throws Exception {
+	public TtStatus buildModel(String earthModel, String modelFile, 
+			String phaseFile) throws Exception {
 		EarthModel refModel, locModel;
 		ModConvert convert;
 		TauModel depModel;
@@ -36,45 +40,62 @@ public class MakeTables {
 		
 		refModel = new EarthModel(earthModel, true);
 		// Read the model.
-		status = refModel.readModel();
-		// Print it out.
+		status = refModel.readModel(modelFile);
+		
+		// If it read OK, process it.
 		if(status == TtStatus.SUCCESS) {
-			// Print the shell summaries.
-//		refModel.printShells();
-			// Print out the radial version.
-//		refModel.printModel();
-			
+			if(TablesUtil.deBugLevel > 2) {
+				// Print the shell summaries.
+				refModel.printShells();
+				// Print out the radial version.
+				refModel.printModel();
+			}
 			// Interpolate the model.
 			convert = refModel.getConvert();
 			locModel = new EarthModel(refModel, convert);
 			locModel.interpolate();
-			// Print the shell summaries.
-			locModel.printShells();
-			// Print out the radial version.
-//		locModel.printModel(false, false);
-			// Print out the Earth flattened version.
-			locModel.printModel(true, true);
-			locModel.printCritical();
+			if(TablesUtil.deBugLevel > 0) {
+				// Print the shell summaries.
+				locModel.printShells();
+				if(TablesUtil.deBugLevel > 2) {
+				// Print out the radial version.
+					locModel.printModel(false, false);
+				}
+				// Print out the Earth flattened version.
+				locModel.printModel(true, true);
+				locModel.printCritical();
+			}
 			
 			// Make the initial slowness sampling.
 			sample = new SampleSlowness(locModel);
 			sample.sample('P');
-			sample.printModel('P', "Tau");
+			if(TablesUtil.deBugLevel > 0) {
+				sample.printModel('P', "Tau");
+			}
 			sample.sample('S');
-			sample.printModel('S', "Tau");
-			// We need a merged set of slownesses for converted branches 
-			// (e.g., ScP).
+			if(TablesUtil.deBugLevel > 0) {
+				sample.printModel('S', "Tau");
+			}
+			// We need a merged set of slownesses for converted branches (e.g., ScP).
 			sample.merge();
-			sample.printMerge();
+			if(TablesUtil.deBugLevel > 0) {
+				sample.printMerge();
+			}
 			// Fiddle with the sampling so that low velocity zones are 
 			// better sampled.
 			sample.depthModel('P');
-			sample.printModel('P', "Depth");
+			if(TablesUtil.deBugLevel > 0) {
+				sample.printModel('P', "Depth");
+			}
 			sample.depthModel('S');
-			sample.printModel('S', "Depth");
+			if(TablesUtil.deBugLevel > 0) {
+				sample.printModel('S', "Depth");
+			}
 			depModel = sample.getDepthModel();
-//		depModel.printDepShells('P');
-//		depModel.printDepShells('S');
+			if(TablesUtil.deBugLevel > 2) {
+				depModel.printDepShells('P');
+				depModel.printDepShells('S');
+			}
 			
 			// Do the integrals.
 			integrate = new Integrate(depModel);
@@ -83,34 +104,55 @@ public class MakeTables {
 			// The final model only includes depth samples that will be 
 			// of interest for earthquake location.
 			finModel = integrate.getFinalModel();
-//		finModel.printShellInts('P');
-//		finModel.printShellInts('S');
+			if(TablesUtil.deBugLevel > 1) {
+				finModel.printShellInts('P');
+				finModel.printShellInts('S');
+			}
 			// Reorganize the integral data.
 			finModel.makePieces();
-			finModel.printShellSpec('P');
-			finModel.printShellSpec('S');
-//		pieces.printProxy();		// Proxy depth sampling before decimation
+			if(TablesUtil.deBugLevel > 0) {
+				// These final shells control making the branches.
+				finModel.printShellSpec('P');
+				finModel.printShellSpec('S');
+				if(TablesUtil.deBugLevel > 2) {
+					// Proxy depth sampling before decimation.
+					finModel.printProxy();
+				}
+			}
 			// Decimate the default sampling for the up-going branches.
 			decimate = new DecTTbranch(finModel, convert);
 			decimate.upGoingDec('P');
 			decimate.upGoingDec('S');
-//		pieces.pPieces.printDec();
-//		pieces.sPieces.printDec();
-			finModel.printProxy();		// Proxy depth sampling after decimation
+			if(TablesUtil.deBugLevel > 0) {
+				if(TablesUtil.deBugLevel > 2) {
+					finModel.pPieces.printDec();
+					finModel.sPieces.printDec();
+				}
+				// Proxy depth sampling after decimation.
+				finModel.printProxy();
+			}
 			
 			// Make the branches.
 			layout = new MakeBranches(finModel, decimate);
-			layout.readPhases();		// Read the desired phases from a file
-			layout.printPhases();
-			layout.printBranches(false, true);
+			layout.readPhases(phaseFile);		// Read the desired phases from a file
+			if(TablesUtil.deBugLevel > 0) {
+				if(TablesUtil.deBugLevel > 1) {
+					layout.printPhases();
+				}
+				layout.printBranches(false, true);
+			}
 			brnData = layout.getBranches();
 			// Do the final decimation.
 			finModel.decimateP();
-			finModel.printP();
+			if(TablesUtil.deBugLevel > 0) {
+				finModel.printP();
+			}
 			finModel.decimateTauX('P');
 			finModel.decimateTauX('S');
 			// Print the final branches.
-//		layout.printBranches(true, true);
+			if(TablesUtil.deBugLevel > 2) {
+				layout.printBranches(true, true);
+			}
 			// Build the branch end ranges.
 			finModel.setEnds(layout.getBranchEnds());
 		}
@@ -121,10 +163,12 @@ public class MakeTables {
 	 * Fill in all the reference data needed to calculate travel times 
 	 * from the table generation.
 	 * 
+	 * @param serName Name of the model serialization file
 	 * @param auxTT Auxiliary travel-time data
 	 * @return The reference data for all branches
+	 * @throws IOException If serialization file write fails
 	 */
-	public AllBrnRef fillAllBrnRef(AuxTtRef auxTT) {
-		return new AllBrnRef(finModel, brnData, auxTT);
+	public AllBrnRef fillAllBrnRef(String serName, AuxTtRef auxTT) throws IOException {
+		return new AllBrnRef(serName, finModel, brnData, auxTT);
 	}
 }

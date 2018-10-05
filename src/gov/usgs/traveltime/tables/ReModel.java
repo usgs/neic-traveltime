@@ -2,6 +2,7 @@ package gov.usgs.traveltime.tables;
 
 import gov.usgs.traveltime.AllBrnRef;
 import gov.usgs.traveltime.AuxTtRef;
+import gov.usgs.traveltime.TauUtil;
 import gov.usgs.traveltime.TtStatus;
 
 /**
@@ -23,6 +24,7 @@ public class ReModel {
 	 * @throws Exception On an illegal integration interval
 	 */
 	public static void main(String[] args) throws Exception {
+		double sysTime;
 		String earthModel = "ak135";
 		MakeTables make;
 		AuxTtRef auxTT = null;
@@ -30,12 +32,16 @@ public class ReModel {
 		TtStatus status;
 		
 		TablesUtil.deBugLevel = 1;
+		sysTime = System.currentTimeMillis();
 		make = new MakeTables();
-		status = make.buildModel(earthModel);
+		status = make.buildModel(earthModel, TauUtil.model("m"+earthModel+".mod"), 
+				TauUtil.model("phases.txt"));
 		if(status == TtStatus.SUCCESS) {
 			// Build the branch reference classes.
 			auxTT = new AuxTtRef(true, false, false);
-			allRef = make.fillAllBrnRef(auxTT);
+			allRef = make.fillAllBrnRef(null, auxTT);
+			System.out.println("Table generation time: "+
+					0.001*(System.currentTimeMillis()-sysTime));
 //		allRef.dumpHead();
 //		allRef.dumpMod('P', true);
 //		allRef.dumpMod('S', true);

@@ -6,12 +6,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Scanner;
 import java.util.TreeSet;
 
 import gov.usgs.traveltime.ModConvert;
 import gov.usgs.traveltime.Spline;
-import gov.usgs.traveltime.TauUtil;
 import gov.usgs.traveltime.TtStatus;
 
 /**
@@ -60,16 +60,16 @@ public class MakeBranches {
 	/**
 	 * Read in a list of desired phases.
 	 * 
+	 * @param phaseFile Name of the file of desired phases
 	 * @return Travel-time status.
 	 */
-	public TtStatus readPhases() {
+	public TtStatus readPhases(String phaseFile) {
 		BufferedInputStream inPhases = null;
 		Scanner scan;
 		
 		// Open and read the desired phases.
 		try {
-			inPhases = new BufferedInputStream(new FileInputStream(
-					TauUtil.model("phases.txt")));
+			inPhases = new BufferedInputStream(new FileInputStream(phaseFile));
 		} catch (FileNotFoundException e) {
 			return TtStatus.BAD_PHASE_LIST;
 		}
@@ -116,7 +116,9 @@ public class MakeBranches {
 		int begShell, endShell;
 		
 		branches = new ArrayList<BrnData>();
-		System.out.println();
+		if(TablesUtil.deBugLevel > 0) {
+			System.out.println();
+		}
 		
 		for(int j=0; j<phases.size(); j++) {
 			phCode = phases.get(j);
@@ -325,11 +327,13 @@ public class MakeBranches {
 			ends.add(branches.get(j).pRange[0]);
 			ends.add(branches.get(j).pRange[1]);
 		}
-/*	System.out.println("\nBranch End Ray Parameters:");
-		Iterator<Double> iter = ends.iterator();
-		while(iter.hasNext()) {
-			System.out.format("     %8.6f\n", iter.next());
-		} */
+		if(TablesUtil.deBugLevel > 1) {
+			System.out.println("\nBranch End Ray Parameters:");
+			Iterator<Double> iter = ends.iterator();
+			while(iter.hasNext()) {
+				System.out.format("     %8.6f\n", iter.next());
+			}
+		}
 		return ends;
 	}
 	
@@ -371,7 +375,7 @@ public class MakeBranches {
 	 */
 	private void refracted(String phCode, char[] typeSeg, double[] shellCounts, 
 			int endShell, int endP) {
-		int begP = 0, maxBrnP, lvzIndex;
+		int minBrnP = 0, maxBrnP;
 		double xTarget, xFactor;
 		BrnData branch;
 		ModelShell shell;
@@ -385,59 +389,28 @@ public class MakeBranches {
 			shell = finModel.getShell(typeSeg[1], shIndex);
 			// Figure the index of the maximum ray parameter for this branch.
 			maxBrnP = Math.min(slowOffset-shell.iTop, endP);
-			if(shell.getCode(typeSeg[1]).charAt(0) != 'r' && begP < maxBrnP) {
+			if(shell.getCode(typeSeg[1]).charAt(0) != 'r' && minBrnP < maxBrnP) {
 				// Initialize the branch.
-				branch = newBranch(phCode, typeSeg, (int)shellCounts[0], maxBrnP-begP+1);
-				// Add up the branch data.
-				for(int i=begP, k=0; i<=maxBrnP; i++, k++) {
-					p[k] = finModel.getP(i);
-					for(int j=0; j<shellCounts.length; j++) {
-						tau[k] += shellCounts[j]*(finModel.getTauSpec(typeSeg[1], i, j) +
-								finModel.getTauSpec(typeSeg[2], i, j));
-						x[k] += shellCounts[j]*(finModel.getXspec(typeSeg[1], i, j) +
-								finModel.getXspec(typeSeg[2], i, j));
-					}
-				}
+				branch = buildBranch(phCode, typeSeg, shellCounts, minBrnP, maxBrnP);
 				// Deal with low velocity zones at discontinuities.
-				lvzIndex = finModel.getIndex(typeSeg[1], p[0]);
-				if(lvzIndex >= 0) {
-					if(finModel.getLvz(typeSeg[1], lvzIndex)) {
-						// We have a low velocity zone on the down-going ray.
-						for(int j=0; j<shellCounts.length; j++) {
-							tau[0] -= shellCounts[j]*finModel.getTauSpec(typeSeg[1], begP, j);
-							x[0] -= shellCounts[j]*finModel.getXspec(typeSeg[1], begP, j);
-						}
-						tau[0] += shellCounts[0]*finModel.getTauInt(typeSeg[1], lvzIndex)[begP];
-						x[0] += shellCounts[0]*finModel.getXInt(typeSeg[1], lvzIndex)[begP];
-					}
-				}
-				lvzIndex = finModel.getIndex(typeSeg[2], p[0]);
-				if(lvzIndex >= 0) {
-					if(finModel.getLvz(typeSeg[2], lvzIndex)) {
-						// We have a low velocity zone on the returning ray.
-						for(int j=0; j<shellCounts.length; j++) {
-							tau[0] -= shellCounts[j]*finModel.getTauSpec(typeSeg[2], begP, j);
-							x[0] -= shellCounts[j]*finModel.getXspec(typeSeg[2], begP, j);
-						}
-						tau[0] += shellCounts[0]*finModel.getTauInt(typeSeg[2], lvzIndex)[begP];
-						x[0] += shellCounts[0]*finModel.getXInt(typeSeg[2], lvzIndex)[begP];
-					}
-				}
+				fixLVZ(typeSeg, shellCounts, minBrnP);
 				// Do the decimation.
 				xTarget = xFactor*Math.max(finModel.getDelX(typeSeg[1], shIndex), 
 						finModel.getDelX(typeSeg[2], shIndex));
-				decimate.downGoingDec(branch, xTarget, begP);
+				decimate.downGoingDec(branch, xTarget, minBrnP);
 				// Create the interpolation basis functions.
 				spline.basisSet(branch.p, branch.basis);
 				// We need to name each sub-branch.
 				branch.phCode = makePhCode(shellCounts, shell.getCode(typeSeg[1]), 
 						shell.getCode(typeSeg[2]), typeSeg[0]);
-				System.out.format("     %2d %-8s %3d %3d %3.0f\n", branches.size(), 
-						branch.phCode, begP, maxBrnP, convert.dimR(xTarget));
+				if(TablesUtil.deBugLevel > 0) {
+					System.out.format("     %2d %-8s %3d %3d %3.0f\n", branches.size(), 
+							branch.phCode, minBrnP, maxBrnP, convert.dimR(xTarget));
+				}
 				// OK.  Add it to the branches list.
 				branches.add(branch);
 			}
-			begP = maxBrnP;
+			minBrnP = maxBrnP;
 		}
 	}
 	
@@ -463,18 +436,7 @@ public class MakeBranches {
 		
 		// Create the branch.
 		endP = slowOffset-endP;
-		branch = newBranch(phCode, typeSeg, (int)shellCounts[0], endP+1);
-		
-		// Create the branch.
-		for(int i=0; i<=endP; i++) {
-			p[i] = finModel.getP(i);
-			for(int j=0; j<shellCounts.length; j++) {
-				tau[i] += shellCounts[j]*(finModel.getTauSpec(typeSeg[1], i, j) +
-						finModel.getTauSpec(typeSeg[2], i, j));
-				x[i] += shellCounts[j]*(finModel.getXspec(typeSeg[1], i, j) +
-						finModel.getXspec(typeSeg[2], i, j));
-			}
-		}
+		branch = buildBranch(phCode, typeSeg, shellCounts, 0, endP);
 		// Decimate the branch.
 		xTarget = decFactor(shellCounts, true)*
 				Math.max(finModel.getNextDelX(typeSeg[1], endShell), 
@@ -482,8 +444,10 @@ public class MakeBranches {
 		decimate.downGoingDec(branch, xTarget, 0);
 		// Create the interpolation basis functions.
 		spline.basisSet(branch.p, branch.basis);
-		System.out.format("     %2d %-8s %3d %3d %3.0f\n", branches.size(), 
-				branch.phCode, 0, endP, convert.dimR(xTarget));
+		if(TablesUtil.deBugLevel > 0) {
+			System.out.format("     %2d %-8s %3d %3d %3.0f\n", branches.size(), 
+					branch.phCode, 0, endP, convert.dimR(xTarget));
+		}
 		// Add it to the branch list.
 		branches.add(branch);
 	}
@@ -510,7 +474,7 @@ public class MakeBranches {
 	private void converted(String phCode, char[] typeSeg, double[] shellCounts, 
 			int begShell, int endShell, int begP, int endP) {
 		boolean useShell2 = false;
-		int minBrnP, maxBrnP1, maxBrnP2, maxBrnP, shIndex2, lvzIndex;
+		int minBrnP, maxBrnP1, maxBrnP2, maxBrnP, shIndex2;
 		double xTarget, xFactor;
 		BrnData branch;
 		ModelShell shell1, shell2;
@@ -543,53 +507,23 @@ public class MakeBranches {
 						if(slowOffset-shell1.iTop <= slowOffset-shell2.iTop) {
 							useShell2 = false;
 							maxBrnP = maxBrnP1;
-//						System.out.format("nph: nph in j l code = %c %d %3d %3d\n", typeSeg[1], 
-//								shIndex1, minBrnP, maxBrnP);
+							if(TablesUtil.deBugLevel > 1) {
+								System.out.format("nph: nph in j l code = %c %d %3d %3d\n", typeSeg[1], 
+										shIndex1, minBrnP, maxBrnP);
+							}
 						} else {
 							useShell2 = true;
 							maxBrnP = maxBrnP2;
-//						System.out.format("kph: kph ik j l code = %c %d %3d %3d\n", typeSeg[2], 
-//								shIndex2, minBrnP, maxBrnP);
+							if(TablesUtil.deBugLevel > 1) {
+								System.out.format("kph: kph ik j l code = %c %d %3d %3d\n", typeSeg[2], 
+										shIndex2, minBrnP, maxBrnP);
+							}
 						}
 						
 						// Initialize the branch.
-						branch = newBranch(phCode, typeSeg, (int)shellCounts[0], 
-								maxBrnP-minBrnP+1);
-						// Add up the branch data.
-						for(int i=minBrnP, k=0; i<=maxBrnP; i++, k++) {
-							p[k] = finModel.getP(i);
-							for(int j=0; j<shellCounts.length; j++) {
-								tau[k] += shellCounts[j]*(finModel.getTauSpec(typeSeg[1], i, j) +
-										finModel.getTauSpec(typeSeg[2], i, j));
-								x[k] += shellCounts[j]*(finModel.getXspec(typeSeg[1], i, j) +
-										finModel.getXspec(typeSeg[2], i, j));
-							}
-						}
+						branch = buildBranch(phCode, typeSeg, shellCounts, minBrnP, maxBrnP);
 						// Deal with low velocity zones at discontinuities.
-						lvzIndex = finModel.getIndex(typeSeg[1], p[0]);
-						if(lvzIndex >= 0) {
-							if(finModel.getLvz(typeSeg[1], lvzIndex)) {
-								// We have a low velocity zone on the down-going ray.
-								for(int j=0; j<shellCounts.length; j++) {
-									tau[0] -= shellCounts[j]*finModel.getTauSpec(typeSeg[1], minBrnP, j);
-									x[0] -= shellCounts[j]*finModel.getXspec(typeSeg[1], minBrnP, j);
-								}
-								tau[0] += shellCounts[0]*finModel.getTauInt(typeSeg[1], lvzIndex)[minBrnP];
-								x[0] += shellCounts[0]*finModel.getXInt(typeSeg[1], lvzIndex)[minBrnP];
-							}
-						}
-						lvzIndex = finModel.getIndex(typeSeg[2], p[0]);
-						if(lvzIndex >= 0) {
-							if(finModel.getLvz(typeSeg[2], lvzIndex)) {
-								// We have a low velocity zone on the returning ray.
-								for(int j=0; j<shellCounts.length; j++) {
-									tau[0] -= shellCounts[j]*finModel.getTauSpec(typeSeg[2], minBrnP, j);
-									x[0] -= shellCounts[j]*finModel.getXspec(typeSeg[2], minBrnP, j);
-								}
-								tau[0] += shellCounts[0]*finModel.getTauInt(typeSeg[2], lvzIndex)[minBrnP];
-								x[0] += shellCounts[0]*finModel.getXInt(typeSeg[2], lvzIndex)[minBrnP];
-							}
-						}
+						fixLVZ(typeSeg, shellCounts, minBrnP);
 						// Do the decimation.
 						xTarget = xFactor*Math.max(finModel.getDelX(typeSeg[1], shIndex1), 
 								finModel.getDelX(typeSeg[2], shIndex2));
@@ -599,9 +533,13 @@ public class MakeBranches {
 						// We need to name each sub-branch.
 						branch.phCode = makePhCode(shellCounts, shell1.getCode(typeSeg[1]), 
 								shell2.getCode(typeSeg[2]), typeSeg[0]);
-//					System.out.format("shells: %2d %2d\n", shIndex1, shIndex2);
-						System.out.format("     %2d %-8s %3d %3d %3.0f %5b\n", branches.size(), 
-								branch.phCode, minBrnP, maxBrnP, convert.dimR(xTarget), useShell2);
+						if(TablesUtil.deBugLevel > 0) {
+							if(TablesUtil.deBugLevel > 1) {
+								System.out.format("shells: %2d %2d\n", shIndex1, shIndex2);
+							}
+							System.out.format("     %2d %-8s %3d %3d %3.0f %5b\n", branches.size(), 
+									branch.phCode, minBrnP, maxBrnP, convert.dimR(xTarget), useShell2);
+						}
 						// OK.  Add it to the branches list.
 						branches.add(branch);
 					} else {
@@ -683,8 +621,10 @@ public class MakeBranches {
 		branch.basis = new double[5][branch.p.length];
 		spline.basisSet(branch.p, branch.basis);
 		branch.update();
-		System.out.format("     %2d %s up     %3d %3d\n", branches.size(), 
-				branch.phCode, 0, branch.p.length-1);
+		if(TablesUtil.deBugLevel > 0) {
+			System.out.format("     %2d %s up     %3d %3d\n", branches.size(), 
+					branch.phCode, 0, branch.p.length-1);
+		}
 		return branch;
 	}
 	
@@ -720,10 +660,83 @@ public class MakeBranches {
 	}
 	
 	/**
+	 * Create a down-going branch and populate the ray parameter, tau, and range 
+	 * arrays.
+	 * 
+	 * @param phCode Phase code
+	 * @param typeSeg Types of up-going phase, down-going phase, and 
+	 * phase coming back up
+	 * @param shellCounts The number of traversals of the mantle, outer core, 
+	 * and inner core
+	 * @param minBrnP Beginning ray parameter index
+	 * @param maxBrnP Ending ray parameter index
+	 * @return Branch data
+	 */
+	private BrnData buildBranch(String phCode, char[] typeSeg, double[] shellCounts, 
+			int minBrnP, int maxBrnP) {
+		BrnData branch;
+		
+		// Initialize the branch.
+		branch = newBranch(phCode, typeSeg, (int)shellCounts[0], maxBrnP-minBrnP+1);
+		// Add up the branch data.
+		for(int i=minBrnP, k=0; i<=maxBrnP; i++, k++) {
+			p[k] = finModel.getP(i);
+			for(int j=0; j<shellCounts.length; j++) {
+				tau[k] += shellCounts[j]*(finModel.getTauSpec(typeSeg[1], i, j) +
+						finModel.getTauSpec(typeSeg[2], i, j));
+				x[k] += shellCounts[j]*(finModel.getXspec(typeSeg[1], i, j) +
+						finModel.getXspec(typeSeg[2], i, j));
+			}
+		}
+		return branch;
+	}
+	
+	/**
+	 * If this branch begins just under a low velocity zone (high slowness zone), 
+	 * we need to correct tau and range.
+	 * 
+	 * @param typeSeg Types of up-going phase, down-going phase, and 
+	 * phase coming back up
+	 * @param shellCounts The number of traversals of the mantle, outer core, 
+	 * and inner core
+	 * @param minBrnP Beginning ray parameter index
+	 */
+	private void fixLVZ(char[] typeSeg, double[] shellCounts, int minBrnP) {
+		int lvzIndex;
+		
+		lvzIndex = finModel.getIndex(typeSeg[1], p[0]);
+		if(lvzIndex >= 0) {
+			if(finModel.getLvz(typeSeg[1], lvzIndex)) {
+				// We have a low velocity zone on the down-going ray.
+				for(int j=0; j<shellCounts.length; j++) {
+					tau[0] -= shellCounts[j]*finModel.getTauSpec(typeSeg[1], minBrnP, j);
+					x[0] -= shellCounts[j]*finModel.getXspec(typeSeg[1], minBrnP, j);
+				}
+				tau[0] += shellCounts[0]*finModel.getTauInt(typeSeg[1], lvzIndex)[minBrnP];
+				x[0] += shellCounts[0]*finModel.getXInt(typeSeg[1], lvzIndex)[minBrnP];
+			}
+		}
+		lvzIndex = finModel.getIndex(typeSeg[2], p[0]);
+		if(lvzIndex >= 0) {
+			if(finModel.getLvz(typeSeg[2], lvzIndex)) {
+				// We have a low velocity zone on the returning ray.
+				for(int j=0; j<shellCounts.length; j++) {
+					tau[0] -= shellCounts[j]*finModel.getTauSpec(typeSeg[2], minBrnP, j);
+					x[0] -= shellCounts[j]*finModel.getXspec(typeSeg[2], minBrnP, j);
+				}
+				tau[0] += shellCounts[0]*finModel.getTauInt(typeSeg[2], lvzIndex)[minBrnP];
+				x[0] += shellCounts[0]*finModel.getXInt(typeSeg[2], lvzIndex)[minBrnP];
+			}
+		}
+	}
+	
+	/**
 	 * The decimation factor is partly based on the number of traversals of the 
 	 * major model shells except for reflected phases.  Note that this is 
 	 * purely based on experience and guess work.
 	 * 
+	 * @param shellCounts The number of traversals of the mantle, outer core, 
+	 * and inner core
 	 * @param reflected True if this is a reflected phase.
 	 * @return Decimation factor
 	 */

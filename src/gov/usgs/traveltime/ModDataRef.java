@@ -1,5 +1,6 @@
 package gov.usgs.traveltime;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 import gov.usgs.traveltime.tables.TauModel;
@@ -15,7 +16,8 @@ import gov.usgs.traveltime.tables.TauSample;
  * @author Ray Buland
  *
  */
-public class ModDataRef {
+public class ModDataRef implements Serializable {
+	private static final long serialVersionUID = 1L;
 	final char typeMod;								// Type of model ('P' or 'S')
 	final double[] zMod;							// Flat Earth depths
 	final double[] pMod;							// Slowness samples
