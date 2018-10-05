@@ -35,7 +35,6 @@ public class BrnDataRef implements Serializable {
 	final double[] pBrn;					// Slowness grid for this branch
 	final double[] tauBrn;				// Tau for each grid point
 	final double[][] basis;				// Basis function coefficients for each grid point
-	final AuxTtRef auxtt;					// Auxiliary data
 	
 	/**
 	 * Load data from the FORTRAN file reader for one branch.  The file 
@@ -50,9 +49,6 @@ public class BrnDataRef implements Serializable {
 	 */
 	public BrnDataRef(ReadTau in, int indexBrn, int indexSeg, String segCode, 
 			ExtraPhases extra, AuxTtRef auxtt) {
-		
-		// Remember the auxiliary data and the branch statistics and ellipticity.
-		this.auxtt = auxtt;
 		
 		// Do phase code.
 		phCode = in.phCode[indexBrn];
@@ -187,9 +183,6 @@ public class BrnDataRef implements Serializable {
 	 */
 	public BrnDataRef(BrnData brnData, int indexBrn, ExtraPhases extra, 
 			AuxTtRef auxtt) {
-		
-		// Remember the auxiliary data and the branch statistics and ellipticity.
-		this.auxtt = auxtt;
 		
 		// Do phase code.
 		phCode = brnData.getPhCode();

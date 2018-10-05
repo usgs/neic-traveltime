@@ -195,6 +195,7 @@ public class TTSessionLocal{
 						} catch (IOException e) {
 							System.out.println("Unable to write Earth model "+earthModel+
 									" serialization file.");
+							e.printStackTrace();
 						}
 					}
 				} else {

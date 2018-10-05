@@ -30,6 +30,7 @@ public class BrnDataVol {
 	BrnDataRef ref;					// Link to non-volatile branch data
 	UpDataVol pUp, sUp;			// Up-going P and S data for correcting the depth
 	ModConvert cvt;					// Model specific conversions
+	AuxTtRef auxtt;					// Auxiliary travel-time data
 	TtFlags flags;					// Flags, etc. by phase code
 	TtStat ttStat;					// Local copy of the phase statistics
 	Ellip ellip;						// Local copy of the ellipticity correction
@@ -45,14 +46,16 @@ public class BrnDataVol {
 	 * @param pUp The corrected P up-going branch source
 	 * @param sUp The corrected S up-going branch source
 	 * @param cvt The conversion factor object
+	 * @param auxtt Auxiliary travel-time data
 	 * @param spline The spline object
 	 */
 	public BrnDataVol(BrnDataRef ref, UpDataVol pUp, UpDataVol sUp, ModConvert cvt, 
-			Spline spline) {
+			AuxTtRef auxtt, Spline spline) {
 		this.ref = ref;
 		this.pUp = pUp;
 		this.sUp = sUp;
 		this.cvt = cvt;
+		this.auxtt = auxtt;
 		this.spline = spline;
 		
 		// Do branch summary information.
@@ -92,7 +95,7 @@ public class BrnDataVol {
 					xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
 					pCaustic = pRange[1];
 					pEnd = Double.NaN;
-					flags = ref.auxtt.findFlags(phCode);
+					flags = auxtt.findFlags(phCode);
 					
 					// Make a local copy of the reference p and tau.
 					len = ref.pBrn.length;
@@ -123,7 +126,7 @@ public class BrnDataVol {
 				xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
 				pCaustic = pRange[1];
 				pEnd = Double.NaN;
-				flags = ref.auxtt.findFlags(phCode);
+				flags = auxtt.findFlags(phCode);
 			
 				// Do phases that start as P.
 				if(ref.typeSeg[0] == 'P') {
@@ -385,8 +388,8 @@ public class BrnDataVol {
 			// Now that we know what type of phase we have, select the right 
 			// statistics and ellipticity correction.
 			if(ref.isUpGoing) {
-				ttStat = ref.auxtt.findStats(phCode);
-				ellip = ref.auxtt.findEllip(flags.phGroup+"up");
+				ttStat = auxtt.findStats(phCode);
+				ellip = auxtt.findEllip(flags.phGroup+"up");
 			}
 			else {
 				ttStat = flags.ttStat;
@@ -737,7 +740,7 @@ public class BrnDataVol {
 			// See if we have an add-on phase.
 			if(ref.hasAddOn && found) {
 				del = Math.toDegrees(xs);
-				addFlags = ref.auxtt.findFlags(ref.phAddOn);
+				addFlags = auxtt.findFlags(ref.phAddOn);
 				if(del >= addFlags.ttStat.minDelta && del <= addFlags.ttStat.maxDelta) {
 					// Fiddle the uniqueCode.
 					if(uniqueCode == null) uniqueCode = new String[2];

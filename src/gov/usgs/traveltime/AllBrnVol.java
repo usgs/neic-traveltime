@@ -66,7 +66,7 @@ public class AllBrnVol {
     branches = new BrnDataVol[ref.branches.length];
 		spline = new Spline();
     for (int j = 0; j < branches.length; j++) {
-      branches[j] = new BrnDataVol(ref.branches[j], pUp, sUp, cvt, spline);
+      branches[j] = new BrnDataVol(ref.branches[j], pUp, sUp, cvt, ref.auxtt, spline);
     }
   }
 
