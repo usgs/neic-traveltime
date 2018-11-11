@@ -192,17 +192,11 @@ public class AllBrnRef {
 		 * time.
 		 */
 		objOut.writeObject(cvt);
-		System.out.println("Serialized cvt out");
 		objOut.writeObject(pModel);
-		System.out.println("Serialized pModel out");
 		objOut.writeObject(sModel);
-		System.out.println("Serialized sModel out");
 		objOut.writeObject(branches);
-		System.out.println("Serialized branches out");
 		objOut.writeObject(pUp);
-		System.out.println("Serialized pUp out");
 		objOut.writeObject(sUp);
-		System.out.println("Serialized sUp out");
 		objOut.close();
 		serOut.close();
 	}

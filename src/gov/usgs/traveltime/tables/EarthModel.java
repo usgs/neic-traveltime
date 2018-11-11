@@ -52,6 +52,7 @@ public class EarthModel {
 		// Set up the properties.
 		if(TauUtil.modelPath == null) {
 			TauUtil.getProperties();
+			
 		}
 	}
 
@@ -502,7 +503,7 @@ public class EarthModel {
 		for(int i=0; i<shells.size(); i++) {
 			shell = shells.get(i);
 			sample = model.get(shell.iBot);
-			for(int j=shell.iBot+1; j<shell.iTop; j++) {
+			for(int j=shell.iBot+1; j<=shell.iTop; j++) {
 				lastSample = sample;
 				sample = model.get(j);
 				if(!inLVZ) {
@@ -510,6 +511,7 @@ public class EarthModel {
 						inLVZ = true;
 						critical.add(new CritSlowness('P', i, ShellLoc.SHELL, 
 								lastSample.slowP));
+						shell.setLVZ();
 					}
 				} else {
 					if(sample.slowP >= lastSample.slowP) {
@@ -525,7 +527,7 @@ public class EarthModel {
 		for(int i=0; i<shells.size(); i++) {
 			shell = shells.get(i);
 			sample = model.get(shell.iBot);
-			for(int j=shell.iBot+1; j<shell.iTop; j++) {
+			for(int j=shell.iBot+1; j<=shell.iTop; j++) {
 				lastSample = sample;
 				sample = model.get(j);
 				if(!inLVZ) {
@@ -533,6 +535,7 @@ public class EarthModel {
 						inLVZ = true;
 						critical.add(new CritSlowness('S', i, ShellLoc.SHELL, 
 								lastSample.slowS));
+						shell.setLVZ();
 					}
 				} else {
 					if(sample.slowS >= lastSample.slowS) {
@@ -654,7 +657,7 @@ public class EarthModel {
 					refModel.earthModel, model.size(), refModel.innerCore.r, 
 					refModel.outerCore.r, refModel.upperMantle.r, refModel.moho.r, 
 					refModel.conrad.r, refModel.surface.r);
-			System.out.println("     R     Vp     Vs");
+			System.out.println("                   R     Vp      Vs");
 			for(int j=0; j<model.size(); j++) {
 				System.out.format("\t%3d: %s\n", j, model.get(j).printSample(false, null));
 			}

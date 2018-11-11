@@ -10,10 +10,11 @@ import java.util.ArrayList;
  *
  */
 public class ModelShell {
-	String name;			// Alternate name for unnamed discontinuities
+	String name;			// Shell name (typical Earth model nomenclature)
 	String pCode;			// Temporary P-wave phase code
 	String sCode;			// Temporary S-wave phase code
 	boolean isDisc;		// True if this is a discontinuity
+	boolean hasLVZ;		// True if this shell contains a high slowness zone
 	int iBot;					// Index of the deepest sample in this region 
 	int iTop;					// Index of the shallowest sample in this region
 	double rBot;			// Radius of the deepest sample in this region in kilometers
@@ -28,6 +29,7 @@ public class ModelShell {
 	 */
 	public ModelShell(int index, double r) {
 		isDisc = false;
+		hasLVZ = false;
 		iBot = index;
 		rBot = r;
 		name = null;
@@ -44,6 +46,7 @@ public class ModelShell {
 	 */
 	public ModelShell(int iBot, int iTop, double r) {
 		isDisc = true;
+		hasLVZ = false;
 		this.iBot = iBot;
 		this.iTop = iTop;
 		rBot = r;
@@ -62,6 +65,7 @@ public class ModelShell {
 	public ModelShell(ModelShell shell, int index) {
 		iBot = index;
 		isDisc = shell.isDisc;
+		hasLVZ = shell.hasLVZ;
 		rBot = shell.rBot;
 		delX = shell.delX;
 		name = shell.name;
@@ -146,6 +150,23 @@ public class ModelShell {
 				return false;
 			}
 		}
+	}
+	
+	/**
+	 * Set the flag saying this shell has an embedded high slowness 
+	 * zone.
+	 */
+	public void setLVZ() {
+		hasLVZ = true;
+	}
+	
+	/**
+	 * Retrieve the embedded high slowness zone flag.
+	 * 
+	 * @return True if this shell has an embedded high slowness zone
+	 */
+	public boolean hasLVZ() {
+		return hasLVZ;
 	}
 	
 	/**

@@ -470,11 +470,12 @@ public class TauInt {
 					"pBot = %8.6f, zTop = %9.6f, zBot = %9.6f, tau = %11.4e, "+
 					"x = %11.4e\n", p, pTop, pBot, zTop, zBot, tau, xLayer);
 			throw new Exception();
-		} else if(xLayer < 0d) {
+		}
+/*	} else if(xLayer < 0d) {
 			System.out.format("***** Bad x: p = %8.6f, pTop = %8.6f, "+
 					"pBot = %8.6f, zTop = %9.6f, zBot = %9.6f, tau = %11.4e, "+
 					"x = %11.4e\n", p, pTop, pBot, zTop, zBot, tau, xLayer);
 			throw new Exception();
-		}
+		} */
 	}
 }

@@ -181,9 +181,9 @@ public class TTSessionLocal{
 					} else {
 						// Generate the tables.
 						TablesUtil.deBugLevel = 1;
-						make = new MakeTables();
+						make = new MakeTables(earthModel);
 						try {
-							status = make.buildModel(earthModel, fileNames[0], fileNames[1]);
+							status = make.buildModel(fileNames[0], fileNames[1]);
 						} catch (Exception e) {
 							System.out.println("Unable to generate Earth model "+earthModel+
 									" ("+status+").");
@@ -195,7 +195,6 @@ public class TTSessionLocal{
 						} catch (IOException e) {
 							System.out.println("Unable to write Earth model "+earthModel+
 									" serialization file.");
-							e.printStackTrace();
 						}
 					}
 				} else {
@@ -230,20 +229,20 @@ public class TTSessionLocal{
 	 * @return True if the input files have changed
 	 */
 	private boolean modelChanged(String earthModel) {
-		// We need two files in eithe case.
+		// We need two files in either case.
 		fileNames = new String[2];
 		if(TauUtil.useFortranFiles) {
 			// Names for the Fortran files.
-			serName = earthModel+"_for.ser";
+			serName = TauUtil.model(earthModel+"_for.ser");
 			fileNames[0] = TauUtil.model(earthModel+".hed");
-			fileNames[0] = TauUtil.model(earthModel+".tbl");
+			fileNames[1] = TauUtil.model(earthModel+".tbl");
 		} else {
 			// Names for generating the model.
-			serName = earthModel+"_gen.ser";
+			serName = TauUtil.model(earthModel+"_gen.ser");
 			fileNames[0] = TauUtil.model("m"+earthModel+".mod");
 			fileNames[1] = TauUtil.model("phases.txt");
 		}
-		return FileChanged.isChanged(TauUtil.model(serName), fileNames);
+		return FileChanged.isChanged(serName, fileNames);
 	}
 	
 	/**

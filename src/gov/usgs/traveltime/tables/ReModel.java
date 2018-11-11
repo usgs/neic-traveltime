@@ -25,7 +25,7 @@ public class ReModel {
 	 */
 	public static void main(String[] args) throws Exception {
 		double sysTime;
-		String earthModel = "ak135";
+		String earthModel = "wus";
 		MakeTables make;
 		AuxTtRef auxTT = null;
 		AllBrnRef allRef;
@@ -33,8 +33,8 @@ public class ReModel {
 		
 		TablesUtil.deBugLevel = 1;
 		sysTime = System.currentTimeMillis();
-		make = new MakeTables();
-		status = make.buildModel(earthModel, TauUtil.model("m"+earthModel+".mod"), 
+		make = new MakeTables(earthModel);
+		status = make.buildModel(TauUtil.model("m"+earthModel+".mod"), 
 				TauUtil.model("phases.txt"));
 		if(status == TtStatus.SUCCESS) {
 			// Build the branch reference classes.

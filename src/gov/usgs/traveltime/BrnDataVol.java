@@ -739,28 +739,30 @@ public class BrnDataVol {
 			
 			// See if we have an add-on phase.
 			if(ref.hasAddOn && found) {
-				del = Math.toDegrees(xs);
 				addFlags = auxtt.findFlags(ref.phAddOn);
-				if(del >= addFlags.ttStat.minDelta && del <= addFlags.ttStat.maxDelta) {
-					// Fiddle the uniqueCode.
-					if(uniqueCode == null) uniqueCode = new String[2];
-					uniqueCode[0] = ref.phAddOn+0;
-					uniqueCode[1] = null;
-					// See what we've got.
-					if(ref.phAddOn.equals("Lg")) {
-						// Make sure we have a valid depth.
-						if(dSource <= TauUtil.LGDEPMAX) {
-							ttList.addPhase(ref.phAddOn, uniqueCode, 0d, cvt.dTdDLg, 0d, 0d, true);
+				if(addFlags.ttStat != null) {
+					del = Math.toDegrees(xs);
+					if(del >= addFlags.ttStat.minDelta && del <= addFlags.ttStat.maxDelta) {
+						// Fiddle the uniqueCode.
+						if(uniqueCode == null) uniqueCode = new String[2];
+						uniqueCode[0] = ref.phAddOn+0;
+						uniqueCode[1] = null;
+						// See what we've got.
+						if(ref.phAddOn.equals("Lg")) {
+							// Make sure we have a valid depth.
+							if(dSource <= TauUtil.LGDEPMAX) {
+								ttList.addPhase(ref.phAddOn, uniqueCode, 0d, cvt.dTdDLg, 0d, 0d, true);
+							}
+						} else if(ref.phAddOn.equals("LR")) {
+							// Make sure we have a valid depth and distance.
+							if(dSource <= TauUtil.LRDEPMAX && xs <= TauUtil.LRDELMAX) {
+								ttList.addPhase(ref.phAddOn, uniqueCode, 0d, cvt.dTdDLR, 0d, 0d, true);
+							}
+						} else if(ref.phAddOn.equals("pwP") || ref.phAddOn.equals("PKPpre")) {
+							tTime = ttList.get(ttList.size()-1);
+							ttList.addPhase(ref.phAddOn, uniqueCode, tTime.tt, tTime.dTdD, tTime.dTdZ, 
+									tTime.dXdP, true);
 						}
-					} else if(ref.phAddOn.equals("LR")) {
-						// Make sure we have a valid depth and distance.
-						if(dSource <= TauUtil.LRDEPMAX && xs <= TauUtil.LRDELMAX) {
-							ttList.addPhase(ref.phAddOn, uniqueCode, 0d, cvt.dTdDLR, 0d, 0d, true);
-						}
-					} else if(ref.phAddOn.equals("pwP") || ref.phAddOn.equals("PKPpre")) {
-						tTime = ttList.get(ttList.size()-1);
-						ttList.addPhase(ref.phAddOn, uniqueCode, tTime.tt, tTime.dTdD, tTime.dTdZ, 
-								tTime.dXdP, true);
 					}
 				}
 			}

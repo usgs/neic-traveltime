@@ -408,7 +408,7 @@ public class SampleSlowness {
 	 */
 	public void depthModel(char type) throws Exception {
 		int iBeg, iEnd, iCur;
-		double slowMax, slowTop, slowBot, locSlow, mergeSlow, rFound;
+		double slowMax, slowTop, slowBot, locSlow0, locSlow1, mergeSlow, rFound;
 		ModelShell shell = null;
 		ArrayList<Double> slowness;
 		
@@ -428,7 +428,7 @@ public class SampleSlowness {
 		/* 
 		 * Loop over shells.
 		 */
-		locSlow = slowMax;
+//	locSlow = slowMax;
 		for(int iShell=shells.size()-1; iShell>=0; iShell--) {
 			shell = shells.get(iShell);
 			slowTop = locModel.getSlow(type, shell.iTop);
@@ -446,31 +446,51 @@ public class SampleSlowness {
 						if(slowness.get(iEnd).equals(slowBot)) break;
 					}
 				}
-				if(TablesUtil.deBugLevel > 0) System.out.format("\nMerged indices: "+
-						"%3d %3d %8.6f %8.6f\n", iBeg, iEnd, slowness.get(iBeg), 
-						slowness.get(iEnd));
-				// Do this shell.
 				if(TablesUtil.deBugLevel > 0) {
-					System.out.format("Shell: %3d %8.6f %8.6f %s\n", iShell, 
-							slowTop, slowBot, shell.name);
+					System.out.format("\nMerged indices: %3d %3d %8.6f %8.6f %3d %s\n", iBeg, 
+							iEnd, slowness.get(iBeg), slowness.get(iEnd), iShell, shell.name);
 				}
-				iCur = shell.iTop-1;
-				locSlow = locModel.getSlow(type, iCur);
 				// Fill in a new version of the model.
 				if(!shell.isDisc) {
 					// This is messy for normal model shells.
+					iCur = shell.iTop-1;
+					locSlow0 = locModel.getSlow(type, shell.iTop);
+					locSlow1 = locModel.getSlow(type, iCur);
+					// Loop over the merged slownesses.
 					for(int j=iBeg; j<iEnd; j++) {
-						mergeSlow = slowness.get(j);
-						while(mergeSlow < locSlow) {
-							locSlow = locModel.getSlow(type, --iCur);
+						if(locSlow1 > locSlow0) {
+							// This is a high slowness zone.
+							j -= 2;
+							mergeSlow = slowness.get(j);
+							if(mergeSlow <= locSlow1) {
+								if(TablesUtil.deBugLevel > 2) System.out.format("\tLVZ: locSlow = "+
+										"%8.6f %8.6f mergeSlow = %8.6f\n", locSlow0, locSlow1, mergeSlow);
+								rFound = getRadius(type, iShell, locModel.getR(iCur-1), 
+										locModel.getR(iCur), mergeSlow);
+								depModel.add(type, rFound, mergeSlow, j);
+								if(TablesUtil.deBugLevel > 1) System.out.format("\tAdd: %3d "+
+										"%7.2f %8.6f\n", j, rFound, slowness.get(j));
+							} else {
+								// So far, so good.  Set up the next model depth interval.
+								j++;
+								locSlow0 = locSlow1;
+								locSlow1 = locModel.getSlow(type, --iCur);
+							}
+						} else {
+							// Slowness is decreasing normally.
+							mergeSlow = slowness.get(j);
+							while(mergeSlow < locSlow1) {
+								locSlow0 = locSlow1;
+								locSlow1 = locModel.getSlow(type, --iCur);
+							}
+							if(TablesUtil.deBugLevel > 2) System.out.format("\t     locSlow = "+
+									"%8.6f %8.6f mergeSlow = %8.6f\n", locSlow0, locSlow1, mergeSlow);
+							rFound = getRadius(type, iShell, locModel.getR(iCur), 
+									locModel.getR(iCur+1), mergeSlow);
+							depModel.add(type, rFound, mergeSlow, j);
+							if(TablesUtil.deBugLevel > 1) System.out.format("\tAdd: %3d "+
+									"%7.2f %8.6f\n", j, rFound, slowness.get(j));
 						}
-						if(TablesUtil.deBugLevel > 2) System.out.format("\tlocSlow = "+
-								"%8.6f mergeSlow = %8.6f\n", locSlow, mergeSlow);
-						rFound = getRadius(type, iShell, locModel.getR(iCur), 
-								locModel.getR(iCur+1), mergeSlow);
-						depModel.add(type, rFound, mergeSlow, j);
-						if(TablesUtil.deBugLevel > 1) System.out.format("\tAdd: %3d "+
-								"%7.2f %8.6f\n", j, rFound, slowness.get(j));
 					}
 					// The last point is the bottom of the shell.
 					iCur = shell.iBot;
@@ -555,7 +575,11 @@ public class SampleSlowness {
 	 * @param ver Model version ("Tau", "Depth", or "Final")
 	 */
 	public void printModel(char type, String ver) {
-		tauModel.printModel(type, ver);
+		if(ver.equals("Depth")) {
+			depModel.printModel(type, ver);
+		} else {
+			tauModel.printModel(type, ver);
+		}
 	}
 	
 	/**

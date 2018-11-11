@@ -12,6 +12,8 @@ import gov.usgs.traveltime.AllBrnVol;
 import gov.usgs.traveltime.AuxTtRef;
 import gov.usgs.traveltime.ReadTau;
 import gov.usgs.traveltime.TTime;
+import gov.usgs.traveltime.TauUtil;
+
 import java.io.IOException;
 import java.io.PrintStream;
 //import java.util.ArrayList;
@@ -81,7 +83,7 @@ public class TTSession {
    */
   public TTSession(String earthModel, double sourceDepth, String[] phases, 
           boolean allPhases, boolean returnBackBranches, boolean tectonic,
-          boolean useRSTT, boolean isPlot /*, EdgeThread parent*/) throws IOException {
+          boolean useRSTT, boolean isPlot /*, EdgeThread parent*/) throws Exception {
     makeTTSession(earthModel, sourceDepth, phases, Double.NaN, Double.NaN, 
             allPhases, returnBackBranches, tectonic, useRSTT, isPlot);
     
@@ -104,7 +106,7 @@ public class TTSession {
   public TTSession(String earthModel, double sourceDepth, String[] phases, 
           double srcLat, double srcLong,
           boolean allPhases, boolean returnBackBranches, boolean tectonic,
-          boolean useRSTT, boolean isPlot /*, EdgeThread parent*/) throws IOException {
+          boolean useRSTT, boolean isPlot /*, EdgeThread parent*/) throws Exception {
     makeTTSession(earthModel, sourceDepth, phases, 
             srcLat, srcLong,
             allPhases, returnBackBranches, tectonic, useRSTT, isPlot);
@@ -133,7 +135,7 @@ public class TTSession {
   private void makeTTSession(String earthModel, double sourceDepth, String[] phases, 
           double srcLat, double srcLong,
           boolean allPhases, boolean returnBackBranches, boolean tectonic,
-          boolean useRSTT, boolean isPlot ) throws IOException {
+          boolean useRSTT, boolean isPlot ) throws Exception {
     //par = parent;
     this.earthModel = earthModel;
     this.sourceDepth = sourceDepth;
@@ -184,12 +186,13 @@ public class TTSession {
         try {
           prta(ttag+" Need to read in model="+earthModel);
           ReadTau readTau = new ReadTau(earthModel);
-          readTau.readHeader();
+          readTau.readHeader(TauUtil.model(earthModel+".hed"));
           //	readTau.dumpSegments();
           //	readTau.dumpBranches();
-          readTau.readTable();
+          readTau.readTable(TauUtil.model(earthModel+".tbl"));
           //	readTau.dumpUp(15);
-          allRef = new AllBrnRef(readTau, auxtt);
+          allRef = new AllBrnRef(TauUtil.model(earthModel+"_for.ser"), readTau, 
+          		auxtt);
         } catch (IOException e) {
           e.printStackTrace(getPrintStream());
           throw e;
@@ -243,7 +246,7 @@ public class TTSession {
         e.printStackTrace(getPrintStream());
         prta(ttag+" Unknown exception while setting sourceDepth and phList in newSession()!");
       }
-    } catch (IOException e) {
+    } catch (IOException | ClassNotFoundException e) {
       e.printStackTrace(getPrintStream());
       throw e;
     }

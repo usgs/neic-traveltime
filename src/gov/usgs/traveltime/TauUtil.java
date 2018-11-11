@@ -189,6 +189,7 @@ public class TauUtil {
 	public static void getProperties() {		
 		CWBProperties.loadProperties(propFile);
 		modelPath = CWBProperties.getProperty("modelPath");
+//	CWBProperties.prtProperties();
 	}
 	
 	/**

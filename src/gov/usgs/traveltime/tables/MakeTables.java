@@ -15,21 +15,32 @@ import gov.usgs.traveltime.TtStatus;
  *
  */
 public class MakeTables {
+	EarthModel refModel;
 	TauModel finModel;
 	ArrayList<BrnData> brnData;
+	
+	/**
+	 * Initialize the reference Earth model.  This needs to happen in 
+	 * the constructor to ensure that the travel-time properties file 
+	 * has been read.
+	 * 
+	 * @param earthModel Name of the Earth model
+	 */
+	public MakeTables(String earthModel) {
+		refModel = new EarthModel(earthModel, true);
+	}
 
 	/**
 	 * Create the travel-time tables out of whole cloth.
 	 * 
-	 * @param earthModel Name of the Earth model
 	 * @param modelFile Name of the Earth model file
 	 * @param phaseFile Name of the file of desired phases
 	 * @return Model read status
 	 * @throws Exception If an integration interval is illegal
 	 */
-	public TtStatus buildModel(String earthModel, String modelFile, 
-			String phaseFile) throws Exception {
-		EarthModel refModel, locModel;
+	public TtStatus buildModel(String modelFile, String phaseFile) 
+			throws Exception {
+		EarthModel locModel;
 		ModConvert convert;
 		TauModel depModel;
 		SampleSlowness sample;
@@ -38,7 +49,6 @@ public class MakeTables {
 		MakeBranches layout;
 		TtStatus status;
 		
-		refModel = new EarthModel(earthModel, true);
 		// Read the model.
 		status = refModel.readModel(modelFile);
 		
@@ -63,6 +73,7 @@ public class MakeTables {
 				}
 				// Print out the Earth flattened version.
 				locModel.printModel(true, true);
+				// Critical points are model slownesses that need to be sampled exactly.
 				locModel.printCritical();
 			}
 			
