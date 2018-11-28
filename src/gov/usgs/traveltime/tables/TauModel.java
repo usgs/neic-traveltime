@@ -297,8 +297,9 @@ public class TauModel {
 	
 	/**
 	 * Make yet another set of shells.  This time, the shell indices are 
-	 * into the P- and S-wave tau models, so the indices will be different 
-	 * for each model.
+	 * into the merged slownesses, which will be the basis for the tau and 
+	 * range integrals.  Note that these shells will directly drive the 
+	 * construction and naming of the final phases.
 	 * 
 	 * @param type Model type (P = P slowness, S = S slowness)
 	 */
@@ -317,17 +318,26 @@ public class TauModel {
 				for(iEnd=iBeg; iEnd>=0; iEnd--) {
 					if(pModel.get(iEnd).slow == slowTop) break;
 				}
+				if(TablesUtil.deBugLevel > 1) System.out.format("MakeDepShells: "+
+						"%c %3d %3d %8.6f\n", type, iBeg, iEnd, slowTop);
 				newShell = new ModelShell(refShell, pModel.get(iBeg).index);
 				newShell.addEnd(pModel.get(iEnd).index, refShell.rTop);
 				if(slowTop > refModel.getSlow(type, refShell.iBot)) {
 					if(lastShell != null) {
 						if(!lastShell.pCode.equals(newShell.pCode)) {
+							// Make sure we have continuity.
 							lastShell.iTop = newShell.iBot;
 							pShells.add(newShell);
 							lastShell = newShell;
 						} else {
-							lastShell.iTop = newShell.iTop;
-							lastShell.rTop = newShell.rTop;
+							// Merge the two shells unless the last shell is an LVZ.
+							if(lastShell.iBot > newShell.iTop) {
+								lastShell.iTop = newShell.iTop;
+								lastShell.rTop = newShell.rTop;
+							} else {
+								pShells.add(newShell);
+								lastShell = newShell;
+							}
 						}
 					} else {
 						pShells.add(newShell);
@@ -335,6 +345,7 @@ public class TauModel {
 					}
 				}
 			}
+			fixLvzShells('P', pShells);
 		} else {
 			sShells = new ArrayList<ModelShell>();
 			iEnd = sModel.size()-1;
@@ -345,22 +356,54 @@ public class TauModel {
 				for(iEnd=iBeg; iEnd>=0; iEnd--) {
 					if(sModel.get(iEnd).slow == slowTop) break;
 				}
+				if(TablesUtil.deBugLevel > 1) System.out.format("MakeDepShells: "+
+						"%c %3d %3d %8.6f\n", type, iBeg, iEnd, slowTop);
 				newShell = new ModelShell(refShell, sModel.get(iBeg).index);
 				newShell.addEnd(sModel.get(iEnd).index, refShell.rTop);
 				if(slowTop > refModel.getSlow(type, refShell.iBot)) {
 					if(lastShell != null) {
 						if(!lastShell.sCode.equals(newShell.sCode)) {
+							// Make sure we have continuity.
+							lastShell.iTop = newShell.iBot;
 							sShells.add(newShell);
 							lastShell = newShell;
 						} else {
-							lastShell.iTop = sModel.get(iEnd).index;
-							lastShell.rTop = newShell.rTop;
+							// Merge the two shells unless the last shell is an LVZ.
+							if(lastShell.iBot > newShell.iTop) {
+								lastShell.iTop = newShell.iTop;
+								lastShell.rTop = newShell.rTop;
+							} else {
+								sShells.add(newShell);
+								lastShell = newShell;
+							}
 						}
 					} else {
 						sShells.add(newShell);
 						lastShell = newShell;
 					}
 				}
+			}
+			fixLvzShells('S', sShells);
+		}
+	}
+	
+	/**
+	 * We need to filter out shells that are entirely inside a high 
+	 * slowness zone (low velocity zone).
+	 * 
+	 * @param type Model type (P = P slowness, S = S slowness)
+	 * @param shells Model shells
+	 */
+	private void fixLvzShells(char type, ArrayList<ModelShell>shells) {
+		int n;
+		
+		n = shells.get(shells.size()-1).iBot;
+		for(int j=shells.size()-2; j>=0; j--) {
+			if(shells.get(j).iBot < n) {
+				shells.remove(j);
+			} else {
+				shells.get(j).iTop = n;
+				n = shells.get(j).iBot;
 			}
 		}
 	}
@@ -1245,18 +1288,33 @@ public class TauModel {
 		System.out.format("%3d %8.6f %8.2f            %8.6f %8.2f\n", 
 				0, pPieces.proxyP[0], convert.dimR(pPieces.proxyX[0]), 
 				sPieces.proxyP[0], convert.dimR(sPieces.proxyX[0]));
-		for(int j=1; j<nP; j++) {
-			System.out.format("%3d %8.6f %8.2f %8.2f   %8.6f %8.2f %8.2f\n", 
-					j, pPieces.proxyP[j], convert.dimR(pPieces.proxyX[j]), 
-					convert.dimR(pPieces.proxyX[j]-pPieces.proxyX[j-1]), 
-					sPieces.proxyP[j], convert.dimR(sPieces.proxyX[j]), 
-					convert.dimR(sPieces.proxyX[j+1]-sPieces.proxyX[j]));
-		}
-		for(int j=nP; j<nS; j++) {
-			System.out.format("%3d                              "+
-					"%8.6f %8.2f %8.2f\n", j, 
-					sPieces.proxyP[j], convert.dimR(sPieces.proxyX[j]), 
-					convert.dimR(sPieces.proxyX[j]-sPieces.proxyX[j-1]));
+		if(nS >= nP) {
+			for(int j=1; j<nP; j++) {
+				System.out.format("%3d %8.6f %8.2f %8.2f   %8.6f %8.2f %8.2f\n", 
+						j, pPieces.proxyP[j], convert.dimR(pPieces.proxyX[j]), 
+						convert.dimR(pPieces.proxyX[j]-pPieces.proxyX[j-1]), 
+						sPieces.proxyP[j], convert.dimR(sPieces.proxyX[j]), 
+						convert.dimR(sPieces.proxyX[j]-sPieces.proxyX[j-1]));
+			}
+			for(int j=nP; j<nS; j++) {
+				System.out.format("%3d                              "+
+						"%8.6f %8.2f %8.2f\n", j, 
+						sPieces.proxyP[j], convert.dimR(sPieces.proxyX[j]), 
+						convert.dimR(sPieces.proxyX[j]-sPieces.proxyX[j-1]));
+			}
+		} else {
+			for(int j=1; j<nS; j++) {
+				System.out.format("%3d %8.6f %8.2f %8.2f   %8.6f %8.2f %8.2f\n", 
+						j, pPieces.proxyP[j], convert.dimR(pPieces.proxyX[j]), 
+						convert.dimR(pPieces.proxyX[j]-pPieces.proxyX[j-1]), 
+						sPieces.proxyP[j], convert.dimR(sPieces.proxyX[j]), 
+						convert.dimR(sPieces.proxyX[j]-sPieces.proxyX[j-1]));
+			}
+			for(int j=nS; j<nP; j++) {
+				System.out.format("%3d %8.6f %8.2f %8.2f\n", j, 
+						pPieces.proxyP[j], convert.dimR(pPieces.proxyX[j]), 
+						convert.dimR(pPieces.proxyX[j]-pPieces.proxyX[j-1]));
+			}
 		}
 	}
 	

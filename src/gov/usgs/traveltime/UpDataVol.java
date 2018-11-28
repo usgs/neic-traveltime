@@ -106,7 +106,7 @@ public class UpDataVol {
 		if(Math.abs(ref.pTauUp[iUp]-pMax) <= TauUtil.DTOL) corrTau = false;
 		else corrTau = true;		
 		
-		pMax = pSource;
+		pMax = Math.min(pMax, pSource);
 		// Correct the up-going tau values to the exact source depth.
 /*	System.out.println("Partial integrals: "+(float)pSource+" - "+
 				(float)modPri.ref.pMod[iSrc]+"  "+(float)zSource+" - "+

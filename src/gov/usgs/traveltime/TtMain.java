@@ -1,6 +1,8 @@
 package gov.usgs.traveltime;
 
 import java.io.IOException;
+
+//import gov.usgs.traveltime.tables.TablesUtil;
 // import java.util.TreeMap;
 
 /**
@@ -19,7 +21,7 @@ public class TtMain {
 	 */
 	public static void main(String[] args) throws Exception {
 		// Simulate a session request.
-		String earthModel = "cus";
+		String earthModel = "ogs";
 		double sourceDepth = 10d;
 		String[] phList = null;
 //	String[] phList = {"PKP", "SKP"};
@@ -36,6 +38,7 @@ public class TtMain {
 		// Simulate a simple travel time request.
 		double[] delta = {1d, 2d, 3d, 5d, 10d, 20d, 40d, 60d, 90d, 120d, 
 				150d, 180d};
+//	double[] delta = {40d};
 		double elev = 0.0d;
 		// Simulate a complex travel time request.
 /*	double sourceLat = 50.2075d;
@@ -55,6 +58,7 @@ public class TtMain {
 //	TauUtil.noCorr = true;
 		try {
 			// Set up a simple session.
+//		TablesUtil.deBugLevel = 3;
 			ttLocal.newSession(earthModel, sourceDepth, phList, !useful, 
 					!noBackBrn, tectonic, rstt);
 			// Set up a complex session.
@@ -62,7 +66,7 @@ public class TtMain {
 //				sourceLon, !useful, !noBackBrn, tectonic, rstt);
 //		ttLocal.printRefBranches(false);
 //		ttLocal.printBranches(false, false, false, useful);
-//		ttLocal.printTable(useful);
+			ttLocal.printTable(useful);
 			for(int j=0; j<delta.length; j++) {
 				// Get the simple travel times.
 				ttList = ttLocal.getTT(elev, delta[j]);

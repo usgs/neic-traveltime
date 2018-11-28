@@ -246,6 +246,7 @@ public class AllBrnVol {
 				}
 				lastDepth = depth;
 			}
+//		dumpBrn("pS", true, true, false);
 		} else {
 			badDepth = true;
 		}
@@ -936,27 +937,23 @@ public class AllBrnVol {
 	 * @param full If true, print the detailed branch specification as well
 	 * @param all If true print even more specifications
 	 * @param sci if true, print in scientific notation
-	 * @param useful If true, only print "useful" crustal phases
 	 */
-	public void dumpBrn(int iBrn, boolean full, boolean all, boolean sci, 
-			boolean useful) {
-		branches[iBrn].dumpBrn(full, all, sci, useful);
+	public void dumpBrn(int iBrn, boolean full, boolean all, boolean sci) {
+		branches[iBrn].dumpBrn(full, all, sci, false);
 	}
 	
 	/**
-	 * Print data for one travel-time segment for debugging purposes.
+	 * Print data for one travel-time phase code for debugging purposes.
 	 * 
-	 * @param seg Segment phase code
+	 * @param phCode Phase code
 	 * @param full If true, print the detailed branch specification as well
 	 * @param all If true print even more specifications
 	 * @param sci if true, print in scientific notation
-	 * @param useful If true, only print "useful" crustal phases
 	 */
-	public void dumpBrn(String seg, boolean full, boolean all, boolean sci,
-			boolean useful) {
+	public void dumpBrn(String phCode, boolean full, boolean all, boolean sci) {
 		for(int j=0; j<branches.length; j++) {
-			if(branches[j].getPhSeg().equals(seg)) 
-				branches[j].dumpBrn(full, all, sci, useful);
+			if(branches[j].phCode.equals(phCode)) 
+				branches[j].dumpBrn(full, all, sci, false);
 		}
 	}
 	
@@ -972,6 +969,23 @@ public class AllBrnVol {
 			boolean useful) {
 		for(int j=0; j<branches.length; j++) {
 			branches[j].dumpBrn(full, all, sci, useful);
+		}
+	}
+	
+	/**
+	 * Print data for one travel-time segment for debugging purposes.
+	 * 
+	 * @param seg Segment phase code
+	 * @param full If true, print the detailed branch specification as well
+	 * @param all If true print even more specifications
+	 * @param sci if true, print in scientific notation
+	 * @param useful If true, only print "useful" crustal phases
+	 */
+	public void dumpSeg(String seg, boolean full, boolean all, boolean sci,
+			boolean useful) {
+		for(int j=0; j<branches.length; j++) {
+			if(branches[j].getPhSeg().equals(seg)) 
+				branches[j].dumpBrn(full, all, sci, useful);
 		}
 	}
 	

@@ -239,15 +239,15 @@ public class AllBrnRef {
 	}
 	
 	/**
-	 * Print data for one travel-time segment for debugging purposes.
+	 * Print data for one travel-time phase code for debugging purposes.
 	 * 
-	 * @param seg Segment phase code
+	 * @param phCode Phase code
 	 * @param full If true, print the detailed specification for each branch
 	 * as well
 	 */
-	public void dumpBrn(String seg, boolean full) {
+	public void dumpBrn(String phCode, boolean full) {
 		for(int j=0; j<branches.length; j++) {
-			if(branches[j].getPhSeg().equals(seg)) 
+			if(branches[j].phCode.equals(phCode)) 
 				branches[j].dumpBrn(full);
 		}
 	}
@@ -261,6 +261,20 @@ public class AllBrnRef {
 	public void dumpBrn(boolean full) {
 		for(int j=0; j<branches.length; j++) {
 			branches[j].dumpBrn(full);
+		}
+	}
+	
+	/**
+	 * Print data for one travel-time segment for debugging purposes.
+	 * 
+	 * @param seg Segment phase code
+	 * @param full If true, print the detailed specification for each branch
+	 * as well
+	 */
+	public void dumpSeg(String seg, boolean full) {
+		for(int j=0; j<branches.length; j++) {
+			if(branches[j].getPhSeg().equals(seg)) 
+				branches[j].dumpBrn(full);
 		}
 	}
 	

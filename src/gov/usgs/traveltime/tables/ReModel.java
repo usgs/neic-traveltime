@@ -40,7 +40,7 @@ public class ReModel {
 			// Build the branch reference classes.
 			auxTT = new AuxTtRef(true, false, false);
 			allRef = make.fillAllBrnRef(null, auxTT);
-			System.out.println("Table generation time: "+
+			System.out.format("\n***** Table generation time: %5.3f *****\n",
 					0.001*(System.currentTimeMillis()-sysTime));
 //		allRef.dumpHead();
 //		allRef.dumpMod('P', true);

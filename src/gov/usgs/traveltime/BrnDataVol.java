@@ -78,6 +78,7 @@ public class BrnDataVol {
 	public void depthCorr(double zSource, double dTdDepth, double xMin, char tagBrn) 
 			throws Exception {
 		int i, len = 0;
+		double pMax;
 		double[][] basisTmp;
 		
 		this.dTdDepth = dTdDepth;
@@ -130,18 +131,24 @@ public class BrnDataVol {
 			
 				// Do phases that start as P.
 				if(ref.typeSeg[0] == 'P') {
-					// Correct ray parameter.
-					pRange[1] = Math.min(pRange[1], pUp.pMax);
+					// Correct ray parameter range.
+					pMax = Math.min(pRange[1], pUp.pMax);
+					// Screen phases that don't exist.
+					if(pRange[0] >= pMax) {
+						exists = false;
+						return;
+					}
+					pRange[1] = pMax;
 					
 					/* See how long we need the corrected arrays to be.  This is 
 					 * awkward and not very Java-like, but the gain in performance 
 					 * seemed worthwhile in this case.*/
 					for(int j=0; j<ref.pBrn.length; j++) {
 						// See if we need this point.
-						if(ref.pBrn[j] < pUp.pMax+TauUtil.DTOL) {
+						if(ref.pBrn[j] < pMax+TauUtil.DTOL) {
 							len++;
 							// If this point is equal to pMax, we're done.
-							if(Math.abs(ref.pBrn[j]-pUp.pMax) <= TauUtil.DTOL) break;
+							if(Math.abs(ref.pBrn[j]-pMax) <= TauUtil.DTOL) break;
 						// Otherwise, add one more point and quit.
 						} else {
 							len++;
@@ -167,7 +174,7 @@ public class BrnDataVol {
 						i = 0;
 						for(int j=0; j<ref.pBrn.length; j++) {
 							// See if we need this point.
-							if(ref.pBrn[j] < pUp.pMax+TauUtil.DTOL) {
+							if(ref.pBrn[j] < pMax+TauUtil.DTOL) {
 								// pTauUp is a superset of pBrn so we need to sync them.
 								while(Math.abs(ref.pBrn[j]-pUp.pUp[i]) > TauUtil.DTOL) {
 									i++;
@@ -176,10 +183,10 @@ public class BrnDataVol {
 								pBrn[j] = ref.pBrn[j];
 								tauBrn[j] = pUp.tauUp[i];
 								// If this point is equal to pMax, we're done.
-								if(Math.abs(ref.pBrn[j]-pUp.pMax) <= TauUtil.DTOL) break;
+								if(Math.abs(ref.pBrn[j]-pMax) <= TauUtil.DTOL) break;
 							// Otherwise, add one more point and quit.
 							} else {
-								pBrn[j] = pUp.pMax;
+								pBrn[j] = pMax;
 								tauBrn[j] = pUp.tauEndUp;
 								break;
 							}
@@ -224,7 +231,7 @@ public class BrnDataVol {
 						i = 0;
 						for(int j=0; j<ref.pBrn.length; j++) {
 							// See if we need this point.
-							if(ref.pBrn[j] < pUp.pMax+TauUtil.DTOL) {
+							if(ref.pBrn[j] < pMax+TauUtil.DTOL) {
 								// pTauUp is a superset of pBrn so we need to sync them.
 								while(Math.abs(ref.pBrn[j]-pUp.pUp[i]) > TauUtil.DTOL) {
 									i++;
@@ -233,10 +240,10 @@ public class BrnDataVol {
 								pBrn[j] = ref.pBrn[j];
 								tauBrn[j] = ref.tauBrn[j]+ref.signSeg*pUp.tauUp[i];
 								// If this point is equal to pMax, we're done.
-								if(Math.abs(ref.pBrn[j]-pUp.pMax) <= TauUtil.DTOL) break;
+								if(Math.abs(ref.pBrn[j]-pMax) <= TauUtil.DTOL) break;
 							// Otherwise, add one more point and quit.
 							} else {
-								pBrn[j] = pUp.pMax;
+								pBrn[j] = pMax;
 								tauBrn[j] = lastTau();
 								break;
 							}
@@ -255,18 +262,24 @@ public class BrnDataVol {
 					}
 				// Do phases that start as S.
 				} else {
-					// Correct ray parameter.
-					pRange[1] = Math.min(pRange[1], sUp.pMax);
+					// Correct ray parameter range.
+					pMax = Math.min(pRange[1], sUp.pMax);
+					// Screen phases that don't exist.
+					if(pRange[0] >= pMax) {
+						exists = false;
+						return;
+					}
+					pRange[1] = pMax;
 					
 					/* See how long we need the corrected arrays to be.  This is 
 					 * awkward and not very Java-like, but the gain in performance 
 					 * seemed worthwhile in this case.*/
 					for(int j=0; j<ref.pBrn.length; j++) {
 						// See if we need this point.
-						if(ref.pBrn[j] < sUp.pMax+TauUtil.DTOL) {
+						if(ref.pBrn[j] < pMax+TauUtil.DTOL) {
 							len++;
 							// If this point is equal to pMax, we're done.
-							if(Math.abs(ref.pBrn[j]-sUp.pMax) <= TauUtil.DTOL) break;
+							if(Math.abs(ref.pBrn[j]-pMax) <= TauUtil.DTOL) break;
 						// Otherwise, add one more point and quit.
 						} else {
 							len++;
@@ -292,7 +305,7 @@ public class BrnDataVol {
 						i = 0;
 						for(int j=0; j<ref.pBrn.length; j++) {
 							// See if we need this point.
-							if(ref.pBrn[j] < sUp.pMax+TauUtil.DTOL) {
+							if(ref.pBrn[j] < pMax+TauUtil.DTOL) {
 								// pTauUp is a superset of pBrn so we need to sync them.
 								while(Math.abs(ref.pBrn[j]-sUp.pUp[i]) > TauUtil.DTOL) {
 									i++;
@@ -301,10 +314,10 @@ public class BrnDataVol {
 								pBrn[j] = ref.pBrn[j];
 								tauBrn[j] = sUp.tauUp[i];
 								// If this point is equal to pMax, we're done.
-								if(Math.abs(ref.pBrn[j]-sUp.pMax) <= TauUtil.DTOL) break;
+								if(Math.abs(ref.pBrn[j]-pMax) <= TauUtil.DTOL) break;
 							// Otherwise, add one more point and quit.
 							} else {
-								pBrn[j] = sUp.pMax;
+								pBrn[j] = pMax;
 								tauBrn[j] = sUp.tauEndUp;
 								break;
 							}
@@ -349,7 +362,7 @@ public class BrnDataVol {
 						i = 0;
 						for(int j=0; j<ref.pBrn.length; j++) {
 							// See if we need this point.
-							if(ref.pBrn[j] < sUp.pMax+TauUtil.DTOL) {
+							if(ref.pBrn[j] < pMax+TauUtil.DTOL) {
 								// pTauUp is a superset of pBrn so we need to sync them.
 								while(Math.abs(ref.pBrn[j]-sUp.pUp[i]) > TauUtil.DTOL) {
 									i++;
@@ -358,10 +371,10 @@ public class BrnDataVol {
 								pBrn[j] = ref.pBrn[j];
 								tauBrn[j] = ref.tauBrn[j]+ref.signSeg*sUp.tauUp[i];
 								// If this point is equal to pMax, we're done.
-								if(Math.abs(ref.pBrn[j]-sUp.pMax) <= TauUtil.DTOL) break;
+								if(Math.abs(ref.pBrn[j]-pMax) <= TauUtil.DTOL) break;
 							// Otherwise, add one more point and quit.
 							} else {
-								pBrn[j] = sUp.pMax;
+								pBrn[j] = pMax;
 								tauBrn[j] = lastTau();
 								break;
 							}
@@ -784,8 +797,6 @@ public class BrnDataVol {
 		
 		// Check validity.
 		if(!exists || ps < pRange[0] || ps > pRange[1]) {
-//		System.out.format("OneRay NaN: %-8s %8.6f %8.6f %8.6f\n", phCode, 
-//				pRange[0], ps, pRange[1]);
 			return Double.NaN;
 		}
 		
@@ -874,8 +885,8 @@ public class BrnDataVol {
 					int n = pBrn.length;
 					if(all && poly != null) {
 						if(sci) {
-							System.out.println("\n         p        tau          x       "+
-									"basis function coefficients");
+							System.out.println("\n               p            tau         x"+
+									"                 basis function coefficients                    xLim");
 							for(int j=0; j<n-1; j++) {
 								System.out.format("%3d: %3s %13.6e %13.6e %6.2f %13.6e %13.6e "+
 										"%13.6e %13.6e %6.2f %6.2f\n", j, flag[j], pBrn[j], tauBrn[j], 
@@ -886,8 +897,8 @@ public class BrnDataVol {
 							System.out.format("%3d:     %13.6e %13.6e %6.2f\n", n-1, pBrn[n-1], 
 									tauBrn[n-1], Math.toDegrees(xBrn[n-1]));
 						} else {
-							System.out.println("\n         p        tau          x       "+
-									"basis function coefficients");
+							System.out.println("\n             p      tau       x            "+
+									"basis function coefficients             xLim");
 							for(int j=0; j<n-1; j++) {
 								System.out.format("%3d: %3s %8.6f %8.6f %6.2f  %9.2e  %9.2e  "+
 										"%9.2e  %9.2e %6.2f %6.2f\n", j, flag[j], pBrn[j], tauBrn[j], 
@@ -900,7 +911,7 @@ public class BrnDataVol {
 						}
 					} else {
 						if(sci) {
-							System.out.println("\n         p        tau          x       "+
+							System.out.println("\n               p            tau         x        "+
 									"xLim");
 							if(poly != null) {
 								for(int j=0; j<n-1; j++) {
@@ -921,7 +932,7 @@ public class BrnDataVol {
 										tauBrn[n-1], Math.toDegrees(xRange[1]));
 							}
 						} else {
-							System.out.println("\n         p        tau          x       "+
+							System.out.println("\n             p      tau       x        "+
 									"xLim");
 							if(poly != null) {
 								for(int j=0; j<n-1; j++) {

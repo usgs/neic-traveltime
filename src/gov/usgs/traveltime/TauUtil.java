@@ -157,6 +157,10 @@ public class TauUtil {
 	 * purposes and cases where the corrections aren't needed.
 	 */
 	public static boolean noCorr = false;
+	/**
+	 * 
+	 */
+	public static boolean noMiscFilter = true;
 	
 	/**
 	 * Receiver azimuth relative to the source in degrees clockwise from 
@@ -277,6 +281,22 @@ public class TauUtil {
 		else if(phCode.equals("LR")) return 'R';
 		// This should never happen.
 		else return ' ';
+	}
+	
+	/**
+	 * Determine if a phase has been converted at the Earth's 
+	 * surface.
+	 * 
+	 * @param phCode Phase code
+	 * @return True if the phase has been converted at the surface
+	 */
+	public static boolean isConverted(String phCode) {
+		if((phCode.contains("p") || phCode.contains("P")) && 
+				(phCode.contains("s") || phCode.contains("S"))) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	/**
@@ -406,10 +426,16 @@ public class TauUtil {
 	 * @param delta Source-receiver distance in degrees
 	 */
 	public static void filterMisc(ArrayList<TTimeData> tTimes, double delta) {
-		for(int j=0; j<tTimes.size(); j++) {
-			if(tTimes.get(j).phCode.equals("Sn") && delta > MAXDELSN) {
-				tTimes.remove(j);
-				break;
+		if(!noMiscFilter) {
+			for(int j=0; j<tTimes.size(); j++) {
+				if(delta > MAXDELSN) {
+					// Filter Sn, pSn, and sSn at large distances.
+					if(tTimes.get(j).phCode.contains("Sn") && 
+							tTimes.get(j).phCode.length() < 4) {
+						tTimes.remove(j);
+						break;
+					}
+				}
 			}
 		}
 	}

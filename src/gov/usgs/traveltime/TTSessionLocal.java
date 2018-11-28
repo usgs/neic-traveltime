@@ -187,6 +187,7 @@ public class TTSessionLocal{
 						} catch (Exception e) {
 							System.out.println("Unable to generate Earth model "+earthModel+
 									" ("+status+").");
+							e.printStackTrace();
 							System.exit(202);
 						}
 						// Build the branch reference classes.
@@ -211,6 +212,7 @@ public class TTSessionLocal{
 //			allRef.dumpMod('P', true);
 //			allRef.dumpMod('S', true);
 //			allRef.dumpBrn(true);
+//			allRef.dumpBrn("pS", true);
 //			allRef.dumpUp('P');
 //			allRef.dumpUp('S');
 				modelData.put(earthModel, allRef);

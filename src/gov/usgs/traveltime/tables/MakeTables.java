@@ -96,10 +96,12 @@ public class MakeTables {
 			// better sampled.
 			sample.depthModel('P');
 			if(TablesUtil.deBugLevel > 0) {
+				sample.depModel.printDepShells('P');
 				sample.printModel('P', "Depth");
 			}
 			sample.depthModel('S');
 			if(TablesUtil.deBugLevel > 0) {
+				sample.depModel.printDepShells('S');
 				sample.printModel('S', "Depth");
 			}
 			depModel = sample.getDepthModel();
@@ -144,6 +146,10 @@ public class MakeTables {
 			}
 			
 			// Make the branches.
+			if(TablesUtil.deBugLevel > 0) {
+				finModel.printDepShells('P');
+				finModel.printDepShells('S');
+			}
 			layout = new MakeBranches(finModel, decimate);
 			layout.readPhases(phaseFile);		// Read the desired phases from a file
 			if(TablesUtil.deBugLevel > 0) {

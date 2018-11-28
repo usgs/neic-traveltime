@@ -138,15 +138,16 @@ public class EarthModel {
 			eta = scan.nextDouble();
 			qMu = scan.nextDouble();
 			qKappa = scan.nextDouble();
+			model.add(new ModelSample(r, vpv, vph, vsv, vsh, eta));
 			// Trap discontinuities.
 			if(r == rLast) {
-				if(model.size() > 0) {
-					shells.get(shells.size()-1).addEnd(model.size()-1, r);
-					shells.add(new ModelShell(model.size()-1, model.size(), r));
+				if(model.size() > 1) {
+					shells.get(shells.size()-1).addEnd(model.size()-2, r);
+					shells.add(new ModelShell(model.size()-2, model.size()-1, r));
+					bridgeVel(model.size()-1);
 				}
-				shells.add(new ModelShell(model.size(), r));
+				shells.add(new ModelShell(model.size()-1, r));
 			}
-			model.add(new ModelSample(r, vpv, vph, vsv, vsh, eta));
 			rLast = r;
 		}
 		// Done, finalize the outermost shell.
@@ -174,6 +175,7 @@ public class EarthModel {
 				surface.vs);
 		// Do the Earth flattening transformation.
 		flatten();
+		refModel = this;
 		return TtStatus.SUCCESS;
 	}
 	
@@ -436,8 +438,12 @@ public class EarthModel {
 				} else {
 					if(rDisc < rUpperMantle) {
 						shell.addName(null, rSurface-rDisc, TablesUtil.DELX[2]);
-					} else {
+					} else if(rDisc < rMoho) {
 						shell.addName(null, rSurface-rDisc, TablesUtil.DELX[3]);
+					} else if(rDisc < rConrad) {
+						shell.addName(null, rSurface-rDisc, TablesUtil.DELX[4]);
+					} else {
+						shell.addName(null, rSurface-rDisc, TablesUtil.DELX[5]);
 					}
 				}
 			}
