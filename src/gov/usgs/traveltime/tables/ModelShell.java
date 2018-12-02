@@ -192,27 +192,15 @@ public class ModelShell {
 	public String printShell(char type) {
 		if(type == 'P') {
 			if(pCode != null) {
-				if(TablesUtil.deBugOrder) {
-					return String.format("%3d - %3d range: %7.2f - %7.2f %5b delX: %6.2f %-8s %s", 
-							TablesUtil.deBugOffset-iBot, TablesUtil.deBugOffset-iTop, rBot, rTop, 
-							isDisc, delX, pCode, name);
-				} else {
-					return String.format("%3d - %3d range: %7.2f - %7.2f %5b delX: %6.2f %-8s %s", 
-							iBot, iTop, rBot, rTop, isDisc, delX, pCode, name);
-				}
+				return String.format("%3d - %3d range: %7.2f - %7.2f %5b delX: %6.2f %-8s %s", 
+						iBot, iTop, rBot, rTop, isDisc, delX, pCode, name);
 			} else {
 				return null;
 			}
 		} else {
 			if(sCode != null) {
-				if(TablesUtil.deBugOrder) {
-					return String.format("%3d - %3d range: %7.2f - %7.2f %5b delX: %6.2f %-8s %s", 
-							TablesUtil.deBugOffset-iBot, TablesUtil.deBugOffset-iTop, rBot, rTop, 
-							isDisc, delX, sCode, name);
-				} else {
-					return String.format("%3d - %3d range: %7.2f - %7.2f %5b delX: %6.2f %-8s %s", 
-							iBot, iTop, rBot, rTop, isDisc, delX, sCode, name);
-				}
+				return String.format("%3d - %3d range: %7.2f - %7.2f %5b delX: %6.2f %-8s %s", 
+						iBot, iTop, rBot, rTop, isDisc, delX, sCode, name);
 			} else {
 				return null;
 			}

@@ -160,7 +160,7 @@ public class TauUtil {
 	/**
 	 * 
 	 */
-	public static boolean noMiscFilter = true;
+	public static boolean noMiscFilter = false;
 	
 	/**
 	 * Receiver azimuth relative to the source in degrees clockwise from 

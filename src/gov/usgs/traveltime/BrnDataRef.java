@@ -22,6 +22,7 @@ public class BrnDataRef implements Serializable {
 	final String phAddOn;					// Phase code of an associated add-on phase
 	final String phRefl;					// Type of bounce point
 	final String convRefl;				// Reflection or conversion on reflection
+	final String turnShell;				// Name of the model shell where the rays turn
 	final boolean isUpGoing;			// True if this is an up-going branch
 	final boolean hasDiff;				// True if this branch is also diffracted
 	final boolean hasAddOn;				// True if this branch has an associated add-on phase
@@ -31,6 +32,7 @@ public class BrnDataRef implements Serializable {
 	final int countSeg;						// Number of mantle traversals
 	final double[] pRange;				// Slowness range for this branch
 	final double[] xRange;				// Distance range for this branch
+	final double[] rRange;				// Radius range where the rays turn
 	final double xDiff;						// Maximum distance of an associated diffracted phase
 	final double[] pBrn;					// Slowness grid for this branch
 	final double[] tauBrn;				// Tau for each grid point
@@ -170,6 +172,10 @@ public class BrnDataRef implements Serializable {
 			phRefl = null;
 			convRefl = null;
 		}
+		
+		// We don't get shell information from the Fortran files.
+		turnShell = null;
+		rRange = null;
 	}
 	
 	/**
@@ -281,6 +287,17 @@ public class BrnDataRef implements Serializable {
 			phRefl = null;
 			convRefl = null;
 		}
+		
+		// Set up the shell information.  Note that this the shell  
+		// information can be handy for debugging new Earth models.
+		turnShell = brnData.getTurnShell();
+		double[] temp;
+		temp = brnData.getRrange();
+		if(temp != null) {
+			rRange = Arrays.copyOf(temp, 2);
+		} else {
+			rRange = null;
+		}
 	}
 	
 	/**
@@ -330,6 +347,10 @@ public class BrnDataRef implements Serializable {
 		System.out.format("Branch: pRange = %8.6f - %8.6f  xRange = %6.2f - %6.2f\n", 
 				pRange[0], pRange[1], Math.toDegrees(xRange[0]), Math.toDegrees(xRange[1]));
 		if(hasDiff) System.out.format("        xDiff = %6.2f\n", Math.toDegrees(xDiff));
+		if(turnShell != null) {
+			System.out.format("Shell: %7.2f-%7.2f %s\n", rRange[0], rRange[1], 
+					turnShell);
+		}
 		
 		if(full) {
 			System.out.println("\n         p        tau                 "+

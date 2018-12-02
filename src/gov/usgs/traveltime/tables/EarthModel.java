@@ -641,21 +641,11 @@ public class EarthModel {
 			int n = model.size()-1;
 			for(int j=n; j>=0; j--) {
 				if(nice) {
-					if(TablesUtil.deBugOrder) {
-						System.out.format("\t%3d: %s\n", j, model.get(j).printSample(true, 
-								convert));
-					} else {
-						System.out.format("\t%3d: %s\n", n-j, model.get(j).printSample(true, 
-								convert));
-					}
+					System.out.format("\t%3d: %s\n", n-j, model.get(j).printSample(true, 
+							convert));
 				} else {
-					if(TablesUtil.deBugOrder) {
-						System.out.format("\t%3d: %s\n", j, model.get(j).printSample(true, 
-								null));
-					} else {
-						System.out.format("\t%3d: %s\n", n-j, model.get(j).printSample(true, 
-								null));
-					}
+					System.out.format("\t%3d: %s\n", n-j, model.get(j).printSample(true, 
+							null));
 				}
 			}
 		} else {

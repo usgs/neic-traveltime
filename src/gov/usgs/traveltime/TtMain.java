@@ -21,13 +21,13 @@ public class TtMain {
 	 */
 	public static void main(String[] args) throws Exception {
 		// Simulate a session request.
-		String earthModel = "ogs";
+		String earthModel = "ak135";
 		double sourceDepth = 10d;
 		String[] phList = null;
 //	String[] phList = {"PKP", "SKP"};
 		// Flags for ttlist.
-		boolean useful = false;
-		boolean noBackBrn = false;
+		boolean useful = true;
+		boolean noBackBrn = true;
 		boolean rstt = false;
 		boolean tectonic = false;
 		// Flags for the locator.
@@ -52,8 +52,7 @@ public class TtMain {
 //	TtPlot ttPlot;
 		
 		// Initialize the local travel-time manager.
-		ttLocal = new TTSessionLocal(false, false, false);
-//	ttLocal = new TTSessionLocal(true, true, true);
+		ttLocal = new TTSessionLocal(true, true, true);
 		
 //	TauUtil.noCorr = true;
 		try {

@@ -391,7 +391,7 @@ public class MakeBranches {
 			maxBrnP = Math.min(slowOffset-shell.iTop, endP);
 			if(shell.getCode(typeSeg[1]).charAt(0) != 'r' && minBrnP < maxBrnP) {
 				// Initialize the branch.
-				branch = buildBranch(phCode, typeSeg, shellCounts, minBrnP, maxBrnP);
+				branch = buildBranch(phCode, typeSeg, shellCounts, minBrnP, maxBrnP, shell);
 				// Deal with low velocity zones at discontinuities.
 				fixLVZ(typeSeg, shellCounts, minBrnP);
 				// Do the decimation.
@@ -436,7 +436,7 @@ public class MakeBranches {
 		
 		// Create the branch.
 		endP = slowOffset-endP;
-		branch = buildBranch(phCode, typeSeg, shellCounts, 0, endP);
+		branch = buildBranch(phCode, typeSeg, shellCounts, 0, endP, null);
 		// Decimate the branch.
 		xTarget = decFactor(shellCounts, true)*
 				Math.max(finModel.getNextDelX(typeSeg[1], endShell), 
@@ -521,7 +521,11 @@ public class MakeBranches {
 						}
 						
 						// Initialize the branch.
-						branch = buildBranch(phCode, typeSeg, shellCounts, minBrnP, maxBrnP);
+						if(!useShell2) {
+							branch = buildBranch(phCode, typeSeg, shellCounts, minBrnP, maxBrnP, shell1);
+						} else {
+							branch = buildBranch(phCode, typeSeg, shellCounts, minBrnP, maxBrnP, shell2);
+						}
 						// Deal with low velocity zones at discontinuities.
 						fixLVZ(typeSeg, shellCounts, minBrnP);
 						// Do the decimation.
@@ -636,13 +640,14 @@ public class MakeBranches {
 	 * phase coming back up
 	 * @param countSeg Number of mantle traversals
 	 * @param n Number of ray parameter samples
+	 * @param shell Model shell where rays in this branch turn
 	 * @return Branch data
 	 */
 	private BrnData newBranch(String phCode, char[] typeSeg, int countSeg, 
-			int n) {
+			int n, ModelShell shell) {
 		BrnData branch;
 		
-		branch = new BrnData(phCode, typeSeg, countSeg);
+		branch = new BrnData(phCode, typeSeg, countSeg, shell);
 		// Allocate arrays.
 		branch.p = new double[n];
 		branch.tau = new double[n];
@@ -670,14 +675,15 @@ public class MakeBranches {
 	 * and inner core
 	 * @param minBrnP Beginning ray parameter index
 	 * @param maxBrnP Ending ray parameter index
+	 * @param shell Model shell where rays in this branch turn
 	 * @return Branch data
 	 */
 	private BrnData buildBranch(String phCode, char[] typeSeg, double[] shellCounts, 
-			int minBrnP, int maxBrnP) {
+			int minBrnP, int maxBrnP, ModelShell shell) {
 		BrnData branch;
 		
 		// Initialize the branch.
-		branch = newBranch(phCode, typeSeg, (int)shellCounts[0], maxBrnP-minBrnP+1);
+		branch = newBranch(phCode, typeSeg, (int)shellCounts[0], maxBrnP-minBrnP+1, shell);
 		// Add up the branch data.
 		for(int i=minBrnP, k=0; i<=maxBrnP; i++, k++) {
 			p[k] = finModel.getP(i);

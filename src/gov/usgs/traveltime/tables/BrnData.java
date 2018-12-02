@@ -12,12 +12,14 @@ public class BrnData {
 	// Header:
 	String phCode;					// Branch phase code
 	String phSeg;						// Segment code
+	String turnShell;				// Name of the shell where the rays turn
 	boolean isUpGoing;			// True if this is an up-going branch
 	char[] typeSeg;					// Phase type for correction, descending, ascending
 	int signSeg;						// Sign of the up-going correction
 	int countSeg;						// Number of mantle traversals
 	double[] pRange;				// Slowness range for this branch
 	double[] xRange;				// Distance range for this branch
+	double[] rRange;				// Radius range of turning shell in kilometers
 	// Data:
 	double[] p = null;			// Non-dimensional ray parameters
 	double[] tau = null;		// Non-dimensional tau
@@ -46,8 +48,9 @@ public class BrnData {
 	 * @param typeSeg Types of up-going phase, down-going phase, and 
 	 * phase coming back up
 	 * @param countSeg Number of mantle traversals
+	 * @param shell Model shell where the rays in this branch turn
 	 */
-	public BrnData(String phCode, char[] typeSeg, int countSeg) {
+	public BrnData(String phCode, char[] typeSeg, int countSeg, ModelShell shell) {
 		this.phCode = phCode;
 		phSeg = phCode;
 		isUpGoing = false;
@@ -63,6 +66,15 @@ public class BrnData {
 			signSeg = -1;
 		}
 		this.countSeg = countSeg;
+		if(shell != null) {
+			turnShell = shell.name;
+			rRange = new double[2];
+			rRange[0] = shell.rBot;
+			rRange[1] = shell.rTop;
+		} else {
+			turnShell = null;
+			rRange = null;
+		}
 	}
 	
 	/**
@@ -114,6 +126,10 @@ public class BrnData {
 	public String getPhSeg() {return phSeg;}
 	
 	/**
+	 * @return the turning shell name
+	 */
+	public String getTurnShell() {return turnShell;}
+	/**
 	 * @return The up-going branch flag
 	 */
 	public boolean getIsUpGoing() {return isUpGoing;}
@@ -142,6 +158,11 @@ public class BrnData {
 	 * @return The summary non-dimensional distance range
 	 */
 	public double[] getXrange() {return xRange;}
+	
+	/**
+	 * @return The radius range of the turning shell
+	 */
+	public double[] getRrange() {return rRange;}
 	
 	/**
 	 * @return The non-dimensional ray parameter sampling
@@ -180,6 +201,10 @@ public class BrnData {
 				System.out.format("%-8s %2d %c %c %c %1d %5b %8.6f %8.6f %8.6f %8.6f %3d\n", 
 						phCode, signSeg, typeSeg[0], typeSeg[1], typeSeg[2], countSeg, 
 						isUpGoing, pRange[0], pRange[1], xRange[0], xRange[1], p.length);
+				if(turnShell != null) {
+					System.out.format("     shell: %7.2f %7.2f %s\n", rRange[0], rRange[1], 
+							turnShell);
+				}
 				if(full) {
 					System.out.println("         p       tau      X                "+
 							"basis function coefficients");
@@ -202,6 +227,10 @@ public class BrnData {
 						phCode, signSeg, typeSeg[0], typeSeg[1], typeSeg[2], countSeg, 
 						isUpGoing, pRange[0], pRange[1], Math.toDegrees(xRange[0]), 
 						Math.toDegrees(xRange[1]), p.length);
+				if(turnShell != null) {
+					System.out.format("     shell: %7.2f-%7.2f %s\n", rRange[0], rRange[1], 
+							turnShell);
+				}
 				if(full) {
 					System.out.println("         p       tau      X                "+
 							"basis function coefficients");

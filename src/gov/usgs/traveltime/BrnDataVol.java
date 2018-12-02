@@ -858,27 +858,32 @@ public class BrnDataVol {
 		if(exists) {
 			if(!useful || !ref.isUseless) {
 				if(ref.isUpGoing) {
-					System.out.format("\n          phase = %2s up  ", phCode);
+					System.out.format("\n         phase = %2s up  ", phCode);
 					if(ref.hasDiff) System.out.format("diff = %s  ", ref.phDiff);
 					if(ref.hasAddOn) System.out.format("add-on = %s  ", ref.phAddOn);
-					System.out.format("Segment: code = %s  type = %c        sign = %2d"+
+					System.out.format("\nSegment: code = %s  type = %c        sign = %2d"+
 							"  count = %d\n", ref.phSeg, ref.typeSeg[0], ref.signSeg, 
 							ref.countSeg);
 				} else {
-					System.out.format("\n          phase = %s  ", phCode);
+					System.out.format("\n         phase = %s  ", phCode);
 					if(ref.hasDiff) System.out.format("diff = %s  ", ref.phDiff);
 					if(ref.hasAddOn) System.out.format("add-on = %s  ", ref.phAddOn);
-					System.out.format("Segment: code = %s  type = %c, %c, %c  "+
+					System.out.format("\nSegment: code = %s  type = %c, %c, %c  "+
 							"sign = %2d  count = %d\n", ref.phSeg, ref.typeSeg[0], 
 							ref.typeSeg[1], ref.typeSeg[2], ref.signSeg, ref.countSeg);
 				}
-				System.out.format("Branch: pRange = %8.6f - %8.6f  xRange = %6.2f - "+
-						"%6.2f\n", pRange[0], pRange[1], Math.toDegrees(xRange[0]), 
+				System.out.format("Branch:  pRange = %8.6f - %8.6f  xRange = %6.2f - "+
+						"%6.2f ", pRange[0], pRange[1], Math.toDegrees(xRange[0]), 
 						Math.toDegrees(xRange[1]));
-				if(ref.hasDiff) System.out.format("        pCaustic = %8.6f  xDiff = "+
+				if(ref.hasDiff) System.out.format("pCaustic = %8.6f  xDiff = "+
 						"%6.2f - %6.2f\n", pCaustic, Math.toDegrees(xDiff[0]), 
 						Math.toDegrees(xDiff[1]));
-				else System.out.format("        pCaustic = %8.6f\n", pCaustic);
+				else System.out.format("pCaustic = %8.6f\n", pCaustic);
+				if(ref.turnShell != null) {
+					System.out.format("Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s\n", ref.rRange[0], 
+							ref.rRange[1], cvt.rSurface-ref.rRange[1], cvt.rSurface-ref.rRange[0],
+							ref.turnShell);
+				}
 		//	System.out.format("Flags: group = %s %s  flags = %b %b %b %b\n", ref.phGroup, 
 		//			ref.auxGroup, ref.isRegional, ref.isDepth, ref.canUse, ref.dis);
 				if(full) {

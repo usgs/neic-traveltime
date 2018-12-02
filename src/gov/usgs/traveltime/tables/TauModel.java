@@ -1025,9 +1025,6 @@ public class TauModel {
 		if(ver.equals("Depth")) {
 			System.out.println("\n     Depth model for "+type+" slowness");
 			System.out.println("      R     slowness      Z");
-			if(TablesUtil.deBugOrder) {
-				TablesUtil.deBugOffset = slowness.size()-1;
-			}
 		} else if(ver.equals("Final")) {
 			System.out.println("\n     Final model for "+type+" slowness");
 			System.out.println("      R     slowness      Z       length");
@@ -1078,9 +1075,6 @@ public class TauModel {
 			System.out.println("\n     Depth model");
 			System.out.println("      R     slowness      Z     slowness"+
 					"      Z");
-			if(TablesUtil.deBugOrder) {
-				TablesUtil.deBugOffset = slowness.size()-1;
-			}
 		} else if(ver.equals("Final")) {
 			System.out.println("\n     Final model");
 			System.out.println("      R     slowness      Z       length"+
@@ -1155,9 +1149,6 @@ public class TauModel {
 		String shellString;
 		
 		System.out.println("\n\t"+type+" Model Shells:");
-		if(TablesUtil.deBugOrder) {
-			TablesUtil.deBugOffset = slowness.size()-1;
-		}
 		if(type == 'P') {
 			for(int j=0; j<pShells.size(); j++) {
 				shellString = pShells.get(j).printShell(type);

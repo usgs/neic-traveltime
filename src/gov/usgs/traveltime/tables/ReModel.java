@@ -25,7 +25,7 @@ public class ReModel {
 	 */
 	public static void main(String[] args) throws Exception {
 		double sysTime;
-		String earthModel = "wus";
+		String earthModel = "ak135";
 		MakeTables make;
 		AuxTtRef auxTT = null;
 		AllBrnRef allRef;
