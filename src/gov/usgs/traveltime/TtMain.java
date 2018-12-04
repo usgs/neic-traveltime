@@ -65,6 +65,7 @@ public class TtMain {
 //				sourceLon, !useful, !noBackBrn, tectonic, rstt);
 //		ttLocal.printRefBranches(false);
 //		ttLocal.printBranches(false, false, false, useful);
+//		ttLocal.printCaustics(false, false, false, useful);
 			ttLocal.printTable(useful);
 			for(int j=0; j<delta.length; j++) {
 				// Get the simple travel times.

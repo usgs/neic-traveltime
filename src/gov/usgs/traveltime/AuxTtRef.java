@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.channels.FileLock;
 // import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Map;
@@ -79,6 +80,7 @@ public class AuxTtRef {
 		FileOutputStream serOut;
 		ObjectInputStream objIn;
 		ObjectOutputStream objOut;
+		FileLock lock;
 		EllipDeps eDepth;
 		
 		// Set up the properties.
@@ -150,6 +152,10 @@ public class AuxTtRef {
 			// Write out the serialized file.
 			serOut = new FileOutputStream(TauUtil.model(serName));
 			objOut = new ObjectOutputStream(serOut);
+			// Wait for an exclusive lock for writing.
+			lock = serOut.getChannel().lock();
+//		System.out.println("AuxTtRef write lock: valid = "+lock.isValid()+
+//				" shared = "+lock.isShared());
 			/*
 			 * The auxiliary data can be read and written very quickly, so for persistent 
 			 * applications such as the travel time or location server, serialization is 
@@ -167,12 +173,17 @@ public class AuxTtRef {
 			objOut.writeObject(ttStats);
 			objOut.writeObject(ellips);
 			objOut.writeObject(topoMap);
+			if(lock.isValid()) lock.release();
 			objOut.close();
 			serOut.close();
 		} else {
 			// Read in the serialized file.
 			serIn = new FileInputStream(TauUtil.model(serName));
 			objIn = new ObjectInputStream(serIn);
+			// Wait for a shared lock for reading.
+			lock = serIn.getChannel().lock(0, Long.MAX_VALUE, true);
+//		System.out.println("AuxTtRef read lock: valid = "+lock.isValid()+
+//				" shared = "+lock.isShared());
 			regional = (PhGroup)objIn.readObject();
 			depth = (PhGroup)objIn.readObject();
 			downWeight = (PhGroup)objIn.readObject();
@@ -206,6 +217,7 @@ public class AuxTtRef {
 				ellips = null;
 				topoMap = null;
 			}
+			if(lock.isValid()) lock.release();
 			objIn.close();
 			serIn.close();
 		}

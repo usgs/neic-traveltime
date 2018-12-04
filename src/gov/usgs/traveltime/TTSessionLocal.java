@@ -300,6 +300,19 @@ public class TTSessionLocal{
 	}
 	
 	/**
+	 * Print volatile phase branches that have at least one caustic.
+	 * 
+	 * @param full If true, print the detailed branch specification as well
+	 * @param all If true print even more specifications
+	 * @param sci if true, print in scientific notation
+	 * @param useful If true, only print "useful" crustal phases
+	 */
+	public void printCaustics(boolean full, boolean all, boolean sci, 
+			boolean useful) {
+		allBrn.dumpCaustics(full, all, sci, useful);
+	}
+	
+	/**
 	 * Print reference phase branch information.
 	 * 
 	 * @param full If true, print the detailed branch specification as well

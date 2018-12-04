@@ -939,7 +939,7 @@ public class AllBrnVol {
 	 * @param sci if true, print in scientific notation
 	 */
 	public void dumpBrn(int iBrn, boolean full, boolean all, boolean sci) {
-		branches[iBrn].dumpBrn(full, all, sci, false);
+		branches[iBrn].dumpBrn(full, all, sci, false, false);
 	}
 	
 	/**
@@ -953,12 +953,12 @@ public class AllBrnVol {
 	public void dumpBrn(String phCode, boolean full, boolean all, boolean sci) {
 		for(int j=0; j<branches.length; j++) {
 			if(branches[j].phCode.equals(phCode)) 
-				branches[j].dumpBrn(full, all, sci, false);
+				branches[j].dumpBrn(full, all, sci, false, false);
 		}
 	}
 	
 	/**
-	 * Print data for all travel-time segments for debugging purposes.
+	 * Print data for all travel-time branches for debugging purposes.
 	 * 
 	 * @param full If true, print the detailed branch specification as well
 	 * @param all If true print even more specifications
@@ -968,7 +968,24 @@ public class AllBrnVol {
 	public void dumpBrn(boolean full, boolean all, boolean sci, 
 			boolean useful) {
 		for(int j=0; j<branches.length; j++) {
-			branches[j].dumpBrn(full, all, sci, useful);
+			branches[j].dumpBrn(full, all, sci, useful, false);
+		}
+	}
+	
+	/**
+	 * Print data for all travel-time branches that have at least one caustic.  
+	 * This turns out to be particularly useful for finding instabilities in 
+	 * the interpolation.
+	 * 
+	 * @param full If true, print the detailed branch specification as well
+	 * @param all If true print even more specifications
+	 * @param sci if true, print in scientific notation
+	 * @param useful If true, only print "useful" crustal phases
+	 */
+	public void dumpCaustics(boolean full, boolean all, boolean sci, 
+			boolean useful) {
+		for(int j=0; j<branches.length; j++) {
+			branches[j].dumpBrn(full, all, sci, useful, true);
 		}
 	}
 	
@@ -985,7 +1002,7 @@ public class AllBrnVol {
 			boolean useful) {
 		for(int j=0; j<branches.length; j++) {
 			if(branches[j].getPhSeg().equals(seg)) 
-				branches[j].dumpBrn(full, all, sci, useful);
+				branches[j].dumpBrn(full, all, sci, useful, false);
 		}
 	}
 	

@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.channels.FileLock;
 import java.util.ArrayList;
 
 import gov.usgs.traveltime.tables.BrnData;
@@ -144,6 +145,7 @@ public class AllBrnRef {
 			throws IOException, ClassNotFoundException {
 		FileInputStream serIn;
 		ObjectInputStream objIn;
+		FileLock lock;
 		
 		// Remember the input data.
 		this.modelName = modelName;
@@ -152,12 +154,17 @@ public class AllBrnRef {
 		// Read the model.
 		serIn = new FileInputStream(serName);
 		objIn = new ObjectInputStream(serIn);
+		// Wait for a shared lock for reading.
+		lock = serIn.getChannel().lock(0, Long.MAX_VALUE, true);
+//	System.out.println("AllBrnRef read lock: valid = "+lock.isValid()+
+//			" shared = "+lock.isShared());
 		cvt = (ModConvert)objIn.readObject();
 		pModel = (ModDataRef)objIn.readObject();
 		sModel = (ModDataRef)objIn.readObject();
 		branches = (BrnDataRef[])objIn.readObject();
 		pUp = (UpDataRef)objIn.readObject();
 		sUp = (UpDataRef)objIn.readObject();
+		if(lock.isValid()) lock.release();
 		objIn.close();
 		serIn.close();
 	}
@@ -180,12 +187,17 @@ public class AllBrnRef {
 	private void serialOut(String serName) throws IOException {
 		FileOutputStream serOut;
 		ObjectOutputStream objOut;
+		FileLock lock;
 		
 		// Write out the serialized file.
 		serOut = new FileOutputStream(serName);
 		objOut = new ObjectOutputStream(serOut);
+		// Wait for an exclusive lock for writing.
+		lock = serOut.getChannel().lock();
+//	System.out.println("AllBrnRef write lock: valid = "+lock.isValid()+
+//			" shared = "+lock.isShared());
 		/*
-		 * The auxiliary data can be read and written very quickly, so for persistent 
+		 * The Earth model data can be read and written very quickly, so for persistent 
 		 * applications such as the travel time or location server, serialization is 
 		 * not necessary.  However, if the travel times are needed for applications 
 		 * that start and stop frequently, the serialization should save some set up 
@@ -197,6 +209,7 @@ public class AllBrnRef {
 		objOut.writeObject(branches);
 		objOut.writeObject(pUp);
 		objOut.writeObject(sUp);
+		if(lock.isValid()) lock.release();
 		objOut.close();
 		serOut.close();
 	}
