@@ -54,6 +54,17 @@ public class TtMain {
 		// Initialize the local travel-time manager.
 		ttLocal = new TTSessionLocal(true, true, true);
 		
+		// Generate a list of available Earth models.
+		String[] models = TauUtil.availableModels();
+		if(models.length > 0) {
+			System.out.println("Available Earth models:");
+			for(int j=0; j<models.length; j++) {
+				System.out.println("\t" + models[j]);
+			}
+		} else {
+			System.out.println("There are no available Earth models?");
+		}
+		
 //	TauUtil.noCorr = true;
 		try {
 			// Set up a simple session.

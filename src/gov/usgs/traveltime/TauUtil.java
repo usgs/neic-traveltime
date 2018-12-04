@@ -1,5 +1,7 @@
 package gov.usgs.traveltime;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
@@ -204,6 +206,35 @@ public class TauUtil {
 	 */
 	public static String model(String modelFile) {
 		return modelPath+modelFile;
+	}
+	
+	/**
+	 * Make a list of available Earth models.
+	 * 
+	 * @return A list of available Earth models.
+	 */
+	public static String[] availableModels() {
+		String[] models;
+		File folder;
+		FilenameFilter filter;
+		
+		filter = new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				if(name.startsWith("m") && name.endsWith(".mod")) {
+					return true;
+				} else {
+					return false;
+				}
+			}
+		};
+		
+		folder = new File(modelPath);
+		models = folder.list(filter);
+		for(int j=0; j<models.length; j++) {
+			models[j] = models[j].substring(1, models[j].indexOf('.'));
+		}
+		return models;
 	}
 	
 	/**
