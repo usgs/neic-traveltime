@@ -10,9 +10,13 @@ package gov.usgs.traveltime.session;
 import gov.usgs.traveltime.AllBrnRef;
 import gov.usgs.traveltime.AllBrnVol;
 import gov.usgs.traveltime.AuxTtRef;
+import gov.usgs.traveltime.FileChanged;
+import gov.usgs.traveltime.PlotData;
 import gov.usgs.traveltime.ReadTau;
 import gov.usgs.traveltime.TTime;
 import gov.usgs.traveltime.TauUtil;
+import gov.usgs.traveltime.TtPlot;
+import gov.usgs.traveltime.tables.MakeTables;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -45,6 +49,9 @@ public class TTSession {
   
   // Variables used within a Session
   private AllBrnVol allBrn;         // The current session with depth object to query for stuff
+  private PlotData plotData;				// Travel-time plot data
+	private String serName;						// Serialized file name for this model
+	private String[] fileNames;				// Raw input file names for this model
   
   @Override
   public String toString() {
@@ -183,20 +190,45 @@ public class TTSession {
 
       // If not, set it up.
       if (allRef == null) {
-        try {
-          prta(ttag+" Need to read in model="+earthModel);
-          ReadTau readTau = new ReadTau(earthModel);
-          readTau.readHeader(TauUtil.model(earthModel+".hed"));
-          //	readTau.dumpSegments();
-          //	readTau.dumpBranches();
-          readTau.readTable(TauUtil.model(earthModel+".tbl"));
-          //	readTau.dumpUp(15);
-          allRef = new AllBrnRef(TauUtil.model(earthModel+"_for.ser"), readTau, 
-          		auxtt);
-        } catch (IOException e) {
-          e.printStackTrace(getPrintStream());
-          throw e;
-        }
+				if(modelChanged(earthModel)) {
+					// The Earth model files have changed--regenerate them.
+					if(TauUtil.useFortranFiles) {
+						// We're going to read the model tables from the Fortran files.
+		        try {
+		          prta(ttag+" Need to read in model="+earthModel);
+		          ReadTau readTau = new ReadTau(earthModel);
+		          readTau.readHeader(TauUtil.model(fileNames[0]));
+		          //	readTau.dumpSegments();
+		          //	readTau.dumpBranches();
+		          readTau.readTable(TauUtil.model(fileNames[1]));
+		          //	readTau.dumpUp(15);
+		          allRef = new AllBrnRef(serName, readTau, auxtt);
+		        } catch (IOException e) {
+		          e.printStackTrace(getPrintStream());
+		          throw e;
+		        }
+					} else {
+						// We're going to generate the model tables from scratch.
+						try {
+		          prta(ttag+" Need to generate model="+earthModel);
+							MakeTables make = new MakeTables(earthModel);
+							make.buildModel(fileNames[0], fileNames[1]);
+							allRef = make.fillAllBrnRef(serName, auxtt);
+						} catch (Exception e) {
+		          e.printStackTrace(getPrintStream());
+		          throw e;
+						}
+					}
+				} else {
+					// We can just read the model from the serialized files.
+					try {
+	          prta(ttag+" Serialize model in ="+earthModel);
+						allRef = new AllBrnRef(serName, earthModel, auxtt);
+					} catch (ClassNotFoundException | IOException e) {
+	          e.printStackTrace(getPrintStream());
+	          throw e;
+					}
+				}
         modelData.put(earthModel, allRef);
         allRef.dumpBrn(false);
       }
@@ -236,12 +268,19 @@ public class TTSession {
       //	allBrn.dumpMod('S', true);
       // Set up a new session.
       try {
-        if(Double.isNaN(sourceLatitude) ) {
-          allBrn.newSession(sourceDepth, phList, !allPhases, !returnBackBranches, tectonic, useRSTT);      
-        }
-        else {
-          allBrn.newSession(sourceLatitude, sourceLongitude, sourceDepth, phList,!allPhases, !returnBackBranches, tectonic, useRSTT);
-        }
+      	if(!isPlot) {
+      		// Set up to generate travel-times (e.g., for earthquake location).
+	        if(Double.isNaN(sourceLatitude) ) {
+	          allBrn.newSession(sourceDepth, phList, !allPhases, !returnBackBranches, tectonic, useRSTT);      
+	        }
+	        else {
+	          allBrn.newSession(sourceLatitude, sourceLongitude, sourceDepth, phList,!allPhases, !returnBackBranches, tectonic, useRSTT);
+	        }
+      	} else {
+      		// Generate a travel-time chart.
+      		plotData = new PlotData(allBrn);
+      		plotData.makePlot(sourceDepth, phList, !allPhases, !returnBackBranches, tectonic);
+      	}
       } catch (Exception e) {
         e.printStackTrace(getPrintStream());
         prta(ttag+" Unknown exception while setting sourceDepth and phList in newSession()!");
@@ -251,6 +290,29 @@ public class TTSession {
       throw e;
     }
   }
+    	
+	/**
+	 * Determine if the input files have changed.
+	 * 
+	 * @param earthModel Earth model name
+	 * @return True if the input files have changed
+	 */
+	private boolean modelChanged(String earthModel) {
+		// We need two files in either case.
+		fileNames = new String[2];
+		if(TauUtil.useFortranFiles) {
+			// Names for the Fortran files.
+			serName = TauUtil.model(earthModel+"_for.ser");
+			fileNames[0] = TauUtil.model(earthModel+".hed");
+			fileNames[1] = TauUtil.model(earthModel+".tbl");
+		} else {
+			// Names for generating the model.
+			serName = TauUtil.model(earthModel+"_gen.ser");
+			fileNames[0] = TauUtil.model("m"+earthModel+".mod");
+			fileNames[1] = TauUtil.model("phases.txt");
+		}
+		return FileChanged.isChanged(serName, fileNames);
+	}
 
 	/**
 	 * Set up a new session.  Note that this sets up the complex 
@@ -353,6 +415,15 @@ public class TTSession {
     if(allBrn == null) return null;
     TTime ttime = allBrn.getTT(recLat, recLong, recElev, delta, azimuth);
     return ttime;
+  }
+  
+  /**
+   * Unlike travel-times, plot data is a one shot deal that was generated in makeTTSession.
+   * 
+   * @return Travel-time plot data
+   */
+  public synchronized TtPlot getPlot() {
+  	return plotData.getPlot();
   }
   
   /**

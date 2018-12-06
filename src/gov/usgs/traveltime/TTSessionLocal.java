@@ -248,6 +248,15 @@ public class TTSessionLocal{
 	}
 	
 	/**
+	 * Get a list of available Earth models.
+	 * 
+	 * @return A list of available Earth model names
+	 */
+	public String[] getAvailModels() {
+		return TauUtil.availableModels();
+	}
+	
+	/**
 	 * Get a pointer to the auxiliary travel-time information.
 	 * 
 	 * @return Auxiliary travel-time data
