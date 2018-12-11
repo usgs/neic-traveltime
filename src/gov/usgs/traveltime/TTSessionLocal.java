@@ -3,6 +3,9 @@ package gov.usgs.traveltime;
 import java.io.IOException;
 import java.util.TreeMap;
 
+import gov.usgs.traveltime.tables.MakeTables;
+import gov.usgs.traveltime.tables.TablesUtil;
+
 /**
  * Manage travel-time calculations locally, but in a manner similar to 
  * the travel time server pool.
@@ -11,10 +14,15 @@ import java.util.TreeMap;
  *
  */
 public class TTSessionLocal{
+	String lastModel = "";
 	TreeMap<String, AllBrnRef> modelData;
+	MakeTables make;
+	TtStatus status;
 	AuxTtRef auxTT;
 	AllBrnVol allBrn;
-	String lastModel = "";
+	// Set up serialization.
+	String serName;											// Serialized file name for this model
+	String[] fileNames;									// Raw input file names for this model
 
 	/**
 	 * Initialize auxiliary data common to all models.
@@ -29,7 +37,7 @@ public class TTSessionLocal{
 		// Read in data common to all models.
 		try {
 			auxTT = new AuxTtRef(readStats, readEllip, readTopo);
-		} catch (IOException e1) {
+		} catch (IOException | ClassNotFoundException e1) {
 			System.out.println("Unable to read auxiliary data.");
 			e1.printStackTrace();
 			System.exit(201);
@@ -152,24 +160,100 @@ public class TTSessionLocal{
 			
 			// If not, set it up.
 			if(allRef == null) {
-				try {
-					readTau = new ReadTau(earthModel);
-					readTau.readHeader();
-					readTau.readTable();
-				} catch(IOException e) {
-					System.out.println("Unable to read Earth model "+earthModel);
-					System.exit(202);
+				if(modelChanged(earthModel)) {
+					if(TauUtil.useFortranFiles) {
+						// Read the tables from the Fortran files.
+						try {
+							readTau = new ReadTau(earthModel);
+							readTau.readHeader(fileNames[0]);
+							readTau.readTable(fileNames[1]);
+						} catch(IOException e) {
+							System.out.println("Unable to read Earth model "+earthModel+".");
+							System.exit(202);
+						}
+						// Reorganize the reference data.
+						try {
+							allRef = new AllBrnRef(serName, readTau, auxTT);
+						} catch (IOException e) {
+							System.out.println("Unable to write Earth model "+earthModel+
+									" serialization file.");
+						}
+					} else {
+						// Generate the tables.
+						TablesUtil.deBugLevel = 1;
+						make = new MakeTables(earthModel);
+						try {
+							status = make.buildModel(fileNames[0], fileNames[1]);
+						} catch (Exception e) {
+							System.out.println("Unable to generate Earth model "+earthModel+
+									" ("+status+").");
+							e.printStackTrace();
+							System.exit(202);
+						}
+						// Build the branch reference classes.
+						try {
+							allRef = make.fillAllBrnRef(serName, auxTT);
+						} catch (IOException e) {
+							System.out.println("Unable to write Earth model "+earthModel+
+									" serialization file.");
+						}
+					}
+				} else {
+					// If the model input hasn't changed, just serialize the model in.
+					try {
+						allRef = new AllBrnRef(serName, earthModel, auxTT);
+					} catch (ClassNotFoundException | IOException e) {
+						System.out.println("Unable to read Earth model "+earthModel+
+								" serialization file.");
+						System.exit(202);
+					}
 				}
-				
-				// Reorganize the reference data.
-				allRef = new AllBrnRef(readTau, auxTT);
+//			allRef.dumpHead();
+//			allRef.dumpMod('P', true);
+//			allRef.dumpMod('S', true);
+//			allRef.dumpBrn(true);
+//			allRef.dumpBrn("pS", true);
+//			allRef.dumpUp('P');
+//			allRef.dumpUp('S');
 				modelData.put(earthModel, allRef);
 			}
 			
 			// Set up the (depth dependent) volatile part.
 			allBrn = new AllBrnVol(allRef);
-	//	allBrn.dumpHead();
+//		allBrn.dumpHead();
 		}
+	}
+	
+	/**
+	 * Determine if the input files have changed.
+	 * 
+	 * @param earthModel Earth model name
+	 * @return True if the input files have changed
+	 */
+	private boolean modelChanged(String earthModel) {
+		// We need two files in either case.
+		fileNames = new String[2];
+		if(TauUtil.useFortranFiles) {
+			// Names for the Fortran files.
+			serName = TauUtil.model(earthModel+"_for.ser");
+			fileNames[0] = TauUtil.model(earthModel+".hed");
+			fileNames[1] = TauUtil.model(earthModel+".tbl");
+		} else {
+			// Names for generating the model.
+			serName = TauUtil.model(earthModel+"_gen.ser");
+			fileNames[0] = TauUtil.model("m"+earthModel+".mod");
+			fileNames[1] = TauUtil.model("phases.txt");
+		}
+		return FileChanged.isChanged(serName, fileNames);
+	}
+	
+	/**
+	 * Get a list of available Earth models.
+	 * 
+	 * @return A list of available Earth model names
+	 */
+	public String[] getAvailModels() {
+		return TauUtil.availableModels();
 	}
 	
 	/**
@@ -222,6 +306,19 @@ public class TTSessionLocal{
 	public void printBranches(boolean full, boolean all, boolean sci, 
 			boolean useful) {
 		allBrn.dumpBrn(full, all, sci, useful);
+	}
+	
+	/**
+	 * Print volatile phase branches that have at least one caustic.
+	 * 
+	 * @param full If true, print the detailed branch specification as well
+	 * @param all If true print even more specifications
+	 * @param sci if true, print in scientific notation
+	 * @param useful If true, only print "useful" crustal phases
+	 */
+	public void printCaustics(boolean full, boolean all, boolean sci, 
+			boolean useful) {
+		allBrn.dumpCaustics(full, all, sci, useful);
 	}
 	
 	/**

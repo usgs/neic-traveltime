@@ -30,6 +30,7 @@ public class BrnDataVol {
 	BrnDataRef ref;					// Link to non-volatile branch data
 	UpDataVol pUp, sUp;			// Up-going P and S data for correcting the depth
 	ModConvert cvt;					// Model specific conversions
+	AuxTtRef auxtt;					// Auxiliary travel-time data
 	TtFlags flags;					// Flags, etc. by phase code
 	TtStat ttStat;					// Local copy of the phase statistics
 	Ellip ellip;						// Local copy of the ellipticity correction
@@ -45,14 +46,16 @@ public class BrnDataVol {
 	 * @param pUp The corrected P up-going branch source
 	 * @param sUp The corrected S up-going branch source
 	 * @param cvt The conversion factor object
+	 * @param auxtt Auxiliary travel-time data
 	 * @param spline The spline object
 	 */
 	public BrnDataVol(BrnDataRef ref, UpDataVol pUp, UpDataVol sUp, ModConvert cvt, 
-			Spline spline) {
+			AuxTtRef auxtt, Spline spline) {
 		this.ref = ref;
 		this.pUp = pUp;
 		this.sUp = sUp;
 		this.cvt = cvt;
+		this.auxtt = auxtt;
 		this.spline = spline;
 		
 		// Do branch summary information.
@@ -75,6 +78,7 @@ public class BrnDataVol {
 	public void depthCorr(double zSource, double dTdDepth, double xMin, char tagBrn) 
 			throws Exception {
 		int i, len = 0;
+		double pMax;
 		double[][] basisTmp;
 		
 		this.dTdDepth = dTdDepth;
@@ -92,7 +96,7 @@ public class BrnDataVol {
 					xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
 					pCaustic = pRange[1];
 					pEnd = Double.NaN;
-					flags = ref.auxtt.findFlags(phCode);
+					flags = auxtt.findFlags(phCode);
 					
 					// Make a local copy of the reference p and tau.
 					len = ref.pBrn.length;
@@ -123,22 +127,28 @@ public class BrnDataVol {
 				xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
 				pCaustic = pRange[1];
 				pEnd = Double.NaN;
-				flags = ref.auxtt.findFlags(phCode);
+				flags = auxtt.findFlags(phCode);
 			
 				// Do phases that start as P.
 				if(ref.typeSeg[0] == 'P') {
-					// Correct ray parameter.
-					pRange[1] = Math.min(pRange[1], pUp.pMax);
+					// Correct ray parameter range.
+					pMax = Math.min(pRange[1], pUp.pMax);
+					// Screen phases that don't exist.
+					if(pRange[0] >= pMax) {
+						exists = false;
+						return;
+					}
+					pRange[1] = pMax;
 					
 					/* See how long we need the corrected arrays to be.  This is 
 					 * awkward and not very Java-like, but the gain in performance 
 					 * seemed worthwhile in this case.*/
 					for(int j=0; j<ref.pBrn.length; j++) {
 						// See if we need this point.
-						if(ref.pBrn[j] < pUp.pMax+TauUtil.DTOL) {
+						if(ref.pBrn[j] < pMax+TauUtil.DTOL) {
 							len++;
 							// If this point is equal to pMax, we're done.
-							if(Math.abs(ref.pBrn[j]-pUp.pMax) <= TauUtil.DTOL) break;
+							if(Math.abs(ref.pBrn[j]-pMax) <= TauUtil.DTOL) break;
 						// Otherwise, add one more point and quit.
 						} else {
 							len++;
@@ -164,7 +174,7 @@ public class BrnDataVol {
 						i = 0;
 						for(int j=0; j<ref.pBrn.length; j++) {
 							// See if we need this point.
-							if(ref.pBrn[j] < pUp.pMax+TauUtil.DTOL) {
+							if(ref.pBrn[j] < pMax+TauUtil.DTOL) {
 								// pTauUp is a superset of pBrn so we need to sync them.
 								while(Math.abs(ref.pBrn[j]-pUp.pUp[i]) > TauUtil.DTOL) {
 									i++;
@@ -173,10 +183,10 @@ public class BrnDataVol {
 								pBrn[j] = ref.pBrn[j];
 								tauBrn[j] = pUp.tauUp[i];
 								// If this point is equal to pMax, we're done.
-								if(Math.abs(ref.pBrn[j]-pUp.pMax) <= TauUtil.DTOL) break;
+								if(Math.abs(ref.pBrn[j]-pMax) <= TauUtil.DTOL) break;
 							// Otherwise, add one more point and quit.
 							} else {
-								pBrn[j] = pUp.pMax;
+								pBrn[j] = pMax;
 								tauBrn[j] = pUp.tauEndUp;
 								break;
 							}
@@ -221,7 +231,7 @@ public class BrnDataVol {
 						i = 0;
 						for(int j=0; j<ref.pBrn.length; j++) {
 							// See if we need this point.
-							if(ref.pBrn[j] < pUp.pMax+TauUtil.DTOL) {
+							if(ref.pBrn[j] < pMax+TauUtil.DTOL) {
 								// pTauUp is a superset of pBrn so we need to sync them.
 								while(Math.abs(ref.pBrn[j]-pUp.pUp[i]) > TauUtil.DTOL) {
 									i++;
@@ -230,10 +240,10 @@ public class BrnDataVol {
 								pBrn[j] = ref.pBrn[j];
 								tauBrn[j] = ref.tauBrn[j]+ref.signSeg*pUp.tauUp[i];
 								// If this point is equal to pMax, we're done.
-								if(Math.abs(ref.pBrn[j]-pUp.pMax) <= TauUtil.DTOL) break;
+								if(Math.abs(ref.pBrn[j]-pMax) <= TauUtil.DTOL) break;
 							// Otherwise, add one more point and quit.
 							} else {
-								pBrn[j] = pUp.pMax;
+								pBrn[j] = pMax;
 								tauBrn[j] = lastTau();
 								break;
 							}
@@ -252,18 +262,24 @@ public class BrnDataVol {
 					}
 				// Do phases that start as S.
 				} else {
-					// Correct ray parameter.
-					pRange[1] = Math.min(pRange[1], sUp.pMax);
+					// Correct ray parameter range.
+					pMax = Math.min(pRange[1], sUp.pMax);
+					// Screen phases that don't exist.
+					if(pRange[0] >= pMax) {
+						exists = false;
+						return;
+					}
+					pRange[1] = pMax;
 					
 					/* See how long we need the corrected arrays to be.  This is 
 					 * awkward and not very Java-like, but the gain in performance 
 					 * seemed worthwhile in this case.*/
 					for(int j=0; j<ref.pBrn.length; j++) {
 						// See if we need this point.
-						if(ref.pBrn[j] < sUp.pMax+TauUtil.DTOL) {
+						if(ref.pBrn[j] < pMax+TauUtil.DTOL) {
 							len++;
 							// If this point is equal to pMax, we're done.
-							if(Math.abs(ref.pBrn[j]-sUp.pMax) <= TauUtil.DTOL) break;
+							if(Math.abs(ref.pBrn[j]-pMax) <= TauUtil.DTOL) break;
 						// Otherwise, add one more point and quit.
 						} else {
 							len++;
@@ -289,7 +305,7 @@ public class BrnDataVol {
 						i = 0;
 						for(int j=0; j<ref.pBrn.length; j++) {
 							// See if we need this point.
-							if(ref.pBrn[j] < sUp.pMax+TauUtil.DTOL) {
+							if(ref.pBrn[j] < pMax+TauUtil.DTOL) {
 								// pTauUp is a superset of pBrn so we need to sync them.
 								while(Math.abs(ref.pBrn[j]-sUp.pUp[i]) > TauUtil.DTOL) {
 									i++;
@@ -298,10 +314,10 @@ public class BrnDataVol {
 								pBrn[j] = ref.pBrn[j];
 								tauBrn[j] = sUp.tauUp[i];
 								// If this point is equal to pMax, we're done.
-								if(Math.abs(ref.pBrn[j]-sUp.pMax) <= TauUtil.DTOL) break;
+								if(Math.abs(ref.pBrn[j]-pMax) <= TauUtil.DTOL) break;
 							// Otherwise, add one more point and quit.
 							} else {
-								pBrn[j] = sUp.pMax;
+								pBrn[j] = pMax;
 								tauBrn[j] = sUp.tauEndUp;
 								break;
 							}
@@ -346,7 +362,7 @@ public class BrnDataVol {
 						i = 0;
 						for(int j=0; j<ref.pBrn.length; j++) {
 							// See if we need this point.
-							if(ref.pBrn[j] < sUp.pMax+TauUtil.DTOL) {
+							if(ref.pBrn[j] < pMax+TauUtil.DTOL) {
 								// pTauUp is a superset of pBrn so we need to sync them.
 								while(Math.abs(ref.pBrn[j]-sUp.pUp[i]) > TauUtil.DTOL) {
 									i++;
@@ -355,10 +371,10 @@ public class BrnDataVol {
 								pBrn[j] = ref.pBrn[j];
 								tauBrn[j] = ref.tauBrn[j]+ref.signSeg*sUp.tauUp[i];
 								// If this point is equal to pMax, we're done.
-								if(Math.abs(ref.pBrn[j]-sUp.pMax) <= TauUtil.DTOL) break;
+								if(Math.abs(ref.pBrn[j]-pMax) <= TauUtil.DTOL) break;
 							// Otherwise, add one more point and quit.
 							} else {
-								pBrn[j] = sUp.pMax;
+								pBrn[j] = pMax;
 								tauBrn[j] = lastTau();
 								break;
 							}
@@ -385,8 +401,8 @@ public class BrnDataVol {
 			// Now that we know what type of phase we have, select the right 
 			// statistics and ellipticity correction.
 			if(ref.isUpGoing) {
-				ttStat = ref.auxtt.findStats(phCode);
-				ellip = ref.auxtt.findEllip(flags.phGroup+"up");
+				ttStat = auxtt.findStats(phCode);
+				ellip = auxtt.findEllip(flags.phGroup+"up");
 			}
 			else {
 				ttStat = flags.ttStat;
@@ -736,28 +752,30 @@ public class BrnDataVol {
 			
 			// See if we have an add-on phase.
 			if(ref.hasAddOn && found) {
-				del = Math.toDegrees(xs);
-				addFlags = ref.auxtt.findFlags(ref.phAddOn);
-				if(del >= addFlags.ttStat.minDelta && del <= addFlags.ttStat.maxDelta) {
-					// Fiddle the uniqueCode.
-					if(uniqueCode == null) uniqueCode = new String[2];
-					uniqueCode[0] = ref.phAddOn+0;
-					uniqueCode[1] = null;
-					// See what we've got.
-					if(ref.phAddOn.equals("Lg")) {
-						// Make sure we have a valid depth.
-						if(dSource <= TauUtil.LGDEPMAX) {
-							ttList.addPhase(ref.phAddOn, uniqueCode, 0d, cvt.dTdDLg, 0d, 0d, true);
+				addFlags = auxtt.findFlags(ref.phAddOn);
+				if(addFlags.ttStat != null) {
+					del = Math.toDegrees(xs);
+					if(del >= addFlags.ttStat.minDelta && del <= addFlags.ttStat.maxDelta) {
+						// Fiddle the uniqueCode.
+						if(uniqueCode == null) uniqueCode = new String[2];
+						uniqueCode[0] = ref.phAddOn+0;
+						uniqueCode[1] = null;
+						// See what we've got.
+						if(ref.phAddOn.equals("Lg")) {
+							// Make sure we have a valid depth.
+							if(dSource <= TauUtil.LGDEPMAX) {
+								ttList.addPhase(ref.phAddOn, uniqueCode, 0d, cvt.dTdDLg, 0d, 0d, true);
+							}
+						} else if(ref.phAddOn.equals("LR")) {
+							// Make sure we have a valid depth and distance.
+							if(dSource <= TauUtil.LRDEPMAX && xs <= TauUtil.LRDELMAX) {
+								ttList.addPhase(ref.phAddOn, uniqueCode, 0d, cvt.dTdDLR, 0d, 0d, true);
+							}
+						} else if(ref.phAddOn.equals("pwP") || ref.phAddOn.equals("PKPpre")) {
+							tTime = ttList.get(ttList.size()-1);
+							ttList.addPhase(ref.phAddOn, uniqueCode, tTime.tt, tTime.dTdD, tTime.dTdZ, 
+									tTime.dXdP, true);
 						}
-					} else if(ref.phAddOn.equals("LR")) {
-						// Make sure we have a valid depth and distance.
-						if(dSource <= TauUtil.LRDEPMAX && xs <= TauUtil.LRDELMAX) {
-							ttList.addPhase(ref.phAddOn, uniqueCode, 0d, cvt.dTdDLR, 0d, 0d, true);
-						}
-					} else if(ref.phAddOn.equals("pwP") || ref.phAddOn.equals("PKPpre")) {
-						tTime = ttList.get(ttList.size()-1);
-						ttList.addPhase(ref.phAddOn, uniqueCode, tTime.tt, tTime.dTdD, tTime.dTdZ, 
-								tTime.dXdP, true);
 					}
 				}
 			}
@@ -779,8 +797,6 @@ public class BrnDataVol {
 		
 		// Check validity.
 		if(!exists || ps < pRange[0] || ps > pRange[1]) {
-//		System.out.format("OneRay NaN: %-8s %8.6f %8.6f %8.6f\n", phCode, 
-//				pRange[0], ps, pRange[1]);
 			return Double.NaN;
 		}
 		
@@ -837,115 +853,134 @@ public class BrnDataVol {
 	 * @param all If true, print even more specifications
 	 * @param sci If true, print using scientific notation
 	 * @param useful If true, omit "useless" crustal phases
+	 * @param caustics If true only print branches with caustics
 	 */
-	public void dumpBrn(boolean full, boolean all, boolean sci, boolean useful) {
-		if(exists) {
-			if(!useful || !ref.isUseless) {
-				if(ref.isUpGoing) {
-					System.out.format("\n          phase = %2s up  ", phCode);
-					if(ref.hasDiff) System.out.format("diff = %s  ", ref.phDiff);
-					if(ref.hasAddOn) System.out.format("add-on = %s  ", ref.phAddOn);
-					System.out.format("Segment: code = %s  type = %c        sign = %2d"+
-							"  count = %d\n", ref.phSeg, ref.typeSeg[0], ref.signSeg, 
-							ref.countSeg);
-				} else {
-					System.out.format("\n          phase = %s  ", phCode);
-					if(ref.hasDiff) System.out.format("diff = %s  ", ref.phDiff);
-					if(ref.hasAddOn) System.out.format("add-on = %s  ", ref.phAddOn);
-					System.out.format("Segment: code = %s  type = %c, %c, %c  "+
-							"sign = %2d  count = %d\n", ref.phSeg, ref.typeSeg[0], 
-							ref.typeSeg[1], ref.typeSeg[2], ref.signSeg, ref.countSeg);
-				}
-				System.out.format("Branch: pRange = %8.6f - %8.6f  xRange = %6.2f - "+
-						"%6.2f\n", pRange[0], pRange[1], Math.toDegrees(xRange[0]), 
-						Math.toDegrees(xRange[1]));
-				if(ref.hasDiff) System.out.format("        pCaustic = %8.6f  xDiff = "+
-						"%6.2f - %6.2f\n", pCaustic, Math.toDegrees(xDiff[0]), 
-						Math.toDegrees(xDiff[1]));
-				else System.out.format("        pCaustic = %8.6f\n", pCaustic);
-		//	System.out.format("Flags: group = %s %s  flags = %b %b %b %b\n", ref.phGroup, 
-		//			ref.auxGroup, ref.isRegional, ref.isDepth, ref.canUse, ref.dis);
-				if(full) {
-					int n = pBrn.length;
-					if(all && poly != null) {
-						if(sci) {
-							System.out.println("\n         p        tau          x       "+
-									"basis function coefficients");
-							for(int j=0; j<n-1; j++) {
-								System.out.format("%3d: %3s %13.6e %13.6e %6.2f %13.6e %13.6e "+
-										"%13.6e %13.6e %6.2f %6.2f\n", j, flag[j], pBrn[j], tauBrn[j], 
-										Math.toDegrees(xBrn[j]), poly[0][j], poly[1][j], poly[2][j], 
-										poly[3][j], Math.toDegrees(xLim[0][j]), 
-										Math.toDegrees(xLim[1][j]));
-							}
-							System.out.format("%3d:     %13.6e %13.6e %6.2f\n", n-1, pBrn[n-1], 
-									tauBrn[n-1], Math.toDegrees(xBrn[n-1]));
-						} else {
-							System.out.println("\n         p        tau          x       "+
-									"basis function coefficients");
-							for(int j=0; j<n-1; j++) {
-								System.out.format("%3d: %3s %8.6f %8.6f %6.2f  %9.2e  %9.2e  "+
-										"%9.2e  %9.2e %6.2f %6.2f\n", j, flag[j], pBrn[j], tauBrn[j], 
-										Math.toDegrees(xBrn[j]), poly[0][j], poly[1][j], poly[2][j], 
-										poly[3][j], Math.toDegrees(xLim[0][j]), 
-										Math.toDegrees(xLim[1][j]));
-							}
-							System.out.format("%3d:     %8.6f %8.6f %6.2f\n", n-1, pBrn[n-1], 
-									tauBrn[n-1], Math.toDegrees(xBrn[n-1]));
-						}
+	public void dumpBrn(boolean full, boolean all, boolean sci, boolean useful, 
+			boolean caustics) {
+		if(!caustics || iMin+iMax > 0) {
+			if(exists) {
+				if(!useful || !ref.isUseless) {
+					if(ref.isUpGoing) {
+						System.out.format("\n         phase = %2s up  ", phCode);
+						if(ref.hasDiff) System.out.format("diff = %s  ", ref.phDiff);
+						if(ref.hasAddOn) System.out.format("add-on = %s  ", ref.phAddOn);
+						System.out.format("\nSegment: code = %s  type = %c        sign = %2d"+
+								"  count = %d\n", ref.phSeg, ref.typeSeg[0], ref.signSeg, 
+								ref.countSeg);
 					} else {
-						if(sci) {
-							System.out.println("\n         p        tau          x       "+
-									"xLim");
-							if(poly != null) {
+						System.out.format("\n         phase = %s  ", phCode);
+						if(ref.hasDiff) System.out.format("diff = %s  ", ref.phDiff);
+						if(ref.hasAddOn) System.out.format("add-on = %s  ", ref.phAddOn);
+						System.out.format("\nSegment: code = %s  type = %c, %c, %c  "+
+								"sign = %2d  count = %d\n", ref.phSeg, ref.typeSeg[0], 
+								ref.typeSeg[1], ref.typeSeg[2], ref.signSeg, ref.countSeg);
+					}
+					System.out.format("Branch:  pRange = %8.6f - %8.6f  xRange = %6.2f - "+
+							"%6.2f ", pRange[0], pRange[1], Math.toDegrees(xRange[0]), 
+							Math.toDegrees(xRange[1]));
+					if(ref.hasDiff) System.out.format("pCaustic = %8.6f  xDiff = "+
+							"%6.2f - %6.2f\n", pCaustic, Math.toDegrees(xDiff[0]), 
+							Math.toDegrees(xDiff[1]));
+					else System.out.format("pCaustic = %8.6f\n", pCaustic);
+					if(ref.turnShell != null) {
+						if(iMin+iMax == 1) {
+							System.out.format("Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s (1 caustic)\n", 
+									ref.rRange[0], ref.rRange[1], cvt.rSurface-ref.rRange[1], 
+									cvt.rSurface-ref.rRange[0], ref.turnShell);
+						} else if(iMin+iMax > 1) {
+							System.out.format("Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s (%d caustics)\n", 
+									ref.rRange[0], ref.rRange[1], cvt.rSurface-ref.rRange[1], 
+									cvt.rSurface-ref.rRange[0], ref.turnShell, iMin+iMax);
+						} else {
+							System.out.format("Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s\n", ref.rRange[0], 
+									ref.rRange[1], cvt.rSurface-ref.rRange[1], cvt.rSurface-ref.rRange[0], 
+									ref.turnShell);
+						}
+					}
+			//	System.out.format("Flags: group = %s %s  flags = %b %b %b %b\n", ref.phGroup, 
+			//			ref.auxGroup, ref.isRegional, ref.isDepth, ref.canUse, ref.dis);
+					if(full) {
+						int n = pBrn.length;
+						if(all && poly != null) {
+							if(sci) {
+								System.out.println("\n               p            tau         x"+
+										"                 basis function coefficients                    xLim");
 								for(int j=0; j<n-1; j++) {
-									System.out.format("%3d: %3s %13.6e %13.6e %6.2f %6.2f %6.2f\n", 
-											j, flag[j], pBrn[j], tauBrn[j], Math.toDegrees(xBrn[j]), 
-											Math.toDegrees(xLim[0][j]), Math.toDegrees(xLim[1][j]));
-								}
-								System.out.format("%3d:     %13.6e %13.6e %6.2f\n", 
-										n-1, pBrn[n-1], tauBrn[n-1], Math.toDegrees(xBrn[n-1]));
-							} else {
-								System.out.format("%3d:     %13.6e %13.6e %6.2f\n", 0, pBrn[0], 
-										tauBrn[0], Math.toDegrees(xRange[0]));
-								for(int j=1; j<n-1; j++) {
-									System.out.format("%3d:     %13.6e %13.6e\n", j, pBrn[j], 
-											tauBrn[j]);
+									System.out.format("%3d: %3s %13.6e %13.6e %6.2f %13.6e %13.6e "+
+											"%13.6e %13.6e %6.2f %6.2f\n", j, flag[j], pBrn[j], tauBrn[j], 
+											Math.toDegrees(xBrn[j]), poly[0][j], poly[1][j], poly[2][j], 
+											poly[3][j], Math.toDegrees(xLim[0][j]), 
+											Math.toDegrees(xLim[1][j]));
 								}
 								System.out.format("%3d:     %13.6e %13.6e %6.2f\n", n-1, pBrn[n-1], 
-										tauBrn[n-1], Math.toDegrees(xRange[1]));
+										tauBrn[n-1], Math.toDegrees(xBrn[n-1]));
+							} else {
+								System.out.println("\n             p      tau       x            "+
+										"basis function coefficients             xLim");
+								for(int j=0; j<n-1; j++) {
+									System.out.format("%3d: %3s %8.6f %8.6f %6.2f  %9.2e  %9.2e  "+
+											"%9.2e  %9.2e %6.2f %6.2f\n", j, flag[j], pBrn[j], tauBrn[j], 
+											Math.toDegrees(xBrn[j]), poly[0][j], poly[1][j], poly[2][j], 
+											poly[3][j], Math.toDegrees(xLim[0][j]), 
+											Math.toDegrees(xLim[1][j]));
+								}
+								System.out.format("%3d:     %8.6f %8.6f %6.2f\n", n-1, pBrn[n-1], 
+										tauBrn[n-1], Math.toDegrees(xBrn[n-1]));
 							}
 						} else {
-							System.out.println("\n         p        tau          x       "+
-									"xLim");
-							if(poly != null) {
-								for(int j=0; j<n-1; j++) {
-									System.out.format("%3d: %3s %8.6f %8.6f %6.2f %6.2f %6.2f\n", 
-											j, flag[j], pBrn[j], tauBrn[j], Math.toDegrees(xBrn[j]), 
-											Math.toDegrees(xLim[0][j]), Math.toDegrees(xLim[1][j]));
+							if(sci) {
+								System.out.println("\n               p            tau         x        "+
+										"xLim");
+								if(poly != null) {
+									for(int j=0; j<n-1; j++) {
+										System.out.format("%3d: %3s %13.6e %13.6e %6.2f %6.2f %6.2f\n", 
+												j, flag[j], pBrn[j], tauBrn[j], Math.toDegrees(xBrn[j]), 
+												Math.toDegrees(xLim[0][j]), Math.toDegrees(xLim[1][j]));
+									}
+									System.out.format("%3d:     %13.6e %13.6e %6.2f\n", 
+											n-1, pBrn[n-1], tauBrn[n-1], Math.toDegrees(xBrn[n-1]));
+								} else {
+									System.out.format("%3d:     %13.6e %13.6e %6.2f\n", 0, pBrn[0], 
+											tauBrn[0], Math.toDegrees(xRange[0]));
+									for(int j=1; j<n-1; j++) {
+										System.out.format("%3d:     %13.6e %13.6e\n", j, pBrn[j], 
+												tauBrn[j]);
+									}
+									System.out.format("%3d:     %13.6e %13.6e %6.2f\n", n-1, pBrn[n-1], 
+											tauBrn[n-1], Math.toDegrees(xRange[1]));
 								}
-								System.out.format("%3d:     %8.6f %8.6f %6.2f\n", 
-										n-1, pBrn[n-1], tauBrn[n-1], Math.toDegrees(xBrn[n-1]));
 							} else {
-								System.out.format("%3d:     %8.6f  %8.6f  %6.2f\n", 0, pBrn[0], 
-										tauBrn[0], Math.toDegrees(xRange[0]));
-								for(int j=1; j<n-1; j++) {
-									System.out.format("%3d:     %8.6f  %8.6f\n", j, pBrn[j], 
-											tauBrn[j]);
+								System.out.println("\n             p      tau       x        "+
+										"xLim");
+								if(poly != null) {
+									for(int j=0; j<n-1; j++) {
+										System.out.format("%3d: %3s %8.6f %8.6f %6.2f %6.2f %6.2f\n", 
+												j, flag[j], pBrn[j], tauBrn[j], Math.toDegrees(xBrn[j]), 
+												Math.toDegrees(xLim[0][j]), Math.toDegrees(xLim[1][j]));
+									}
+									System.out.format("%3d:     %8.6f %8.6f %6.2f\n", 
+											n-1, pBrn[n-1], tauBrn[n-1], Math.toDegrees(xBrn[n-1]));
+								} else {
+									System.out.format("%3d:     %8.6f  %8.6f  %6.2f\n", 0, pBrn[0], 
+											tauBrn[0], Math.toDegrees(xRange[0]));
+									for(int j=1; j<n-1; j++) {
+										System.out.format("%3d:     %8.6f  %8.6f\n", j, pBrn[j], 
+												tauBrn[j]);
+									}
+									System.out.format("%3d:     %8.6f  %8.6f  %6.2f\n", n-1, pBrn[n-1], 
+											tauBrn[n-1], Math.toDegrees(xRange[1]));
 								}
-								System.out.format("%3d:     %8.6f  %8.6f  %6.2f\n", n-1, pBrn[n-1], 
-										tauBrn[n-1], Math.toDegrees(xRange[1]));
 							}
 						}
 					}
+				} else {
+					System.out.format("\n          phase = %s is useless\n", ref.phCode);
 				}
 			} else {
-				System.out.format("\n          phase = %s is useless\n", ref.phCode);
+				if(ref.isUpGoing) System.out.format("\n          phase = %s up doesn't exist\n", 
+						ref.phCode);
+				else System.out.format("\n          phase = %s doesn't exist\n", ref.phCode);
 			}
-		} else {
-			if(ref.isUpGoing) System.out.format("\n          phase = %s up doesn't exist\n", 
-					ref.phCode);
-			else System.out.format("\n          phase = %s doesn't exist\n", ref.phCode);
 		}
 	}
 	

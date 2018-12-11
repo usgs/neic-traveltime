@@ -3,6 +3,7 @@ package gov.usgs.traveltime;
 import java.util.Arrays;
 
 import gov.usgs.traveltime.tables.TauInt;
+import gov.usgs.traveltime.tables.Decimate;
 
 /**
  * Store volatile up-going branch data for one wave type.  Note that all 
@@ -105,7 +106,7 @@ public class UpDataVol {
 		if(Math.abs(ref.pTauUp[iUp]-pMax) <= TauUtil.DTOL) corrTau = false;
 		else corrTau = true;		
 		
-		pMax = pSource;
+		pMax = Math.min(pMax, pSource);
 		// Correct the up-going tau values to the exact source depth.
 /*	System.out.println("Partial integrals: "+(float)pSource+" - "+
 				(float)modPri.ref.pMod[iSrc]+"  "+(float)zSource+" - "+
@@ -201,8 +202,9 @@ public class UpDataVol {
 	 */
 	public double[] realUp(double pBrn[], double tauBrn[], double[] xRange, 
 			double xMin) throws Exception {
-		int power;
+		int power, len;
 		double depth, dp;
+		boolean[] keep;
 		
 		depth = cvt.realZ(zSource);
 		if(depth <= cvt.zNewUp) {
@@ -236,8 +238,26 @@ public class UpDataVol {
 		} else {
 			// For deeper sources, it is enough to decimate the ray 
 			// parameter grid we already have.
-			pDec = dec.decXFast(pBrn, tauBrn, xRange, xMin);
-			tauDec = dec.getDecTau();
+			keep = dec.fastDecimation(pBrn, tauBrn, xRange, xMin);
+			if(keep != null) {
+				// Do the decimation.
+				len = 0;
+				for(int k=0; k<keep.length; k++) {
+					if(keep[k]) len++;
+				}
+				pDec = new double[len];
+				tauDec = new double[len];
+				for(int k=0, l=0; k<keep.length; k++) {
+					if(keep[k]) {
+						pDec[l] = pBrn[k];
+						tauDec[l++] = tauBrn[k];
+					}
+				}
+			} else {
+				// We don't need to decimate.
+				pDec = Arrays.copyOf(pBrn, pBrn.length);
+				tauDec = Arrays.copyOf(tauBrn, tauBrn.length);
+			}
 		}
 		return pDec;
 	}

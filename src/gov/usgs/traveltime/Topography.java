@@ -3,6 +3,7 @@ package gov.usgs.traveltime;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
@@ -16,20 +17,21 @@ import java.nio.ShortBuffer;
  * @author Ray Buland
  *
  */
-public class Topography {
+public class Topography implements Serializable {
+	private static final long serialVersionUID = 1L;
 	short[][] topo;						// Global topography on a 20" grid in kilometers
-//final String topoFile = "../../Documents/Work/Models/ETOPObase.smth";
 	TopoLons topoLons;				// Virtual array of longitude sample points
 	TopoLats topoLats;				// Virtual array of latitude sample points
 	
 	/**
 	 * The constructor reads in the topography file.
 	 * 
+	 * @param topoFile Name of the topography file
 	 * @throws IOException On any I/O error or data mismatch
 	 */
-	public Topography() throws IOException {
+	public Topography(String topoFile) throws IOException {
 		// Read the topography data.
-		readTopo();
+		readTopo(topoFile);
 		// Set up the virtual arrays of latitude and longitude sample points.
 		topoLons = new TopoLons();
 		topoLats = new TopoLats();
@@ -38,9 +40,10 @@ public class Topography {
 	/**
 	 * Read the topography file.
 	 * 
+	 * @param topoFile Name of the topography file
 	 * @throws IOException On any I/O error or data mismatch
 	 */
-	private void readTopo() throws IOException {
+	private void readTopo(String topoFile) throws IOException {
 			byte[] byteArray;
 			int bytesRead, recLen = 0, recLast;
 			@SuppressWarnings("unused")
@@ -57,7 +60,7 @@ public class Topography {
 			ShortBuffer shorts = byteBuf.asShortBuffer();
 			
 			// Open the topo file.
-			in = new BufferedInputStream(new FileInputStream(TauUtil.model("topo.dat")));
+			in = new BufferedInputStream(new FileInputStream(topoFile));
 			
 			// Read the record header.
 			bytesRead = in.read(byteArray, 0, 4);

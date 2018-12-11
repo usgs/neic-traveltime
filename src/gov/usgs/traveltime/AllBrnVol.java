@@ -66,7 +66,7 @@ public class AllBrnVol {
     branches = new BrnDataVol[ref.branches.length];
 		spline = new Spline();
     for (int j = 0; j < branches.length; j++) {
-      branches[j] = new BrnDataVol(ref.branches[j], pUp, sUp, cvt, spline);
+      branches[j] = new BrnDataVol(ref.branches[j], pUp, sUp, cvt, ref.auxtt, spline);
     }
   }
 
@@ -177,11 +177,11 @@ public class AllBrnVol {
 					// Note that a source depth of zero is intrinsically different 
 					// from any positive depth (i.e., no up-going phases).
 					zSource = 0d;
-					dTdDepth = 1d/cvt.pNorm;
+					dTdDepth = 1d/cvt.vNorm;
 				} else {
 					zSource = Math.min(Math.log(Math.max(1d-dSource*cvt.xNorm, 
 							TauUtil.DMIN)), 0d);
-					dTdDepth = 1d/(cvt.pNorm*(1d-dSource*cvt.xNorm));
+					dTdDepth = 1d/(cvt.vNorm*(1d-dSource*cvt.xNorm));
 				}
 				
 				// See if we want all phases.
@@ -246,6 +246,7 @@ public class AllBrnVol {
 				}
 				lastDepth = depth;
 			}
+//		dumpBrn("pS", true, true, false);
 		} else {
 			badDepth = true;
 		}
@@ -892,9 +893,8 @@ public class AllBrnVol {
 	 */
 	public void dumpHead() {
 		System.out.println("\n     "+ref.modelName);
-		System.out.format("Normalization: xNorm =%11.4e  pNorm =%11.4e  "+
-				"tNorm =%11.4e vNorm =%11.4e\n", cvt.xNorm, cvt.pNorm, cvt.tNorm, 
-				cvt.vNorm);
+		System.out.format("Normalization: xNorm =%11.4e  vNorm =%11.4e  "+
+				"tNorm =%11.4e\n", cvt.xNorm, cvt.vNorm, cvt.tNorm);
 		System.out.format("Boundaries: zUpperMantle =%7.1f  zMoho =%7.1f  "+
 				"zConrad =%7.1f\n", cvt.zUpperMantle, cvt.zMoho, cvt.zConrad);
 		System.out.format("Derived: rSurface =%8.1f  zNewUp = %7.1f  "+
@@ -937,11 +937,56 @@ public class AllBrnVol {
 	 * @param full If true, print the detailed branch specification as well
 	 * @param all If true print even more specifications
 	 * @param sci if true, print in scientific notation
+	 */
+	public void dumpBrn(int iBrn, boolean full, boolean all, boolean sci) {
+		branches[iBrn].dumpBrn(full, all, sci, false, false);
+	}
+	
+	/**
+	 * Print data for one travel-time phase code for debugging purposes.
+	 * 
+	 * @param phCode Phase code
+	 * @param full If true, print the detailed branch specification as well
+	 * @param all If true print even more specifications
+	 * @param sci if true, print in scientific notation
+	 */
+	public void dumpBrn(String phCode, boolean full, boolean all, boolean sci) {
+		for(int j=0; j<branches.length; j++) {
+			if(branches[j].phCode.equals(phCode)) 
+				branches[j].dumpBrn(full, all, sci, false, false);
+		}
+	}
+	
+	/**
+	 * Print data for all travel-time branches for debugging purposes.
+	 * 
+	 * @param full If true, print the detailed branch specification as well
+	 * @param all If true print even more specifications
+	 * @param sci if true, print in scientific notation
 	 * @param useful If true, only print "useful" crustal phases
 	 */
-	public void dumpBrn(int iBrn, boolean full, boolean all, boolean sci, 
+	public void dumpBrn(boolean full, boolean all, boolean sci, 
 			boolean useful) {
-		branches[iBrn].dumpBrn(full, all, sci, useful);
+		for(int j=0; j<branches.length; j++) {
+			branches[j].dumpBrn(full, all, sci, useful, false);
+		}
+	}
+	
+	/**
+	 * Print data for all travel-time branches that have at least one caustic.  
+	 * This turns out to be particularly useful for finding instabilities in 
+	 * the interpolation.
+	 * 
+	 * @param full If true, print the detailed branch specification as well
+	 * @param all If true print even more specifications
+	 * @param sci if true, print in scientific notation
+	 * @param useful If true, only print "useful" crustal phases
+	 */
+	public void dumpCaustics(boolean full, boolean all, boolean sci, 
+			boolean useful) {
+		for(int j=0; j<branches.length; j++) {
+			branches[j].dumpBrn(full, all, sci, useful, true);
+		}
 	}
 	
 	/**
@@ -953,26 +998,11 @@ public class AllBrnVol {
 	 * @param sci if true, print in scientific notation
 	 * @param useful If true, only print "useful" crustal phases
 	 */
-	public void dumpBrn(String seg, boolean full, boolean all, boolean sci,
+	public void dumpSeg(String seg, boolean full, boolean all, boolean sci,
 			boolean useful) {
 		for(int j=0; j<branches.length; j++) {
 			if(branches[j].getPhSeg().equals(seg)) 
-				branches[j].dumpBrn(full, all, sci, useful);
-		}
-	}
-	
-	/**
-	 * Print data for all travel-time segments for debugging purposes.
-	 * 
-	 * @param full If true, print the detailed branch specification as well
-	 * @param all If true print even more specifications
-	 * @param sci if true, print in scientific notation
-	 * @param useful If true, only print "useful" crustal phases
-	 */
-	public void dumpBrn(boolean full, boolean all, boolean sci, 
-			boolean useful) {
-		for(int j=0; j<branches.length; j++) {
-			branches[j].dumpBrn(full, all, sci, useful);
+				branches[j].dumpBrn(full, all, sci, useful, false);
 		}
 	}
 	

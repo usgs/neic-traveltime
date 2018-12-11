@@ -1,6 +1,9 @@
 package gov.usgs.traveltime;
 
+import java.io.Serializable;
 import java.util.Arrays;
+
+import gov.usgs.traveltime.tables.BrnData;
 
 /**
  * Store all non-volatile information associated with one travel-time 
@@ -10,7 +13,8 @@ import java.util.Arrays;
  * @author Ray Buland
  *
  */
-public class BrnDataRef {
+public class BrnDataRef implements Serializable {
+	private static final long serialVersionUID = 1L;
 	final String phCode;					// Branch phase code
 	final String[] uniqueCode;		// Unique phase codes (oxymoron?)
 	final String phSeg;						// Generic phase code for all branches in this segment
@@ -18,6 +22,7 @@ public class BrnDataRef {
 	final String phAddOn;					// Phase code of an associated add-on phase
 	final String phRefl;					// Type of bounce point
 	final String convRefl;				// Reflection or conversion on reflection
+	final String turnShell;				// Name of the model shell where the rays turn
 	final boolean isUpGoing;			// True if this is an up-going branch
 	final boolean hasDiff;				// True if this branch is also diffracted
 	final boolean hasAddOn;				// True if this branch has an associated add-on phase
@@ -27,11 +32,11 @@ public class BrnDataRef {
 	final int countSeg;						// Number of mantle traversals
 	final double[] pRange;				// Slowness range for this branch
 	final double[] xRange;				// Distance range for this branch
+	final double[] rRange;				// Radius range where the rays turn
 	final double xDiff;						// Maximum distance of an associated diffracted phase
 	final double[] pBrn;					// Slowness grid for this branch
 	final double[] tauBrn;				// Tau for each grid point
 	final double[][] basis;				// Basis function coefficients for each grid point
-	final AuxTtRef auxtt;					// Auxiliary data
 	
 	/**
 	 * Load data from the FORTRAN file reader for one branch.  The file 
@@ -49,22 +54,11 @@ public class BrnDataRef {
 		
 		// Do phase code.
 		phCode = in.phCode[indexBrn];
-		uniqueCode = new String[2];
-		uniqueCode[0] = TauUtil.uniqueCode(phCode);
-		if(phCode.contains("ab")) {
-			uniqueCode[1] = uniqueCode[0].replace("ab", "bc");
-		} else {
-			uniqueCode[1] = null;
-		}
-		
-		// Remember the auxiliary data and the branch statistics and ellipticity.
-		this.auxtt = auxtt;
 		
 		// Do segment summary information.
 		phSeg = segCode;
 		if(in.typeSeg[indexSeg][1] <= 0) isUpGoing = true;
 		else isUpGoing = false;
-		isUseless = auxtt.isChaff(phCode);
 		// The three types are: 1) initial, 2) down-going, and 3) up-coming.
 		// For example, sP would be S, P, P, while ScP would be S, S, P.
 		typeSeg = new char[3];
@@ -99,7 +93,36 @@ public class BrnDataRef {
 			pRange[j] = in.pBrn[indexBrn][j];
 			xRange[j] = in.xBrn[indexBrn][j];
 		}
-				
+
+		// Set up the branch specification.
+		int start = in.indexBrn[indexBrn][0]-1;
+		int end = in.indexBrn[indexBrn][1];
+		pBrn = Arrays.copyOfRange(in.pSpec, start, end);
+		tauBrn = Arrays.copyOfRange(in.tauSpec, start, end);
+		basis = new double[5][];
+		for(int k=0; k<5; k++) {
+			basis[k] = Arrays.copyOfRange(in.basisSpec[k], start, end);
+		}
+		
+		/*
+		 * This section draws only on preset information within the 
+		 * Java code (i.e., not the model).  Although it is the same for 
+		 * any constructor, it must be duplicated because the variables 
+		 * being set are final.
+		 */
+		
+		// Set up the unique code (for plotting).
+		uniqueCode = new String[2];
+		uniqueCode[0] = TauUtil.uniqueCode(phCode);
+		if(phCode.contains("ab")) {
+			uniqueCode[1] = uniqueCode[0].replace("ab", "bc");
+		} else {
+			uniqueCode[1] = null;
+		}
+		
+		// Set the useless phase flag.
+		isUseless = auxtt.isChaff(phCode);
+		
 		// Set up diffracted and add-on phases.
 		if(!isUpGoing) {
 			hasDiff = extra.hasDiff(phCode);
@@ -149,15 +172,131 @@ public class BrnDataRef {
 			phRefl = null;
 			convRefl = null;
 		}
+		
+		// We don't get shell information from the Fortran files.
+		turnShell = null;
+		rRange = null;
+	}
+	
+	/**
+	 * Load data from the tau-p table generation branch data into this 
+	 * class supporting the actual travel-time generation.
+	 * 
+	 * @param brnData Travel-time table generation branch data
+	 * @param indexBrn FORTRAN branch index
+	 * @param extra List of extra phases
+	 * @param auxtt Auxiliary data source
+	 */
+	public BrnDataRef(BrnData brnData, int indexBrn, ExtraPhases extra, 
+			AuxTtRef auxtt) {
+		
+		// Do phase code.
+		phCode = brnData.getPhCode();
+		
+		// Do segment summary information.
+		phSeg = brnData.getPhSeg();
+		isUpGoing = brnData.getIsUpGoing();
+		// The three types are: 1) initial, 2) down-going, and 3) up-coming.
+		// For example, sP would be S, P, P, while ScP would be S, S, P.
+		typeSeg = Arrays.copyOf(brnData.getTypeSeg(), 3);
+		// We need to know whether to add or subtract the up-going correction.
+		// For example, the up-going correction would be subtracted for P, but 
+		// added for pP.
+		signSeg = brnData.getSignSeg();
+		// We might need to add or subtract the up-going correction more than 
+		// once.
+		countSeg = brnData.getCountSeg();
+		
+		// Do branch summary information.
+		pRange = Arrays.copyOf(brnData.getPrange(), 2);
+		xRange = Arrays.copyOf(brnData.getXrange(), 2);
 
 		// Set up the branch specification.
-		int start = in.indexBrn[indexBrn][0]-1;
-		int end = in.indexBrn[indexBrn][1];
-		pBrn = Arrays.copyOfRange(in.pSpec, start, end);
-		tauBrn = Arrays.copyOfRange(in.tauSpec, start, end);
+		pBrn = Arrays.copyOf(brnData.getP(), brnData.getP().length);
+		tauBrn = Arrays.copyOf(brnData.getTau(), brnData.getTau().length);
 		basis = new double[5][];
 		for(int k=0; k<5; k++) {
-			basis[k] = Arrays.copyOfRange(in.basisSpec[k], start, end);
+			basis[k] = Arrays.copyOf(brnData.getBasis(k), brnData.getBasis(k).length);
+		}
+		
+		/*
+		 * This section draws only on preset information within the 
+		 * Java code (i.e., not the model).  Although it is the same for 
+		 * any constructor, it must be duplicated because the variables 
+		 * being set are final.
+		 */
+		
+		// Set up the unique code (for plotting).
+		uniqueCode = new String[2];
+		uniqueCode[0] = TauUtil.uniqueCode(phCode);
+		if(phCode.contains("ab")) {
+			uniqueCode[1] = uniqueCode[0].replace("ab", "bc");
+		} else {
+			uniqueCode[1] = null;
+		}
+		
+		// Set the useless phase flag.
+		isUseless = auxtt.isChaff(phCode);
+		
+		// Set up diffracted and add-on phases.
+		if(!isUpGoing) {
+			hasDiff = extra.hasDiff(phCode);
+			hasAddOn = extra.hasAddOn(phCode, xRange[1]);
+		} else {
+			hasDiff = false;
+			hasAddOn = false;
+		}
+		
+		// Handle a diffracted branch.
+		if(hasDiff) {
+			phDiff = extra.getPhDiff();
+			xDiff = extra.getPhLim();
+		} else {
+			phDiff = "";
+			xDiff = 0d;
+		}
+		
+		// Handle an add-on phase.
+		if(hasAddOn) {
+			phAddOn = extra.getPhAddOn();
+			// Add-on flags can be different than the base phase.
+		} else {
+			phAddOn = "";
+		}
+		
+		// Set up the type of surface reflection, if any.
+		if(signSeg > 0 && !isUpGoing) {
+			if(typeSeg[0] == 'P') {
+				if(typeSeg[1] == 'P') phRefl = "pP";
+				else phRefl = "pS";
+			} else {
+				if(typeSeg[1] == 'P') phRefl = "sP";
+				else phRefl = "sS";
+			}
+			convRefl = phRefl.toUpperCase();
+		} else if(countSeg > 1) {
+			if(typeSeg[1] == 'P') {
+				if(typeSeg[2] == 'P') phRefl = "PP";
+				else phRefl = "PS";
+			} else {
+				if(typeSeg[2] == 'P') phRefl = "SP";
+				else phRefl = "SS";
+			}
+			convRefl = phRefl.toUpperCase();
+		} else {
+			phRefl = null;
+			convRefl = null;
+		}
+		
+		// Set up the shell information.  Note that this the shell  
+		// information can be handy for debugging new Earth models.
+		turnShell = brnData.getTurnShell();
+		double[] temp;
+		temp = brnData.getRrange();
+		if(temp != null) {
+			rRange = Arrays.copyOf(temp, 2);
+		} else {
+			rRange = null;
 		}
 	}
 	
@@ -188,14 +327,14 @@ public class BrnDataRef {
 	 */
 	public void dumpBrn(boolean full) {
 		if(isUpGoing) {
-			System.out.format("\n          phase = %s up  %s  ", phCode, uniqueCode);
+			System.out.format("\n          phase = %s up  %s  ", phCode, uniqueCode[0]);
 			if(hasDiff) System.out.format("diff = %s  ", phDiff);
 			if(hasAddOn) System.out.format("add-on = %s  ", phAddOn);
 			System.out.format("isUseless = %b\n", isUseless);
 			System.out.format("Segment: code = %s  type = %c        sign = %2d"+
 					"  count = %d\n", phSeg, typeSeg[0], signSeg, countSeg);
 		} else {
-			System.out.format("\n          phase = %s  %s  ", phCode, uniqueCode);
+			System.out.format("\n          phase = %s  %s  ", phCode, uniqueCode[0]);
 			if(hasDiff) System.out.format("diff = %s  ", phDiff);
 			if(hasAddOn) System.out.format("add-on = %s  ", phAddOn);
 			System.out.format("isUseless = %b\n", isUseless);
@@ -208,6 +347,10 @@ public class BrnDataRef {
 		System.out.format("Branch: pRange = %8.6f - %8.6f  xRange = %6.2f - %6.2f\n", 
 				pRange[0], pRange[1], Math.toDegrees(xRange[0]), Math.toDegrees(xRange[1]));
 		if(hasDiff) System.out.format("        xDiff = %6.2f\n", Math.toDegrees(xDiff));
+		if(turnShell != null) {
+			System.out.format("Shell: %7.2f-%7.2f %s\n", rRange[0], rRange[1], 
+					turnShell);
+		}
 		
 		if(full) {
 			System.out.println("\n         p        tau                 "+

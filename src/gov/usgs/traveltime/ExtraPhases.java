@@ -88,8 +88,15 @@ public class ExtraPhases {
 	 * with it
 	 */
 	public boolean hasAddOn(String phCode, double xMin) {
-		// If we didn't read in the phase statistics, we can't do an add on.
-		if(auxtt.findFlags(phCode).ttStat == null) return false;
+		TtFlags flags;
+		
+		flags = auxtt.findFlags(phCode);
+		// Check for phases missing from the groups file.
+		if(flags == null) {
+			System.out.println("Warning: "+phCode+" is not in the groups.txt file!");
+			return false;
+		}
+		if(flags.ttStat == null) return false;
 		// Otherwise, see if an add on phase is listed.
 		for(int j=0; j<baseCode.length; j++) {
 			if(phCode.equals(baseCode[j])) {

@@ -20,7 +20,6 @@ public class ModelSample {
 	 * oblateness is small enough (~1/300) to be considered a perturbation.
 	 * 
 	 */
-	boolean isDisc;	// True if this point is at a velocity discontinuity
 	double r;				// Radius in kilometers
 	double vp;			// Isotropic velocity in kilometers/second
 	double vs;			// Isotropic velocity in kilometers/second
@@ -37,10 +36,9 @@ public class ModelSample {
 	 * @param vsv Vertically polarized S velocity in kilometers/second
 	 * @param vsh Horizontally polarized S velocity in kilometers/second
 	 * @param eta Anisotropy parameter
-	 * @param isDisc True if this sample is at a discontinuity
 	 */
 	public ModelSample(double r, double vpv, double vph, double vsv, double vsh, 
-			double eta, boolean isDisc) {
+			double eta) {
 		
 		this.r = r;
 		
@@ -60,10 +58,33 @@ public class ModelSample {
 	}
 	
 	/**
-	 * Set the discontinuity flag.
+	 * Create an isotropic model sample.
+	 * 
+	 * @param r	Radius in kilometers
+	 * @param vp P velocity in kilometers/second
+	 * @param vs S velocity in kilometers/second
 	 */
-	protected void setDisc() {
-		isDisc = true;
+	public ModelSample(double r, double vp, double vs) {
+		
+		this.r = r;
+		this.vp = vp;
+		this.vs = vs;
+		// Mask fluid areas.
+		if(vs == 0d) vs = vp;
+	}
+	
+	/**
+	 * Create a model sample by copying from another model sample.
+	 * 
+	 * @param sample Reference model sample
+	 */
+	public ModelSample(ModelSample sample) {
+		r = sample.r;
+		vp = sample.vp;
+		vs = sample.vs;
+		z = sample.z;
+		slowP = sample.slowP;
+		slowS = sample.slowS;
 	}
 	
 	/**
@@ -80,29 +101,44 @@ public class ModelSample {
 	 * @param convert Model sensitive conversion constants
 	 */
 	public void flatten(ModConvert convert) {
-		z = Math.log(r*convert.xNorm);
-		slowP = r*convert.tNorm/vp;
-		slowS = r*convert.tNorm/vs;
+		z = convert.flatZ(r);
+		slowP = convert.flatP(vp, r);
+		slowS = convert.flatP(vs, r);
+	}
+	
+	/**
+	 * Getter for slowness.
+	 * 
+	 * @param type Slowness type (P = P-wave, S = S-wave)
+	 * @return Non-dimensional Earth flattened slowness
+	 */
+	public double getSlow(char type) {
+		if(type == 'P') {
+			return slowP;
+		} else {
+			return slowS;
+		}
 	}
 	
 	/**
 	 * Print the model sample.
 	 * 
-	 * @param j Sample index
 	 * @param flat If true print the Earth flattened parameters
 	 * @param convert If not null, convert to dimensional depth
+	 * @return String describing this model sample
 	 */
-	public void printSample(int j, boolean flat, ModConvert convert) {
+	public String printSample(boolean flat, ModConvert convert) {
 		
 		if(flat) {
 			if(convert == null) {
-				System.out.format("\t%3d: %9.4f %9.6f %9.6f\n", j, z, slowP, slowS);
-			} else {
-				System.out.format("\t%3d: %9.2f %9.6f %9.6f\n", j, convert.realZ(z), 
+				return String.format("%7.2f %9.4f %8.6f %8.6f", r, z, 
 						slowP, slowS);
+			} else {
+				return String.format("%8.2f %7.2f %8.6f %8.6f", r, 
+						convert.realZ(z), slowP, slowS);
 			}
 		} else {
-			System.out.format("\t%3d: %9.2f %7.4f %7.4f\n", j, r, vp, vs);
+			return String.format("%9.2f %7.4f %7.4f", r, vp, vs);
 		}
 	}
 }

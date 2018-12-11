@@ -1,5 +1,7 @@
 package gov.usgs.traveltime;
 
+import java.io.Serializable;
+
 /**
  * Implements the Dziewonski &amp; Gilbert ellipticity correction 
  * algorithm for one phase.
@@ -7,7 +9,8 @@ package gov.usgs.traveltime;
  * @author Ray Buland
  *
  */
-public class Ellip {
+public class Ellip implements Serializable {
+	private static final long serialVersionUID = 1L;
 	final String phCode;					// Phase code
 	final double minDelta;				// Minimum distance in degrees
 	final double maxDelta;				// Maximum distance in degrees

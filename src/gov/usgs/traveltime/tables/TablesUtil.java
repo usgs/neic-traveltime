@@ -8,34 +8,9 @@ package gov.usgs.traveltime.tables;
  */
 public class TablesUtil {
 	/**
-	 * Default inner core radius in kilometers.
+	 * Increment in radius in kilometers to sample the reference Earth model.
 	 */
-	public static double DEFINNERCORE = 1217d;
-	/**
-	 * Default outer core radius in kilometers.
-	 */
-	public static double DEFOUTERCORE = 3482d;
-	/**
-	 * Default upper mantle radius in kilometers.  This corresponds to 
-	 * the 410 kilometer depth discontinuity.
-	 */
-	public static double DEFUPPERMANTLE = 5961d;
-	/**
-	 * Default Moho radius in kilometers.  This corresponds to a 
-	 * crustal thickness of 35 kilometers.
-	 */
-	public static double DEFMOHO = 6336d;
-	/**
-	 * Default Conrad radius in kilometers.  This corresponds to an 
-	 * upper crust thickness of 20 kilometers.
-	 */
-	public static double DEFCONRAD = 6351d;
-	/**
-	 * Default radius of the Earth in kilometers.  This doesn't 
-	 * necessarily match what's in the textbooks, but it's the right 
-	 * value for a spherically averaged Earth.
-	 */
-	public static double DEFRADIUS = 6371d;
+	public static double RESAMPLE = 50d;
 	/**
 	 * Maximum non-dimensional increment between successive slowness 
 	 * samples.
@@ -55,4 +30,42 @@ public class TablesUtil {
 	 * complex regional models.
 	 */
 	public static double[] DELX = {300d, 300d, 150d, 150d, 100d, 100d};
+	/**
+	 * The target range spacing for the up-going branch proxy in kilometers.
+	 */
+	public static double DELXUP = 400d;
+	/**
+	 * Sets the dividing line (as a ratio) between trusting the default 
+	 * up-going decimation and keeping some additional ray parameters.
+	 */
+	public static double PLIM = 0.7d;
+	/**
+	 * Ray parameters closer together than this non-dimensional tolerance 
+	 * will use the default up-going decimation even if we're looking to keep 
+	 * some additional ray parameters.
+	 */
+	public static double PTOL = 0.03d;
+	/**
+	 * Maximum iterations for root finding algorithms (e.g., for 
+	 * finding caustics).
+	 */
+	public static int MAXEVAL = 30;
+	/**
+	 * Non-dimensional tolerance for sampling range (ray travel distance).
+	 */
+	public static double XTOL = 5e-6d;
+	/**
+	 * Relative velocity tolerance.  If velocity is within this tolerance 
+	 * across an apparent Earth model discontinuity, make the velocity 
+	 * continuous.
+	 */
+	public static double VELOCITYTOL = 2e-5d;
+	/**
+	 * Non-dimensional back off when dXdP is infinite (at the top of shells).
+	 */
+	public static double SLOWOFF = 1e-6d;
+	/**
+	 * The higher the debug level, the more output you get.
+	 */
+	public static int deBugLevel = 0;
 }

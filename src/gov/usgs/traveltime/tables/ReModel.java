@@ -1,5 +1,8 @@
 package gov.usgs.traveltime.tables;
 
+import gov.usgs.traveltime.AllBrnRef;
+import gov.usgs.traveltime.AuxTtRef;
+import gov.usgs.traveltime.TauUtil;
 import gov.usgs.traveltime.TtStatus;
 
 /**
@@ -18,25 +21,35 @@ public class ReModel {
 	 * be generated on the fly.
 	 * 
 	 * @param args Command line arguments
+	 * @throws Exception On an illegal integration interval
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
+		double sysTime;
 		String earthModel = "ak135";
-		EarthModel reModel;
+		MakeTables make;
+		AuxTtRef auxTT = null;
+		AllBrnRef allRef;
 		TtStatus status;
 		
-		reModel = new EarthModel(earthModel, true);
-		// Read the model.
-		status = reModel.readModel();
-		System.out.println("Read status = "+status);
-		// Print it out.
+		TablesUtil.deBugLevel = 1;
+		sysTime = System.currentTimeMillis();
+		make = new MakeTables(earthModel);
+		status = make.buildModel(TauUtil.model("m"+earthModel+".mod"), 
+				TauUtil.model("phases.txt"));
 		if(status == TtStatus.SUCCESS) {
-			// Print the shell summaries.
-			reModel.printShells();
-			// Print out the radial version.
-			reModel.printModel(false, false);
-			// Print out the Earth flattened version.
-			reModel.printModel(true, true);
-			reModel.printCritical();
+			// Build the branch reference classes.
+			auxTT = new AuxTtRef(true, false, false);
+			allRef = make.fillAllBrnRef(null, auxTT);
+			System.out.format("\n***** Table generation time: %5.3f *****\n",
+					0.001*(System.currentTimeMillis()-sysTime));
+//		allRef.dumpHead();
+//		allRef.dumpMod('P', true);
+//		allRef.dumpMod('S', true);
+			allRef.dumpBrn(false);
+//		allRef.dumpUp('P');
+//		allRef.dumpUp('S');
+		} else {
+			System.out.println("Read status = "+status);
 		}
 	}
 }

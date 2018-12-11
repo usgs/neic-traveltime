@@ -1,5 +1,7 @@
 package gov.usgs.traveltime;
 
+import java.io.Serializable;
+
 /**
  * Virtual array of ellipticity correction sample depths.  In this 
  * case the virtual array maps to a physical array.
@@ -7,7 +9,8 @@ package gov.usgs.traveltime;
  * @author Ray Buland
  *
  */
-public class EllipDeps implements GenIndex {
+public class EllipDeps implements GenIndex, Serializable {
+	private static final long serialVersionUID = 1L;
 	// Ellipticity depths in kilometers.
 	final double[] ellipDeps = {0d, 100d, 200d, 300d, 500d, 700d};	
 	

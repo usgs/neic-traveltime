@@ -2,7 +2,11 @@ package gov.usgs.traveltime;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.channels.FileLock;
 // import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Map;
@@ -39,9 +43,13 @@ public class AuxTtRef {
 	// Flag storage by phase
 	final TreeMap<String, TtFlags> phFlags;	// Phase group information by phase
 	// Topography.
-	final Topography topoMap;									// Topography for bounce points
-	TtStat ttStat;					// Phase statistics
-	Ellip ellip, upEllip;		// Ellipticity correction(s)
+	final Topography topoMap;								// Topography for bounce points
+	TtStat ttStat;													// Phase statistics
+	Ellip ellip, upEllip;										// Ellipticity correction(s)
+	// Set up serialization.
+	String serName = "ttaux.ser";						// Serialized file name
+	String[] fileNames = {"groups.txt", "ttstats.txt", "ellip.txt", 
+			"topo.dat"};												// Raw input file names
 	// Set up the reader.
 	Scanner scan;
 	boolean priGroup = false;
@@ -61,42 +69,58 @@ public class AuxTtRef {
 	 * @param readEllip If true, read the ellipticity corrections
 	 * @param readTopo If true, read the topography file
 	 * @throws IOException If opens fail
+	 * @throws ClassNotFoundException Serialization input fails
 	 */
+	@SuppressWarnings("unchecked")
 	public AuxTtRef(boolean readStats, boolean readEllip, boolean readTopo) 
-			throws IOException {
+			throws IOException, ClassNotFoundException {
+		String[] absNames;
 		BufferedInputStream inGroup, inStats, inEllip;
+		FileInputStream serIn;
+		FileOutputStream serOut;
+		ObjectInputStream objIn;
+		ObjectOutputStream objOut;
+		FileLock lock;
 		EllipDeps eDepth;
 		
 		// Set up the properties.
 		if(TauUtil.modelPath == null) {
 			TauUtil.getProperties();
 		}
+		// Create absolute path names.
+		absNames = new String[fileNames.length];
+		for(int j=0; j<fileNames.length; j++) {
+			absNames[j] = TauUtil.model(fileNames[j]);
+		}
 		
-		// Open and read the phase groups file.
-		inGroup = new BufferedInputStream(new FileInputStream(TauUtil.model("groups.txt")));
-		scan = new Scanner(inGroup);
-		// Prime the pump.
-		nextCode = scan.next();
-		// Handle local-regional phases separately.
-		regional = read1Group();
-		// Handle depth phases separately.
-		depth = read1Group();
-		// Handle down weighted phases separately.
-		downWeight = read1Group();
-		// Handle used phases separately.
-		canUse = read1Group();
-		// Handle useless phases separately.
-		chaff = read1Group();
-		// Handle "normal" groups.
-		phGroups = new ArrayList<PhGroup>();
-		auxGroups = new ArrayList<PhGroup>();
-		readGroups();
-		inGroup.close();
-		
-		if(readStats) {
+		// If any of the raw input files have changed, regenerate the 
+		// serialized file.
+		if(FileChanged.isChanged(TauUtil.model(serName), absNames)) {
+			// Open and read the phase groups file.
+			inGroup = new BufferedInputStream(new FileInputStream(
+					absNames[0]));
+			scan = new Scanner(inGroup);
+			// Prime the pump.
+			nextCode = scan.next();
+			// Handle local-regional phases separately.
+			regional = read1Group();
+			// Handle depth phases separately.
+			depth = read1Group();
+			// Handle down weighted phases separately.
+			downWeight = read1Group();
+			// Handle used phases separately.
+			canUse = read1Group();
+			// Handle useless phases separately.
+			chaff = read1Group();
+			// Handle "normal" groups.
+			phGroups = new ArrayList<PhGroup>();
+			auxGroups = new ArrayList<PhGroup>();
+			readGroups();
+			inGroup.close();
+			
 			// Open and read the travel-time statistics file.
 			inStats = new BufferedInputStream(new FileInputStream(
-					TauUtil.model("ttstats.txt")));
+					absNames[1]));
 			scan = new Scanner(inStats);
 			ttStats = new TreeMap<String, TtStat>();
 			// Prime the pump.
@@ -108,14 +132,10 @@ public class AuxTtRef {
 				read1StatData(new TtStatLinFit(ttStat));
 			} while(scan.hasNext());
 			inStats.close();
-		} else {
-			ttStats = null;
-		}
-		
-		if(readEllip) {
+			
 			// Open and read the ellipticity correction file.
 			inEllip = new BufferedInputStream(new FileInputStream(
-					TauUtil.model("ellip.txt")));
+					absNames[2]));
 			scan = new Scanner(inEllip);
 			ellips = new TreeMap<String, Ellip>();
 			eDepth = new EllipDeps();
@@ -125,21 +145,87 @@ public class AuxTtRef {
 				ellips.put(ellip.phCode, ellip);
 			} while(scan.hasNext());
 			inEllip.close();
+			
+			// Set up the topography data.
+			topoMap = new Topography(absNames[3]);
+			
+			// Write out the serialized file.
+			serOut = new FileOutputStream(TauUtil.model(serName));
+			objOut = new ObjectOutputStream(serOut);
+			// Wait for an exclusive lock for writing.
+			lock = serOut.getChannel().lock();
+//		System.out.println("AuxTtRef write lock: valid = "+lock.isValid()+
+//				" shared = "+lock.isShared());
+			/*
+			 * The auxiliary data can be read and written very quickly, so for persistent 
+			 * applications such as the travel time or location server, serialization is 
+			 * not necessary.  However, if the travel times are needed for applications 
+			 * that start and stop frequently, the serialization should save some set up 
+			 * time.
+			 */
+			objOut.writeObject(regional);
+			objOut.writeObject(depth);
+			objOut.writeObject(downWeight);
+			objOut.writeObject(canUse);
+			objOut.writeObject(chaff);
+			objOut.writeObject(phGroups);
+			objOut.writeObject(auxGroups);
+			objOut.writeObject(ttStats);
+			objOut.writeObject(ellips);
+			objOut.writeObject(topoMap);
+			if(lock.isValid()) lock.release();
+			objOut.close();
+			serOut.close();
 		} else {
-			ellips = null;
+			// Read in the serialized file.
+			serIn = new FileInputStream(TauUtil.model(serName));
+			objIn = new ObjectInputStream(serIn);
+			// Wait for a shared lock for reading.
+			lock = serIn.getChannel().lock(0, Long.MAX_VALUE, true);
+//		System.out.println("AuxTtRef read lock: valid = "+lock.isValid()+
+//				" shared = "+lock.isShared());
+			regional = (PhGroup)objIn.readObject();
+			depth = (PhGroup)objIn.readObject();
+			downWeight = (PhGroup)objIn.readObject();
+			canUse = (PhGroup)objIn.readObject();
+			chaff = (PhGroup)objIn.readObject();
+			phGroups = (ArrayList<PhGroup>)objIn.readObject();
+			auxGroups = (ArrayList<PhGroup>)objIn.readObject();
+			/*
+			 * Note that there is a theoretical inconsistency here.  If you ask for 
+			 * ellipticity, but not statistics, you have to read the statistics anyway.  
+			 * Unfortunately, since the data is all final, once read, it can't easily 
+			 * be unread.  In practice, the auxiliary data should be all or nothing 
+			 * anyway (e.g., you need the corrections for location, but not for 
+			 * association).
+			 */
+			if(readStats || readEllip || readTopo) {
+				ttStats = (TreeMap<String, TtStat>)objIn.readObject();
+				if(readEllip || readTopo) {
+					ellips = (TreeMap<String, Ellip>)objIn.readObject();
+					if(readTopo) {
+						topoMap = (Topography)objIn.readObject();
+					} else {
+						topoMap = null;
+					}
+				} else {
+					ellips = null;
+					topoMap = null;
+				}
+			} else {
+				ttStats = null;
+				ellips = null;
+				topoMap = null;
+			}
+			if(lock.isValid()) lock.release();
+			objIn.close();
+			serIn.close();
 		}
 		
 		// Rearrange group flags, phase flags and statistics and the 
 		// ellipticity correction by phase.
 		phFlags = new TreeMap<String, TtFlags>();
 		makePhFlags();
-		
-		if(readTopo) {
-			// Set up the topography data.
-			topoMap = new Topography();
-		} else {
-			topoMap = null;
-		}
 	}
 	
 	/**

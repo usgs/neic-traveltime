@@ -1,6 +1,10 @@
 package gov.usgs.traveltime;
 
+import java.io.Serializable;
 import java.util.Arrays;
+
+import gov.usgs.traveltime.tables.TauModel;
+import gov.usgs.traveltime.tables.TauSample;
 
 /**
  * Store Earth model data for one wave type.  Note that the model is 
@@ -12,7 +16,8 @@ import java.util.Arrays;
  * @author Ray Buland
  *
  */
-public class ModDataRef {
+public class ModDataRef implements Serializable {
+	private static final long serialVersionUID = 1L;
 	final char typeMod;								// Type of model ('P' or 'S')
 	final double[] zMod;							// Flat Earth depths
 	final double[] pMod;							// Slowness samples
@@ -48,6 +53,50 @@ public class ModDataRef {
 				indexUp[j] = indexUp[j]-indexUp[1];
 			}
 		}
+	}
+	
+	/**
+	 * Load data for the Earth model for one wave type from the table 
+	 * generation process.  
+	 * 
+	 * @param finModel Travel-time table generation final tau model
+	 * @param cvt The Earth model units converter
+	 * @param typeMod Wave type ('P' or 'S')
+	 */
+	public ModDataRef(TauModel finModel, ModConvert cvt, char typeMod) {
+		int n, indexOffset;
+		TauSample sample;
+		
+		this.typeMod = typeMod;
+		this.cvt = cvt;
+		
+		n = finModel.size(typeMod);
+		zMod = new double[n];
+		pMod = new double[n];
+		indexUp = new int[n-3];
+		sample = finModel.getSample(typeMod, 1);
+		indexOffset = sample.getIndex();
+		for(int j=0; j<n; j++) {
+			sample = finModel.getSample(typeMod, j);
+			zMod[j] = sample.getZ();
+			pMod[j] = sample.getSlow();
+			if(j < n-3) indexUp[j] = Math.max(sample.getIndex()-indexOffset, -1);
+		}
+	}
+	
+	/**
+	 * Get the non-dimensional depth corresponding to an up-going branch.
+	 * 
+	 * @param iUp Index of the up-going branch
+	 * @return Non-dimensional depth
+	 */
+	public double getDepth(int iUp) {
+		for(int j=0; j<indexUp.length; j++) {
+			if(iUp == indexUp[j]) {
+				return zMod[j];
+			}
+		}
+		return Double.NaN;
 	}
 	
 	/**

@@ -1,37 +1,75 @@
 package gov.usgs.traveltime;
 
+import java.io.Serializable;
+
 /**
  * Earth model dependent unit conversions and constants.
  * 
  * @author Ray Buland
  *
  */
-public class ModConvert {
+public class ModConvert implements Serializable {
+	private static final long serialVersionUID = 1L;
 	/**
-	 * Normalization for distance (delta and depth).
+	 * Normalization for distance (delta and depth).  Note that 
+	 * this is Xn in the Fortran programs.  You need to multiply 
+	 * the distance by Xn to normalize it.
 	 */
-	public final double xNorm;		// Internal normalization constant for distance.
+	public final double xNorm;
 	/**
-	 * Normalization for slowness and ray parameter.
+	 * Normalization for velocity.  Called Pn in the Fortran code, 
+	 * this constant was intended as the normalization for slowness.  
+	 * Dividing velocity by Pn normalizes it.
 	 */
-	public final double pNorm;		// Internal normalization constant for slowness.
+	public final double vNorm;
 	/**
-	 * Normalization for travel-time and tau.
+	 * Normalization for travel-time and tau.  This is Tn in the 
+	 * Fortran code to compute travel times, but 1/Tn in the code 
+	 * to generate the tables (yuck!).
 	 */
-	public final double tNorm;		// Internal normalization constant for time.
+	public final double tNorm;
 	/**
-	 * Normalization for velocity (turns out to be the same as time).
+	 * Normalization for slowness and ray parameter.  This is a new 
+	 * constant to resolve the dichotomy in Tn.  It corresponds to 
+	 * Tn in the table generation.
 	 */
-	public final double vNorm;		// Internal normalization constant for velocity.
-	final double dTdDelta;				// Convert dT/dDelta to dimensional units.
-	final double deg2km;					// Convert degrees to kilometers.
-	final double zUpperMantle;		// Depth of the upper mantle in kilometers.
-	final double zMoho;						// Depth of the Moho in kilometers.
-	final double zConrad;					// Depth of the Conrad discontinuity in kilometers.
-	final double rSurface;				// Radius of the free surface of the Earth in kilometers.
-	final double zNewUp;					// Up-going branch replacement depth.
-	final double dTdDLg;					// dT/dDelta for Lg in seconds/degree.
-	final double dTdDLR;					// dT/dDelta for LR in seconds/degree.
+	public final double pNorm;
+	/**
+	 * Convert dT/dDelta to dimensional units.
+	 */
+	public final double dTdDelta;
+	/**
+	 * Convert degrees to kilometers.
+	 */
+	public final double deg2km;
+	/**
+	 * Depth of the upper mantle in kilometers.
+	 */
+	public final double zUpperMantle;
+	/**
+	 * Depth of the Moho in kilometers.
+	 */
+	public final double zMoho;
+	/**
+	 * Depth of the Conrad discontinuity in kilometers.
+	 */
+	public final double zConrad;
+	/**
+	 * Radius of the free surface of the Earth in kilometers.
+	 */
+	public final double rSurface;
+	/**
+	 * Up-going branch replacement depth.
+	 */
+	public final double zNewUp;
+	/**
+	 * Typical dT/dDelta for Lg in seconds/degree.
+	 */
+	public final double dTdDLg;
+	/**
+	 * Typical dT/dDelta for LR in seconds/degree.
+	 */
+	public final double dTdDLR;
 	
 	/**
 	 * Set constants from the Fortran generated *.hed file.
@@ -41,11 +79,11 @@ public class ModConvert {
 	public ModConvert(ReadTau in) {
 		// Set up the normalization.
 		xNorm = in.xNorm;
-		pNorm = in.pNorm;
+		vNorm = in.pNorm;
 		tNorm = in.tNorm;
 		// Compute some useful constants.
-		vNorm = xNorm*pNorm;
-		dTdDelta = Math.toRadians(1d/(vNorm));
+		pNorm = 1d/tNorm;
+		dTdDelta = Math.toRadians(tNorm);
 		rSurface = in.rSurface;
 		deg2km = Math.PI*rSurface/180d;
 		dTdDLg = deg2km/TauUtil.LGGRPVEL;
@@ -71,11 +109,11 @@ public class ModConvert {
 	public ModConvert(double rUpperMantle, double rMoho, double rConrad, 
 			double rSurface, double vsSurface) {
 		xNorm = 1d/rSurface;
-		pNorm = vsSurface;
+		vNorm = vsSurface;
 		// Compute some useful constants.
-		tNorm = xNorm*pNorm;
-		vNorm = tNorm;
-		dTdDelta = Math.toRadians(1d/(vNorm));
+		pNorm = xNorm*vNorm;
+		tNorm = 1d/pNorm;
+		dTdDelta = Math.toRadians(tNorm);
 		this.rSurface = rSurface;
 		deg2km = Math.PI*rSurface/180d;
 		dTdDLg = deg2km/TauUtil.LGGRPVEL;
@@ -118,7 +156,28 @@ public class ModConvert {
 	 * @return Velocity at that depth in kilometers/second
 	 */
 	public double realV(double p, double z) {
-		return realR(z)/(tNorm*p);
+		return pNorm*realR(z)/p;
+	}
+	
+	/**
+	 * Normalize radius (or depth) into units of the radius of the 
+	 * Earth
+	 * 
+	 * @param r Radius or depth in kilometers
+	 * @return Non-dimensional radius or depth
+	 */
+	public double normR(double r) {
+		return xNorm*r;
+	}	
+	
+	/**
+	 * Convert non-dimensional radius (or depth) into kilometers.
+	 * 
+	 * @param r Non-dimensional radius or depth
+	 * @return Dimensional radius or depth in kilometers
+	 */
+	public double dimR(double r) {
+		return r/xNorm;
 	}
 	
 	/**
@@ -141,6 +200,6 @@ public class ModConvert {
 	 * @return Normalized slowness
 	 */
 	public double flatP(double v, double r) {
-		return vNorm*r/v;
+		return pNorm*r/v;
 	}
 }

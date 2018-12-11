@@ -21,7 +21,16 @@ public enum TtStatus {
 	 * Something bad (probably fatal) is wrong with the Earth model 
 	 * file--intended as an external exit status.
 	 */
-	BAD_MODEL_FILE (203);			// Model file is badly formed
+	BAD_MODEL_FILE (203),			// Model file is badly formed
+	/**
+	 * Unable to do the tau-x partial integrals due to a bad model 
+	 * interval.
+	 */
+	BAD_TAU_INTERVAL (204),		// Screwed up tau model
+	/**
+	 * Unable to open the phase list file or it's empty.
+	 */
+	BAD_PHASE_LIST (205);			// Phase list is messed up
 	
 	private final int status;	// Exit flag
 	
@@ -39,7 +48,7 @@ public enum TtStatus {
 	 * 
 	 * @return Exit value
 	 */
-	int status() {
+	public int status() {
 		return status;
 	}
 }

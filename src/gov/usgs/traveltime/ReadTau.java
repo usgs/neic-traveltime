@@ -126,16 +126,15 @@ public class ReadTau {
 	 * travel-time branch information including the surface focus tau interpolation 
 	 * for a wide variety of seismic phases.
 	 * 
+	 * @param hedFileName Name of the model header file
 	 * @throws IOException Throw an exception if the input file is not laid out 
 	 * as expected
 	 */
-	public void readHeader() throws IOException {
+	public void readHeader(String hedFileName) throws IOException {
 		int bytesRead, recLen = 0, recLast;
 		
 		// Open the file.
-//	in = new BufferedInputStream(new FileInputStream(modelPath + 
-//			modelName + ".hed"));
-		in = new BufferedInputStream(new FileInputStream(TauUtil.model(modelName+".hed")));
+		in = new BufferedInputStream(new FileInputStream(hedFileName));
 		
 		/*
 		 * Read the first record.
@@ -468,16 +467,17 @@ public class ReadTau {
 	 * depth were random accessed to save memory.  In the Java implementation, the 
 	 * entire table is read into memory.
 	 * 
+	 * @param tblFileName Name of the model table file
 	 * @throws IOException Throw an exception if the input file is not laid out as 
 	 * expected
 	 */
-	public void readTable() throws IOException {
+	public void readTable(String tblFileName) throws IOException {
 		int bytesRead;
 		int recSize;
 		int[] upSize;
 		
 		// Open the table file.
-		in = new BufferedInputStream(new FileInputStream(TauUtil.model(modelName+".tbl")));
+		in = new BufferedInputStream(new FileInputStream(tblFileName));
 		
 		// Set the random access record length.  Note: the factor of four reflects 
 		// a bug in the Fortran code (the record length for direct access binary 
