@@ -61,7 +61,7 @@ public class TTSessionLocal{
 			boolean tectonic, boolean useRSTT) throws Exception {
 		
 		setModel(earthModel);
-		allBrn.newSession(sourceDepth, phases, !returnAllPhases, !returnBackBranches, 
+		allBrn.newSession(sourceDepth, phases, returnAllPhases, returnBackBranches, 
 				tectonic, useRSTT);
 	}
 	
@@ -85,8 +85,8 @@ public class TTSessionLocal{
 					throws Exception {
 		
 		setModel(earthModel);
-		allBrn.newSession(srcLat, srcLong, sourceDepth, phases, !returnAllPhases, 
-				!returnBackBranches, tectonic, useRSTT);
+		allBrn.newSession(srcLat, srcLong, sourceDepth, phases, returnAllPhases, 
+				returnBackBranches, tectonic, useRSTT);
 	}
 	
 	/**
@@ -134,7 +134,7 @@ public class TTSessionLocal{
 		
 		setModel(earthModel);
 		plotData = new PlotData(allBrn);
-		plotData.makePlot(sourceDepth, phases, !returnAllPhases, !returnBackBranches, 
+		plotData.makePlot(sourceDepth, phases, returnAllPhases, returnBackBranches, 
 				tectonic);
 		return plotData.getPlot();
 	}
@@ -289,10 +289,10 @@ public class TTSessionLocal{
 	/**
 	 * Print phase table.
 	 * 
-	 * @param useful If true, only print "useful" phases.
+	 * @param returnAllPhases If false, only print "useful" phases.
 	 */
-	public void printTable(boolean useful) {
-		allBrn.dumpTable(useful);
+	public void printTable(boolean returnAllPhases) {
+		allBrn.dumpTable(returnAllPhases);
 	}
 	
 	/**
@@ -301,11 +301,11 @@ public class TTSessionLocal{
 	 * @param full If true, print the detailed branch specification as well
 	 * @param all If true print even more specifications
 	 * @param sci if true, print in scientific notation
-	 * @param useful If true, only print "useful" crustal phases
+	 * @param returnAllPhases If false, only print "useful" crustal phases
 	 */
 	public void printBranches(boolean full, boolean all, boolean sci, 
-			boolean useful) {
-		allBrn.dumpBrn(full, all, sci, useful);
+			boolean returnAllPhases) {
+		allBrn.dumpBrn(full, all, sci, returnAllPhases);
 	}
 	
 	/**
@@ -314,11 +314,11 @@ public class TTSessionLocal{
 	 * @param full If true, print the detailed branch specification as well
 	 * @param all If true print even more specifications
 	 * @param sci if true, print in scientific notation
-	 * @param useful If true, only print "useful" crustal phases
+	 * @param returnAllPhases If false, only print "useful" crustal phases
 	 */
 	public void printCaustics(boolean full, boolean all, boolean sci, 
-			boolean useful) {
-		allBrn.dumpCaustics(full, all, sci, useful);
+			boolean returnAllPhases) {
+		allBrn.dumpCaustics(full, all, sci, returnAllPhases);
 	}
 	
 	/**

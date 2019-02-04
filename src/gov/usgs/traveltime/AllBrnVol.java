@@ -1,6 +1,5 @@
 package gov.usgs.traveltime;
 
-import com.sun.webkit.network.Util;
 import java.util.ArrayList;
 
 /**
@@ -26,8 +25,8 @@ public class AllBrnVol {
 	boolean complexRequest;						// True if this is a "complex" request
 	boolean badDepth;									// True if the depth is out of range
 	boolean badDelta;									// True if the distance is out of range
-	boolean useful;										// Do only "useful" phases (opposite of "all")
-	boolean noBackBrn;								// Suppress back branches for stability
+	boolean returnAllPhases;					// Do all phases (including useless ones)
+	boolean returnBackBranches;				// Return back branches as well as primary arrivals
 	boolean tectonic;									// True if the source is in a tectonic province
 	boolean rstt;											// Use RSTT for local phases
 	double lastDepth = Double.NaN;		// Last depth computed in kilometers
@@ -41,8 +40,8 @@ public class AllBrnVol {
   @Override
   public String toString() {
     return ref.modelName + " d=" + lastDepth + " cmplx=" + (complexSession ? "T" : "F") + 
-    		" eqcoord=" + eqLat + " " + eqLon + " del=" + staDelta + " flgs=" + (useful ? "U" : "u") 
-    		+ (noBackBrn ? "b" : "B") + (tectonic ? "T" : "t") + (rstt ? "R" : "r");
+    		" eqcoord=" + eqLat + " " + eqLon + " del=" + staDelta + " flgs=" + (!returnAllPhases ? "U" : "u") 
+    		+ (!returnBackBranches ? "b" : "B") + (tectonic ? "T" : "t") + (rstt ? "R" : "r");
 
   }
 
@@ -96,14 +95,14 @@ public class AllBrnVol {
 	 * @param longitude Source longitude in degrees
 	 * @param depth Source depth in kilometers
 	 * @param phList Array of phase use commands
-	 * @param useful If true, only provide "useful" crustal phases
-	 * @param noBackBrn If true, suppress back branches
+	 * @param returnAllPhases If false, only provide "useful" crustal phases
+	 * @param returnBackBranches If false, suppress back branches
 	 * @param tectonic If true, map Pb and Sb onto Pg and Sg
 	 * @param rstt If true, use RSTT crustal phases
 	 * @throws Exception If the depth is out of range
 	 */
 	public void newSession(double latitude, double longitude, double depth, 
-			String[] phList, boolean useful, boolean noBackBrn, boolean tectonic, 
+			String[] phList, boolean returnAllPhases, boolean returnBackBranches, boolean tectonic, 
 			boolean rstt) throws Exception {
 		// See if the epicenter makes sense.
 		if(!Double.isNaN(latitude) && latitude >= -90d && latitude <= 90d && 
@@ -117,7 +116,7 @@ public class AllBrnVol {
 			eqLat = Double.NaN;
 			eqLon = Double.NaN;
 		}
-		setSession(depth, phList, useful, noBackBrn, tectonic, rstt);
+		setSession(depth, phList, returnAllPhases, returnBackBranches, tectonic, rstt);
 	}
 		
 	/**
@@ -126,19 +125,19 @@ public class AllBrnVol {
 	 * 
 	 * @param depth Source depth in kilometers
 	 * @param phList Array of phase use commands
-	 * @param useful If true, only provide "useful" crustal phases
-	 * @param noBackBrn If true, suppress back branches
+	 * @param returnAllPhases If false, only provide "useful" crustal phases
+	 * @param returnBackBranches If false, suppress back branches
 	 * @param tectonic If true, map Pb and Sb onto Pg and Sg
 	 * @param rstt If true, use RSTT crustal phases
 	 * @throws Exception If the depth is out of range
 	 */
-	public void newSession(double depth, String[] phList, boolean useful, 
-			boolean noBackBrn, boolean tectonic, boolean rstt) 
+	public void newSession(double depth, String[] phList, boolean returnAllPhases, 
+			boolean returnBackBranches, boolean tectonic, boolean rstt) 
 			throws Exception {
 		complexSession = false;
 		eqLat = Double.NaN;
 		eqLon = Double.NaN;
-		setSession(depth, phList, useful, noBackBrn, tectonic, rstt);
+		setSession(depth, phList, returnAllPhases, returnBackBranches, tectonic, rstt);
 	}
 	
 	/**
@@ -147,14 +146,14 @@ public class AllBrnVol {
 	 * 
 	 * @param depth Source depth in kilometers
 	 * @param phList Array of phase use commands
-	 * @param useful If true, only provide "useful" crustal phases
-	 * @param noBackBrn If true, suppress back branches
+	 * @param returnAllPhases If false, only provide "useful" crustal phases
+	 * @param returnBackBranches If false, suppress back branches
 	 * @param tectonic If true, map Pb and Sb onto Pg and Sg
 	 * @param rstt If true, use RSTT crustal phases
 	 * @throws Exception If the depth is out of range
 	 */
-	private void setSession(double depth, String[] phList, boolean useful, 
-			boolean noBackBrn, boolean tectonic, boolean rstt) 
+	private void setSession(double depth, String[] phList, boolean returnAllPhases, 
+			boolean returnBackBranches, boolean tectonic, boolean rstt) 
 			throws Exception {
 		char tagBrn;
 		double xMin;
@@ -164,8 +163,8 @@ public class AllBrnVol {
 		if(depth >= 0d && depth <= TauUtil.MAXDEPTH) {
 			badDepth = false;
 			// Remember the session control flags.
-			this.useful = useful;
-			this.noBackBrn = noBackBrn;
+			this.returnAllPhases = returnAllPhases;
+			this.returnBackBranches = returnBackBranches;
 			this.tectonic = tectonic;
 			this.rstt = rstt;
 			
@@ -204,7 +203,7 @@ public class AllBrnVol {
 					for(int j=0; j<branches.length; j++) {
 						// If we only want useful phases and this one is useless, just 
 						// turn it off.
-						if(useful && ref.branches[j].isUseless) {
+						if(!returnAllPhases && ref.branches[j].isUseless) {
 							branches[j].setCompute(false);
 						}
 						// Otherwise, we're good to go.
@@ -217,7 +216,7 @@ public class AllBrnVol {
 					expandList(phList);
 					for(int j=0; j<branches.length; j++) {
 						// See if this phase is selected (unless it's NEIC-useless).
-						if(!useful || !ref.branches[j].isUseless) {
+						if(returnAllPhases || !ref.branches[j].isUseless) {
 							branches[j].setCompute(testList(ref.branches[j].phCode));
 						} else {
 							branches[j].setCompute(false);
@@ -398,7 +397,7 @@ public class AllBrnVol {
 		for(int j=0; j<branches.length; j++) {
 			// Loop over possible distances.
 			for(int i=0; i<3; i++) {
-				branches[j].getTT(i, xs[i], dSource, useful, ttList);
+				branches[j].getTT(i, xs[i], dSource, returnAllPhases, ttList);
 				// We have to add the phase statistics and other corrections at this level.
 				if(ttList.size() > lastTT) {
 					for(int k=lastTT; k<ttList.size(); k++) {
@@ -525,7 +524,7 @@ public class AllBrnVol {
 			}
 		} */
     // Sort the arrivals into increasing time order, filter, etc.
-    ttList.finish(tectonic, noBackBrn);
+    ttList.finish(tectonic, returnBackBranches);
     return ttList;
   }
 
@@ -939,7 +938,7 @@ public class AllBrnVol {
 	 * @param sci if true, print in scientific notation
 	 */
 	public void dumpBrn(int iBrn, boolean full, boolean all, boolean sci) {
-		branches[iBrn].dumpBrn(full, all, sci, false, false);
+		branches[iBrn].dumpBrn(full, all, sci, true, false);
 	}
 	
 	/**
@@ -953,7 +952,7 @@ public class AllBrnVol {
 	public void dumpBrn(String phCode, boolean full, boolean all, boolean sci) {
 		for(int j=0; j<branches.length; j++) {
 			if(branches[j].phCode.equals(phCode)) 
-				branches[j].dumpBrn(full, all, sci, false, false);
+				branches[j].dumpBrn(full, all, sci, true, false);
 		}
 	}
 	
@@ -963,12 +962,12 @@ public class AllBrnVol {
 	 * @param full If true, print the detailed branch specification as well
 	 * @param all If true print even more specifications
 	 * @param sci if true, print in scientific notation
-	 * @param useful If true, only print "useful" crustal phases
+	 * @param returnAllPhases If false, only print "useful" crustal phases
 	 */
 	public void dumpBrn(boolean full, boolean all, boolean sci, 
-			boolean useful) {
+			boolean returnAllPhases) {
 		for(int j=0; j<branches.length; j++) {
-			branches[j].dumpBrn(full, all, sci, useful, false);
+			branches[j].dumpBrn(full, all, sci, returnAllPhases, false);
 		}
 	}
 	
@@ -980,12 +979,12 @@ public class AllBrnVol {
 	 * @param full If true, print the detailed branch specification as well
 	 * @param all If true print even more specifications
 	 * @param sci if true, print in scientific notation
-	 * @param useful If true, only print "useful" crustal phases
+	 * @param returnAllPhases If false, only print "useful" crustal phases
 	 */
 	public void dumpCaustics(boolean full, boolean all, boolean sci, 
-			boolean useful) {
+			boolean returnAllPhases) {
 		for(int j=0; j<branches.length; j++) {
-			branches[j].dumpBrn(full, all, sci, useful, true);
+			branches[j].dumpBrn(full, all, sci, returnAllPhases, true);
 		}
 	}
 	
@@ -996,13 +995,13 @@ public class AllBrnVol {
 	 * @param full If true, print the detailed branch specification as well
 	 * @param all If true print even more specifications
 	 * @param sci if true, print in scientific notation
-	 * @param useful If true, only print "useful" crustal phases
+	 * @param returnAllPhases If false, only print "useful" crustal phases
 	 */
 	public void dumpSeg(String seg, boolean full, boolean all, boolean sci,
-			boolean useful) {
+			boolean returnAllPhases) {
 		for(int j=0; j<branches.length; j++) {
 			if(branches[j].getPhSeg().equals(seg)) 
-				branches[j].dumpBrn(full, all, sci, useful, false);
+				branches[j].dumpBrn(full, all, sci, returnAllPhases, false);
 		}
 	}
 	

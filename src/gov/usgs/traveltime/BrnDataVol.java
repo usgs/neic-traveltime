@@ -635,10 +635,10 @@ public class BrnDataVol {
 	 * @param depIndex Depth index (there are three possible depths)
 	 * @param xs Desired distance in radians
 	 * @param dSource Source depth in kilometers
-	 * @param useful If true only return potentially useful phases
+	 * @param returnAllPhases If false only return potentially useful phases
 	 * @param ttList A list of travel times to be filled in
 	 */
-	public void getTT(int depIndex, double xs, double dSource, boolean useful, 
+	public void getTT(int depIndex, double xs, double dSource, boolean returnAllPhases, 
 			TTime ttList) {
 		String tmpCode;
 		boolean found = false;
@@ -647,7 +647,7 @@ public class BrnDataVol {
 		TtFlags addFlags;
 		
 		// Skip non-existent and useless phases (if requested).
-		if(!exists || (useful && ref.isUseless)) return;
+		if(!exists || (!returnAllPhases && ref.isUseless)) return;
 		// On the first index, set up the conversion for dT/dDelta.
 		if(depIndex == 0) xSign = cvt.dTdDelta*Math.pow(-1d, xTries[0]+1);
 		
@@ -852,14 +852,14 @@ public class BrnDataVol {
 	 * @param full If true, print the branch specification as well
 	 * @param all If true, print even more specifications
 	 * @param sci If true, print using scientific notation
-	 * @param useful If true, omit "useless" crustal phases
+	 * @param returnAllPhases If false, omit "useless" crustal phases
 	 * @param caustics If true only print branches with caustics
 	 */
-	public void dumpBrn(boolean full, boolean all, boolean sci, boolean useful, 
+	public void dumpBrn(boolean full, boolean all, boolean sci, boolean returnAllPhases, 
 			boolean caustics) {
 		if(!caustics || iMin+iMax > 0) {
 			if(exists) {
-				if(!useful || !ref.isUseless) {
+				if(returnAllPhases || !ref.isUseless) {
 					if(ref.isUpGoing) {
 						System.out.format("\n         phase = %2s up  ", phCode);
 						if(ref.hasDiff) System.out.format("diff = %s  ", ref.phDiff);
@@ -987,10 +987,10 @@ public class BrnDataVol {
 	/**
 	 * Generate one line of a branch summary table.
 	 * 
-	 * @param useful If true, omit "useless" crustal phases
+	 * @param returnAllPhases If true, omit "useless" crustal phases
 	 */
-	public void forTable(boolean useful) {
-		if(!exists || (useful && ref.isUseless)) return;
+	public void forTable(boolean returnAllPhases) {
+		if(!exists || (!returnAllPhases && ref.isUseless)) return;
 		if(ref.isUpGoing) {
 			System.out.format("%-2s up    %7.4f %7.4f %7.2f %7.2f %7.4f"+
 					"          %c %c %c %2d %d\n", phCode, pRange[0], pRange[1], 

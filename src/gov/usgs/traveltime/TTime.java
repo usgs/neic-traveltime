@@ -83,14 +83,14 @@ public class TTime {
 	 * filtering them.
 	 * 
 	 * @param tectonic If true convert Pb and Sb into Pg and Sg
-	 * @param noBackBrn If true eliminate all back branches
+	 * @param returnBackBranches If false eliminate all back branches
 	 */
-	public void finish(boolean tectonic, boolean noBackBrn) {
+	public void finish(boolean tectonic, boolean returnBackBranches) {
 		//Sort the arrival times into increasing order.
 		tTimes.sort(new ArrComp());
 		// Filter the phases to make them easier to use.
 		if(tectonic) TauUtil.filterTect(tTimes);
-		if(noBackBrn) TauUtil.filterBack(tTimes);
+		if(!returnBackBranches) TauUtil.filterBack(tTimes);
 		else TauUtil.filterDef(tTimes);
 		// A catch all filter to compensate for strange model artifacts.
 		TauUtil.filterMisc(tTimes, delta);

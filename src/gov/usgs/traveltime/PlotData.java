@@ -26,18 +26,18 @@ public class PlotData {
  * 
  * @param depth Source depth in kilometers
  * @param phList Array of phase use commands
- * @param useful If true, only provide "useful" crustal phases
- * @param noBackBrn If true, suppress back branches
+ * @param returnAllPhases If false, only provide "useful" crustal phases
+ * @param returnBackBranches If false, suppress back branches
  * @param tectonic If true, map Pb and Sb onto Pg and Sg
  * @throws Exception If the depth is out of range
  */
-	public void makePlot(double depth, String[] phList, boolean useful, 
-			boolean noBackBrn, boolean tectonic) throws Exception {
+	public void makePlot(double depth, String[] phList, boolean returnAllPhases, 
+			boolean returnBackBranches, boolean tectonic) throws Exception {
 		// Make sure the depth is in range.
 		if(!Double.isNaN(depth) && depth >= 0d && depth <= TauUtil.MAXDEPTH) {
 			ttPlot = new TtPlot();
 			// A simple request is all we can do.
-			allBrn.newSession(depth, phList, useful, noBackBrn, tectonic, false);
+			allBrn.newSession(depth, phList, returnAllPhases, returnBackBranches, tectonic, false);
 			// Loop over distances.
 			for(double delta=0d; delta<=180d; delta+=TauUtil.DDELPLOT) {
 				ttList = allBrn.getTT(0d, delta);
