@@ -11,7 +11,8 @@ sPKiKP sPKPdf sPKPab sPKPbc sPKPdif PcP SKiKP SKPdf
 SKPab SKPbc ScP PP
 
 Chaff: pPg pPb pPn sPg sPb sPn pSg pSb pSn sSg sSb 
-sSn PgPg PbPb PnPn SgSg SbSb SnSn
+sSn PgPg PbPb PnPn SgSg SbSb SnSn PgS PbS SPg SPb 
+SnPg
 
 P: Pg Pb Pn P Pdif
 PKP: PKiKP PKPdf PKPab PKPbc PKPdif PKPpre
@@ -23,7 +24,7 @@ sP: sPg sPb sPn sP sPdif
 sPKP: sPKiKP sPKPdf sPKPab sPKPbc sPKPdif
 PcP: PcP
 -
-SP: SPg SPn SP
+SP: SnPg SPg SPb SPn SP
 SKP: SKiKP SKPdf SKPab SKPbc
 ScP: ScP
 -
@@ -33,7 +34,7 @@ PKKP: PKKPdf PKKPab PKKPbc
 -
 SKKP: SKKPdf SKKPab SKKPbc
 -
-pS: pS pSdif
+pS: pSg pSb pSn pS pSdif
 pSKS: pSKSdf pSKSac
 sS: sSg sSb sSn sS sSdif
 sSKS: sSKSdf sSKSac
@@ -41,7 +42,7 @@ ScS: ScS
 -
 SS: SgSg SbSb SnSn SS
 S'S': S'S'df S'S'ac
-PS: PgS PnS PS
+PS: PgSn PgS PbS PnS PS
 PKS: PKSdf PKSab PKSbc
 PcS: PcS
 -

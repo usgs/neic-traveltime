@@ -40,7 +40,7 @@ public class TtMain {
 		double staLon = -113.9115d;
 		double azimuth = 151.4299d; */
 		// Classes we will need.
-		boolean local = false;
+		boolean local = true;
 		TTSessionLocal ttLocal = null;
 		TTSessionPool ttPool = null;
 		TTSession ttServer = null;
