@@ -271,15 +271,15 @@ public class TTSession {
       	if(!isPlot) {
       		// Set up to generate travel-times (e.g., for earthquake location).
 	        if(Double.isNaN(sourceLatitude) ) {
-	          allBrn.newSession(sourceDepth, phList, !allPhases, !returnBackBranches, tectonic, useRSTT);      
+	          allBrn.newSession(sourceDepth, phList, allPhases, returnBackBranches, tectonic, useRSTT);      
 	        }
 	        else {
-	          allBrn.newSession(sourceLatitude, sourceLongitude, sourceDepth, phList,!allPhases, !returnBackBranches, tectonic, useRSTT);
+	          allBrn.newSession(sourceLatitude, sourceLongitude, sourceDepth, phList,allPhases, returnBackBranches, tectonic, useRSTT);
 	        }
       	} else {
       		// Generate a travel-time chart.
       		plotData = new PlotData(allBrn);
-      		plotData.makePlot(sourceDepth, phList, !allPhases, !returnBackBranches, tectonic);
+      		plotData.makePlot(sourceDepth, phList, allPhases, returnBackBranches, tectonic);
       	}
       } catch (Exception e) {
         e.printStackTrace(getPrintStream());
@@ -333,10 +333,10 @@ public class TTSession {
 			String[] phList, boolean allPhases, boolean backBrn, boolean tectonic, 
 			boolean rstt, boolean plot) throws Exception {  
     if(Double.isNaN(latitude)) {
-      allBrn.newSession(latitude, longitude, depth, phList, !allPhases, !backBrn, tectonic, rstt);
+      allBrn.newSession(latitude, longitude, depth, phList, allPhases, backBrn, tectonic, rstt);
     }
     else {
-      allBrn.newSession(depth, phList, !allPhases, !backBrn, tectonic, rstt);
+      allBrn.newSession(depth, phList, allPhases, backBrn, tectonic, rstt);
     }
     makeTTag();
   }
@@ -356,7 +356,7 @@ public class TTSession {
 	public void newSession(double depth, String[] phList, boolean allPhases, 
 			boolean backBrn, boolean tectonic, boolean rstt, boolean plot) 
 			throws Exception {
-    allBrn.newSession(depth, phList, !allPhases, !backBrn, tectonic, rstt);
+    allBrn.newSession(depth, phList, allPhases, backBrn, tectonic, rstt);
     makeTTag();
   }
   
