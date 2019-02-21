@@ -2,13 +2,15 @@
 language: java
 
 jdk:
+  - openjdk8
   - oraclejdk8
 
 script:
   # Java build
-  - ant all
+  - ./gradlew build
+  - ./gradlew javadoc
   - mkdir ${TRAVIS_BUILD_DIR}/doc/javadoc
-  - cp -r ${TRAVIS_BUILD_DIR}/dist/javadoc/* ${TRAVIS_BUILD_DIR}/doc/javadoc
+  - cp -r ${TRAVIS_BUILD_DIR}/build/docs/* ${TRAVIS_BUILD_DIR}/doc/javadoc
 
 deploy:
   # Deploying documentation to github pages
