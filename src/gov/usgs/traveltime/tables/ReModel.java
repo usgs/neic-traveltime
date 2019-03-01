@@ -38,7 +38,9 @@ public class ReModel {
 				TauUtil.model("phases.txt"));
 		if(status == TtStatus.SUCCESS) {
 			// Build the branch reference classes.
-			auxTT = new AuxTtRef(true, false, false);
+			// NOTE assumes default model path for now, need to figure out
+        	// where to get this path. Cmd line arg?
+			auxTT = new AuxTtRef(true, false, false, null);
 			allRef = make.fillAllBrnRef(null, auxTT);
 			System.out.format("\n***** Table generation time: %5.3f *****\n",
 					0.001*(System.currentTimeMillis()-sysTime));
