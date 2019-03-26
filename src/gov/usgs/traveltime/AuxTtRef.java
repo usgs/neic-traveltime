@@ -68,11 +68,13 @@ public class AuxTtRef {
 	 * @param readStats If true, read the phase statistics
 	 * @param readEllip If true, read the ellipticity corrections
 	 * @param readTopo If true, read the topography file
+	 * @param modelPath If not null, path to model files
 	 * @throws IOException If opens fail
 	 * @throws ClassNotFoundException Serialization input fails
 	 */
 	@SuppressWarnings("unchecked")
-	public AuxTtRef(boolean readStats, boolean readEllip, boolean readTopo) 
+	public AuxTtRef(boolean readStats, boolean readEllip, boolean readTopo, 
+			String modelPath) 
 			throws IOException, ClassNotFoundException {
 		String[] absNames;
 		BufferedInputStream inGroup, inStats, inEllip;
@@ -83,10 +85,10 @@ public class AuxTtRef {
 		FileLock lock;
 		EllipDeps eDepth;
 		
-		// Set up the properties.
-		if(TauUtil.modelPath == null) {
-			TauUtil.getProperties();
+		if (modelPath != null) {
+			TauUtil.modelPath = modelPath;
 		}
+
 		// Create absolute path names.
 		absNames = new String[fileNames.length];
 		for(int j=0; j<fileNames.length; j++) {

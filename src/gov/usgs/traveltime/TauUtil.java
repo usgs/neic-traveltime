@@ -180,23 +180,9 @@ public class TauUtil {
 	private static TreeMap<String, Integer> unique;
 	
 	/**
-	 * Path of the travel time/locator properties file.
+	 * Paths for model files.
 	 */
-	private static String propFile = "Properties"+CWBProperties.FS+"traveltime.prop";
-	/**
-	 * Paths for model and event files set in getProperties.
-	 */
-	public static String modelPath;
-	
-	/**
-	 * Read the travel time properties file and set up paths to the model 
-	 * and event files.
-	 */
-	public static void getProperties() {		
-		CWBProperties.loadProperties(propFile);
-		modelPath = CWBProperties.getProperty("modelPath");
-//	CWBProperties.prtProperties();
-	}
+	public static String modelPath = "./models/";
 	
 	/**
 	 * Build a path to a model file.

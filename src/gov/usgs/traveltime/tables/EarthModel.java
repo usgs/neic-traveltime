@@ -49,11 +49,6 @@ public class EarthModel {
 		model = new ArrayList<ModelSample>();
 		shells = new ArrayList<ModelShell>();
 		interp = new ModelInterp(model, shells, isCubic);
-		// Set up the properties.
-		if(TauUtil.modelPath == null) {
-			TauUtil.getProperties();
-			
-		}
 	}
 
 	/**

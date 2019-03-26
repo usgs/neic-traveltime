@@ -30,13 +30,15 @@ public class TTSessionLocal{
 	 * @param readStats If true, read the phase statistics
 	 * @param readEllip If true, read the ellipticity corrections
 	 * @param readTopo If true, read the topography file
+	 * @param modelPath If not null, path to model files
 	 * @throws IOException If the auxiliary data reads fail
 	 */
-	public TTSessionLocal(boolean readStats, boolean readEllip, boolean readTopo) 
+	public TTSessionLocal(boolean readStats, boolean readEllip, boolean readTopo,
+			String modelPath) 
 			throws IOException {
 		// Read in data common to all models.
 		try {
-			auxTT = new AuxTtRef(readStats, readEllip, readTopo);
+			auxTT = new AuxTtRef(readStats, readEllip, readTopo, modelPath);
 		} catch (IOException | ClassNotFoundException e1) {
 			System.out.println("Unable to read auxiliary data.");
 			e1.printStackTrace();

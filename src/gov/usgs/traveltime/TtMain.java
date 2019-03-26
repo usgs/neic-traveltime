@@ -49,7 +49,9 @@ public class TtMain {
 		
 		if(local) {
 			// Initialize the local travel-time manager.
-			ttLocal = new TTSessionLocal(true, true, true);
+			// NOTE assumes default model path for now, need to figure out
+        	// where to get this path. Cmd line arg?
+			ttLocal = new TTSessionLocal(true, true, true, null);
 			// Generate a list of available Earth models.
 			String[] models = TauUtil.availableModels();
 			if(models.length > 0) {

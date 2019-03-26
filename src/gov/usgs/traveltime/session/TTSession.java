@@ -182,7 +182,9 @@ public class TTSession {
       // Read in data common to all models.
       if (auxtt == null) {
         prta(ttag+" create AuxTtRef ");
-        auxtt = new AuxTtRef(true, true, true);
+        // NOTE assumes default model path for now, need to figure out
+        // where to get this path. Cmd line arg?
+        auxtt = new AuxTtRef(true, true, true, null);
       }
 
       // See if we know this model.
