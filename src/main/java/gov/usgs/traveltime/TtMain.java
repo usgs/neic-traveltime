@@ -9,6 +9,26 @@ import java.io.IOException;
  * @author Ray Buland
  */
 public class TtMain {
+  /** A String containing the locator version */
+  public static final String VERSION = "v0.1.0";
+
+  /** A String containing the argument for specifying the model file path. */
+  public static final String MODELPATH_ARGUMENT = "--modelPath=";
+
+  /** A String containing the argument for specifying the earth model. */
+  public static final String EARTHMODEL_ARGUMENT = "--earthModel=";
+
+  /** A String containing the argument for specifying the source depth. */
+  public static final String SOURCEDEPTH_ARGUMENT = "--sourceDepth=";
+
+  /** A String containing the argument for requesting the locator version. */
+  public static final String VERSION_ARGUMENT = "--version";
+
+  /** A String containing the argument for specifying a log file path. */
+  public static final String LOGPATH_ARGUMENT = "--logPath=";
+
+  /** A String containing the argument for specifying a log level. */
+  public static final String LOGLEVEL_ARGUMENT = "--logLevel=";
 
   /**
    * Test main program for the travel-time package.
@@ -17,9 +37,48 @@ public class TtMain {
    * @throws Exception If the travel-time setup fails
    */
   public static void main(String[] args) throws Exception {
-    // Simulate a session request.
+    if (args == null || args.length == 0) {
+      System.out.println(
+          "Usage:\nneic-traveltime --modelPath=[model path] --earthModel=[earth model] "
+              + "\n\t--sourceDepth=[source depth] --logPath=[log file path] --logLevel=[logging level]");
+      System.exit(1);
+    }
+
+    String modelPath = null;
     String earthModel = "ak135";
-    double sourceDepth = 10d;
+    double sourceDepth = 10.0;
+    String logPath = "./";
+    String logLevel = "INFO";
+
+    // process arguments
+    StringBuffer argumentList = new StringBuffer();
+    for (String arg : args) {
+      // save arguments for logging
+      argumentList.append(arg).append(" ");
+
+      if (arg.startsWith(MODELPATH_ARGUMENT)) {
+        // get model path
+        modelPath = arg.replace(MODELPATH_ARGUMENT, "");
+      } else if (arg.startsWith(EARTHMODEL_ARGUMENT)) {
+        // get earth model
+        earthModel = arg.replace(EARTHMODEL_ARGUMENT, "");
+      } else if (arg.startsWith(SOURCEDEPTH_ARGUMENT)) {
+        // get source depth
+        sourceDepth = Double.parseDouble(arg.replace(SOURCEDEPTH_ARGUMENT, ""));
+      } else if (arg.startsWith(LOGPATH_ARGUMENT)) {
+        // get log path
+        logPath = arg.replace(LOGPATH_ARGUMENT, "");
+      } else if (arg.startsWith(LOGLEVEL_ARGUMENT)) {
+        // get log level
+        logLevel = arg.replace(LOGLEVEL_ARGUMENT, "");
+      } else if (arg.equals(VERSION_ARGUMENT)) {
+        // print version
+        System.err.println("neic-traveltime");
+        System.err.println(VERSION);
+        System.exit(0);
+      }
+    }
+
     String[] phList = null;
     //	String[] phList = {"PKP", "SKP"};
     // Flags for ttlist.
@@ -47,9 +106,8 @@ public class TtMain {
 
     if (local) {
       // Initialize the local travel-time manager.
-      // NOTE assumes default model path for now, need to figure out
-      // where to get this path. Cmd line arg?
-      ttLocal = new TTSessionLocal(true, true, true, null);
+      ttLocal = new TTSessionLocal(true, true, true, modelPath);
+
       // Generate a list of available Earth models.
       String[] models = TauUtil.availableModels();
       if (models.length > 0) {

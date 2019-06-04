@@ -39,11 +39,11 @@ compileJava.dependsOn 'googleJavaFormat'
 // Added Google java style check (shouldn't find anything)
 project.tasks.check.dependsOn(verifyGoogleJavaFormat)
 
-test {
-  filter {
-    includeTestsMatching "*Test"
-  }
-}
+//test {
+//  filter {
+//    includeTestsMatching "*Test"
+//  }
+//}
 
 // copy required model files
 task copyModelFiles(type: Copy) {
@@ -58,6 +58,19 @@ task copyModelFiles(type: Copy) {
 tasks.withType(JavaCompile) {
   options.setDeprecation(true);
   options.setWarnings(true);
+}
+
+// set jar entry point
+jar {
+  manifest {
+    attributes(
+      'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
+      'Main-Class': 'gov.usgs.traveltime.TtMain'
+    )
+  }
+  from {
+      configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+  }
 }
 
 // create javadocs
