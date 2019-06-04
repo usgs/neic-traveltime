@@ -6,7 +6,10 @@
  */
 
 plugins {
+    // Apply the java plugin to add support for Java
     id 'java'
+    // google java format
+    id 'com.github.sherter.google-java-format' version '0.8'   
 }
 
 sourceCompatibility = '1.8'
@@ -18,19 +21,49 @@ repositories {
 }
 
 dependencies {
+    // Use JUnit test framework
+    testCompile "junit:junit-dep:4.11"
     // org.apache.commons.math3
-    compile files("lib/commons-math3-3.6.1.jar")
+    compile "org.apache.commons:commons-math3:3.6.1"
 }
 
-sourceSets {
-    main {
-         java {
-            srcDirs = ['src']
-         }
-    }
+// Note: To reformat all java code (not in lib) manually into the 
+// google java style, run ./gradlew goJF
+googleJavaFormat {
+  exclude 'lib/**'
+}
+
+// always format to google style prior to the build
+compileJava.dependsOn 'googleJavaFormat'
+
+// Added Google java style check (shouldn't find anything)
+project.tasks.check.dependsOn(verifyGoogleJavaFormat)
+
+test {
+  filter {
+    includeTestsMatching "*Test"
+  }
+}
+
+// copy required model files
+task copyModelFiles(type: Copy) {
+  description 'Copies required model files to build directory.'
+  dependsOn 'compileJava'
+  from "models"
+  exclude "README.txt"
+  into "$buildDir/models"
+}
+
+// show compile warnings
+tasks.withType(JavaCompile) {
+  options.setDeprecation(true);
+  options.setWarnings(true);
 }
 
 // create javadocs
 javadoc {
-  options.addBooleanOption('html5', true)
+  exclude "gov/usgs/processingformats/**"
+  if(JavaVersion.current() != JavaVersion.VERSION_1_8) {
+    options.addBooleanOption('html5', true)
+  }
 }
