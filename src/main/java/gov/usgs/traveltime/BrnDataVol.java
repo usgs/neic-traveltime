@@ -1057,6 +1057,10 @@ public class BrnDataVol {
     }
   }
 
+  public boolean getIsUseless() {
+    return (ref.isUseless);
+  }
+
   /**
    * Generate one line of a branch summary table.
    *

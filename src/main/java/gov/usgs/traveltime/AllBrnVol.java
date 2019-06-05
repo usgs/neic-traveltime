@@ -963,6 +963,20 @@ public class AllBrnVol {
     }
   }
 
+  public int getBranchCount(boolean useful) {
+    if (useful == false) {
+      return (branches.length);
+    } else {
+      int count = 0;
+      for (int j = 0; j < branches.length; j++) {
+        if (branches[j].getIsUseless() == false) {
+          count++;
+        }
+      }
+      return (count);
+    }
+  }
+
   /**
    * Print model parameters for debugging purposes.
    *

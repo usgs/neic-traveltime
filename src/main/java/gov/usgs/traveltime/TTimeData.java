@@ -201,7 +201,7 @@ public class TTimeData implements Comparable<TTimeData> {
   }
 
   /**
-   * Getter for the deph flag.
+   * Getter for the depth flag.
    *
    * @return True if the phase is depth sensitive
    */

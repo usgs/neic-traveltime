@@ -308,6 +308,10 @@ public class TTSessionLocal {
     allBrn.dumpTable(returnAllPhases);
   }
 
+  public int getBranchCount(boolean returnAllPhases) {
+    return (allBrn.getBranchCount(returnAllPhases));
+  }
+
   /**
    * Print volatile phase branch information.
    *
