@@ -60,7 +60,7 @@ public class TtMain {
     String earthModel = "ak135";
     double sourceDepth = 10.0;
     String logPath = "./";
-    String logLevel = "INFO";
+    String logLevel = "DEBUG";
 
     // process arguments
     StringBuffer argumentList = new StringBuffer();
@@ -144,10 +144,11 @@ public class TtMain {
       // Generate a list of available Earth models.
       String[] models = TauUtil.availableModels();
       if (models.length > 0) {
-        LOGGER.info("Available Earth models:");
+        String modelString = "Available Earth models:";
         for (int j = 0; j < models.length; j++) {
-          LOGGER.info("\t" + models[j]);
+          modelString += ("\n\t" + models[j]);
         }
+        LOGGER.fine(modelString);
       } else {
         LOGGER.info("There are no available Earth models?");
       }
@@ -166,7 +167,8 @@ public class TtMain {
         //			ttLocal.printRefBranches(false);
         //			ttLocal.printBranches(false, false, false, returnAllPhases);
         //			ttLocal.printCaustics(false, false, false, returnAllPhases);
-        ttLocal.printTable(returnAllPhases);
+        ttLocal.logTable(returnAllPhases);
+
       } else {
         ttServer =
             TTSessionPool.getTravelTimeSession(
@@ -190,7 +192,7 @@ public class TtMain {
         // Get the complex travel times.
         //			ttList = ttLocal.getTT(staLat, staLon, elev, delta, azimuth);
         // Print them.
-        ttList.print();
+        ttList.dumpPhases();
       }
 
       //		ttPlot = ttLocal.getPlot(earthModel, sourceDepth, phList, returnAllPhases,

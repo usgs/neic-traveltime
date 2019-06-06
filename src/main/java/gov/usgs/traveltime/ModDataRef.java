@@ -4,6 +4,7 @@ import gov.usgs.traveltime.tables.TauModel;
 import gov.usgs.traveltime.tables.TauSample;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 /**
  * Store Earth model data for one wave type. Note that the model is normalized and the depths have
@@ -19,6 +20,9 @@ public class ModDataRef implements Serializable {
   final double[] pMod; // Slowness samples
   final int[] indexUp; // Index into the up-going branch data
   final ModConvert cvt; // Model dependent conversions
+
+  /** Private logging object. */
+  private static final Logger LOGGER = Logger.getLogger(ModDataRef.class.getName());
 
   /**
    * Load data from the FORTRAN file reader for the Earth model for one wave type. The file data
@@ -99,30 +103,43 @@ public class ModDataRef implements Serializable {
    * @param nice If true print in dimensional units.
    */
   public void dumpMod(boolean nice) {
-    System.out.println("\n     " + typeMod + " Model:");
+    String modelString = "\n     " + typeMod + " Model:";
+
     if (nice) {
-      System.out.println("         Z      p   index");
+      modelString += "\n         Z      p   index";
+
       for (int j = 0; j < indexUp.length; j++) {
-        System.out.format(
-            "%3d: %6.1f  %5.2f  %3d\n",
-            j, cvt.realZ(zMod[j]), cvt.realV(pMod[j], zMod[j]), indexUp[j]);
+        modelString +=
+            String.format(
+                "%3d: %6.1f  %5.2f  %3d\n",
+                j, cvt.realZ(zMod[j]), cvt.realV(pMod[j], zMod[j]), indexUp[j]);
       }
+
       for (int j = indexUp.length; j < pMod.length - 1; j++) {
-        System.out.format(
-            "%3d: %6.1f  %5.2f\n", j, cvt.realZ(zMod[j]), cvt.realV(pMod[j], zMod[j]));
+        modelString +=
+            String.format(
+                "%3d: %6.1f  %5.2f\n", j, cvt.realZ(zMod[j]), cvt.realV(pMod[j], zMod[j]));
       }
-      System.out.format(
-          "%3d: center  %5.2f\n",
-          pMod.length - 1, cvt.realV(pMod[pMod.length - 1], zMod[zMod.length - 1]));
+
+      modelString +=
+          String.format(
+              "%3d: center  %5.2f\n",
+              pMod.length - 1, cvt.realV(pMod[pMod.length - 1], zMod[zMod.length - 1]));
     } else {
-      System.out.println("          Z         p     index");
+      modelString += "\n          Z         p     index";
+
       for (int j = 0; j < indexUp.length; j++) {
-        System.out.format("%3d: %9.6f  %8.6f  %3d\n", j, zMod[j], pMod[j], indexUp[j]);
+        modelString += String.format("%3d: %9.6f  %8.6f  %3d\n", j, zMod[j], pMod[j], indexUp[j]);
       }
+
       for (int j = indexUp.length; j < pMod.length - 1; j++) {
-        System.out.format("%3d: %9.6f  %8.6f\n", j, zMod[j], pMod[j]);
+        modelString += String.format("%3d: %9.6f  %8.6f\n", j, zMod[j], pMod[j]);
       }
-      System.out.format("%3d: -infinity  %8.6f\n", pMod.length - 1, pMod[pMod.length - 1]);
+
+      modelString +=
+          String.format("%3d: -infinity  %8.6f\n", pMod.length - 1, pMod[pMod.length - 1]);
     }
+
+    LOGGER.fine(modelString);
   }
 }

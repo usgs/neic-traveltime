@@ -304,8 +304,8 @@ public class TTSessionLocal {
    *
    * @param returnAllPhases If false, only print "useful" phases.
    */
-  public void printTable(boolean returnAllPhases) {
-    allBrn.dumpTable(returnAllPhases);
+  public void logTable(boolean returnAllPhases) {
+    allBrn.logTable(returnAllPhases);
   }
 
   public int getBranchCount(boolean returnAllPhases) {

@@ -1,5 +1,7 @@
 package gov.usgs.traveltime;
 
+import java.util.logging.Logger;
+
 /**
  * Store Earth model data for one wave type. Note that the model is normalized and the depths have
  * undergone a flat Earth transformation. Also, only the upper 800 kilometers of the Earth model are
@@ -13,6 +15,9 @@ public class ModDataVol {
   double pFound, zFound, pMax = Double.NaN;
   ModDataRef ref; // Non-volatile model information
   ModConvert cvt; // Model dependent conversion factors
+
+  /** Private logging object. */
+  private static final Logger LOGGER = Logger.getLogger(ModDataVol.class.getName());
 
   /**
    * Load data from the FORTRAN file reader for the Earth model for one wave type. The file data

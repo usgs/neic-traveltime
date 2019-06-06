@@ -1,6 +1,7 @@
 package gov.usgs.traveltime;
 
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 /**
  * Umbrella storage for all volatile branch level travel-time data.
@@ -35,6 +36,9 @@ public class AllBrnVol {
   Spline spline;
   ArrayList<String> expList;
   int lastBrn = -1, upBrnP = -1, upBrnS = -1;
+
+  /** Private logging object. */
+  private static final Logger LOGGER = Logger.getLogger(AllBrnVol.class.getName());
 
   @Override
   public String toString() {
@@ -939,16 +943,20 @@ public class AllBrnVol {
 
   /** Print global or header data for debugging purposes. */
   public void dumpHead() {
-    System.out.println("\n     " + ref.modelName);
-    System.out.format(
-        "Normalization: xNorm =%11.4e  vNorm =%11.4e  " + "tNorm =%11.4e\n",
-        cvt.xNorm, cvt.vNorm, cvt.tNorm);
-    System.out.format(
-        "Boundaries: zUpperMantle =%7.1f  zMoho =%7.1f  " + "zConrad =%7.1f\n",
-        cvt.zUpperMantle, cvt.zMoho, cvt.zConrad);
-    System.out.format(
-        "Derived: rSurface =%8.1f  zNewUp = %7.1f  " + "dTdDel2P =%11.4e  dTdDepth = %11.4e\n",
-        cvt.rSurface, cvt.zNewUp, cvt.dTdDelta, dTdDepth);
+    String headerString = "\n     " + ref.modelName;
+    headerString +=
+        String.format(
+            "Normalization: xNorm =%11.4e  vNorm =%11.4e  " + "tNorm =%11.4e\n",
+            cvt.xNorm, cvt.vNorm, cvt.tNorm);
+    headerString +=
+        String.format(
+            "Boundaries: zUpperMantle =%7.1f  zMoho =%7.1f  " + "zConrad =%7.1f\n",
+            cvt.zUpperMantle, cvt.zMoho, cvt.zConrad);
+    headerString +=
+        String.format(
+            "Derived: rSurface =%8.1f  zNewUp = %7.1f  " + "dTdDel2P =%11.4e  dTdDepth = %11.4e\n",
+            cvt.rSurface, cvt.zNewUp, cvt.dTdDelta, dTdDepth);
+    LOGGER.fine(headerString);
   }
 
   /**
@@ -956,11 +964,15 @@ public class AllBrnVol {
    *
    * @param useful If true, only print "useful" crustal phases
    */
-  public void dumpTable(boolean useful) {
-    System.out.println("\nPhase          pRange          xRange    " + "pCaustic difLim    Flags");
+  public void logTable(boolean useful) {
+    String tableString =
+        String.format(
+            "Summary Branch Table: \nPhase          pRange          xRange    "
+                + "pCaustic difLim    Flags\n");
     for (int j = 0; j < branches.length; j++) {
-      branches[j].forTable(useful);
+      tableString += branches[j].forTable(useful);
     }
+    LOGGER.fine(tableString);
   }
 
   public int getBranchCount(boolean useful) {

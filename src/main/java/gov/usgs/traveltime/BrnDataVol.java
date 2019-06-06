@@ -1,6 +1,7 @@
 package gov.usgs.traveltime;
 
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 /**
  * Generate all volatile information associated with one travel-time branch.
@@ -40,6 +41,9 @@ public class BrnDataVol {
       pSourceSq = Double.NaN,
       pEnd = Double.NaN; // Some variables need to be remembered between calls
   // to the travel-time routine.
+
+  /** Private logging object. */
+  private static final Logger LOGGER = Logger.getLogger(AllBrnVol.class.getName());
 
   /**
    * Set up volatile copies of data that changes with depth
@@ -877,184 +881,247 @@ public class BrnDataVol {
    */
   public void dumpBrn(
       boolean full, boolean all, boolean sci, boolean returnAllPhases, boolean caustics) {
+    String branchString = "";
+
     if (!caustics || iMin + iMax > 0) {
       if (exists) {
         if (returnAllPhases || !ref.isUseless) {
           if (ref.isUpGoing) {
-            System.out.format("\n         phase = %2s up  ", phCode);
-            if (ref.hasDiff) System.out.format("diff = %s  ", ref.phDiff);
-            if (ref.hasAddOn) System.out.format("add-on = %s  ", ref.phAddOn);
-            System.out.format(
-                "\nSegment: code = %s  type = %c        sign = %2d" + "  count = %d\n",
-                ref.phSeg, ref.typeSeg[0], ref.signSeg, ref.countSeg);
+            branchString += String.format("\n         phase = %2s up  ", phCode);
+
+            if (ref.hasDiff) {
+              branchString += String.format("diff = %s  ", ref.phDiff);
+            }
+
+            if (ref.hasAddOn) {
+              branchString += String.format("add-on = %s  ", ref.phAddOn);
+            }
+
+            branchString +=
+                String.format(
+                    "\nSegment: code = %s  type = %c        sign = %2d" + "  count = %d\n",
+                    ref.phSeg, ref.typeSeg[0], ref.signSeg, ref.countSeg);
           } else {
-            System.out.format("\n         phase = %s  ", phCode);
-            if (ref.hasDiff) System.out.format("diff = %s  ", ref.phDiff);
-            if (ref.hasAddOn) System.out.format("add-on = %s  ", ref.phAddOn);
-            System.out.format(
-                "\nSegment: code = %s  type = %c, %c, %c  " + "sign = %2d  count = %d\n",
-                ref.phSeg,
-                ref.typeSeg[0],
-                ref.typeSeg[1],
-                ref.typeSeg[2],
-                ref.signSeg,
-                ref.countSeg);
+            branchString += String.format("\n         phase = %s  ", phCode);
+
+            if (ref.hasDiff) {
+              branchString += String.format("diff = %s  ", ref.phDiff);
+            }
+
+            if (ref.hasAddOn) {
+              branchString += String.format("add-on = %s  ", ref.phAddOn);
+            }
+
+            branchString +=
+                String.format(
+                    "\nSegment: code = %s  type = %c, %c, %c  " + "sign = %2d  count = %d\n",
+                    ref.phSeg,
+                    ref.typeSeg[0],
+                    ref.typeSeg[1],
+                    ref.typeSeg[2],
+                    ref.signSeg,
+                    ref.countSeg);
           }
-          System.out.format(
-              "Branch:  pRange = %8.6f - %8.6f  xRange = %6.2f - " + "%6.2f ",
-              pRange[0], pRange[1], Math.toDegrees(xRange[0]), Math.toDegrees(xRange[1]));
-          if (ref.hasDiff)
-            System.out.format(
-                "pCaustic = %8.6f  xDiff = " + "%6.2f - %6.2f\n",
-                pCaustic, Math.toDegrees(xDiff[0]), Math.toDegrees(xDiff[1]));
-          else System.out.format("pCaustic = %8.6f\n", pCaustic);
+
+          branchString +=
+              String.format(
+                  "Branch:  pRange = %8.6f - %8.6f  xRange = %6.2f - " + "%6.2f ",
+                  pRange[0], pRange[1], Math.toDegrees(xRange[0]), Math.toDegrees(xRange[1]));
+
+          if (ref.hasDiff) {
+            branchString +=
+                String.format(
+                    "pCaustic = %8.6f  xDiff = " + "%6.2f - %6.2f\n",
+                    pCaustic, Math.toDegrees(xDiff[0]), Math.toDegrees(xDiff[1]));
+          } else {
+            branchString += String.format("pCaustic = %8.6f\n", pCaustic);
+          }
+
           if (ref.turnShell != null) {
             if (iMin + iMax == 1) {
-              System.out.format(
-                  "Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s (1 caustic)\n",
-                  ref.rRange[0],
-                  ref.rRange[1],
-                  cvt.rSurface - ref.rRange[1],
-                  cvt.rSurface - ref.rRange[0],
-                  ref.turnShell);
+              branchString +=
+                  String.format(
+                      "Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s (1 caustic)\n",
+                      ref.rRange[0],
+                      ref.rRange[1],
+                      cvt.rSurface - ref.rRange[1],
+                      cvt.rSurface - ref.rRange[0],
+                      ref.turnShell);
             } else if (iMin + iMax > 1) {
-              System.out.format(
-                  "Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s (%d caustics)\n",
-                  ref.rRange[0],
-                  ref.rRange[1],
-                  cvt.rSurface - ref.rRange[1],
-                  cvt.rSurface - ref.rRange[0],
-                  ref.turnShell,
-                  iMin + iMax);
+              branchString +=
+                  String.format(
+                      "Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s (%d caustics)\n",
+                      ref.rRange[0],
+                      ref.rRange[1],
+                      cvt.rSurface - ref.rRange[1],
+                      cvt.rSurface - ref.rRange[0],
+                      ref.turnShell,
+                      iMin + iMax);
             } else {
-              System.out.format(
-                  "Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s\n",
-                  ref.rRange[0],
-                  ref.rRange[1],
-                  cvt.rSurface - ref.rRange[1],
-                  cvt.rSurface - ref.rRange[0],
-                  ref.turnShell);
+              branchString +=
+                  String.format(
+                      "Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s\n",
+                      ref.rRange[0],
+                      ref.rRange[1],
+                      cvt.rSurface - ref.rRange[1],
+                      cvt.rSurface - ref.rRange[0],
+                      ref.turnShell);
             }
           }
-          //	System.out.format("Flags: group = %s %s  flags = %b %b %b %b\n", ref.phGroup,
+
+          //	branchString += String.format("Flags: group = %s %s  flags = %b %b %b %b\n",
+          // ref.phGroup,
           //			ref.auxGroup, ref.isRegional, ref.isDepth, ref.canUse, ref.dis);
+
           if (full) {
             int n = pBrn.length;
+
             if (all && poly != null) {
               if (sci) {
                 System.out.println(
                     "\n               p            tau         x"
                         + "                 basis function coefficients                    xLim");
+
                 for (int j = 0; j < n - 1; j++) {
-                  System.out.format(
-                      "%3d: %3s %13.6e %13.6e %6.2f %13.6e %13.6e " + "%13.6e %13.6e %6.2f %6.2f\n",
-                      j,
-                      flag[j],
-                      pBrn[j],
-                      tauBrn[j],
-                      Math.toDegrees(xBrn[j]),
-                      poly[0][j],
-                      poly[1][j],
-                      poly[2][j],
-                      poly[3][j],
-                      Math.toDegrees(xLim[0][j]),
-                      Math.toDegrees(xLim[1][j]));
+                  branchString +=
+                      String.format(
+                          "%3d: %3s %13.6e %13.6e %6.2f %13.6e %13.6e "
+                              + "%13.6e %13.6e %6.2f %6.2f\n",
+                          j,
+                          flag[j],
+                          pBrn[j],
+                          tauBrn[j],
+                          Math.toDegrees(xBrn[j]),
+                          poly[0][j],
+                          poly[1][j],
+                          poly[2][j],
+                          poly[3][j],
+                          Math.toDegrees(xLim[0][j]),
+                          Math.toDegrees(xLim[1][j]));
                 }
-                System.out.format(
-                    "%3d:     %13.6e %13.6e %6.2f\n",
-                    n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xBrn[n - 1]));
+
+                branchString +=
+                    String.format(
+                        "%3d:     %13.6e %13.6e %6.2f\n",
+                        n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xBrn[n - 1]));
               } else {
                 System.out.println(
                     "\n             p      tau       x            "
                         + "basis function coefficients             xLim");
+
                 for (int j = 0; j < n - 1; j++) {
-                  System.out.format(
-                      "%3d: %3s %8.6f %8.6f %6.2f  %9.2e  %9.2e  " + "%9.2e  %9.2e %6.2f %6.2f\n",
-                      j,
-                      flag[j],
-                      pBrn[j],
-                      tauBrn[j],
-                      Math.toDegrees(xBrn[j]),
-                      poly[0][j],
-                      poly[1][j],
-                      poly[2][j],
-                      poly[3][j],
-                      Math.toDegrees(xLim[0][j]),
-                      Math.toDegrees(xLim[1][j]));
+                  branchString +=
+                      String.format(
+                          "%3d: %3s %8.6f %8.6f %6.2f  %9.2e  %9.2e  "
+                              + "%9.2e  %9.2e %6.2f %6.2f\n",
+                          j,
+                          flag[j],
+                          pBrn[j],
+                          tauBrn[j],
+                          Math.toDegrees(xBrn[j]),
+                          poly[0][j],
+                          poly[1][j],
+                          poly[2][j],
+                          poly[3][j],
+                          Math.toDegrees(xLim[0][j]),
+                          Math.toDegrees(xLim[1][j]));
                 }
-                System.out.format(
-                    "%3d:     %8.6f %8.6f %6.2f\n",
-                    n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xBrn[n - 1]));
+
+                branchString +=
+                    String.format(
+                        "%3d:     %8.6f %8.6f %6.2f\n",
+                        n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xBrn[n - 1]));
               }
             } else {
               if (sci) {
                 System.out.println("\n               p            tau         x        " + "xLim");
+
                 if (poly != null) {
                   for (int j = 0; j < n - 1; j++) {
-                    System.out.format(
-                        "%3d: %3s %13.6e %13.6e %6.2f %6.2f %6.2f\n",
-                        j,
-                        flag[j],
-                        pBrn[j],
-                        tauBrn[j],
-                        Math.toDegrees(xBrn[j]),
-                        Math.toDegrees(xLim[0][j]),
-                        Math.toDegrees(xLim[1][j]));
+                    branchString +=
+                        String.format(
+                            "%3d: %3s %13.6e %13.6e %6.2f %6.2f %6.2f\n",
+                            j,
+                            flag[j],
+                            pBrn[j],
+                            tauBrn[j],
+                            Math.toDegrees(xBrn[j]),
+                            Math.toDegrees(xLim[0][j]),
+                            Math.toDegrees(xLim[1][j]));
                   }
-                  System.out.format(
-                      "%3d:     %13.6e %13.6e %6.2f\n",
-                      n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xBrn[n - 1]));
+
+                  branchString +=
+                      String.format(
+                          "%3d:     %13.6e %13.6e %6.2f\n",
+                          n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xBrn[n - 1]));
                 } else {
-                  System.out.format(
-                      "%3d:     %13.6e %13.6e %6.2f\n",
-                      0, pBrn[0], tauBrn[0], Math.toDegrees(xRange[0]));
+                  branchString +=
+                      String.format(
+                          "%3d:     %13.6e %13.6e %6.2f\n",
+                          0, pBrn[0], tauBrn[0], Math.toDegrees(xRange[0]));
+
                   for (int j = 1; j < n - 1; j++) {
-                    System.out.format("%3d:     %13.6e %13.6e\n", j, pBrn[j], tauBrn[j]);
+                    branchString +=
+                        String.format("%3d:     %13.6e %13.6e\n", j, pBrn[j], tauBrn[j]);
                   }
-                  System.out.format(
-                      "%3d:     %13.6e %13.6e %6.2f\n",
-                      n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xRange[1]));
+
+                  branchString +=
+                      String.format(
+                          "%3d:     %13.6e %13.6e %6.2f\n",
+                          n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xRange[1]));
                 }
               } else {
                 System.out.println("\n             p      tau       x        " + "xLim");
+
                 if (poly != null) {
                   for (int j = 0; j < n - 1; j++) {
-                    System.out.format(
-                        "%3d: %3s %8.6f %8.6f %6.2f %6.2f %6.2f\n",
-                        j,
-                        flag[j],
-                        pBrn[j],
-                        tauBrn[j],
-                        Math.toDegrees(xBrn[j]),
-                        Math.toDegrees(xLim[0][j]),
-                        Math.toDegrees(xLim[1][j]));
+                    branchString +=
+                        String.format(
+                            "%3d: %3s %8.6f %8.6f %6.2f %6.2f %6.2f\n",
+                            j,
+                            flag[j],
+                            pBrn[j],
+                            tauBrn[j],
+                            Math.toDegrees(xBrn[j]),
+                            Math.toDegrees(xLim[0][j]),
+                            Math.toDegrees(xLim[1][j]));
                   }
-                  System.out.format(
-                      "%3d:     %8.6f %8.6f %6.2f\n",
-                      n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xBrn[n - 1]));
+
+                  branchString +=
+                      String.format(
+                          "%3d:     %8.6f %8.6f %6.2f\n",
+                          n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xBrn[n - 1]));
                 } else {
-                  System.out.format(
-                      "%3d:     %8.6f  %8.6f  %6.2f\n",
-                      0, pBrn[0], tauBrn[0], Math.toDegrees(xRange[0]));
+                  branchString +=
+                      String.format(
+                          "%3d:     %8.6f  %8.6f  %6.2f\n",
+                          0, pBrn[0], tauBrn[0], Math.toDegrees(xRange[0]));
+
                   for (int j = 1; j < n - 1; j++) {
-                    System.out.format("%3d:     %8.6f  %8.6f\n", j, pBrn[j], tauBrn[j]);
+                    branchString += String.format("%3d:     %8.6f  %8.6f\n", j, pBrn[j], tauBrn[j]);
                   }
-                  System.out.format(
-                      "%3d:     %8.6f  %8.6f  %6.2f\n",
-                      n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xRange[1]));
+
+                  branchString +=
+                      String.format(
+                          "%3d:     %8.6f  %8.6f  %6.2f\n",
+                          n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xRange[1]));
                 }
               }
             }
           }
         } else {
-          System.out.format("\n          phase = %s is useless\n", ref.phCode);
+          branchString += String.format("\n          phase = %s is useless\n", ref.phCode);
         }
       } else {
-        if (ref.isUpGoing)
-          System.out.format("\n          phase = %s up doesn't exist\n", ref.phCode);
-        else System.out.format("\n          phase = %s doesn't exist\n", ref.phCode);
+        if (ref.isUpGoing) {
+          branchString += String.format("\n          phase = %s up doesn't exist\n", ref.phCode);
+        } else {
+          branchString += String.format("\n          phase = %s doesn't exist\n", ref.phCode);
+        }
       }
     }
+
+    LOGGER.fine(branchString);
   }
 
   public boolean getIsUseless() {
@@ -1066,10 +1133,12 @@ public class BrnDataVol {
    *
    * @param returnAllPhases If true, omit "useless" crustal phases
    */
-  public void forTable(boolean returnAllPhases) {
-    if (!exists || (!returnAllPhases && ref.isUseless)) return;
+  public String forTable(boolean returnAllPhases) {
+    if (!exists || (!returnAllPhases && ref.isUseless)) {
+      return "";
+    }
     if (ref.isUpGoing) {
-      System.out.format(
+      return String.format(
           "%-2s up    %7.4f %7.4f %7.2f %7.2f %7.4f" + "          %c %c %c %2d %d\n",
           phCode,
           pRange[0],
@@ -1083,7 +1152,7 @@ public class BrnDataVol {
           ref.signSeg,
           ref.countSeg);
     } else if (ref.hasDiff) {
-      System.out.format(
+      return String.format(
           "%-8s %7.4f %7.4f %7.2f %7.2f %7.4f %7.2f" + "  %c %c %c %2d %d\n",
           phCode,
           pRange[0],
@@ -1098,7 +1167,7 @@ public class BrnDataVol {
           ref.signSeg,
           ref.countSeg);
     } else {
-      System.out.format(
+      return String.format(
           "%-8s %7.4f %7.4f %7.2f %7.2f %7.4f" + "          %c %c %c %2d %d\n",
           phCode,
           pRange[0],

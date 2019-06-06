@@ -1,6 +1,7 @@
 package gov.usgs.traveltime;
 
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 /**
  * This class contains complete information (including auxiliary information) for all phases
@@ -13,6 +14,9 @@ public class TTime {
   double delta; // Source-receiver distance in degrees
   ArrayList<TTimeData> tTimes;
 
+  /** Private logging object. */
+  private static final Logger LOGGER = Logger.getLogger(TTime.class.getName());
+
   /**
    * The constructor just creates an ArrayList to hold the phase data. The depth and source-receiver
    * distance are remembered for convenience.
@@ -23,6 +27,7 @@ public class TTime {
   public TTime(double depth, double delta) {
     this.depth = depth;
     this.delta = delta;
+
     tTimes = new ArrayList<TTimeData>();
   }
 
@@ -89,15 +94,25 @@ public class TTime {
   public void finish(boolean tectonic, boolean returnBackBranches) {
     // Sort the arrival times into increasing order.
     tTimes.sort(new ArrComp());
+
     // Filter the phases to make them easier to use.
-    if (tectonic) TauUtil.filterTect(tTimes);
-    if (!returnBackBranches) TauUtil.filterBack(tTimes);
-    else TauUtil.filterDef(tTimes);
+    if (tectonic) {
+      TauUtil.filterTect(tTimes);
+    }
+
+    if (!returnBackBranches) {
+      TauUtil.filterBack(tTimes);
+    } else {
+      TauUtil.filterDef(tTimes);
+    }
+
     // A catch all filter to compensate for strange model artifacts.
     TauUtil.filterMisc(tTimes, delta);
+
     // Modify the observabilities of phases closely following
     // another phase in time.
     TauUtil.modObserv(tTimes);
+
     // Modify canUse for phases with no statistics.
     TauUtil.modCanUse(tTimes);
   }
@@ -131,15 +146,17 @@ public class TTime {
   }
 
   /** Print the travel-time data for all phases as a table. */
-  public void print() {
-    System.out.println();
-    System.out.format("Depth = %5.1f  Delta = %6.2f\n", depth, delta);
+  public void dumpPhases() {
+    String phaseString = String.format("Depth = %5.1f  Delta = %6.2f", depth, delta);
+
     if (tTimes.size() > 0) {
       for (int j = 0; j < tTimes.size(); j++) {
-        System.out.format("%2d  %s", j, tTimes.get(j));
+        phaseString += String.format("\n%2d  %s", j, tTimes.get(j));
       }
     } else {
-      System.out.println("No arrival times found.");
+      phaseString += String.format("\nNo arrival times found.");
     }
+
+    LOGGER.fine(phaseString);
   }
 }
