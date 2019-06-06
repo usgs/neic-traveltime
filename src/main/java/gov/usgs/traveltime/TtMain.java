@@ -1,8 +1,10 @@
 package gov.usgs.traveltime;
 
 import gov.usgs.traveltime.session.*;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.logging.ConsoleHandler;
@@ -193,6 +195,19 @@ public class TtMain {
         //			ttList = ttLocal.getTT(staLat, staLon, elev, delta, azimuth);
         // Print them.
         ttList.dumpPhases();
+      }
+
+      String input = "";
+      BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+      while (!"quit".equals(input)) {
+        System.out.println("\nEnter Distance (or 'quit' to exit): ");
+        input = reader.readLine();
+
+        if (!"quit".equals(input)) {
+          double userDelta = Double.parseDouble(input);
+          ttList = ttLocal.getTT(elev, userDelta);
+          ttList.dumpPhases();
+        }
       }
 
       //		ttPlot = ttLocal.getPlot(earthModel, sourceDepth, phList, returnAllPhases,
