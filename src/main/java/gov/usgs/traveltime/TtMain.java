@@ -146,7 +146,7 @@ public class TtMain {
       if (models.length > 0) {
         String modelString = "Available Earth models:";
         for (int j = 0; j < models.length; j++) {
-          modelString += ("\n\t" + models[j]);
+          modelString += ("\n" + models[j]);
         }
         LOGGER.fine(modelString);
       } else {

@@ -248,7 +248,7 @@ public class TTimeData implements Comparable<TTimeData> {
   @Override
   public String toString() {
     return String.format(
-        "%-8s %7.2f %10.2e %10.2e %5.2f %7.1f  " + "%-6s %-6s %-5b %-5b %-5b %-5b",
+        "%-8s %7.2f %10.2e %10.2e %6.2f %7.1f  " + "%-6s %-6s %-6b %-6b %-6b %-6b",
         phCode,
         tt,
         dTdD,

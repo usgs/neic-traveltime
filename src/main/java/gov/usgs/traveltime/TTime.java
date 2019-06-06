@@ -148,7 +148,8 @@ public class TTime {
   /** Print the travel-time data for all phases as a table. */
   public void dumpPhases() {
     String phaseString = String.format("Depth = %5.1f  Delta = %6.2f", depth, delta);
-
+    phaseString +=
+        "\n    phCode   ttime    distDrv    dpthDrv   spread  observ  phGrp  auxGrp canUse isReg  isDpth dis";
     if (tTimes.size() > 0) {
       for (int j = 0; j < tTimes.size(); j++) {
         phaseString += String.format("\n%2d  %s", j, tTimes.get(j));
