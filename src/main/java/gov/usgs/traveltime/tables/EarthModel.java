@@ -30,7 +30,7 @@ public class EarthModel {
   ModelSample surface; // Model at the free surface
   ArrayList<ModelSample> model; // Model storage
   ArrayList<ModelShell> shells; // Model shell parameters
-  ArrayList<CritSlowness> critical; // Critical slownesses
+  ArrayList<CriticalSlowness> critical; // Critical slownesses
   EarthModel refModel;
   ModelInterp interp;
   ModConvert convert;
@@ -61,7 +61,7 @@ public class EarthModel {
     earthModel = refModel.earthModel;
     model = new ArrayList<ModelSample>();
     shells = new ArrayList<ModelShell>();
-    critical = new ArrayList<CritSlowness>();
+    critical = new ArrayList<CriticalSlowness>();
   }
 
   /**
@@ -297,7 +297,7 @@ public class EarthModel {
    *
    * @return List of critical slownesses
    */
-  public ArrayList<CritSlowness> getCritical() {
+  public ArrayList<CriticalSlowness> getCritical() {
     return critical;
   }
 
@@ -468,14 +468,14 @@ public class EarthModel {
     for (int j = 0; j < shells.size(); j++) {
       shell = shells.get(j);
       critical.add(
-          new CritSlowness(
+          new CriticalSlowness(
               'P',
               j,
               (shell.isDisc ? ShellLoc.BOUNDARY : ShellLoc.SHELL),
               model.get(shell.iBot).slowP));
       if (model.get(shell.iBot).slowP != model.get(shell.iBot).slowS) {
         critical.add(
-            new CritSlowness(
+            new CriticalSlowness(
                 'S',
                 j,
                 (shell.isDisc ? ShellLoc.BOUNDARY : ShellLoc.SHELL),
@@ -483,9 +483,9 @@ public class EarthModel {
       }
     }
     critical.add(
-        new CritSlowness('P', shells.size() - 1, ShellLoc.SHELL, model.get(shell.iTop).slowP));
+        new CriticalSlowness('P', shells.size() - 1, ShellLoc.SHELL, model.get(shell.iTop).slowP));
     critical.add(
-        new CritSlowness('S', shells.size() - 1, ShellLoc.SHELL, model.get(shell.iTop).slowS));
+        new CriticalSlowness('S', shells.size() - 1, ShellLoc.SHELL, model.get(shell.iTop).slowS));
 
     /*
      * Now look for high slowness zones.  Note that this is not quite the
@@ -502,13 +502,13 @@ public class EarthModel {
         if (!inLVZ) {
           if (sample.slowP <= lastSample.slowP) {
             inLVZ = true;
-            critical.add(new CritSlowness('P', i, ShellLoc.SHELL, lastSample.slowP));
+            critical.add(new CriticalSlowness('P', i, ShellLoc.SHELL, lastSample.slowP));
             shell.setLVZ();
           }
         } else {
           if (sample.slowP >= lastSample.slowP) {
             inLVZ = false;
-            critical.add(new CritSlowness('P', i, ShellLoc.SHELL, lastSample.slowP));
+            critical.add(new CriticalSlowness('P', i, ShellLoc.SHELL, lastSample.slowP));
           }
         }
       }
@@ -524,13 +524,13 @@ public class EarthModel {
         if (!inLVZ) {
           if (sample.slowS <= lastSample.slowS) {
             inLVZ = true;
-            critical.add(new CritSlowness('S', i, ShellLoc.SHELL, lastSample.slowS));
+            critical.add(new CriticalSlowness('S', i, ShellLoc.SHELL, lastSample.slowS));
             shell.setLVZ();
           }
         } else {
           if (sample.slowS >= lastSample.slowS) {
             inLVZ = false;
-            critical.add(new CritSlowness('S', i, ShellLoc.SHELL, lastSample.slowS));
+            critical.add(new CriticalSlowness('S', i, ShellLoc.SHELL, lastSample.slowS));
           }
         }
       }
@@ -557,23 +557,23 @@ public class EarthModel {
    */
   private void fixShells() {
     ModelShell shell;
-    CritSlowness crit;
+    CriticalSlowness crit;
 
     for (int i = 0; i < critical.size(); i++) {
       crit = critical.get(i);
       // Add or check/fix P slowness shells.
       for (int j = shells.size() - 1; j >= 0; j--) {
         shell = shells.get(j);
-        if (crit.slowness >= model.get(shell.iBot).slowP) {
-          crit.addShell('P', j);
+        if (crit.getSlowness() >= model.get(shell.iBot).slowP) {
+          crit.setShellIndex('P', j);
           break;
         }
       }
       // Add or check/fix S slowness shells.
       for (int j = shells.size() - 1; j >= 0; j--) {
         shell = shells.get(j);
-        if (crit.slowness >= model.get(shell.iBot).slowS) {
-          crit.addShell('S', j);
+        if (crit.getSlowness() >= model.get(shell.iBot).slowS) {
+          crit.setShellIndex('S', j);
           break;
         }
       }

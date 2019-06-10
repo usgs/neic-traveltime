@@ -237,8 +237,8 @@ public class TauModel {
    */
   public void merge(EarthModel locModel) {
     int pBeg = 1, pEnd, sBeg = 0, sEnd;
-    ArrayList<CritSlowness> critical;
-    CritSlowness crit0, crit1;
+    ArrayList<CriticalSlowness> critical;
+    CriticalSlowness crit0, crit1;
 
     critical = locModel.critical;
     slowness = new ArrayList<Double>();
@@ -247,16 +247,17 @@ public class TauModel {
       crit0 = crit1;
       crit1 = critical.get(iCrit);
       if (TablesUtil.deBugLevel > 1)
-        System.out.format("\tInterval: " + "%8.6f %8.6f\n", crit0.slowness, crit1.slowness);
-      if (crit0.slowness <= pModel.get(pBeg - 1).slow) {
+        System.out.format(
+            "\tInterval: " + "%8.6f %8.6f\n", crit0.getSlowness(), crit1.getSlowness());
+      if (crit0.getSlowness() <= pModel.get(pBeg - 1).slow) {
         for (pEnd = pBeg; pEnd < pModel.size(); pEnd++) {
-          if (crit1.slowness == pModel.get(pEnd).slow) break;
+          if (crit1.getSlowness() == pModel.get(pEnd).slow) break;
         }
       } else {
         pEnd = 0;
       }
       for (sEnd = sBeg; sEnd < sModel.size(); sEnd++) {
-        if (crit1.slowness == sModel.get(sEnd).slow) break;
+        if (crit1.getSlowness() == sModel.get(sEnd).slow) break;
       }
 
       if (TablesUtil.deBugLevel > 1)

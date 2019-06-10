@@ -32,7 +32,7 @@ public class SampleSlowness {
   TauInt tauInt;
   ArrayList<ModelSample> model;
   ArrayList<ModelShell> shells;
-  ArrayList<CritSlowness> critical;
+  ArrayList<CriticalSlowness> critical;
   ArrayList<TauSample> tmpModel;
   PegasusSolver solver;
   FindCaustic findCaustic;
@@ -77,7 +77,7 @@ public class SampleSlowness {
     int iShell, iCrit, nSamp, iTop;
     double slowTop, xTop, rTop, slowBot, xBot, rBot, dSlow, slowMin, slow, pCaustic;
     ModelShell shell;
-    CritSlowness crit;
+    CriticalSlowness crit;
     TauSample sample0, sample1, sample2;
 
     // Initialize temporary variables.
@@ -91,16 +91,16 @@ public class SampleSlowness {
     slowTop = model.get(shell.iTop).getSlow(type);
     for (iCrit = critical.size() - 2; iCrit >= 0; iCrit--) {
       crit = critical.get(iCrit);
-      if (crit.slowness < slowTop) {
+      if (crit.getSlowness() < slowTop) {
         // Set up limits for this shell.
-        iShell = crit.getShell(type);
+        iShell = crit.getShellIndex(type);
         shell = shells.get(iShell);
         delX = convert.normR(shell.delX);
         limit = shell.iBot;
         if (TablesUtil.deBugLevel > 0) {
           System.out.format("\nShell: %3d %3d %6.2f %s\n", iShell, limit, shell.delX, shell.name);
         }
-        slowBot = crit.slowness;
+        slowBot = crit.getSlowness();
         // Sample the top and bottom of this layer.
         tmpModel.clear();
         tauInt.intX(type, slowTop, limit);
