@@ -48,7 +48,7 @@ project.tasks.check.dependsOn(verifyGoogleJavaFormat)
 // copy required model files
 task copyModelFiles(type: Copy) {
   description 'Copies required model files to build directory.'
-  dependsOn 'compileJava'
+  // dependsOn 'compileJava'
   from "models"
   exclude "README.txt"
   into "$buildDir/models"
@@ -59,6 +59,11 @@ tasks.withType(JavaCompile) {
   options.setDeprecation(true);
   options.setWarnings(true);
 }
+
+// make sure we always update the external projects and copy models prior to 
+// complile
+defaultTasks 'copyModelFiles'
+compileJava.dependsOn 'copyModelFiles'
 
 // set jar entry point
 jar {

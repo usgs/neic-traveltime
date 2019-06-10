@@ -64,10 +64,10 @@ public class TravelTimeRegressionTest {
     TTime ttList1 = ttLocal.getTT(elev, delta1);
 
     // check number of ttimes
-    assertEquals("tTimes Size Check:", 20, ttList1.tTimes.size());
+    assertEquals("tTimes Size Check:", 20, ttList1.getNumPhases());
 
     // check the first ttime
-    TTimeData firstTTime = ttList1.tTimes.get(0);
+    TTimeData firstTTime = ttList1.getPhase(0);
     assertEquals("tTime first phase code:", "Pg", firstTTime.getPhCode());
     assertEquals("tTime first arrival time:", 19.234, firstTTime.getTT(), 0.001);
     assertEquals("tTime first tangential derivative time:", 19.070, firstTTime.getDTdD(), 0.001);
@@ -88,10 +88,10 @@ public class TravelTimeRegressionTest {
     TTime ttList2 = ttLocal.getTT(elev, delta2);
 
     // check number of ttimes
-    assertEquals("tTimes Size Check:", 32, ttList2.tTimes.size());
+    assertEquals("tTimes Size Check:", 32, ttList2.getNumPhases());
 
     // check the first ttime
-    firstTTime = ttList2.tTimes.get(0);
+    firstTTime = ttList2.getPhase(0);
     assertEquals("tTime first phase code:", "P", firstTTime.getPhCode());
     assertEquals("tTime first arrival time:", 779.729, firstTTime.getTT(), 0.001);
     assertEquals("tTime first tangential derivative time:", 4.655, firstTTime.getDTdD(), 0.001);
@@ -112,10 +112,10 @@ public class TravelTimeRegressionTest {
     TTime ttList3 = ttLocal.getTT(elev, delta3);
 
     // check number of ttimes
-    assertEquals("tTimes Size Check:", 12, ttList3.tTimes.size());
+    assertEquals("tTimes Size Check:", 12, ttList3.getNumPhases());
 
     // check the first ttime
-    firstTTime = ttList3.tTimes.get(0);
+    firstTTime = ttList3.getPhase(0);
     assertEquals("tTime first phase code:", "PKPdf", firstTTime.getPhCode());
     assertEquals("tTime first arrival time:", 1210.790, firstTTime.getTT(), 0.001);
     assertEquals("tTime first tangential derivative time:", 3.315E-9, firstTTime.getDTdD(), 0.001);

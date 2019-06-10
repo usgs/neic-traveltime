@@ -437,9 +437,9 @@ public class AllBrnVol {
       for (int i = 0; i < 3; i++) {
         branches[j].getTT(i, xs[i], dSource, returnAllPhases, ttList);
         // We have to add the phase statistics and other corrections at this level.
-        if (ttList.size() > lastTT) {
-          for (int k = lastTT; k < ttList.size(); k++) {
-            tTime = ttList.get(k);
+        if (ttList.getNumPhases() > lastTT) {
+          for (int k = lastTT; k < ttList.getNumPhases(); k++) {
+            tTime = ttList.getPhase(k);
             flags = ref.auxtt.findFlags(tTime.phCode);
             if (tTime.phCode.equals("pwP")) delTT = k;
             // There's a special case for up-going P and S.
@@ -538,10 +538,10 @@ public class AllBrnVol {
           }
           // If there was no pwP, get rid of the estimate.
           if (delTT >= 0) {
-            ttList.remove(delTT);
+            ttList.removePhase(delTT);
             delTT = -1;
           }
-          lastTT = ttList.size();
+          lastTT = ttList.getNumPhases();
         }
       }
     }
@@ -579,7 +579,7 @@ public class AllBrnVol {
     	}
     } */
     // Sort the arrivals into increasing time order, filter, etc.
-    ttList.finish(tectonic, returnBackBranches);
+    ttList.finalizeTravelTimes(tectonic, returnBackBranches);
     return ttList;
   }
 

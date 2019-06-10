@@ -46,8 +46,8 @@ public class PlotData {
       for (double delta = 0d; delta <= 180d; delta += TauUtil.DDELPLOT) {
         ttList = allBrn.getTT(0d, delta);
         // Loop over phases sorting them into branches.
-        for (int j = 0; j < ttList.size(); j++) {
-          tTime = ttList.get(j);
+        for (int j = 0; j < ttList.getNumPhases(); j++) {
+          tTime = ttList.getPhase(j);
           ttPlot.addPoint(
               tTime.phCode,
               tTime.uniqueCode,

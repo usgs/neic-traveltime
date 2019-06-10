@@ -553,8 +553,8 @@ public class TTSession {
               + " delta="
               + delta);
 
-      for (int i = 0; i < ttime.size(); i++) {
-        System.out.print(ttime.get(i).toString());
+      for (int i = 0; i < ttime.getNumPhases(); i++) {
+        System.out.print(ttime.getPhase(i).toString());
       }
     } catch (Exception e) {
       e.printStackTrace();

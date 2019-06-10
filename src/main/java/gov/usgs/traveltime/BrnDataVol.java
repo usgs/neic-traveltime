@@ -796,7 +796,7 @@ public class BrnDataVol {
                 ttList.addPhase(ref.phAddOn, uniqueCode, 0d, cvt.dTdDLR, 0d, 0d, true);
               }
             } else if (ref.phAddOn.equals("pwP") || ref.phAddOn.equals("PKPpre")) {
-              tTime = ttList.get(ttList.size() - 1);
+              tTime = ttList.getPhase(ttList.getNumPhases() - 1);
               ttList.addPhase(
                   ref.phAddOn, uniqueCode, tTime.tt, tTime.dTdD, tTime.dTdZ, tTime.dXdP, true);
             }
