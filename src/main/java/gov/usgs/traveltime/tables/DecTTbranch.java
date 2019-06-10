@@ -108,18 +108,18 @@ public class DecTTbranch {
    * @param xTarget Non-dimensional range spacing target
    * @param pOffset Base slowness index in the merged slowness array
    */
-  public void downGoingDec(BrnData branch, double xTarget, int pOffset) {
+  public void downGoingDec(BranchData branch, double xTarget, int pOffset) {
     int beg = 0, k = -1;
     boolean[] keep, downKeep;
     double[] pOld, tauOld, xOld, pNew, tauNew, xNew;
     IntPieces piece;
 
     // Set up.
-    piece = finModel.getPiece(branch.typeSeg[0]);
+    piece = finModel.getPiece(branch.getRaySegmentPhaseTypes()[0]);
     keep = piece.keep;
-    pOld = branch.p;
-    tauOld = branch.tau;
-    xOld = branch.x;
+    pOld = branch.getRayParameters();
+    tauOld = branch.getTauValues();
+    xOld = branch.getRayTravelDistances();
     pNew = new double[pOld.length];
     tauNew = new double[tauOld.length];
     xNew = new double[xOld.length];

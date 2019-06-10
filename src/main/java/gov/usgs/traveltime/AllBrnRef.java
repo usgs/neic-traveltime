@@ -1,6 +1,6 @@
 package gov.usgs.traveltime;
 
-import gov.usgs.traveltime.tables.BrnData;
+import gov.usgs.traveltime.tables.BranchData;
 import gov.usgs.traveltime.tables.TauModel;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -95,7 +95,7 @@ public class AllBrnRef {
    * @param auxtt The auxiliary data source
    * @throws IOException If serialization file write fails
    */
-  public AllBrnRef(String serName, TauModel finModel, ArrayList<BrnData> brnData, AuxTtRef auxtt)
+  public AllBrnRef(String serName, TauModel finModel, ArrayList<BranchData> brnData, AuxTtRef auxtt)
       throws IOException {
 
     // Remember the input data.

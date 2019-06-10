@@ -32,7 +32,7 @@ public class MakeBranches {
   double[] p, tau, x;
   double[][] basis;
   ArrayList<String> phases = null;
-  ArrayList<BrnData> branches;
+  ArrayList<BranchData> branches;
   TauModel finModel;
   ModConvert convert;
   DecTTbranch decimate;
@@ -108,7 +108,7 @@ public class MakeBranches {
     char[] code;
     int begShell, endShell;
 
-    branches = new ArrayList<BrnData>();
+    branches = new ArrayList<BranchData>();
     if (TablesUtil.deBugLevel > 0) {
       System.out.println();
     }
@@ -331,8 +331,8 @@ public class MakeBranches {
 
     ends = new TreeSet<Double>();
     for (int j = 0; j < branches.size(); j++) {
-      ends.add(branches.get(j).pRange[0]);
-      ends.add(branches.get(j).pRange[1]);
+      ends.add(branches.get(j).getSlownessRange()[0]);
+      ends.add(branches.get(j).getSlownessRange()[1]);
     }
     if (TablesUtil.deBugLevel > 1) {
       System.out.println("\nBranch End Ray Parameters:");
@@ -349,7 +349,7 @@ public class MakeBranches {
    *
    * @return Travel-time branch data
    */
-  public ArrayList<BrnData> getBranches() {
+  public ArrayList<BranchData> getBranches() {
     return branches;
   }
 
@@ -382,7 +382,7 @@ public class MakeBranches {
       String phCode, char[] typeSeg, double[] shellCounts, int endShell, int endP) {
     int minBrnP = 0, maxBrnP;
     double xTarget, xFactor;
-    BrnData branch;
+    BranchData branch;
     ModelShell shell;
 
     // Do some setup.
@@ -406,15 +406,15 @@ public class MakeBranches {
                     finModel.getDelX(typeSeg[1], shIndex), finModel.getDelX(typeSeg[2], shIndex));
         decimate.downGoingDec(branch, xTarget, minBrnP);
         // Create the interpolation basis functions.
-        spline.basisSet(branch.p, branch.basis);
+        spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());
         // We need to name each sub-branch.
-        branch.phCode =
+        branch.setPhaseCode(
             makePhCode(
-                shellCounts, shell.getCode(typeSeg[1]), shell.getCode(typeSeg[2]), typeSeg[0]);
+                shellCounts, shell.getCode(typeSeg[1]), shell.getCode(typeSeg[2]), typeSeg[0]));
         if (TablesUtil.deBugLevel > 0) {
           System.out.format(
               "     %2d %-8s %3d %3d %3.0f\n",
-              branches.size(), branch.phCode, minBrnP, maxBrnP, convert.dimR(xTarget));
+              branches.size(), branch.getPhaseCode(), minBrnP, maxBrnP, convert.dimR(xTarget));
         }
         // OK.  Add it to the branches list.
         branches.add(branch);
@@ -440,7 +440,7 @@ public class MakeBranches {
   private void reflected(
       String phCode, char[] typeSeg, double[] shellCounts, int endShell, int endP) {
     double xTarget;
-    BrnData branch;
+    BranchData branch;
 
     // Create the branch.
     endP = slowOffset - endP;
@@ -453,11 +453,11 @@ public class MakeBranches {
                 finModel.getNextDelX(typeSeg[2], endShell));
     decimate.downGoingDec(branch, xTarget, 0);
     // Create the interpolation basis functions.
-    spline.basisSet(branch.p, branch.basis);
+    spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());
     if (TablesUtil.deBugLevel > 0) {
       System.out.format(
           "     %2d %-8s %3d %3d %3.0f\n",
-          branches.size(), branch.phCode, 0, endP, convert.dimR(xTarget));
+          branches.size(), branch.getPhaseCode(), 0, endP, convert.dimR(xTarget));
     }
     // Add it to the branch list.
     branches.add(branch);
@@ -492,7 +492,7 @@ public class MakeBranches {
     boolean useShell2 = false;
     int minBrnP, maxBrnP1, maxBrnP2, maxBrnP, shIndex2;
     double xTarget, xFactor;
-    BrnData branch;
+    BranchData branch;
     ModelShell shell1, shell2;
 
     // Do some setup.
@@ -554,14 +554,14 @@ public class MakeBranches {
                         finModel.getDelX(typeSeg[2], shIndex2));
             decimate.downGoingDec(branch, xTarget, minBrnP);
             // Create the interpolation basis functions.
-            spline.basisSet(branch.p, branch.basis);
+            spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());
             // We need to name each sub-branch.
-            branch.phCode =
+            branch.setPhaseCode(
                 makePhCode(
                     shellCounts,
                     shell1.getCode(typeSeg[1]),
                     shell2.getCode(typeSeg[2]),
-                    typeSeg[0]);
+                    typeSeg[0]));
             if (TablesUtil.deBugLevel > 0) {
               if (TablesUtil.deBugLevel > 1) {
                 System.out.format("shells: %2d %2d\n", shIndex1, shIndex2);
@@ -569,7 +569,7 @@ public class MakeBranches {
               System.out.format(
                   "     %2d %-8s %3d %3d %3.0f %5b\n",
                   branches.size(),
-                  branch.phCode,
+                  branch.getPhaseCode(),
                   minBrnP,
                   maxBrnP,
                   convert.dimR(xTarget),
@@ -640,24 +640,25 @@ public class MakeBranches {
    * @param upType Type of up-going phase
    * @return Branch data
    */
-  private BrnData newBranch(char upType) {
-    BrnData branch;
+  private BranchData newBranch(char upType) {
+    BranchData branch;
 
     // Create the branch.
-    branch = new BrnData(upType);
+    branch = new BranchData(upType);
 
     // Set up the ray parameter arrays.
     if (upType == 'P') {
-      branch.p = finModel.pPieces.proxyP;
+      branch.setRayParameters(finModel.pPieces.proxyP);
     } else {
-      branch.p = finModel.sPieces.proxyP;
+      branch.setRayParameters(finModel.sPieces.proxyP);
     }
-    branch.basis = new double[5][branch.p.length];
-    spline.basisSet(branch.p, branch.basis);
+    branch.setBasisCoefficients(new double[5][branch.getRayParameters().length]);
+    spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());
     branch.update();
     if (TablesUtil.deBugLevel > 0) {
       System.out.format(
-          "     %2d %s up     %3d %3d\n", branches.size(), branch.phCode, 0, branch.p.length - 1);
+          "     %2d %s up     %3d %3d\n",
+          branches.size(), branch.getPhaseCode(), 0, branch.getRayParameters().length - 1);
     }
     return branch;
   }
@@ -672,20 +673,21 @@ public class MakeBranches {
    * @param shell Model shell where rays in this branch turn
    * @return Branch data
    */
-  private BrnData newBranch(String phCode, char[] typeSeg, int countSeg, int n, ModelShell shell) {
-    BrnData branch;
+  private BranchData newBranch(
+      String phCode, char[] typeSeg, int countSeg, int n, ModelShell shell) {
+    BranchData branch;
 
-    branch = new BrnData(phCode, typeSeg, countSeg, shell);
+    branch = new BranchData(phCode, typeSeg, countSeg, shell);
     // Allocate arrays.
-    branch.p = new double[n];
-    branch.tau = new double[n];
-    branch.x = new double[n];
-    branch.basis = new double[5][n];
+    branch.setRayParameters(new double[n]);
+    branch.setTauValues(new double[n]);
+    branch.setRayTravelDistances(new double[n]);
+    branch.setBasisCoefficients(new double[5][n]);
     // Make the branch data arrays local for convenience.
-    p = branch.p;
-    tau = branch.tau;
-    x = branch.x;
-    basis = branch.basis;
+    p = branch.getRayParameters();
+    tau = branch.getTauValues();
+    x = branch.getRayTravelDistances();
+    basis = branch.getBasisCoefficients();
     // Initialize them.
     Arrays.fill(tau, 0d);
     Arrays.fill(x, 0d);
@@ -703,14 +705,14 @@ public class MakeBranches {
    * @param shell Model shell where rays in this branch turn
    * @return Branch data
    */
-  private BrnData buildBranch(
+  private BranchData buildBranch(
       String phCode,
       char[] typeSeg,
       double[] shellCounts,
       int minBrnP,
       int maxBrnP,
       ModelShell shell) {
-    BrnData branch;
+    BranchData branch;
 
     // Initialize the branch.
     branch = newBranch(phCode, typeSeg, (int) shellCounts[0], maxBrnP - minBrnP + 1, shell);
@@ -868,8 +870,9 @@ public class MakeBranches {
    */
   public void printBranches(boolean full, boolean nice) {
     System.out.println("\n\tBranches");
+
     for (int j = 0; j < branches.size(); j++) {
-      branches.get(j).dumpBrn(full, nice);
+      branches.get(j).printBranch(full, nice);
     }
   }
 }

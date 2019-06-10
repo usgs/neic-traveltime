@@ -1,6 +1,6 @@
 package gov.usgs.traveltime;
 
-import gov.usgs.traveltime.tables.BrnData;
+import gov.usgs.traveltime.tables.BranchData;
 import java.io.Serializable;
 import java.util.Arrays;
 
@@ -184,35 +184,37 @@ public class BrnDataRef implements Serializable {
    * @param extra List of extra phases
    * @param auxtt Auxiliary data source
    */
-  public BrnDataRef(BrnData brnData, int indexBrn, ExtraPhases extra, AuxTtRef auxtt) {
+  public BrnDataRef(BranchData brnData, int indexBrn, ExtraPhases extra, AuxTtRef auxtt) {
 
     // Do phase code.
-    phCode = brnData.getPhCode();
+    phCode = brnData.getPhaseCode();
 
     // Do segment summary information.
-    phSeg = brnData.getPhSeg();
-    isUpGoing = brnData.getIsUpGoing();
+    phSeg = brnData.getPhaseSegmentCode();
+    isUpGoing = brnData.getIsBranchUpGoing();
     // The three types are: 1) initial, 2) down-going, and 3) up-coming.
     // For example, sP would be S, P, P, while ScP would be S, S, P.
-    typeSeg = Arrays.copyOf(brnData.getTypeSeg(), 3);
+    typeSeg = Arrays.copyOf(brnData.getRaySegmentPhaseTypes(), 3);
     // We need to know whether to add or subtract the up-going correction.
     // For example, the up-going correction would be subtracted for P, but
     // added for pP.
-    signSeg = brnData.getSignSeg();
+    signSeg = brnData.getUpGoingDepthCorrectionSign();
     // We might need to add or subtract the up-going correction more than
     // once.
-    countSeg = brnData.getCountSeg();
+    countSeg = brnData.getNumMantleTraversals();
 
     // Do branch summary information.
-    pRange = Arrays.copyOf(brnData.getPrange(), 2);
-    xRange = Arrays.copyOf(brnData.getXrange(), 2);
+    pRange = Arrays.copyOf(brnData.getSlownessRange(), 2);
+    xRange = Arrays.copyOf(brnData.getDistanceRange(), 2);
 
     // Set up the branch specification.
-    pBrn = Arrays.copyOf(brnData.getP(), brnData.getP().length);
-    tauBrn = Arrays.copyOf(brnData.getTau(), brnData.getTau().length);
+    pBrn = Arrays.copyOf(brnData.getRayParameters(), brnData.getRayParameters().length);
+    tauBrn = Arrays.copyOf(brnData.getTauValues(), brnData.getTauValues().length);
     basis = new double[5][];
     for (int k = 0; k < 5; k++) {
-      basis[k] = Arrays.copyOf(brnData.getBasis(k), brnData.getBasis(k).length);
+      basis[k] =
+          Arrays.copyOf(
+              brnData.getBasisCoefficientRow(k), brnData.getBasisCoefficientRow(k).length);
     }
 
     /*
@@ -286,9 +288,9 @@ public class BrnDataRef implements Serializable {
 
     // Set up the shell information.  Note that this the shell
     // information can be handy for debugging new Earth models.
-    turnShell = brnData.getTurnShell();
+    turnShell = brnData.getTurnShellName();
     double[] temp;
-    temp = brnData.getRrange();
+    temp = brnData.getRadiusTurningRange();
     if (temp != null) {
       rRange = Arrays.copyOf(temp, 2);
     } else {

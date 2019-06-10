@@ -15,7 +15,7 @@ import java.util.ArrayList;
 public class MakeTables {
   EarthModel refModel;
   TauModel finModel;
-  ArrayList<BrnData> brnData;
+  ArrayList<BranchData> brnData;
 
   /**
    * Initialize the reference Earth model. This needs to happen in the constructor to ensure that
