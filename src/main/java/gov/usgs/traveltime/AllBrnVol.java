@@ -753,7 +753,7 @@ public class AllBrnVol {
    */
   protected void addAux(
       String phCode, double xs, double delCorUp, TTimeData tTime, boolean upGoing) {
-    double del, spd, obs;
+    double del, spd, obs, dSdD;
 
     // Add the phase statistics.  First, convert distance to degrees
     del = Math.toDegrees(xs);
@@ -770,6 +770,7 @@ public class AllBrnVol {
     if (del >= 360d || flags.ttStat == null) {
       spd = TauUtil.DEFSPREAD;
       obs = TauUtil.DEFOBSERV;
+      dSdD = 0d;
     } else {
       // Wrap distances greater than 180 degrees.
       if (del > 180d) {
@@ -781,9 +782,10 @@ public class AllBrnVol {
       }
       spd = flags.ttStat.getSpread(del, upGoing);
       obs = flags.ttStat.getObserv(del, upGoing);
+      dSdD = flags.ttStat.getSpreadDerivative(del, upGoing);
     }
     // Add statistics.
-    tTime.addStats(spd, obs);
+    tTime.addStats(spd, obs, dSdD);
     // Add flags.
     tTime.addFlags(
         flags.phGroup, flags.auxGroup, flags.isRegional, flags.isDepth, flags.canUse, flags.dis);

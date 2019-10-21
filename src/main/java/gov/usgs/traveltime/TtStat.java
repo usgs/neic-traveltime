@@ -102,6 +102,38 @@ public class TtStat implements Serializable {
     return TauUtil.DEFOBSERV;
   }
 
+  /**
+   * Get the derivative of the phase spread with respect to distance.
+   *
+   * @param delta Distance in degrees
+   * @param upGoing True if the phase is an up-going P or S
+   * @return Spread in seconds at distance delta
+   */
+  public double getSpreadDerivative(double delta, boolean upGoing) {
+  	double deriv;
+    TtStatSeg seg;
+
+    for (int k = 0; k < spread.size(); k++) {
+      seg = spread.get(k);
+      if (delta >= seg.minDelta && delta <= seg.maxDelta) {
+    		deriv = seg.deriv(delta);
+      	if(delta == seg.maxDelta) {
+      		if(++k < spread.size()) {
+      			seg = spread.get(k);
+      			if(delta == seg.minDelta) {
+      				deriv = (deriv + seg.deriv(delta))/2d;
+      			}
+      		}
+      	}
+      	return deriv;
+      }
+    }
+    if (upGoing) {
+      return spread.get(0).deriv(delta);
+    }
+    return 0d;
+  }
+
   /** Print the travel-time statistics. */
   protected void dumpStats() {
     // Print the header.
