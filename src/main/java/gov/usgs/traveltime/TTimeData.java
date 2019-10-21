@@ -15,6 +15,7 @@ public class TTimeData implements Comparable<TTimeData> {
   double dXdP; // Derivative of distance with respect to ray parameter (degree-s)
   double spread; // Statistical spread (s)
   double observ; // Relative statistical observability
+  double dSdD;	 // Derivative of spread with respect to distance (s/degree)
   double window; // Association window in seconds
   String phGroup; // Teleseismic phase group
   String auxGroup; // Auxiliary phase group
@@ -57,10 +58,12 @@ public class TTimeData implements Comparable<TTimeData> {
    *
    * @param spread Statistical spread
    * @param observ Relative statistical observability
+   * @param dSdD Derivative of spread with respect to distance
    */
-  public void addStats(double spread, double observ) {
+  public void addStats(double spread, double observ, double dSdD) {
     this.spread = spread;
     this.observ = observ;
+    this.dSdD = dSdD;
     window = Math.max(TauUtil.ASSOCFACTOR * spread, TauUtil.WINDOWMIN);
   }
 
@@ -162,6 +165,15 @@ public class TTimeData implements Comparable<TTimeData> {
    */
   public double getObserv() {
     return observ;
+  }
+
+  /**
+   * Getter for the derivative of spread with respect to distance.
+   *
+   * @return Derivative of spread with respect to distance
+   */
+  public double getDSdD() {
+    return dSdD;
   }
 
   /**

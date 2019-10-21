@@ -75,9 +75,10 @@ public class TTime {
    *
    * @param spread A double containing the statistical spread
    * @param observability A double containing the relative statistical observability
+   * @param dSdD Derivative of spread with respect to distance
    */
-  public void addStatistics(double spread, double observability) {
-    phaseTravelTimes.get(phaseTravelTimes.size() - 1).addStats(spread, observability);
+  public void addStatistics(double spread, double observability, double dSdD) {
+    phaseTravelTimes.get(phaseTravelTimes.size() - 1).addStats(spread, observability, dSdD);
   }
 
   /**
