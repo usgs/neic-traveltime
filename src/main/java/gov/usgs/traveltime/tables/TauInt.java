@@ -55,9 +55,9 @@ public class TauInt {
    * @param start Starting model layer index
    * @param end Ending model layer index
    * @return Normalized integrated tau
-   * @throws Exception If tau or x is negative in any layer
+   * @throws TauIntegralException If tau or x is negative in any layer
    */
-  public double intRange(double p, int start, int end) throws Exception {
+  public double intRange(double p, int start, int end) throws TauIntegralException {
     double tauSum;
 
     tauSum = 0d;
@@ -87,10 +87,10 @@ public class TauInt {
    * @param pLast Last normalized slowness
    * @param zLast Last normalized depth
    * @return Normalized integrated tau
-   * @throws Exception If tau or x is negative in any layer
+   * @throws TauIntegralException If tau or x is negative in any layer
    */
   public double intRange(double p, int start, int end, double pLast, double zLast)
-      throws Exception {
+      throws TauIntegralException {
     double tauSum;
 
     tauSum = 0d;
@@ -120,11 +120,11 @@ public class TauInt {
    * @param pLast Last normalized slowness
    * @param zLast Last normalized depth
    * @return Normalized integrated tau
-   * @throws Exception If tau or x is negative in any layer
+   * @throws TauIntegralException If tau or x is negative in any layer
    */
   public double intRange(
       double p, int start, int end, double pFirst, double zFirst, double pLast, double zLast)
-      throws Exception {
+      throws TauIntegralException {
     double tauSum;
 
     // Start with an increment at the beginning that's between grid
@@ -151,9 +151,9 @@ public class TauInt {
    * @param p Normalized ray parameter
    * @param limit Index of the deepest layer of the model to integrate to
    * @return Normalized integrated tau
-   * @throws Exception If tau or x is negative in any layer
+   * @throws TauIntegralException If tau or x is negative in any layer
    */
-  public double intX(char type, double p, int limit) throws Exception {
+  public double intX(char type, double p, int limit) throws TauIntegralException {
     double tauSum, zLast;
     int j;
 
@@ -267,10 +267,10 @@ public class TauInt {
    * @param zTop Normalized depth at the top of the layer
    * @param zBot Normalized depth at the bottom of the layer
    * @return Normalized tau
-   * @throws Exception If tau or x is negative
+   * @throws TauIntegralException If tau or x is negative
    */
   public double intLayer(double p, double pTop, double pBot, double zTop, double zBot)
-      throws Exception {
+      throws TauIntegralException {
     double tau, b, p2, pTop2, pBot2, bSq, b2, xInt;
 
     // Handle a zero thickness layer (discontinuity).
@@ -523,10 +523,10 @@ public class TauInt {
    * @param zTop Normalized depth at the top of the layer
    * @param zBot Normalized depth at the bottom of the layer
    * @param tau Normalized tau
-   * @throws Exception If tau or x is negative
+   * @throws TauIntegralException If tau or x is negative
    */
   private void tauTest(double p, double pTop, double pBot, double zTop, double zBot, double tau)
-      throws Exception {
+      throws TauIntegralException {
     if (tau < -TauUtil.DMIN) {
       System.out.format(
           "***** Bad tau: p = %8.6f, pTop = %8.6f, "
@@ -534,7 +534,7 @@ public class TauInt {
               + "x = %11.4e\n",
           p, pTop, pBot, zTop, zBot, tau, xLayer);
       if (p > pTop) System.out.println("***** p too big to penetrate to this layer!");
-      throw new Exception();
+      throw new TauIntegralException("Partial integrals cannot be negative");
       /*	} else if(xLayer < -TauUtil.DMIN) {
       System.out.format("***** Bad x: p = %8.6f, pTop = %8.6f, "+
       		"pBot = %8.6f, zTop = %9.6f, zBot = %9.6f, tau = %11.4e, "+

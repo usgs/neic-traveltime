@@ -2,6 +2,8 @@ package gov.usgs.traveltime;
 
 import gov.usgs.traveltime.tables.Decimate;
 import gov.usgs.traveltime.tables.TauInt;
+import gov.usgs.traveltime.tables.TauIntegralException;
+
 import java.util.Arrays;
 
 /**
@@ -62,9 +64,10 @@ public class UpDataVol {
    * tau for the largest ray parameter for all branches.
    *
    * @param depth Normalized source depth
-   * @throws Exception If the source depth is too deep
+   * @throws BadDepthException If the source depth is too deep
+   * @throws TauIntegralException If the tau integral fails
    */
-  public void newDepth(double depth) throws Exception {
+  public void newDepth(double depth) throws BadDepthException, TauIntegralException {
     int i;
     double xInt;
     boolean corrTau; // True if tauUp needs correcting
@@ -168,7 +171,7 @@ public class UpDataVol {
       tauEndCnv = intSec.intRange(pMax, 0, iBot - 1, pMax, zMax);
       xEndCnv = intSec.getXSum();
       //	System.out.println("tau x = "+(float)tauEndCnv+" "+xEndCnv);
-    } catch (Exception e) {
+    } catch (BadDepthException | TauIntegralException e) {
       tauEndCnv = 0d;
       xEndCnv = 0d;
       //	System.out.println("\nNo Cnv correction needed");
@@ -188,10 +191,10 @@ public class UpDataVol {
    * @param xRange Normalized distance range
    * @param xMin Normalized minimum distance interval desired
    * @return A new grid of ray parameter values for the up-going branch
-   * @throws Exception If the tau integration fails
+   * @throws TauIntegralException If the tau integration fails
    */
   public double[] realUp(double pBrn[], double tauBrn[], double[] xRange, double xMin)
-      throws Exception {
+      throws TauIntegralException {
     int power, len;
     double depth, dp;
     boolean[] keep;

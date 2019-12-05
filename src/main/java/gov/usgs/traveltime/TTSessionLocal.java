@@ -2,6 +2,8 @@ package gov.usgs.traveltime;
 
 import gov.usgs.traveltime.tables.MakeTables;
 import gov.usgs.traveltime.tables.TablesUtil;
+import gov.usgs.traveltime.tables.TauIntegralException;
+
 import java.io.IOException;
 import java.util.TreeMap;
 
@@ -28,18 +30,13 @@ public class TTSessionLocal {
    * @param readEllip If true, read the ellipticity corrections
    * @param readTopo If true, read the topography file
    * @param modelPath If not null, path to model files
-   * @throws IOException If the auxiliary data reads fail
+   * @throws IOException On any read error
+   * @throws ClassNotFoundException In input serialization is hosed
    */
-  public TTSessionLocal(boolean readStats, boolean readEllip, boolean readTopo, String modelPath)
-      throws IOException {
+  public TTSessionLocal(boolean readStats, boolean readEllip, boolean readTopo, String modelPath) 
+  			throws IOException, ClassNotFoundException {
     // Read in data common to all models.
-    try {
       auxTT = new AuxTtRef(readStats, readEllip, readTopo, modelPath);
-    } catch (IOException | ClassNotFoundException e1) {
-      System.out.println("Unable to read auxiliary data.");
-      e1.printStackTrace();
-      System.exit(201);
-    }
   }
 
   /**
@@ -52,7 +49,8 @@ public class TTSessionLocal {
    * @param returnBackBranches If true, return all back branches
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
    * @param useRSTT If true, use RSTT crustal phases
-   * @throws Exception If the depth is out of range
+   * @throws BadDepthException If the depth is out of range
+   * @throws TauIntegralException If the tau integrals fail
    */
   public void newSession(
       String earthModel,
@@ -62,7 +60,7 @@ public class TTSessionLocal {
       boolean returnBackBranches,
       boolean tectonic,
       boolean useRSTT)
-      throws Exception {
+      throws BadDepthException, TauIntegralException {
 
     setModel(earthModel);
     allBrn.newSession(sourceDepth, phases, returnAllPhases, returnBackBranches, tectonic, useRSTT);
@@ -80,7 +78,8 @@ public class TTSessionLocal {
    * @param returnBackBranches If true, return all back branches
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
    * @param useRSTT If true, use RSTT crustal phases
-   * @throws Exception If the depth is out of range
+   * @throws BadDepthException If the depth is out of range
+   * @throws TauIntegralException If the tau integrals fail
    */
   public void newSession(
       String earthModel,
@@ -92,7 +91,7 @@ public class TTSessionLocal {
       boolean returnBackBranches,
       boolean tectonic,
       boolean useRSTT)
-      throws Exception {
+      throws BadDepthException, TauIntegralException {
 
     setModel(earthModel);
     allBrn.newSession(
@@ -141,7 +140,8 @@ public class TTSessionLocal {
    * @param returnBackBranches If true, return all back branches
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
    * @return Travel-time plot data
-   * @throws Exception If the depth is out of range
+   * @throws BadDepthException If the depth is out of range
+   * @throws TauIntegralException If the tau integrals fail
    */
   public TtPlot getPlot(
       String earthModel,
@@ -150,7 +150,7 @@ public class TTSessionLocal {
       boolean returnAllPhases,
       boolean returnBackBranches,
       boolean tectonic)
-      throws Exception {
+      throws BadDepthException, TauIntegralException {
     PlotData plotData;
 
     setModel(earthModel);

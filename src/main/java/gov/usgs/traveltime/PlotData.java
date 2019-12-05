@@ -1,5 +1,7 @@
 package gov.usgs.traveltime;
 
+import gov.usgs.traveltime.tables.TauIntegralException;
+
 /**
  * Create data for travel-time plots
  *
@@ -28,7 +30,8 @@ public class PlotData {
    * @param returnAllPhases If false, only provide "useful" crustal phases
    * @param returnBackBranches If false, suppress back branches
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
-   * @throws Exception If the depth is out of range
+   * @throws BadDepthException If the depth is out of range
+   * @throws TauIntegralException If the tau integrals fail
    */
   public void makePlot(
       double depth,
@@ -36,7 +39,7 @@ public class PlotData {
       boolean returnAllPhases,
       boolean returnBackBranches,
       boolean tectonic)
-      throws Exception {
+      		throws BadDepthException, TauIntegralException {
     // Make sure the depth is in range.
     if (!Double.isNaN(depth) && depth >= 0d && depth <= TauUtil.MAXDEPTH) {
       ttPlot = new TtPlot();
