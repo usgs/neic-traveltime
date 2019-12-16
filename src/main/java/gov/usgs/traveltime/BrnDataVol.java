@@ -3,6 +3,8 @@ package gov.usgs.traveltime;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
+import gov.usgs.traveltime.tables.TauIntegralException;
+
 /**
  * Generate all volatile information associated with one travel-time branch.
  *
@@ -78,10 +80,10 @@ public class BrnDataVol {
    * @param dTdDepth Correction factor for dT/dDepth
    * @param xMin The minimum source-receiver distance desired between ray parameter samples
    * @param tagBrn The P or S up-going branch suffix
-   * @throws Exception If the tau integral fails
+   * @throws TauIntegralException If the tau integral fails
    */
   public void depthCorr(double zSource, double dTdDepth, double xMin, char tagBrn)
-      throws Exception {
+  		throws TauIntegralException {
     int i, len = 0;
     double pMax;
     double[][] basisTmp;
@@ -812,9 +814,8 @@ public class BrnDataVol {
    *
    * @param dTdD Desired ray parameter in seconds/degree
    * @return Source-receiver distance in degrees
-   * @throws Exception If the desired arrival doesn't exist
    */
-  public double oneRay(double dTdD) throws Exception {
+  public double oneRay(double dTdD) {
     double xCorr;
     double ps = Math.abs(dTdD) / cvt.dTdDelta;
 

@@ -3,6 +3,8 @@ package gov.usgs.traveltime;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import gov.usgs.traveltime.tables.TauIntegralException;
+
 /**
  * Umbrella storage for all volatile branch level travel-time data.
  *
@@ -114,7 +116,8 @@ public class AllBrnVol {
    * @param returnBackBranches If false, suppress back branches
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
    * @param rstt If true, use RSTT crustal phases
-   * @throws Exception If the depth is out of range
+   * @throws BadDepthException If the depth is out of range
+   * @throws TauIntegralException If the tau integral doesn't make sense
    */
   public void newSession(
       double latitude,
@@ -125,7 +128,7 @@ public class AllBrnVol {
       boolean returnBackBranches,
       boolean tectonic,
       boolean rstt)
-      throws Exception {
+      throws BadDepthException, TauIntegralException {
     // See if the epicenter makes sense.
     if (!Double.isNaN(latitude)
         && latitude >= -90d
@@ -155,7 +158,8 @@ public class AllBrnVol {
    * @param returnBackBranches If false, suppress back branches
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
    * @param rstt If true, use RSTT crustal phases
-   * @throws Exception If the depth is out of range
+   * @throws BadDepthException If the depth is out of range
+   * @throws TauIntegralException If the tau integral doesn't make sense
    */
   public void newSession(
       double depth,
@@ -164,7 +168,7 @@ public class AllBrnVol {
       boolean returnBackBranches,
       boolean tectonic,
       boolean rstt)
-      throws Exception {
+      throws BadDepthException, TauIntegralException {
     complexSession = false;
     eqLat = Double.NaN;
     eqLon = Double.NaN;
@@ -181,7 +185,8 @@ public class AllBrnVol {
    * @param returnBackBranches If false, suppress back branches
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
    * @param rstt If true, use RSTT crustal phases
-   * @throws Exception If the depth is out of range
+   * @throws BadDepthException If the depth is out of range
+   * @throws TauIntegralException If the tau integral doesn't make sense
    */
   private void setSession(
       double depth,
@@ -190,7 +195,7 @@ public class AllBrnVol {
       boolean returnBackBranches,
       boolean tectonic,
       boolean rstt)
-      throws Exception {
+      throws BadDepthException, TauIntegralException {
     char tagBrn;
     double xMin;
     boolean all;
@@ -457,9 +462,9 @@ public class AllBrnVol {
               // Get the correction.
               try {
                 delCorUp = upRay(tTime.phCode, tTime.dTdD);
-              } catch (Exception e) {
+              } catch (PhaseNotFoundException e) {
                 // This should never happen.
-                e.printStackTrace();
+                System.out.println(e.toString());
                 delCorUp = 0d;
               }
               // This is the normal case.  Do various travel-time corrections.
@@ -486,9 +491,9 @@ public class AllBrnVol {
                       if (tmpCode != null) {
                         try {
                           delCorDn = oneRay(tmpCode, tTime.dTdD);
-                        } catch (Exception e) {
+                        } catch (PhaseNotFoundException e) {
                           // This should never happen.
-                          e.printStackTrace();
+                          System.out.println(e.toString());
                           //				System.out.format("Phase = %-8s delta = %6.2f\n", tTime.phCode,
                           // staDelta);
                           delCorDn = 0.5d * staDelta;
@@ -566,7 +571,7 @@ public class AllBrnVol {
     				// Get the correction.
     				try {
     					delCorUp = upRay(tTime.phCode, tTime.dTdD);
-    				} catch (Exception e) {
+    				} catch (PhaseNotFoundException e) {
     					// This should never happen.
     					e.printStackTrace();
     					delCorUp = 0d;
@@ -797,9 +802,9 @@ public class AllBrnVol {
    * @param phCode Phase code for the desired branch
    * @param dTdD Desired ray parameter in seconds/degree
    * @return Source-receiver distance in degrees
-   * @throws Exception If the desired arrival doesn't exist
+   * @throws PhaseNotFoundException If the desired arrival doesn't exist
    */
-  public double oneRay(String phCode, double dTdD) throws Exception {
+  public double oneRay(String phCode, double dTdD) throws PhaseNotFoundException {
     String tmpCode;
     double tcorr;
 
@@ -816,7 +821,7 @@ public class AllBrnVol {
         }
       }
     }
-    throw new Exception();
+    throw new PhaseNotFoundException(tmpCode);
   }
 
   /**
@@ -826,16 +831,16 @@ public class AllBrnVol {
    * @param phCode Phase code of the phase being corrected
    * @param dTdD Desired ray parameter in seconds/degree
    * @return Distance cut off in degrees
-   * @throws Exception If the up-going arrival doesn't exist
+   * @throws PhaseNotFoundException If the up-going arrival doesn't exist
    */
-  public double upRay(String phCode, double dTdD) throws Exception {
+  public double upRay(String phCode, double dTdD) throws PhaseNotFoundException {
     char type = phCode.charAt(0);
     if (type == 'p' || type == 'P') {
       lastBrn = upBrnP;
     } else if (type == 's' || type == 'S') {
       lastBrn = upBrnS;
     } else {
-      throw new Exception();
+      throw new PhaseNotFoundException(phCode);
     }
     if (lastBrn < 0) {
       return 0d;

@@ -36,9 +36,9 @@ public class ModDataVol {
    *
    * @param z Desired normalized, flattened depth
    * @return Normalized slowness at the desired depth
-   * @throws Exception If the desired depth is too deep
+   * @throws BadDepthException If the desired depth is too deep
    */
-  public double findP(double z) throws Exception {
+  public double findP(double z) throws BadDepthException {
     // Search the model to bracket the source depth.
     for (iSource = 0; iSource < ref.indexUp.length; iSource++) {
       if (ref.zMod[iSource] <= z) break;
@@ -46,7 +46,7 @@ public class ModDataVol {
     // If we went off the end of the model, throw and exception.
     if (iSource >= ref.indexUp.length) {
       System.out.println("findP: source depth is too deep");
-      throw new Exception();
+      throw new BadDepthException(String.format("%3.1f km", cvt.realZ(z)));
     }
     zFound = z;
     pMax = Double.NaN;
@@ -73,12 +73,14 @@ public class ModDataVol {
    * @param p Desired normalized model slowness
    * @param first If true, find the top of a low velocity zone, if false, find the bottom
    * @return Normalized depth at the desired slowness
-   * @throws Exception If the desired slowness is too small
+   * @throws BadDepthException If the desired slowness is too small
    */
-  public double findZ(double p, boolean first) throws Exception {
+  public double findZ(double p, boolean first) throws BadDepthException {
     // Search the model to bracket the source depth.
     if (first) {
-      if (p > ref.pMod[0]) throw new Exception();
+      if (p > ref.pMod[0]) {
+      	throw new BadDepthException(String.format("< %3.1f km", cvt.realZ(ref.zMod[0])));
+      }
       for (iSource = 0; iSource < ref.indexUp.length; iSource++) {
         if (ref.pMod[iSource] <= p) break;
       }
@@ -93,7 +95,7 @@ public class ModDataVol {
     // If we went off the end of the model, throw and exception.
     if (iSource >= ref.indexUp.length || iSource < 0) {
       System.out.println("findZ: source depth not found.");
-      throw new Exception();
+      throw new BadDepthException(String.format("> %f3.1f km", cvt.realZ(ref.zMod[ref.indexUp.length-1])));
     }
     pFound = p;
     // If we're on a grid point, return that.
