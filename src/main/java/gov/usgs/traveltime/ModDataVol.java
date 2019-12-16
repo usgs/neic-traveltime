@@ -79,7 +79,7 @@ public class ModDataVol {
     // Search the model to bracket the source depth.
     if (first) {
       if (p > ref.pMod[0]) {
-      	throw new BadDepthException(String.format("< %3.1f km", cvt.realZ(ref.zMod[0])));
+        throw new BadDepthException(String.format("< %3.1f km", cvt.realZ(ref.zMod[0])));
       }
       for (iSource = 0; iSource < ref.indexUp.length; iSource++) {
         if (ref.pMod[iSource] <= p) break;
@@ -95,7 +95,8 @@ public class ModDataVol {
     // If we went off the end of the model, throw and exception.
     if (iSource >= ref.indexUp.length || iSource < 0) {
       System.out.println("findZ: source depth not found.");
-      throw new BadDepthException(String.format("> %f3.1f km", cvt.realZ(ref.zMod[ref.indexUp.length-1])));
+      throw new BadDepthException(
+          String.format("> %f3.1f km", cvt.realZ(ref.zMod[ref.indexUp.length - 1])));
     }
     pFound = p;
     // If we're on a grid point, return that.

@@ -39,7 +39,7 @@ public class PlotData {
       boolean returnAllPhases,
       boolean returnBackBranches,
       boolean tectonic)
-      		throws BadDepthException, TauIntegralException {
+      throws BadDepthException, TauIntegralException {
     // Make sure the depth is in range.
     if (!Double.isNaN(depth) && depth >= 0d && depth <= TauUtil.MAXDEPTH) {
       ttPlot = new TtPlot();

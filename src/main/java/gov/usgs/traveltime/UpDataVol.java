@@ -3,7 +3,6 @@ package gov.usgs.traveltime;
 import gov.usgs.traveltime.tables.Decimate;
 import gov.usgs.traveltime.tables.TauInt;
 import gov.usgs.traveltime.tables.TauIntegralException;
-
 import java.util.Arrays;
 
 /**

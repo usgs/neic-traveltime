@@ -3,7 +3,6 @@ package gov.usgs.traveltime;
 import gov.usgs.traveltime.tables.MakeTables;
 import gov.usgs.traveltime.tables.TablesUtil;
 import gov.usgs.traveltime.tables.TauIntegralException;
-
 import java.io.IOException;
 import java.util.TreeMap;
 
@@ -33,10 +32,10 @@ public class TTSessionLocal {
    * @throws IOException On any read error
    * @throws ClassNotFoundException In input serialization is hosed
    */
-  public TTSessionLocal(boolean readStats, boolean readEllip, boolean readTopo, String modelPath) 
-  			throws IOException, ClassNotFoundException {
+  public TTSessionLocal(boolean readStats, boolean readEllip, boolean readTopo, String modelPath)
+      throws IOException, ClassNotFoundException {
     // Read in data common to all models.
-      auxTT = new AuxTtRef(readStats, readEllip, readTopo, modelPath);
+    auxTT = new AuxTtRef(readStats, readEllip, readTopo, modelPath);
   }
 
   /**

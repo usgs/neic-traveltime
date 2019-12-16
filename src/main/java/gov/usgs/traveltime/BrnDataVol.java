@@ -1,9 +1,8 @@
 package gov.usgs.traveltime;
 
+import gov.usgs.traveltime.tables.TauIntegralException;
 import java.util.Arrays;
 import java.util.logging.Logger;
-
-import gov.usgs.traveltime.tables.TauIntegralException;
 
 /**
  * Generate all volatile information associated with one travel-time branch.
@@ -83,7 +82,7 @@ public class BrnDataVol {
    * @throws TauIntegralException If the tau integral fails
    */
   public void depthCorr(double zSource, double dTdDepth, double xMin, char tagBrn)
-  		throws TauIntegralException {
+      throws TauIntegralException {
     int i, len = 0;
     double pMax;
     double[][] basisTmp;

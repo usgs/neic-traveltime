@@ -15,7 +15,7 @@ public class TTimeData implements Comparable<TTimeData> {
   double dXdP; // Derivative of distance with respect to ray parameter (degree-s)
   double spread; // Statistical spread (s)
   double observ; // Relative statistical observability
-  double dSdD;	 // Derivative of spread with respect to distance (s/degree)
+  double dSdD; // Derivative of spread with respect to distance (s/degree)
   double window; // Association window in seconds
   String phGroup; // Teleseismic phase group
   String auxGroup; // Auxiliary phase group
