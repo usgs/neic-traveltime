@@ -1,9 +1,8 @@
 package gov.usgs.traveltime;
 
+import gov.usgs.traveltime.tables.TauIntegralException;
 import java.util.ArrayList;
 import java.util.logging.Logger;
-
-import gov.usgs.traveltime.tables.TauIntegralException;
 
 /**
  * Umbrella storage for all volatile branch level travel-time data.

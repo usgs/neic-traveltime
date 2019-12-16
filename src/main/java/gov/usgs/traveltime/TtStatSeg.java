@@ -45,9 +45,9 @@ public class TtStatSeg implements Serializable {
   }
 
   /**
-   * Get the derivative of the linear fit at one distance. Note that the interpolation will 
-   * be done for distances less than the minimum, but fixed at the minimum distance. This is 
-   * a hack needed for up-going P and S at short distances from deep sources.
+   * Get the derivative of the linear fit at one distance. Note that the interpolation will be done
+   * for distances less than the minimum, but fixed at the minimum distance. This is a hack needed
+   * for up-going P and S at short distances from deep sources.
    *
    * @param delta Distance in degrees where derivatives are desired
    * @return Derivative of the parameter
