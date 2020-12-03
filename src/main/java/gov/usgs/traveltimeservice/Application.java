@@ -7,9 +7,9 @@ import io.swagger.v3.oas.annotations.info.Info;
 @OpenAPIDefinition(
     info =
         @Info(
-            title = "locator service",
+            title = "traveltime service",
             version = "0.0",
-            description = "locator service description"))
+            description = "traveltime service description"))
 public class Application {
 
   public static void main(String[] args) {

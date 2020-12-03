@@ -1,10 +1,9 @@
 package gov.usgs.traveltimeservice;
 
-import gov.usgs.traveltime.TravelTimeService;
+import gov.usgs.processingformats.TravelTimeData;
 import gov.usgs.processingformats.TravelTimeException;
 import gov.usgs.processingformats.TravelTimeRequest;
-import gov.usgs.processingformats.TravelTimeData;
-
+import gov.usgs.traveltime.TTService;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
@@ -27,9 +26,9 @@ public class TravelTimeController {
     return HttpResponse.redirect(URI.create("/ws/traveltime/index.html"));
   }
 
-  @Post(uri = "/locate", consumes = MediaType.APPLICATION_JSON)
+  @Post(uri = "/traveltime", consumes = MediaType.APPLICATION_JSON)
   public TravelTimeData getTravelTime(@Body TravelTimeRequest request) throws TravelTimeException {
-    TravelTimeService service = new TravelTimeService(modelPath);
+    TTService service = new TTService(modelPath);
     return service.getTravelTimes(request);
   }
 }
