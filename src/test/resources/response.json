@@ -1,0 +1,244 @@
+{
+    "Source": {
+      "Latitude": 63.238,
+      "Longitude": -151.66,
+      "Depth": 1
+    },
+    "Receivers": [
+      {
+        "ID": "1",
+        "Distance": 0,
+        "Elevation": 611,
+        "Latitude": 63.419,
+        "Longitude": -152.084
+      }
+    ],
+    "EarthModel": "AK135",
+    "ReturnAllPhases": true,
+    "ReturnBackBranches": true,
+    "ConvertTectonic": true,
+    "Response": [
+      {
+        "ID": "1",
+        "Distance": 0,
+        "Elevation": 611,
+        "Latitude": 63.419,
+        "Longitude": -152.084,
+        "Branches": [
+          {
+            "Phase": "Pg",
+            "TravelTime": 5.061652870684076,
+            "DistanceDerivative": 19.159799522420467,
+            "DepthDerivative": 0.005203066387977019,
+            "RayDerivative": 0.006874292935036577,
+            "StatisticalSpread": 0.3318045923236022,
+            "Observability": 25423.90670225805,
+            "TeleseismicPhaseGroup": "P",
+            "AuxiliaryPhaseGroup": "PKP",
+            "LocationUseFlag": true,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "sPg",
+            "TravelTime": 5.432484559268477,
+            "DistanceDerivative": 19.171490785597175,
+            "DepthDerivative": 0.23193818821786238,
+            "RayDerivative": -0.8112053989706985,
+            "StatisticalSpread": 12,
+            "Observability": 0,
+            "TeleseismicPhaseGroup": "sP",
+            "AuxiliaryPhaseGroup": "sPKP",
+            "LocationUseFlag": false,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "Sg",
+            "TravelTime": 8.48475955543113,
+            "DistanceDerivative": 32.117583014625296,
+            "DepthDerivative": 0.008721903145083958,
+            "RayDerivative": 0.0041008713741589355,
+            "StatisticalSpread": 0.7756183783880348,
+            "Observability": 803.2713194560296,
+            "TeleseismicPhaseGroup": "S",
+            "AuxiliaryPhaseGroup": "SKS",
+            "LocationUseFlag": true,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "PcP",
+            "TravelTime": 510.4708857341959,
+            "DistanceDerivative": 0.025342024499892646,
+            "DepthDerivative": -0.17241364242636648,
+            "RayDerivative": 0.0031721591635280513,
+            "StatisticalSpread": 12,
+            "Observability": 0,
+            "TeleseismicPhaseGroup": "PcP",
+            "LocationUseFlag": false,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "ScP",
+            "TravelTime": 721.9604644407998,
+            "DistanceDerivative": 0.03286606851089296,
+            "DepthDerivative": -0.2890171898556626,
+            "RayDerivative": 0.0024460784683672777,
+            "StatisticalSpread": 12,
+            "Observability": 0,
+            "TeleseismicPhaseGroup": "ScP",
+            "LocationUseFlag": false,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "PcS",
+            "TravelTime": 722.0747219595812,
+            "DistanceDerivative": 0.032866843229284196,
+            "DepthDerivative": -0.17241353966021306,
+            "RayDerivative": 0.0024460208214860785,
+            "StatisticalSpread": 12,
+            "Observability": 0,
+            "TeleseismicPhaseGroup": "PcS",
+            "LocationUseFlag": false,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "ScS",
+            "TravelTime": 933.5650900399033,
+            "DistanceDerivative": 0.04673372669112931,
+            "DepthDerivative": -0.2890170353558613,
+            "RayDerivative": 0.0017201534358443102,
+            "StatisticalSpread": 4.9695820550123235,
+            "Observability": 0.07028297803384231,
+            "TeleseismicPhaseGroup": "ScS",
+            "LocationUseFlag": false,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "PKiKP",
+            "TravelTime": 992.9983415254204,
+            "DistanceDerivative": 0.005907700174504854,
+            "DepthDerivative": -0.1724137849150059,
+            "RayDerivative": 0.0136072958247754,
+            "StatisticalSpread": 12,
+            "Observability": 0,
+            "TeleseismicPhaseGroup": "PKP",
+            "AuxiliaryPhaseGroup": "P",
+            "LocationUseFlag": false,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "pPKiKP",
+            "TravelTime": 993.5816287887033,
+            "DistanceDerivative": 0.005907576081914597,
+            "DepthDerivative": 0.17241378491534987,
+            "RayDerivative": 0.013607581631854018,
+            "StatisticalSpread": 12,
+            "Observability": 0,
+            "TeleseismicPhaseGroup": "pPKP",
+            "AuxiliaryPhaseGroup": "pP",
+            "LocationUseFlag": false,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "sPKiKP",
+            "TravelTime": 993.7788442268359,
+            "DistanceDerivative": 0.005907601113851887,
+            "DepthDerivative": 0.2890173361557969,
+            "RayDerivative": 0.013607523977868678,
+            "StatisticalSpread": 12,
+            "Observability": 0,
+            "TeleseismicPhaseGroup": "sPKP",
+            "AuxiliaryPhaseGroup": "sP",
+            "LocationUseFlag": false,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "SKiKP",
+            "TravelTime": 1204.4869808489586,
+            "DistanceDerivative": 0.006240591010912282,
+            "DepthDerivative": -0.28901733558961595,
+            "RayDerivative": 0.012881487353288387,
+            "StatisticalSpread": 12,
+            "Observability": 0,
+            "TeleseismicPhaseGroup": "SKP",
+            "AuxiliaryPhaseGroup": "SP",
+            "LocationUseFlag": false,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "PKKPdf",
+            "TravelTime": 1905.415249638878,
+            "DistanceDerivative": -0.005881736686654588,
+            "DepthDerivative": -0.17241378498682175,
+            "RayDerivative": -0.01366906066901618,
+            "StatisticalSpread": 12,
+            "Observability": 0,
+            "TeleseismicPhaseGroup": "PKKP",
+            "LocationUseFlag": false,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "PKKSdf",
+            "TravelTime": 2114.9190792578997,
+            "DistanceDerivative": -0.005585130219206322,
+            "DepthDerivative": -0.1724137857847977,
+            "RayDerivative": -0.014394757835326075,
+            "StatisticalSpread": 12,
+            "Observability": 0,
+            "TeleseismicPhaseGroup": "PKKS",
+            "LocationUseFlag": false,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "SKKPdf",
+            "TravelTime": 2116.819959057097,
+            "DistanceDerivative": -0.005585152590664131,
+            "DepthDerivative": -0.2890173366744739,
+            "RayDerivative": -0.014394700194029563,
+            "StatisticalSpread": 12,
+            "Observability": 0,
+            "TeleseismicPhaseGroup": "SKKP",
+            "LocationUseFlag": false,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "SKKSdf",
+            "TravelTime": 2325.708436887416,
+            "DistanceDerivative": -0.005317019360911409,
+            "DepthDerivative": -0.28901733708361793,
+            "RayDerivative": -0.015120416187506565,
+            "StatisticalSpread": 12,
+            "Observability": 0,
+            "TeleseismicPhaseGroup": "SKKS",
+            "LocationUseFlag": false,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "P'P'df",
+            "TravelTime": 2429.785793194089,
+            "DistanceDerivative": -0.007658969859815539,
+            "DepthDerivative": -0.172413779340701,
+            "RayDerivative": -0.010498370077638637,
+            "StatisticalSpread": 12,
+            "Observability": 0,
+            "TeleseismicPhaseGroup": "P'P'",
+            "AuxiliaryPhaseGroup": "PP",
+            "LocationUseFlag": false,
+            "AssociationWeightFlag": false
+          },
+          {
+            "Phase": "S'S'df",
+            "TravelTime": 3268.5674444989318,
+            "DistanceDerivative": -0.005999547068603876,
+            "DepthDerivative": -0.2890173360025637,
+            "RayDerivative": -0.013400767663956132,
+            "StatisticalSpread": 12,
+            "Observability": 0,
+            "TeleseismicPhaseGroup": "S'S'",
+            "AuxiliaryPhaseGroup": "SS",
+            "LocationUseFlag": false,
+            "AssociationWeightFlag": false
+          }
+        ]
+      }
+    ]
+  }
