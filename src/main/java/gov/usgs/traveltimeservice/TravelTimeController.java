@@ -19,6 +19,9 @@ public class TravelTimeController {
   @Value("${traveltime.model.path:./build/models/}")
   protected String modelPath;
 
+  @Value("${traveltime.serialized.path:./build/models/}")
+  protected String serializedPath;
+
   @Get(uri = "/", produces = MediaType.TEXT_HTML)
   @Hidden
   public HttpResponse getIndex() {
@@ -28,7 +31,7 @@ public class TravelTimeController {
   @Post(uri = "/traveltime", consumes = MediaType.APPLICATION_JSON)
   public TravelTimeRequest getTravelTime(@Body TravelTimeRequest request)
       throws TravelTimeException {
-    TTService service = new TTService(modelPath);
+    TTService service = new TTService(modelPath, serializedPath);
     return service.getTravelTimes(request);
   }
 }

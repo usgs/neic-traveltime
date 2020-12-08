@@ -35,7 +35,7 @@ public class TravelTimeRegressionTest {
 
     try {
       // Initialize the local travel-time manager.
-      ttLocal = new TTSessionLocal(true, true, true, modelPath);
+      ttLocal = new TTSessionLocal(true, true, true, modelPath, modelPath);
     } catch (IOException | ClassNotFoundException e) {
       System.out.println("Unable to read travel-time auxiliary data.");
       Assertions.fail("Unable to read travel-time auxiliary data");

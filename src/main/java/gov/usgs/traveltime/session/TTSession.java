@@ -247,7 +247,7 @@ public class TTSession {
         prta(ttag + " create AuxTtRef ");
         // NOTE assumes default model path for now, need to figure out
         // where to get this path. Cmd line arg?
-        auxtt = new AuxTtRef(true, true, true, null);
+        auxtt = new AuxTtRef(true, true, true, null, null);
       }
 
       // See if we know this model.
@@ -378,12 +378,12 @@ public class TTSession {
     fileNames = new String[2];
     if (TauUtil.useFortranFiles) {
       // Names for the Fortran files.
-      serName = TauUtil.model(earthModel + "_for.ser");
+      serName = TauUtil.serialize(earthModel + "_for.ser");
       fileNames[0] = TauUtil.model(earthModel + ".hed");
       fileNames[1] = TauUtil.model(earthModel + ".tbl");
     } else {
       // Names for generating the model.
-      serName = TauUtil.model(earthModel + "_gen.ser");
+      serName = TauUtil.serialize(earthModel + "_gen.ser");
       fileNames[0] = TauUtil.model("m" + earthModel + ".mod");
       fileNames[1] = TauUtil.model("phases.txt");
     }

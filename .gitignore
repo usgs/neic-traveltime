@@ -9,3 +9,4 @@ build
 lib
 bin
 *.log*
+*.ser

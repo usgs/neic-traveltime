@@ -168,6 +168,8 @@ public class MakeTables {
       }
       // Build the branch end ranges.
       finModel.setEnds(layout.getBranchEnds());
+    } else {
+      System.out.println("failed to read model: " + status);
     }
     return status;
   }

@@ -66,7 +66,12 @@ public class AuxTtRef {
    * @throws ClassNotFoundException Serialization input fails
    */
   @SuppressWarnings("unchecked")
-  public AuxTtRef(boolean readStats, boolean readEllip, boolean readTopo, String modelPath)
+  public AuxTtRef(
+      boolean readStats,
+      boolean readEllip,
+      boolean readTopo,
+      String modelPath,
+      String serializedPath)
       throws IOException, ClassNotFoundException {
     String[] absNames;
     BufferedInputStream inGroup, inStats, inEllip;
@@ -80,6 +85,9 @@ public class AuxTtRef {
     if (modelPath != null) {
       TauUtil.modelPath = modelPath;
     }
+    if (serializedPath != null) {
+      TauUtil.serializedPath = serializedPath;
+    }
 
     // Create absolute path names.
     absNames = new String[fileNames.length];
@@ -89,7 +97,7 @@ public class AuxTtRef {
 
     // If any of the raw input files have changed, regenerate the
     // serialized file.
-    if (FileChanged.isChanged(TauUtil.model(serName), absNames)) {
+    if (FileChanged.isChanged(TauUtil.serialize(serName), absNames)) {
       // Open and read the phase groups file.
       inGroup = new BufferedInputStream(new FileInputStream(absNames[0]));
       scan = new Scanner(inGroup);
@@ -141,7 +149,7 @@ public class AuxTtRef {
       topoMap = new Topography(absNames[3]);
 
       // Write out the serialized file.
-      serOut = new FileOutputStream(TauUtil.model(serName));
+      serOut = new FileOutputStream(TauUtil.serialize(serName));
       objOut = new ObjectOutputStream(serOut);
       // Wait for an exclusive lock for writing.
       lock = serOut.getChannel().lock();
@@ -169,7 +177,7 @@ public class AuxTtRef {
       serOut.close();
     } else {
       // Read in the serialized file.
-      serIn = new FileInputStream(TauUtil.model(serName));
+      serIn = new FileInputStream(TauUtil.serialize(serName));
       objIn = new ObjectInputStream(serIn);
       // Wait for a shared lock for reading.
       lock = serIn.getChannel().lock(0, Long.MAX_VALUE, true);

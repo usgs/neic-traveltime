@@ -13,13 +13,17 @@ public class TTService implements TravelTimeService {
   /** A String containing the earth model path for the locator, null to use default. */
   private String modelPath = null;
 
+  /** A String containing the serialized path for the locator, null to use default. */
+  private String serializedPath = null;
+
   /**
    * The TTService constructor. Sets up the earth model path.
    *
    * @param modelPath A String containing the earth model path to use
    */
-  public TTService(String modelPath) {
+  public TTService(String modelPath, String serializedPath) {
     this.modelPath = modelPath;
+    this.serializedPath = serializedPath;
   }
 
   /**
@@ -48,7 +52,8 @@ public class TTService implements TravelTimeService {
       String phases[] = request.PhaseTypes.toArray(new String[request.PhaseTypes.size()]);
 
       // setup new session
-      TTSessionLocal ttLocal = new TTSessionLocal(readStats, readEllip, readTopo, modelPath);
+      TTSessionLocal ttLocal =
+          new TTSessionLocal(readStats, readEllip, readTopo, modelPath, serializedPath);
       ttLocal.newSession(
           request.EarthModel,
           request.Source.Depth,

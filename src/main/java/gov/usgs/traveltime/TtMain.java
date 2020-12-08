@@ -160,7 +160,7 @@ public class TtMain {
 
     if (local) {
       // Initialize the local travel-time manager.
-      ttLocal = new TTSessionLocal(true, true, true, modelPath);
+      ttLocal = new TTSessionLocal(true, true, true, modelPath, modelPath);
 
       // Generate a list of available Earth models.
       String[] models = TauUtil.availableModels();

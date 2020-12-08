@@ -95,7 +95,11 @@ public class EarthModel {
     modelCheck = scan.next();
     if (!modelCheck.equals(earthModel)) {
       System.out.println(
-          "\n***** Error: model name mismatch (" + earthModel + " != " + modelCheck + ") *****\n");
+          "\n***** Error: model name mismatch (earthModel:"
+              + earthModel
+              + " != modelHeader:"
+              + modelCheck
+              + ") *****\n");
       scan.close();
       return TtStatus.BAD_MODEL_FILE;
     }
