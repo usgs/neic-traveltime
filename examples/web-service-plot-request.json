@@ -1,0 +1,12 @@
+{
+    "Source": {
+      "Latitude": 63.238,
+      "Longitude": -151.660,
+      "Depth": 1.0
+    },
+    "EarthModel": "AK135",
+    "PhaseTypes": [],
+    "ReturnAllPhases": true,
+    "ReturnBackBranches": true,
+    "ConvertTectonic": true
+  }

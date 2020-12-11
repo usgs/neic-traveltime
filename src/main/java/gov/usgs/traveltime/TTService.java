@@ -2,12 +2,17 @@ package gov.usgs.traveltime;
 
 import gov.usgs.processingformats.TravelTimeData;
 import gov.usgs.processingformats.TravelTimeException;
+import gov.usgs.processingformats.TravelTimePlotDataBranch;
+import gov.usgs.processingformats.TravelTimePlotDataSample;
+import gov.usgs.processingformats.TravelTimePlotRequest;
 import gov.usgs.processingformats.TravelTimeReceiver;
 import gov.usgs.processingformats.TravelTimeRequest;
 import gov.usgs.processingformats.TravelTimeService;
 import gov.usgs.traveltime.tables.TauIntegralException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.NavigableMap;
 
 public class TTService implements TravelTimeService {
   /** A String containing the earth model path for the locator, null to use default. */
@@ -139,6 +144,103 @@ public class TTService implements TravelTimeService {
     }
 
     request.Response = responseList;
+
+    return (request);
+  }
+
+  /**
+   * Function to get a travel time using the provided input, implementing the TravelTime service
+   * interface.
+   *
+   * @param request a Final TravelTimeRequest containing the TravelTime request
+   * @return A TravelTimeResult containing the resulting TravelTime
+   * @throws gov.usgs.processingformats.TravelTimeException Throws a TravelTimeException upon
+   *     certain severe errors.
+   */
+  @Override
+  public TravelTimePlotRequest getTravelTimePlot(final TravelTimePlotRequest request)
+      throws TravelTimeException {
+    if (request == null) {
+      // LOGGER.severe("Null request.");
+      throw new TravelTimeException("Null request");
+    }
+    boolean readStats = true;
+    boolean readEllip = true;
+    boolean readTopo = true;
+
+    ArrayList<TravelTimePlotDataBranch> branchList = null;
+
+    try {
+      String phases[] = request.PhaseTypes.toArray(new String[request.PhaseTypes.size()]);
+
+      // setup new session
+      TTSessionLocal ttLocal =
+          new TTSessionLocal(readStats, readEllip, readTopo, modelPath, serializedPath);
+      ttLocal.newSession(
+          request.EarthModel,
+          request.Source.Depth,
+          phases,
+          request.Source.Latitude,
+          request.Source.Longitude,
+          request.ReturnAllPhases,
+          request.ReturnBackBranches,
+          request.ConvertTectonic,
+          false);
+
+      // allocate response
+      branchList = new ArrayList<TravelTimePlotDataBranch>();
+
+      // get plotting information
+      TtPlot plot =
+          ttLocal.getPlot(
+              request.EarthModel,
+              request.Source.Depth,
+              phases,
+              request.ReturnAllPhases,
+              request.ReturnBackBranches,
+              request.ConvertTectonic);
+
+      // add traveltimes to response
+      NavigableMap<String, TtBranch> map = plot.branches.headMap("~", true);
+      for (@SuppressWarnings("rawtypes") Map.Entry entry : map.entrySet()) {
+        TtBranch branch = (TtBranch) entry.getValue();
+
+        // build travel time branch
+        TravelTimePlotDataBranch dataBranch = new TravelTimePlotDataBranch();
+        dataBranch.Phase = branch.phCode;
+
+        ArrayList<TravelTimePlotDataSample> dataSamples = new ArrayList<TravelTimePlotDataSample>();
+        for (int i = 0; i < branch.branch.size(); i++) {
+          TtPlotPoint point = branch.branch.get(i);
+
+          TravelTimePlotDataSample dataPoint = new TravelTimePlotDataSample();
+          dataPoint.Distance = point.delta;
+          dataPoint.TravelTime = point.tt;
+          dataPoint.StatisticalSpread = point.spread;
+          dataPoint.Observability = point.observ;
+          dataPoint.RayParameter = point.dTdD;
+
+          // add point to list
+          dataSamples.add(dataPoint);
+        }
+
+        // add sample points to branch
+        dataBranch.Samples = dataSamples;
+
+        // add branch to branchList
+        branchList.add(dataBranch);
+      }
+    } catch (BadDepthException e) {
+      throw new TravelTimeException("Source depth out of range");
+    } catch (TauIntegralException e) {
+      throw new TravelTimeException("Bad Tau Integral");
+    } catch (IOException e) {
+      throw new TravelTimeException("Read Error");
+    } catch (ClassNotFoundException e) {
+      throw new TravelTimeException("Input serialization");
+    }
+
+    request.Response = branchList;
 
     return (request);
   }

@@ -1,6 +1,7 @@
 package gov.usgs.traveltimeservice;
 
 import gov.usgs.processingformats.TravelTimeException;
+import gov.usgs.processingformats.TravelTimePlotRequest;
 import gov.usgs.processingformats.TravelTimeRequest;
 import gov.usgs.traveltime.TTService;
 import io.micronaut.context.annotation.Value;
@@ -33,5 +34,12 @@ public class TravelTimeController {
       throws TravelTimeException {
     TTService service = new TTService(modelPath, serializedPath);
     return service.getTravelTimes(request);
+  }
+
+  @Post(uri = "/traveltimeplot", consumes = MediaType.APPLICATION_JSON)
+  public TravelTimePlotRequest getTravelTimePlot(@Body TravelTimePlotRequest request)
+      throws TravelTimeException {
+    TTService service = new TTService(modelPath, serializedPath);
+    return service.getTravelTimePlot(request);
   }
 }
