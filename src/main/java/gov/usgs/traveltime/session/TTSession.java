@@ -354,8 +354,11 @@ public class TTSession {
           }
         } else {
           // Generate a travel-time chart.
+          double maxDistance = 180.0;
+          double maxTime = 3600.0;
           plotData = new PlotData(allBrn);
-          plotData.makePlot(sourceDepth, phList, allPhases, returnBackBranches, tectonic);
+          plotData.makePlot(
+              sourceDepth, phList, allPhases, returnBackBranches, tectonic, maxDistance, maxTime);
         }
       } catch (Exception e) {
         e.printStackTrace(getPrintStream());

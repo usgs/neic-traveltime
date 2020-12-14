@@ -168,10 +168,35 @@ public class TTService implements TravelTimeService {
     boolean readEllip = true;
     boolean readTopo = true;
 
+    // optional defaults
+    String phases[] = null;
+    boolean returnAllPhases = true;
+    boolean returnBackBranches = true;
+    boolean convertTectonic = true;
+    double maxDistance = 180.0;
+    double maxTime = 3600.0;
     ArrayList<TravelTimePlotDataBranch> branchList = null;
 
     try {
-      String phases[] = request.PhaseTypes.toArray(new String[request.PhaseTypes.size()]);
+      // handle optional values
+      if (request.PhaseTypes != null) {
+        phases = request.PhaseTypes.toArray(new String[request.PhaseTypes.size()]);
+      }
+      if (request.ReturnAllPhases != null) {
+        returnAllPhases = request.ReturnAllPhases;
+      }
+      if (request.ReturnBackBranches != null) {
+        returnBackBranches = request.ReturnBackBranches;
+      }
+      if (request.ConvertTectonic != null) {
+        convertTectonic = request.ConvertTectonic;
+      }
+      if ((request.MaximumDistance != null) && (request.MaximumDistancegit> 0)) {
+        maxDistance = request.MaximumDistance;
+      }
+      if ((request.MaximumTravelTime != null) && (request.MaximumTravelTime > 0)) {
+        maxTime = request.MaximumTravelTime;
+      }
 
       // setup new session
       TTSessionLocal ttLocal =
@@ -182,9 +207,9 @@ public class TTService implements TravelTimeService {
           phases,
           request.Source.Latitude,
           request.Source.Longitude,
-          request.ReturnAllPhases,
-          request.ReturnBackBranches,
-          request.ConvertTectonic,
+          returnAllPhases,
+          returnBackBranches,
+          convertTectonic,
           false);
 
       // allocate response
@@ -196,9 +221,11 @@ public class TTService implements TravelTimeService {
               request.EarthModel,
               request.Source.Depth,
               phases,
-              request.ReturnAllPhases,
-              request.ReturnBackBranches,
-              request.ConvertTectonic);
+              returnAllPhases,
+              returnBackBranches,
+              convertTectonic,
+              maxDistance,
+              maxTime);
 
       // add traveltimes to response
       NavigableMap<String, TtBranch> map = plot.branches.headMap("~", true);

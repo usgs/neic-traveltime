@@ -8,5 +8,7 @@
     "PhaseTypes": [],
     "ReturnAllPhases": true,
     "ReturnBackBranches": true,
-    "ConvertTectonic": true
-  }
+    "ConvertTectonic": true,
+    "MaximumDistance": 90.0,
+    "MaximumTravelTime": 2700.0
+}

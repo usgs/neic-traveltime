@@ -145,6 +145,8 @@ public class TTSessionLocal {
    * @param returnAllPhases If true, provide all phases
    * @param returnBackBranches If true, return all back branches
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
+   * @param maxDelta Maximum distance in degrees to generate
+   * @param maxTime Maximum travel time in seconds to allow
    * @return Travel-time plot data
    * @throws BadDepthException If the depth is out of range
    * @throws TauIntegralException If the tau integrals fail
@@ -155,13 +157,16 @@ public class TTSessionLocal {
       String[] phases,
       boolean returnAllPhases,
       boolean returnBackBranches,
-      boolean tectonic)
+      boolean tectonic,
+      double maxDelta,
+      double maxTime)
       throws BadDepthException, TauIntegralException {
     PlotData plotData;
 
     setModel(earthModel.toLowerCase());
     plotData = new PlotData(allBrn);
-    plotData.makePlot(sourceDepth, phases, returnAllPhases, returnBackBranches, tectonic);
+    plotData.makePlot(
+        sourceDepth, phases, returnAllPhases, returnBackBranches, tectonic, maxDelta, maxTime);
     return plotData.getPlot();
   }
 
