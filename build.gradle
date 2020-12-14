@@ -148,10 +148,8 @@ task cloneExternalProjects {
 
   doFirst {
     // earthquake-processing-formats
-    //addExternalProject("$projectDir/lib/earthquake-processing-formats",
-    //  "https://github.com/usgs/earthquake-processing-formats.git", "master", "java/src")
     addExternalProject("$projectDir/lib/earthquake-processing-formats",
-      "https://github.com/jpatton-USGS/earthquake-processing-formats.git", "tt-refactor", "java/src")
+      "https://github.com/usgs/earthquake-processing-formats.git", "master", "java/src")
   }
 }
 
