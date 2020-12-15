@@ -5,7 +5,9 @@ services:
     environment:
         - traveltime.serialized.path=/local/
     ports:
+        # HOST:CONTAINER
         - 8080:8080
     volumes:
+        # HOST:CONTAINER
         - ./:/local
     entrypoint: "/usr/bin/java -jar neic-traveltime-service.jar --mode=service"

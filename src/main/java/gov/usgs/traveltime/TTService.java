@@ -191,7 +191,7 @@ public class TTService implements TravelTimeService {
       if (request.ConvertTectonic != null) {
         convertTectonic = request.ConvertTectonic;
       }
-      if ((request.MaximumDistance != null) && (request.MaximumDistancegit> 0)) {
+      if ((request.MaximumDistance != null) && (request.MaximumDistance > 0)) {
         maxDistance = request.MaximumDistance;
       }
       if ((request.MaximumTravelTime != null) && (request.MaximumTravelTime > 0)) {

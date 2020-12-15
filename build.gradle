@@ -108,7 +108,7 @@ googleJavaFormat {
 }
 
 // always format to google style prior to the build
-// compileJava.dependsOn 'googleJavaFormat'
+compileJava.dependsOn 'googleJavaFormat'
 
 // Added Google java style check (shouldn't find anything)
 project.tasks.check.dependsOn(verifyGoogleJavaFormat)
@@ -148,8 +148,10 @@ task cloneExternalProjects {
 
   doFirst {
     // earthquake-processing-formats
+    //addExternalProject("$projectDir/lib/earthquake-processing-formats",
+    //  "https://github.com/usgs/earthquake-processing-formats.git", "master", "java/src")
     addExternalProject("$projectDir/lib/earthquake-processing-formats",
-      "https://github.com/usgs/earthquake-processing-formats.git", "master", "java/src")
+      "https://github.com/jpatton-USGS/earthquake-processing-formats.git", "tt-refactor", "java/src")
   }
 }
 
