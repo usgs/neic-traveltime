@@ -42,7 +42,9 @@ file in your application.
 
 To run the neic-traveltime as a web service, run the command `java -jar build/libs/neic-traveltime-0.2.0-all.jar --mode=service`
 
-To run the neic-traveltime from the docker container, first create a docker volume for the temporary files with the command `docker volume create tt-vol`, then run the command `docker run -d --name tt-test --mount source=tt-vol,target=/project/local/ -p 8080:8080 -it usgs/neic-traveltime:latest`
+To run the neic-traveltime from the docker container, first create a docker volume for the temporary files with the command `docker volume create tt-vol`, then run the command `docker run -d --name tt-test --mount source=tt-vol,target=/project/local/ -p 8080:8080 -it usgs/neic-traveltime:latest` or `docker-compose up` if docker-compose is available.
+
+To attach to the neic-traveltime container for debugging, use the command `docker container exec -it tt-test /bin/bash`
 
 Once the web service is running, either locally or out of the container, you can access the swagger ui in a browser at `http://localhost:8080/`, and "try out" the traveltime service using the contents of `examples/web-service-request.json` or `examples/web-service-plot-request.json`.
 
