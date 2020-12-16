@@ -29,11 +29,14 @@ RUN yum install -y java-11-openjdk-headless
 # copy shadow jar
 COPY --from=build /project/build/neic-traveltime-service.jar /project/
 # copy models
-ENV traveltime.model.path=/project/models/
 COPY --from=build /project/build/models /project/models
 
-# run as unprivileged user
-USER nobody
+# set environment
+ENV traveltime.model.path=/project/models/
+ENV traveltime.serialized.path=/project/local/
+
+# run as root to avoid volume writing issues
+USER root
 EXPOSE 8080
 WORKDIR /project
 ENTRYPOINT [ "/usr/bin/java", "-jar", "neic-traveltime-service.jar" ]

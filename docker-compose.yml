@@ -2,12 +2,10 @@ version: "3.7"
 services:
   webapp:
     image: usgs/neic-traveltime:latest
-    environment:
-        - traveltime.serialized.path=/local/
     ports:
         # HOST:CONTAINER
         - 8080:8080
     volumes:
         # HOST:CONTAINER
-        - ./:/local
+        - tt-vol:/project/local/
     entrypoint: "/usr/bin/java -jar neic-traveltime-service.jar --mode=service"
