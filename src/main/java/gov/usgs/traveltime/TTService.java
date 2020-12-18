@@ -175,6 +175,7 @@ public class TTService implements TravelTimeService {
     boolean convertTectonic = true;
     double maxDistance = 180.0;
     double maxTime = 3600.0;
+    double deltaStep = -1.0;
     ArrayList<TravelTimePlotDataBranch> branchList = null;
 
     try {
@@ -225,7 +226,8 @@ public class TTService implements TravelTimeService {
               returnBackBranches,
               convertTectonic,
               maxDistance,
-              maxTime);
+              maxTime,
+              deltaStep);
 
       // add traveltimes to response
       NavigableMap<String, TtBranch> map = plot.branches.headMap("~", true);

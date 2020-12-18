@@ -32,6 +32,7 @@ public class PlotData {
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
    * @param maxDelta Maximum distance in degrees to generate
    * @param maxTime Maximum travel time in seconds to allow
+   * @param deltaStep Distance increment in degrees for travel-time plots
    * @throws BadDepthException If the depth is out of range
    * @throws TauIntegralException If the tau integrals fail
    */
@@ -42,15 +43,22 @@ public class PlotData {
       boolean returnBackBranches,
       boolean tectonic,
       double maxDelta,
-      double maxTime)
+      double maxTime,
+      double deltaStep)
       throws BadDepthException, TauIntegralException {
+
+    double deltaIncrement = TauUtil.DDELPLOT;
+    if (deltaStep > 0) {
+      deltaIncrement = deltaStep;
+    }
+
     // Make sure the depth is in range.
     if (!Double.isNaN(depth) && depth >= 0d && depth <= TauUtil.MAXDEPTH) {
       ttPlot = new TtPlot();
       // A simple request is all we can do.
       allBrn.newSession(depth, phList, returnAllPhases, returnBackBranches, tectonic, false);
       // Loop over distances.
-      for (double delta = 0d; delta <= maxDelta; delta += TauUtil.DDELPLOT) {
+      for (double delta = 0d; delta <= maxDelta; delta += deltaIncrement) {
         ttList = allBrn.getTT(0d, delta);
         // Loop over phases sorting them into branches.
         for (int j = 0; j < ttList.getNumPhases(); j++) {

@@ -358,7 +358,14 @@ public class TTSession {
           double maxTime = 3600.0;
           plotData = new PlotData(allBrn);
           plotData.makePlot(
-              sourceDepth, phList, allPhases, returnBackBranches, tectonic, maxDistance, maxTime);
+              sourceDepth,
+              phList,
+              allPhases,
+              returnBackBranches,
+              tectonic,
+              maxDistance,
+              maxTime,
+              -1.0);
         }
       } catch (Exception e) {
         e.printStackTrace(getPrintStream());
