@@ -62,6 +62,7 @@ public class AuxTtRef {
    * @param readEllip If true, read the ellipticity corrections
    * @param readTopo If true, read the topography file
    * @param modelPath If not null, path to model files
+   * @param serializedPath If not null, path to serialized files
    * @throws IOException If opens fail
    * @throws ClassNotFoundException Serialization input fails
    */

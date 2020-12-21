@@ -19,7 +19,7 @@ public class TtPlotPoint implements Comparable<TtPlotPoint> {
    * @param tt Travel time in seconds
    * @param spread Statistical spread in seconds
    * @param observ Relative observability
-   * @param dTdD .g
+   * @param dTdD Ray parameter in seconds/degree
    */
   public TtPlotPoint(double delta, double tt, double spread, double observ, double dTdD) {
     this.delta = delta;

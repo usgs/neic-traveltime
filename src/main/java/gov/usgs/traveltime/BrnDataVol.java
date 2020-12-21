@@ -1132,6 +1132,7 @@ public class BrnDataVol {
    * Generate one line of a branch summary table.
    *
    * @param returnAllPhases If true, omit "useless" crustal phases
+   * @return a String containing one line of a branch summary table
    */
   public String forTable(boolean returnAllPhases) {
     if (!exists || (!returnAllPhases && ref.isUseless)) {

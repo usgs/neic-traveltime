@@ -14,6 +14,12 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.NavigableMap;
 
+/**
+ * The TTService class contains the interfaces between the travel time package and service code,
+ * i.e. webservices.
+ *
+ * @author John Patton
+ */
 public class TTService implements TravelTimeService {
   /** A String containing the earth model path for the locator, null to use default. */
   private String modelPath = null;
@@ -25,6 +31,7 @@ public class TTService implements TravelTimeService {
    * The TTService constructor. Sets up the earth model path.
    *
    * @param modelPath A String containing the earth model path to use
+   * @param serializedPath A String containing the serialized file path to use
    */
   public TTService(String modelPath, String serializedPath) {
     this.modelPath = modelPath;
@@ -32,11 +39,11 @@ public class TTService implements TravelTimeService {
   }
 
   /**
-   * Function to get a travel time using the provided input, implementing the TravelTime service
-   * interface.
+   * Function to get a set of travel times using the provided input, i.e a series of stations
+   * (recievers) relative to an event (source), implementing the TravelTime service interface.
    *
-   * @param request a Final TravelTimeRequest containing the TravelTime request
-   * @return A TravelTimeResult containing the resulting TravelTime
+   * @param request a final TravelTimeRequest containing the TravelTime request
+   * @return A TravelTimeRequest with the response section containing the resulting TravelTime data
    * @throws gov.usgs.processingformats.TravelTimeException Throws a TravelTimeException upon
    *     certain severe errors.
    */
@@ -149,11 +156,12 @@ public class TTService implements TravelTimeService {
   }
 
   /**
-   * Function to get a travel time using the provided input, implementing the TravelTime service
-   * interface.
+   * Function to get travel time plot data using the provided input, implementing the TravelTime
+   * service interface.
    *
-   * @param request a Final TravelTimeRequest containing the TravelTime request
-   * @return A TravelTimeResult containing the resulting TravelTime
+   * @param request a final TravelTimePlotRequest containing the travel time plot data request
+   * @return A TravelTimePlotRequest with the response section containing the resulting travel time
+   *     plot data
    * @throws gov.usgs.processingformats.TravelTimeException Throws a TravelTimeException upon
    *     certain severe errors.
    */

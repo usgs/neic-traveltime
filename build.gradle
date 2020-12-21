@@ -92,7 +92,8 @@ ext.addExternalProject = { path, url, branch, srcDir ->
   sourceSets {
     main {
       java {
-          srcDirs "$path/$srcDir"
+          // grab the main subdir of src to avoid compiling tests
+          srcDirs "$path/$srcDir/main"
       }
     }
   }
@@ -186,7 +187,7 @@ shadowJar {
 
 // create javadocs
 javadoc {
-  exclude "gov/usgs/processingformats/**"
+  exclude "**/gov/usgs/processingformats/**"
   if(JavaVersion.current() != JavaVersion.VERSION_1_8) {
     options.addBooleanOption('html5', true)
   }
