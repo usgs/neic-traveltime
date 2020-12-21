@@ -7,6 +7,12 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.http.client.annotation.Client;
 import javax.validation.constraints.NotBlank;
 
+/**
+ * The TravelTimeController is a required Micronaut interface defining the desired
+ * endpoints and functions for travel time webservices.
+ *
+ * @author John Patton
+ */
 @Client("${traveltime.controller.path:/traveltime}")
 public interface TravelTimeControllerClient {
 
@@ -15,6 +21,6 @@ public interface TravelTimeControllerClient {
       throws TravelTimeException;
 
   @Post("/traveltimeplot")
-  public TravelTimePlotRequest getTravelTime(@NotBlank TravelTimePlotRequest request)
+  public TravelTimePlotRequest getTravelTimePlot(@NotBlank TravelTimePlotRequest request)
       throws TravelTimeException;
 }
