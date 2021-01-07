@@ -26,14 +26,27 @@ The steps to get and build neic-traveltime.jar using ant are as follows:
 
 1. Clone neic-traveltime.
 2. Open a command window and change directories to /neic-traveltime/
-3. To build the jar file, run the command `ant jar`
-4. To generate javadocs, run the command `ant javadoc`
-5. To compile, generate javadocs, build jar, run the command `ant all`
+3. To build the jar file, run the command `./gradlew build`
+4. To build the jar file, run unit tests, and code coverage, run the command `./gradlew check`
+5. To generate javadocs, run the command `./gradlew javadoc`
+
+To build the docker image, with docker installed and neic-traveltime built:
+
+1. In a command window, change directories to /neic-traveltime/
+2. To build the docker container, run the command `docker build -t usgs/neic-traveltime:latest .`
 
 Using
 -----
 Once you are able to build the neic-traveltime jar, simply include the jar
 file in your application.
+
+To run the neic-traveltime as a web service, run the command `java -jar build/libs/neic-traveltime-0.2.0-all.jar --mode=service`
+
+To run the neic-traveltime from the docker container, first create a docker volume for the temporary files with the command `docker volume create tt-vol`, then run the command `docker run -d --name tt-test --mount source=tt-vol,target=/project/local/ -p 8080:8080 -it usgs/neic-traveltime:latest` or `docker-compose up` if docker-compose is available.
+
+To attach to the neic-traveltime container for debugging, use the command `docker container exec -it tt-test /bin/bash`
+
+Once the web service is running, either locally or out of the container, you can access the swagger ui in a browser at `http://localhost:8080/`, and "try out" the traveltime service using the contents of `examples/web-service-request.json` or `examples/web-service-plot-request.json`.
 
 Further Information and Documentation
 ------

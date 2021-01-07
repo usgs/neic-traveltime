@@ -118,6 +118,9 @@ public class TauUtil {
   /** Paths for model files. */
   public static String modelPath = "./models/";
 
+  /** Paths for serialized files. */
+  public static String serializedPath = "./models/";
+
   /**
    * Build a path to a model file.
    *
@@ -126,6 +129,16 @@ public class TauUtil {
    */
   public static String model(String modelFile) {
     return modelPath + modelFile;
+  }
+
+  /**
+   * Build a path to a serialized file.
+   *
+   * @param modelFile Model file name
+   * @return serialize file path
+   */
+  public static String serialize(String modelFile) {
+    return serializedPath + modelFile;
   }
 
   /**

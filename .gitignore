@@ -6,3 +6,7 @@ build
 
 # User-specific files
 .DS_Store
+lib
+bin
+*.log*
+*.ser

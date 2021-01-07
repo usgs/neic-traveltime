@@ -41,6 +41,15 @@ public class TtMain {
   /** A String containing the argument for specifying a log level. */
   public static final String LOGLEVEL_ARGUMENT = "--logLevel=";
 
+  /** A String containing the argument for specifying the mode. */
+  public static final String MODE_ARGUMENT = "--mode=";
+
+  /** Mode to run normally. */
+  public static final String MODE_LOCAL = "local";
+
+  /** Mode to run web service. */
+  public static final String MODE_SERVICE = "service";
+
   /** Private logging object. */
   private static final Logger LOGGER = Logger.getLogger(TtMain.class.getName());
 
@@ -58,6 +67,7 @@ public class TtMain {
       System.exit(1);
     }
 
+    String mode = MODE_LOCAL;
     String modelPath = null;
     String earthModel = "ak135";
     double sourceDepth = 10.0;
@@ -90,6 +100,9 @@ public class TtMain {
         System.err.println("neic-traveltime");
         System.err.println(VERSION);
         System.exit(0);
+      } else if (arg.startsWith(MODE_ARGUMENT)) {
+        // get mode
+        mode = arg.replace(MODE_ARGUMENT, "");
       }
     }
 
@@ -113,6 +126,12 @@ public class TtMain {
     LOGGER.config("os.version = " + System.getProperty("os.version"));
     LOGGER.config("user.dir = " + System.getProperty("user.dir"));
     LOGGER.config("user.name = " + System.getProperty("user.name"));
+
+    if (MODE_SERVICE.equals(mode)) {
+      gov.usgs.traveltimeservice.Application.main(args);
+      // service runs in separate thread, just return from this method...
+      return;
+    }
 
     String[] phList = null;
     //	String[] phList = {"PKP", "SKP"};
@@ -141,7 +160,7 @@ public class TtMain {
 
     if (local) {
       // Initialize the local travel-time manager.
-      ttLocal = new TTSessionLocal(true, true, true, modelPath);
+      ttLocal = new TTSessionLocal(true, true, true, modelPath, modelPath);
 
       // Generate a list of available Earth models.
       String[] models = TauUtil.availableModels();
