@@ -8,8 +8,8 @@ import io.micronaut.http.client.annotation.Client;
 import javax.validation.constraints.NotBlank;
 
 /**
- * The TravelTimeController is a required Micronaut interface defining the desired
- * endpoints and functions for travel time webservices.
+ * The TravelTimeController is a required Micronaut interface defining the desired endpoints and
+ * functions for travel time webservices.
  *
  * @author John Patton
  */
