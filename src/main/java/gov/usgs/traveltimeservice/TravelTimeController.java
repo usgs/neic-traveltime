@@ -15,9 +15,9 @@ import io.swagger.v3.oas.annotations.Hidden;
 import java.net.URI;
 
 /**
- * The TravelTimeController is a required Micronaut class defining the desired uri's and
- * endpoints for travel time webservices, and linking those endpoints with the corresponding
- * TTService methods.
+ * The TravelTimeController is a required Micronaut class defining the desired uri's and endpoints
+ * for travel time webservices, and linking those endpoints with the corresponding TTService
+ * methods.
  *
  * @author John Patton
  */
