@@ -206,6 +206,9 @@ public class TTService implements TravelTimeService {
       if ((request.MaximumTravelTime != null) && (request.MaximumTravelTime > 0)) {
         maxTime = request.MaximumTravelTime;
       }
+      if ((request.DistanceStep != null) && (request.DistanceStep > 0)) {
+        deltaStep = request.DistanceStep;
+      }
 
       // setup new session
       TTSessionLocal ttLocal =
