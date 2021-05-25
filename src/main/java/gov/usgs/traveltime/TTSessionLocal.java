@@ -37,6 +37,7 @@ public class TTSessionLocal {
   			throws IOException, ClassNotFoundException {
     // Read in data common to all models.
       auxTT = new AuxTtRef(readStats, readEllip, readTopo, modelPath);
+      auxTT.printGroups();
   }
 
   /**
@@ -240,6 +241,7 @@ public class TTSessionLocal {
       // Set up the (depth dependent) volatile part.
       allBrn = new AllBrnVol(allRef);
       //		allBrn.dumpHead();
+      //		allBrn.dumpBrn("PnPn", false, false, true);
     }
   }
 
