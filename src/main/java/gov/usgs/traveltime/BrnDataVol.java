@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 public class BrnDataVol {
   boolean compute; // True if travel times should be computed
   boolean exists; // True if the corrected branch still exists
+  boolean isUseless; // True if the phase just gets in the way
   String phCode; // Corrected phase code
   String[] uniqueCode; // Local storage for diffracted and add on phases
   double[] pRange; // Corrected slowness range for this branch
@@ -66,6 +67,7 @@ public class BrnDataVol {
     this.spline = spline;
 
     // Do branch summary information.
+    isUseless = auxtt.isChaff(ref.phCode);
     compute = true;
     exists = true;
     xDiff = new double[2];
@@ -653,7 +655,7 @@ public class BrnDataVol {
     TtFlags addFlags;
 
     // Skip non-existent and useless phases (if requested).
-    if (!exists || (!returnAllPhases && ref.isUseless)) return;
+    if (!exists || (!returnAllPhases && isUseless)) return;
     // On the first index, set up the conversion for dT/dDelta.
     if (depIndex == 0) xSign = cvt.dTdDelta * Math.pow(-1d, xTries[0] + 1);
 
@@ -885,7 +887,7 @@ public class BrnDataVol {
 
     if (!caustics || iMin + iMax > 0) {
       if (exists) {
-        if (returnAllPhases || !ref.isUseless) {
+        if (returnAllPhases || !isUseless) {
           if (ref.isUpGoing) {
             branchString += String.format("\n         phase = %2s up  ", phCode);
 
@@ -1125,7 +1127,7 @@ public class BrnDataVol {
   }
 
   public boolean getIsUseless() {
-    return (ref.isUseless);
+    return (isUseless);
   }
 
   /**
@@ -1135,7 +1137,7 @@ public class BrnDataVol {
    * @return a String containing one line of a branch summary table
    */
   public String forTable(boolean returnAllPhases) {
-    if (!exists || (!returnAllPhases && ref.isUseless)) {
+    if (!exists || (!returnAllPhases && isUseless)) {
       return "";
     }
     if (ref.isUpGoing) {

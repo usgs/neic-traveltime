@@ -260,6 +260,7 @@ public class TTSessionLocal {
       // Set up the (depth dependent) volatile part.
       allBrn = new AllBrnVol(allRef);
       //		allBrn.dumpHead();
+      //		allBrn.dumpBrn("PnPn", false, false, true);
     }
   }
 
