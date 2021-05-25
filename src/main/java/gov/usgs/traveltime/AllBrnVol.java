@@ -1,9 +1,8 @@
 package gov.usgs.traveltime;
 
+import gov.usgs.traveltime.tables.TauIntegralException;
 import java.util.ArrayList;
 import java.util.logging.Logger;
-
-import gov.usgs.traveltime.tables.TauIntegralException;
 
 /**
  * Umbrella storage for all volatile branch level travel-time data.
@@ -306,25 +305,29 @@ public class AllBrnVol {
   public TTime getTT(double staLat, double staLon, double elev, double delta, double azimuth) {
 
     // If this is a simple session, the request can only be simple.
-    if (complexSession) complexRequest = true;
-    else complexRequest = false;
+    if (complexSession) {
+      complexRequest = true;
+    } else {
+      complexRequest = false;
+    }
 
     // See if the distance makes sense.
-    if (!Double.isNaN(delta) && delta >= 0d && delta <= 180d) {
+    if ((!Double.isNaN(delta)) && (delta >= 0d) && (delta <= 180d)) {
       badDelta = false;
+      staDelta = delta;
+
       if (complexRequest) {
         // OK, how about the azimuth.
-        if (!Double.isNaN(azimuth) && azimuth >= 0d && azimuth <= 360d) {
-          staDelta = delta;
+        if ((!Double.isNaN(azimuth)) && (azimuth >= 0d) && (azimuth <= 360d)) {
           staAzim = azimuth;
         } else {
           // If the station coordinates makes sense, we can fix it.
-          if (!Double.isNaN(staLat)
-              && staLat >= -90d
-              && staLat <= 90d
-              && !Double.isNaN(staLon)
-              && staLon >= -180d
-              && staLon <= 180d) {
+          if ((!Double.isNaN(staLat))
+              && (staLat >= -90d)
+              && (staLat <= 90d)
+              && (!Double.isNaN(staLon))
+              && (staLon >= -180d)
+              && (staLon <= 180d)) {
             staDelta = TauUtil.delAz(eqLat, eqLon, staLat, staLon);
             staAzim = TauUtil.azimuth;
           } else {
@@ -335,15 +338,16 @@ public class AllBrnVol {
       } else {
         staAzim = Double.NaN;
       }
+
       // The distance is bad, see if we can fix it.
     } else {
       // See if the station coordinates make sense.
-      if (!Double.isNaN(staLat)
-          && staLat >= -90d
-          && staLat <= 90d
-          && !Double.isNaN(staLon)
-          && staLon >= -180d
-          && staLon <= 180d) {
+      if ((!Double.isNaN(staLat))
+          && (staLat >= -90d)
+          && (staLat <= 90d)
+          && (!Double.isNaN(staLon))
+          && (staLon >= -180d)
+          && (staLon <= 180d)) {
         badDelta = false;
         staDelta = TauUtil.delAz(eqLat, eqLon, staLat, staLon);
         staAzim = TauUtil.azimuth;
@@ -353,7 +357,7 @@ public class AllBrnVol {
     }
 
     // If the elevation doesn't make sense, just set it to zero.
-    if (!Double.isNaN(elev) && elev >= TauUtil.MINELEV && elev <= TauUtil.MAXELEV) {
+    if ((!Double.isNaN(elev)) && (elev >= TauUtil.MINELEV) && (elev <= TauUtil.MAXELEV)) {
       return doTT(elev);
     } else {
       return doTT(0d);

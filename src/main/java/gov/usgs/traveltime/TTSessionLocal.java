@@ -3,7 +3,6 @@ package gov.usgs.traveltime;
 import gov.usgs.traveltime.tables.MakeTables;
 import gov.usgs.traveltime.tables.TablesUtil;
 import gov.usgs.traveltime.tables.TauIntegralException;
-
 import java.io.IOException;
 import java.util.TreeMap;
 
@@ -30,14 +29,20 @@ public class TTSessionLocal {
    * @param readEllip If true, read the ellipticity corrections
    * @param readTopo If true, read the topography file
    * @param modelPath If not null, path to model files
+   * @param serializedPath If not null, path to serialized files
    * @throws IOException On any read error
    * @throws ClassNotFoundException In input serialization is hosed
    */
-  public TTSessionLocal(boolean readStats, boolean readEllip, boolean readTopo, String modelPath) 
-  			throws IOException, ClassNotFoundException {
+  public TTSessionLocal(
+      boolean readStats,
+      boolean readEllip,
+      boolean readTopo,
+      String modelPath,
+      String serializedPath)
+      throws IOException, ClassNotFoundException {
+
     // Read in data common to all models.
-      auxTT = new AuxTtRef(readStats, readEllip, readTopo, modelPath);
-      auxTT.printGroups();
+    auxTT = new AuxTtRef(readStats, readEllip, readTopo, modelPath, serializedPath);
   }
 
   /**
@@ -63,7 +68,7 @@ public class TTSessionLocal {
       boolean useRSTT)
       throws BadDepthException, TauIntegralException {
 
-    setModel(earthModel);
+    setModel(earthModel.toLowerCase());
     allBrn.newSession(sourceDepth, phases, returnAllPhases, returnBackBranches, tectonic, useRSTT);
   }
 
@@ -94,7 +99,7 @@ public class TTSessionLocal {
       boolean useRSTT)
       throws BadDepthException, TauIntegralException {
 
-    setModel(earthModel);
+    setModel(earthModel.toLowerCase());
     allBrn.newSession(
         srcLat,
         srcLong,
@@ -140,6 +145,9 @@ public class TTSessionLocal {
    * @param returnAllPhases If true, provide all phases
    * @param returnBackBranches If true, return all back branches
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
+   * @param maxDelta Maximum distance in degrees to generate
+   * @param maxTime Maximum travel time in seconds to allow
+   * @param deltaStep Distance increment in degrees for travel-time plots
    * @return Travel-time plot data
    * @throws BadDepthException If the depth is out of range
    * @throws TauIntegralException If the tau integrals fail
@@ -150,13 +158,24 @@ public class TTSessionLocal {
       String[] phases,
       boolean returnAllPhases,
       boolean returnBackBranches,
-      boolean tectonic)
+      boolean tectonic,
+      double maxDelta,
+      double maxTime,
+      double deltaStep)
       throws BadDepthException, TauIntegralException {
     PlotData plotData;
 
-    setModel(earthModel);
+    setModel(earthModel.toLowerCase());
     plotData = new PlotData(allBrn);
-    plotData.makePlot(sourceDepth, phases, returnAllPhases, returnBackBranches, tectonic);
+    plotData.makePlot(
+        sourceDepth,
+        phases,
+        returnAllPhases,
+        returnBackBranches,
+        tectonic,
+        maxDelta,
+        maxTime,
+        deltaStep);
     return plotData.getPlot();
   }
 
@@ -256,12 +275,12 @@ public class TTSessionLocal {
     fileNames = new String[2];
     if (TauUtil.useFortranFiles) {
       // Names for the Fortran files.
-      serName = TauUtil.model(earthModel + "_for.ser");
+      serName = TauUtil.serialize(earthModel + "_for.ser");
       fileNames[0] = TauUtil.model(earthModel + ".hed");
       fileNames[1] = TauUtil.model(earthModel + ".tbl");
     } else {
       // Names for generating the model.
-      serName = TauUtil.model(earthModel + "_gen.ser");
+      serName = TauUtil.serialize(earthModel + "_gen.ser");
       fileNames[0] = TauUtil.model("m" + earthModel + ".mod");
       fileNames[1] = TauUtil.model("phases.txt");
     }

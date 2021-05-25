@@ -30,6 +30,9 @@ public class PlotData {
    * @param returnAllPhases If false, only provide "useful" crustal phases
    * @param returnBackBranches If false, suppress back branches
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
+   * @param maxDelta Maximum distance in degrees to generate
+   * @param maxTime Maximum travel time in seconds to allow
+   * @param deltaStep Distance increment in degrees for travel-time plots
    * @throws BadDepthException If the depth is out of range
    * @throws TauIntegralException If the tau integrals fail
    */
@@ -38,27 +41,38 @@ public class PlotData {
       String[] phList,
       boolean returnAllPhases,
       boolean returnBackBranches,
-      boolean tectonic)
-      		throws BadDepthException, TauIntegralException {
+      boolean tectonic,
+      double maxDelta,
+      double maxTime,
+      double deltaStep)
+      throws BadDepthException, TauIntegralException {
+
+    double deltaIncrement = TauUtil.DDELPLOT;
+    if (deltaStep > 0) {
+      deltaIncrement = deltaStep;
+    }
+
     // Make sure the depth is in range.
     if (!Double.isNaN(depth) && depth >= 0d && depth <= TauUtil.MAXDEPTH) {
       ttPlot = new TtPlot();
       // A simple request is all we can do.
       allBrn.newSession(depth, phList, returnAllPhases, returnBackBranches, tectonic, false);
       // Loop over distances.
-      for (double delta = 0d; delta <= 180d; delta += TauUtil.DDELPLOT) {
+      for (double delta = 0d; delta <= maxDelta; delta += deltaIncrement) {
         ttList = allBrn.getTT(0d, delta);
         // Loop over phases sorting them into branches.
         for (int j = 0; j < ttList.getNumPhases(); j++) {
           tTime = ttList.getPhase(j);
-          ttPlot.addPoint(
-              tTime.phCode,
-              tTime.uniqueCode,
-              delta,
-              tTime.tt,
-              tTime.spread,
-              tTime.observ,
-              tTime.dTdD);
+          if (tTime.tt <= maxTime) {
+            ttPlot.addPoint(
+                tTime.phCode,
+                tTime.uniqueCode,
+                delta,
+                tTime.tt,
+                tTime.spread,
+                tTime.observ,
+                tTime.dTdD);
+          }
         }
       }
       ttPlot.sortBranches();

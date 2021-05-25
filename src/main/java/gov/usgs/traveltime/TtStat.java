@@ -110,22 +110,22 @@ public class TtStat implements Serializable {
    * @return Spread in seconds at distance delta
    */
   public double getSpreadDerivative(double delta, boolean upGoing) {
-  	double deriv;
+    double deriv;
     TtStatSeg seg;
 
     for (int k = 0; k < spread.size(); k++) {
       seg = spread.get(k);
       if (delta >= seg.minDelta && delta <= seg.maxDelta) {
-    		deriv = seg.deriv(delta);
-      	if(delta == seg.maxDelta) {
-      		if(++k < spread.size()) {
-      			seg = spread.get(k);
-      			if(delta == seg.minDelta) {
-      				deriv = (deriv + seg.deriv(delta))/2d;
-      			}
-      		}
-      	}
-      	return deriv;
+        deriv = seg.deriv(delta);
+        if (delta == seg.maxDelta) {
+          if (++k < spread.size()) {
+            seg = spread.get(k);
+            if (delta == seg.minDelta) {
+              deriv = (deriv + seg.deriv(delta)) / 2d;
+            }
+          }
+        }
+        return deriv;
       }
     }
     if (upGoing) {

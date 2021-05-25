@@ -81,7 +81,9 @@ public class AllBrnRef {
     sUp = new UpDataRef(in, 'S');
 
     // Serialize the model out.
-    if (serName != null) serialOut(serName);
+    if (serName != null) {
+      serialOut(serName);
+    }
   }
 
   /**
@@ -122,7 +124,9 @@ public class AllBrnRef {
     sUp = new UpDataRef(finModel, 'S');
 
     // Serialize the model out.
-    if (serName != null) serialOut(serName);
+    if (serName != null) {
+      serialOut(serName);
+    }
   }
 
   /**

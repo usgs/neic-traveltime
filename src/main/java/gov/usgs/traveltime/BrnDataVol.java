@@ -1,9 +1,8 @@
 package gov.usgs.traveltime;
 
+import gov.usgs.traveltime.tables.TauIntegralException;
 import java.util.Arrays;
 import java.util.logging.Logger;
-
-import gov.usgs.traveltime.tables.TauIntegralException;
 
 /**
  * Generate all volatile information associated with one travel-time branch.
@@ -85,7 +84,7 @@ public class BrnDataVol {
    * @throws TauIntegralException If the tau integral fails
    */
   public void depthCorr(double zSource, double dTdDepth, double xMin, char tagBrn)
-  		throws TauIntegralException {
+      throws TauIntegralException {
     int i, len = 0;
     double pMax;
     double[][] basisTmp;
@@ -1135,6 +1134,7 @@ public class BrnDataVol {
    * Generate one line of a branch summary table.
    *
    * @param returnAllPhases If true, omit "useless" crustal phases
+   * @return a String containing one line of a branch summary table
    */
   public String forTable(boolean returnAllPhases) {
     if (!exists || (!returnAllPhases && isUseless)) {

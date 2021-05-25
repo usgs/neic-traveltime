@@ -1,0 +1,22 @@
+{
+    "Source": {
+      "Latitude": 63.238,
+      "Longitude": -151.660,
+      "Depth": 1.0
+    },
+    "Receivers": [
+      {
+        "ID": "1",
+        "Distance": 0,
+        "Elevation": 611.00,
+        "Latitude": 63.419,
+        "Longitude": -152.084,
+        "Branches": []
+      }
+    ],
+    "EarthModel": "AK135",
+    "PhaseTypes": [],
+    "ReturnAllPhases": true,
+    "ReturnBackBranches": true,
+    "ConvertTectonic": true
+  }
