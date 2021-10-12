@@ -1,11 +1,9 @@
 version: "3.7"
+
 services:
-  webapp:
-    image: usgs/neic-traveltime:latest
-    ports:
-        # HOST:CONTAINER
-        - 8080:8080
+  webttt:
+    build: .
     volumes:
-        # HOST:CONTAINER
-        - tt-vol:/project/local/
-    entrypoint: "/usr/bin/java -jar neic-traveltime-service.jar --mode=service"
+        - /tmp:/neic-traveltime/local
+    ports:
+        - 8080:8080 
