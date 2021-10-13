@@ -21,7 +21,7 @@ import java.net.URI;
  *
  * @author John Patton
  */
-@Controller("/ws/traveltime")
+@Controller("/traveltimeservices")
 public class TravelTimeController {
 
   /**
@@ -48,7 +48,7 @@ public class TravelTimeController {
   @Get(uri = "/", produces = MediaType.TEXT_HTML)
   @Hidden
   public HttpResponse getIndex() {
-    return HttpResponse.redirect(URI.create("/ws/traveltime/index.html"));
+    return HttpResponse.redirect(URI.create("/traveltimeservices/index.html"));
   }
 
   /**
