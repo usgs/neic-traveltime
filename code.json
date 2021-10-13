@@ -1,30 +1,33 @@
-{
-  "name": "neic-traveltime",
-  "organization": "U.S. Geological Survey",
-  "description": "REPOSITORY_DESCRIPTION",
-  "status": "Beta",
-  "homepage": "https://github.com/usgs/neic-traveltime",
-  "downloadURL": "https://github.com/usgs/neic-traveltime/archive/master.zip",
-
-  "openSourceProject": 1,
-  "license": "https://github.com/usgs/neic-traveltime/blob/master/LICENSE.md",
-  "vcs": "git",
-  "repository": "https://github.com/usgs/neic-traveltime.git",
-
-  "tags": [
-    "earthquake",
-    "traveltimes",
-    "processing"
-  ],
-  "languages": [
-    "java"
-  ],
-
-  "contact": {
-    "name": "John Patton",
-    "email": "jpatton@usgs.gov"
-  },
-  "updated": {
-    "metadataLastUpdated": "2017-12-04"
+[
+  {
+    "name": "neic-traveltime",
+    "organization": "U.S. Geological Survey",
+    "description": "Port of the NEIC 'TTimes' libraries from FORTRAN77 to Java",
+    "version": "0.1.0",
+    "status": "Development",
+    "permissions": {
+      "usageType": "openSource",
+      "licenses": [
+        {
+          "name": "Public Domain, CC0-1.0",
+          "URL": "https://code.chs.usgs.gov/ghsc/hazdev/inventory-validator/-/blob/master/LICENSE.md"
+        }
+      ]
+    },
+    "homepageURL": "https://code.usgs.gov/ghsc/neic/algorithms/neic-traveltime",
+    "downloadURL": "https://code.usgs.gov/ghsc/neic/algorithms/neic-traveltime/-/archive/master/neic-traveltime-master.zip",
+    "disclaimerURL": "https://code.usgs.gov/ghsc/neic/algorithms/neic-traveltime/-/raw/master/DISCLAIMER.md",
+    "repositoryURL": "https://code.chs.usgs.gov/ghsc/neic/motus/motus-services.git",
+    "vcs": "git",
+    "laborHours": 0,
+    "tags": ["Open Source", "Earthquake", "Travel Times", "Seismic Processing", "NEIC" ],
+    "languages": ["java"],
+    "contact": {
+      "name": "John Patton",
+      "email": "jpatton@usgs.gov"
+    },
+    "updated": {
+      "metadataLastUpdated": "2021-10-13"
+    }
   }
-}
+]
