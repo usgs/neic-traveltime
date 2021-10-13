@@ -1,0 +1,161 @@
+image: ${DEVOPS_REGISTRY}usgs/centos:latest
+
+stages:
+#  - test
+  - integration
+#  - scan
+  - deploy
+
+variables:
+  CI_REGISTRY: ${CODE_REGISTRY}
+  MOTUS_CI_REGISTRY_IMAGE: ${ALGORITHMS_REGISTRY_ADDRESS}
+  # docker variables
+  DOCKER_DRIVER: overlay2
+  FROM_IMAGE: ${DEVOPS_REGISTRY}usgs/centos:7
+  # environment variables
+  APP_NAME: neic-traveltime
+
+## --------------------------------------------------
+# Templates
+## --------------------------------------------------
+
+.adjust_image_names:
+  before_script:
+    - IMAGE_NAME=${APP_NAME}:${CI_COMMIT_REF_SLUG}
+    - IMAGE_NAME=${IMAGE_NAME/:master/:latest}
+    - INTERNAL_IMAGE_NAME=${MOTUS_CI_REGISTRY_IMAGE}/${IMAGE_NAME}
+    - STACK_NAME=${APP_NAME}
+
+.build_docker_image:
+  cache: {}
+  extends:
+    - .adjust_image_names
+  image: docker:19.03-git
+  only:
+    - master@ghsc/neic/algorithms/neic-traveltime
+    - production@ghsc/neic/algorithms/neic-traveltime
+    - tags@ghsc/neic/algorithms/neic-traveltime
+  script:
+    # Build the container
+    - docker build
+      --pull
+      --build-arg FROM_IMAGE=${FROM_IMAGE}
+      --build-arg GIT_BRANCH_NAME=${CI_COMMIT_REF_NAME}
+      --build-arg GIT_COMMIT_SHA=${CI_COMMIT_SHA}
+      --tag local/${IMAGE_NAME} .
+   
+    # Tag and Push image to algorithms registry
+    - docker tag local/${IMAGE_NAME} ${INTERNAL_IMAGE_NAME}
+    - docker push ${INTERNAL_IMAGE_NAME}
+    - docker image rm ${INTERNAL_IMAGE_NAME}
+  services:
+    - docker:19.03-dind
+  stage: integration
+  tags:
+    - build
+
+.deploy:
+  cache: {}
+  extends:
+    - .adjust_image_names
+  image: ${CI_REGISTRY}/ghsc/hazdev/container-deploy:latest
+  script:
+    - mkdir scripts
+    # get configuration from the config repository
+    - git clone ${MOTUS_CONFIG_REPO_ADDRESS}/${APP_NAME}.git config
+    - cp -v
+      config/custom.config.sh
+      config/custom.funcs.sh
+      config/${APP_NAME}.yml
+      scripts/.    
+    # get the deploy scripts
+    - cp -v
+      /container-deploy/default.config.sh
+      /container-deploy/default.funcs.sh
+      /container-deploy/deploy.sh
+      scripts/.
+    # set varibles
+    - export APP_NAME=${APP_NAME}
+    - export IMAGE_NAME=${IMAGE_NAME}      
+    - export REGISTRY=${MOTUS_CI_REGISTRY_IMAGE}
+    - export STACK_NAME=${APP_NAME}
+    - export DEBUG='true'
+    # do the deployment
+    - ./scripts/deploy.sh
+
+  stage: deploy
+  tags:
+    - deploy
+    - swarm
+
+.staging:
+  only:
+    - master@ghsc/neic/algorithms/neic-traveltime
+    - tags@ghsc/neic/algorithms/neic-traveltime
+
+# NOTE: No production infrastructure yet
+#.production:
+#  except:
+#    - ^.*beta.*$
+#    - ^.*-rc.*$
+#  only:
+#    - tags@ghsc/neic/algorithms/neic-traveltime
+#    - production@ghsc/neic/algorithms/neic-traveltime
+#  when: manual
+
+## --------------------------------------------------
+# Test Stage
+## --------------------------------------------------
+
+## --------------------------------------------------
+# Integration Stage
+## --------------------------------------------------
+
+Build Docker Image:
+  extends:
+    - .build_docker_image
+  variables:
+    APP_NAME: neic-traveltime
+
+## --------------------------------------------------
+# Scanning Stage (e.g. OWASP ZAP etc...)
+## --------------------------------------------------
+
+## --------------------------------------------------
+# Deploy Stage
+## --------------------------------------------------
+
+dvbl2 webttt Service:
+  extends:
+    - .deploy
+    - .staging
+  tags:
+    - deploy
+    - swarm
+    - dvbl2
+  variables:
+    APP_NAME: neic-traveltime
+
+# NOTE: No production infrastructure yet
+#Production01 Web Service:
+#  extends:
+#    - .deploy
+#    - .production
+#  tags:
+#    - deploy
+#    - swarm
+#    - production01
+#  variables:
+#    APP_NAME: neic-traveltime
+
+# NOTE: No staging infrastructure yet
+#Staging01 Web Service:
+#  extends:
+#    - .deploy
+#    - .staging
+#  tags:
+#    - deploy
+#    - swarm
+#    - staging01
+#  variables:
+#    APP_NAME: neic-traveltime
