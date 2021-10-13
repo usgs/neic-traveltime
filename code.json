@@ -3,7 +3,7 @@
     "name": "neic-traveltime",
     "organization": "U.S. Geological Survey",
     "description": "Port of the NEIC 'TTimes' libraries from FORTRAN77 to Java",
-    "version": "0.1.0",
+    "version": "0.2.1",
     "status": "Development",
     "permissions": {
       "usageType": "openSource",
