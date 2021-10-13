@@ -17,7 +17,7 @@
     "homepageURL": "https://code.usgs.gov/ghsc/neic/algorithms/neic-traveltime",
     "downloadURL": "https://code.usgs.gov/ghsc/neic/algorithms/neic-traveltime/-/archive/master/neic-traveltime-master.zip",
     "disclaimerURL": "https://code.usgs.gov/ghsc/neic/algorithms/neic-traveltime/-/raw/master/DISCLAIMER.md",
-    "repositoryURL": "https://code.chs.usgs.gov/ghsc/neic/motus/motus-services.git",
+    "repositoryURL": "https://code.usgs.gov/ghsc/neic/algorithms/neic-traveltime.git",
     "vcs": "git",
     "laborHours": 0,
     "tags": ["Open Source", "Earthquake", "Travel Times", "Seismic Processing", "NEIC" ],
