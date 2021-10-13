@@ -10,7 +10,7 @@
       "licenses": [
         {
           "name": "Public Domain, CC0-1.0",
-          "URL": "https://code.chs.usgs.gov/ghsc/hazdev/inventory-validator/-/blob/master/LICENSE.md"
+          "URL": "https://code.usgs.gov/ghsc/neic/algorithms/neic-traveltime/-/blob/master/LICENSE.md"
         }
       ]
     },
@@ -26,7 +26,7 @@
       "name": "John Patton",
       "email": "jpatton@usgs.gov"
     },
-    "updated": {
+    "date": {
       "metadataLastUpdated": "2021-10-13"
     }
   }
