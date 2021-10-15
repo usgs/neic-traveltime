@@ -8,7 +8,7 @@ stages:
 
 variables:
   CI_REGISTRY: ${CODE_REGISTRY}
-  MOTUS_CI_REGISTRY_IMAGE: ${ALGORITHMS_REGISTRY_ADDRESS}
+  ALGORITHMS_CI_REGISTRY_IMAGE: ${ALGORITHMS_REGISTRY_ADDRESS}
   # docker variables
   DOCKER_DRIVER: overlay2
   FROM_IMAGE: ${DEVOPS_REGISTRY}usgs/centos:7
@@ -23,7 +23,7 @@ variables:
   before_script:
     - IMAGE_NAME=${APP_NAME}:${CI_COMMIT_REF_SLUG}
     - IMAGE_NAME=${IMAGE_NAME/:master/:latest}
-    - INTERNAL_IMAGE_NAME=${MOTUS_CI_REGISTRY_IMAGE}/${IMAGE_NAME}
+    - INTERNAL_IMAGE_NAME=${ALGORITHMS_CI_REGISTRY_IMAGE}/${IMAGE_NAME}
     - STACK_NAME=${APP_NAME}
 
 .build_docker_image:
@@ -62,7 +62,7 @@ variables:
   script:
     - mkdir scripts
     # get configuration from the config repository
-    - git clone ${MOTUS_CONFIG_REPO_ADDRESS}/${APP_NAME}.git config
+    - git clone ${ALGORITHMS_CONFIG_REPO_ADDRESS}/${APP_NAME}.git config
     - cp -v
       config/custom.config.sh
       config/custom.funcs.sh
@@ -77,7 +77,7 @@ variables:
     # set varibles
     - export APP_NAME=${APP_NAME}
     - export IMAGE_NAME=${IMAGE_NAME}      
-    - export REGISTRY=${MOTUS_CI_REGISTRY_IMAGE}
+    - export REGISTRY=${ALGORITHMS_CI_REGISTRY_IMAGE}
     - export STACK_NAME=${APP_NAME}
     - export DEBUG='true'
     # do the deployment
