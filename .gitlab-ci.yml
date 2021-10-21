@@ -2,7 +2,7 @@ image: ${DEVOPS_REGISTRY}usgs/centos:latest
 
 stages:
 #  - test
-  - integration
+  - build
 #  - scan
   - deploy
 
@@ -22,7 +22,9 @@ variables:
 .adjust_image_names:
   before_script:
     - IMAGE_NAME=${APP_NAME}:${CI_COMMIT_REF_SLUG}
-    - IMAGE_NAME=${IMAGE_NAME/:master/:latest}
+#    - IMAGE_NAME=${IMAGE_NAME/:development/:dev}
+#    - IMAGE_NAME=${IMAGE_NAME/:staging/:stage}
+#    - IMAGE_NAME=${IMAGE_NAME/:production/:prod}
     - INTERNAL_IMAGE_NAME=${ALGORITHMS_CI_REGISTRY_IMAGE}/${IMAGE_NAME}
     - STACK_NAME=${APP_NAME}
 
@@ -32,9 +34,9 @@ variables:
     - .adjust_image_names
   image: docker:19.03-git
   only:
-    - master@ghsc/neic/algorithms/neic-traveltime
+    - development@ghsc/neic/algorithms/neic-traveltime
+    - staging@ghsc/neic/algorithms/neic-traveltime
     - production@ghsc/neic/algorithms/neic-traveltime
-    - tags@ghsc/neic/algorithms/neic-traveltime
   script:
     # Build the container
     - docker build
@@ -50,7 +52,7 @@ variables:
     - docker image rm ${INTERNAL_IMAGE_NAME}
   services:
     - docker:19.03-dind
-  stage: integration
+  stage: build
   tags:
     - build
 
@@ -86,12 +88,16 @@ variables:
   stage: deploy
   tags:
     - deploy
-    - swarm
+
+.development:
+  only:
+    - development@ghsc/neic/algorithms/neic-traveltime
+    #- tags@ghsc/neic/algorithms/neic-traveltime
 
 .staging:
   only:
-    - master@ghsc/neic/algorithms/neic-traveltime
-    - tags@ghsc/neic/algorithms/neic-traveltime
+    - staging@ghsc/neic/algorithms/neic-traveltime
+    #- tags@ghsc/neic/algorithms/neic-traveltime
 
 # NOTE: No production infrastructure yet
 #.production:
@@ -104,35 +110,39 @@ variables:
 #  when: manual
 
 ## --------------------------------------------------
-# Test Stage
+# Build Stage
 ## --------------------------------------------------
-
-## --------------------------------------------------
-# Integration Stage
-## --------------------------------------------------
-
 Build Docker Image:
   extends:
     - .build_docker_image
   variables:
     APP_NAME: neic-traveltime
 
-## --------------------------------------------------
-# Scanning Stage (e.g. OWASP ZAP etc...)
-## --------------------------------------------------
 
 ## --------------------------------------------------
 # Deploy Stage
 ## --------------------------------------------------
-
+# Dev deploy
 dvbl2 webttt Service:
+  extends:
+    - .deploy
+    - .development
+  tags:
+    - deploy
+    - development
+    - dvbl2
+  variables:
+    APP_NAME: neic-traveltime
+
+# Staging (test) deploy 
+dvbld webttt Service:
   extends:
     - .deploy
     - .staging
   tags:
     - deploy
-    - swarm
-    - dvbl2
+    - staging
+    - dvbld
   variables:
     APP_NAME: neic-traveltime
 
@@ -143,19 +153,9 @@ dvbl2 webttt Service:
 #    - .production
 #  tags:
 #    - deploy
-#    - swarm
-#    - production01
+#    - production 
+#    - <prod server>
 #  variables:
 #    APP_NAME: neic-traveltime
 
-# NOTE: No staging infrastructure yet
-#Staging01 Web Service:
-#  extends:
-#    - .deploy
-#    - .staging
-#  tags:
-#    - deploy
-#    - swarm
-#    - staging01
-#  variables:
-#    APP_NAME: neic-traveltime
+
