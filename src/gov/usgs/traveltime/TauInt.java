@@ -282,13 +282,15 @@ public class TauInt {
 	 */
 	private void tauTest(double p, double pTop, double pBot, double zTop, 
 			double zBot, double tau) throws Exception {
-		if(tau < 0d) {
-			System.out.format("***** Bad tau: p = %8.6f, pTop = %8.6f, "+
+		final double tol = 1e-12d;
+		
+		if(tau < -tol) {
+			System.out.format("****+ Bad tau: p = %8.6f, pTop = %8.6f, "+
 					"pBot = %8.6f, zTop = %9.6f, zBot = %9.6f, tau = %11.4e, "+
 					"x = %11.4e\n", p, pTop, pBot, zTop, zBot, tau, xLayer);
 			throw new Exception();
-		} else if(xLayer < 0d) {
-			System.out.format("***** Bad x: p = %8.6f, pTop = %8.6f, "+
+		} else if(xLayer < -tol) {
+			System.out.format("****+ Bad x: p = %8.6f, pTop = %8.6f, "+
 					"pBot = %8.6f, zTop = %9.6f, zBot = %9.6f, tau = %11.4e, "+
 					"x = %11.4e\n", p, pTop, pBot, zTop, zBot, tau, xLayer);
 			throw new Exception();
