@@ -114,6 +114,8 @@ public class TauUtil {
 	 */
 	protected final static double ELLIPFAC = 0.993305521d;
 	
+	protected final static double TAUINTTOL = 1e-11d;
+	
 	/**
 	 * Create a segment code by stripping a phase code of unnecessary 
 	 * frippery.
