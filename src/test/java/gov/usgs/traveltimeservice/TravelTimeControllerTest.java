@@ -4,11 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.usgs.processingformats.TravelTimeData;
 import gov.usgs.processingformats.TravelTimeRequest;
 import io.micronaut.runtime.server.EmbeddedServer;
-import io.micronaut.test.annotation.MicronautTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import javax.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

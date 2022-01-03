@@ -25,10 +25,10 @@ public class BrnDataRef implements Serializable {
   final boolean hasAddOn; // True if this branch has an associated add-on phase
   final boolean isUseless; // True if this phase is always in the coda of another phase
   /*
-   * Originally, the useless flag was hard coded and putting it in the reference section 
-   * made sense.  Now, the useless flag is set via the groups.txt file (chaff section) 
-   * in the auxiliary data.  The reference useless flag has been retained to avoid 
-   * messing with the Earth model files.  However, only the volatile useless flag is still 
+   * Originally, the useless flag was hard coded and putting it in the reference section
+   * made sense.  Now, the useless flag is set via the groups.txt file (chaff section)
+   * in the auxiliary data.  The reference useless flag has been retained to avoid
+   * messing with the Earth model files.  However, only the volatile useless flag is still
    * used.
    */
   final char[] typeSeg; // Phase type for correction, descending, ascending
@@ -126,12 +126,12 @@ public class BrnDataRef implements Serializable {
 
     // Set the useless phase flag.
     isUseless = auxtt.isChaff(phCode);
-    
-    if(phCode != null) {
-	    if(phCode.equals("PnPn")) {
-	    	System.out.println("Got PnPn (BrnDataRef 1)!");
-	    	System.out.println();
-	    }
+
+    if (phCode != null) {
+      if (phCode.equals("PnPn")) {
+        System.out.println("Got PnPn (BrnDataRef 1)!");
+        System.out.println();
+      }
     }
 
     // Set up diffracted and add-on phases.
@@ -249,14 +249,13 @@ public class BrnDataRef implements Serializable {
 
     // Set the useless phase flag.
     isUseless = auxtt.isChaff(phCode);
-    
-    if(phCode != null) {
-	    if(phCode.equals("PnPn")) {
-	    	System.out.println("Got PnPn (BrnDataRef 2)!");
-	    	System.out.println();
-	    }
-    }
 
+    if (phCode != null) {
+      if (phCode.equals("PnPn")) {
+        System.out.println("Got PnPn (BrnDataRef 2)!");
+        System.out.println();
+      }
+    }
 
     // Set up diffracted and add-on phases.
     if (!isUpGoing) {

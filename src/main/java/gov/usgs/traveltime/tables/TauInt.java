@@ -527,13 +527,15 @@ public class TauInt {
    */
   private void tauTest(double p, double pTop, double pBot, double zTop, double zBot, double tau)
       throws TauIntegralException {
-    if (tau < -TauUtil.DMIN) {
+    if (tau < -TauUtil.TAUINTTOL) {
       System.out.format(
           "***** Bad tau: p = %8.6f, pTop = %8.6f, "
               + "pBot = %8.6f, zTop = %9.6f, zBot = %9.6f, tau = %11.4e, "
-              + "x = %11.4e\n",
-          p, pTop, pBot, zTop, zBot, tau, xLayer);
-      if (p > pTop) System.out.println("***** p too big to penetrate to this layer!");
+              + "TAUINTTOL=%11.4e, x = %11.4e\n",
+          p, pTop, pBot, zTop, zBot, tau, -TauUtil.TAUINTTOL, xLayer);
+      if (p > pTop) {
+        System.out.println("***** p too big to penetrate to this layer!");
+      }
       throw new TauIntegralException("Partial integrals cannot be negative");
       /*	} else if(xLayer < -TauUtil.DMIN) {
       System.out.format("***** Bad x: p = %8.6f, pTop = %8.6f, "+
