@@ -242,7 +242,7 @@ public class AllBrnVol {
           for (int j = 0; j < branches.length; j++) {
             // If we only want useful phases and this one is useless, just
             // turn it off.
-          	if (!returnAllPhases && branches[j].isUseless) {
+            if (!returnAllPhases && branches[j].isUseless) {
               branches[j].setCompute(false);
             }
             // Otherwise, we're good to go.
@@ -255,7 +255,7 @@ public class AllBrnVol {
           expandList(phList);
           for (int j = 0; j < branches.length; j++) {
             // See if this phase is selected (unless it's NEIC-useless).
-          	if (returnAllPhases || !branches[j].isUseless) {
+            if (returnAllPhases || !branches[j].isUseless) {
               branches[j].setCompute(testList(ref.branches[j].phCode));
             } else {
               branches[j].setCompute(false);

@@ -90,6 +90,8 @@ public class TauUtil {
   protected static final double FREQOBSERV = Math.PI / DTOBSERV;
   /** The ellipticity factor needed to compute geocentric co-latitude. */
   protected static final double ELLIPFAC = 0.993305521d;
+  /** The tau comparision tolerance */
+  public static final double TAUINTTOL = 1e-11d;
 
   /**
    * By default generate the model data from a model definition file. This can be overridden
