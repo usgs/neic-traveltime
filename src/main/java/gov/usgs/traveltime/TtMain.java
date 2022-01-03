@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  */
 public class TtMain {
   /** A String containing the locator version */
-  public static final String VERSION = "v0.1.0";
+  public static final String VERSION = "v0.2.1";
 
   /** A String containing the argument for specifying the model file path. */
   public static final String MODELPATH_ARGUMENT = "--modelPath=";
