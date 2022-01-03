@@ -10,14 +10,8 @@ plugins {
     id "application"
     // jar bundling
     id "com.github.johnrengelman.shadow" version "7.1.2"
-    // Apply the java plugin to add support for Java
-    // id 'java'
     // code coverage
     id "jacoco"
-    // static code analysis
-    // id "pmd"
-    // post build results online
-    //id "com.gradle.build-scan" version "2.0.2"
     // git clone, etc.
     id "org.ajoberstar.grgit" version "2.3.0"
     // google java format
@@ -165,8 +159,7 @@ task copyModelFiles(type: Copy) {
   into "$buildDir/models"
 }
 
-
-// show implementation warnings
+// show compile warnings
 tasks.withType(JavaCompile) {
   options.compilerArgs.add("-parameters")
   options.encoding = "UTF-8"
@@ -184,7 +177,6 @@ shadowJar {
   mergeServiceFiles()
 }
 
-
 // create javadocs
 javadoc {
   exclude "**/gov/usgs/processingformats/**"
@@ -192,25 +184,3 @@ javadoc {
     options.addBooleanOption('html5', true)
   }
 }
-
-// Tasks for TravisCI
-
-// run with "gradle build --scan" to post build output online
-//buildScan {
-//  termsOfServiceUrl = "https://gradle.com/terms-of-service"
-//  termsOfServiceAgree = "yes"
-//}
-
-// .travis.yml uses this to upload coverage
-//task sendCoverageToCodacy(type: JavaExec, dependsOn: jacocoTestReport) {
-//  description = "Upload coverage to codacy (used by TravisCI)"
-//  main = "com.codacy.CodacyCoverageReporter"
-//  classpath = configurations.codacy
-//  args = [
-//    "report",
-//    "-l",
-//    "Java",
-//    "-r",
-//    "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
-//  ]
-//}
