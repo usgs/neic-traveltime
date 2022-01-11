@@ -186,17 +186,25 @@ public class BrnDataVol {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 while (Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
+
+                  if (i >= pUp.pUp.length) {
+                    break;
+                  }
                 }
-                ;
+
                 // Correct the tau and x values.
                 pBrn[j] = ref.pBrn[j];
                 tauBrn[j] = pUp.tauUp[i];
+
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) break;
+                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) {
+                  break;
+                }
                 // Otherwise, add one more point and quit.
               } else {
                 pBrn[j] = pMax;
                 tauBrn[j] = pUp.tauEndUp;
+
                 break;
               }
             }
@@ -248,11 +256,11 @@ public class BrnDataVol {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 while (Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
+
                   if (i >= pUp.pUp.length) {
                     break;
                   }
                 }
-                ;
 
                 // Correct the tau and x values.
                 pBrn[j] = ref.pBrn[j];
@@ -266,6 +274,7 @@ public class BrnDataVol {
               } else {
                 pBrn[j] = pMax;
                 tauBrn[j] = lastTau();
+
                 break;
               }
             }
@@ -300,7 +309,7 @@ public class BrnDataVol {
             // See if we need this point.
             if (ref.pBrn[j] < pMax + TauUtil.DTOL) {
               len++;
-              
+
               // If this point is equal to pMax, we're done.
               if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) {
                 break;
@@ -334,17 +343,25 @@ public class BrnDataVol {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 while (Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
+
+                  if (i >= sUp.pUp.length) {
+                    break;
+                  }
                 }
-                ;
+
                 // Correct the tau and x values.
                 pBrn[j] = ref.pBrn[j];
                 tauBrn[j] = sUp.tauUp[i];
+
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) break;
+                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) {
+                  break;
+                }
                 // Otherwise, add one more point and quit.
               } else {
                 pBrn[j] = pMax;
                 tauBrn[j] = sUp.tauEndUp;
+
                 break;
               }
             }
@@ -392,17 +409,25 @@ public class BrnDataVol {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 while (Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
+
+                  if (i >= sUp.pUp.length) {
+                    break;
+                  }
                 }
-                ;
+
                 // Correct the tau and x values.
                 pBrn[j] = ref.pBrn[j];
                 tauBrn[j] = ref.tauBrn[j] + ref.signSeg * sUp.tauUp[i];
+
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) break;
+                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) {
+                  break;
+                }
                 // Otherwise, add one more point and quit.
               } else {
                 pBrn[j] = pMax;
                 tauBrn[j] = lastTau();
+
                 break;
               }
             }
