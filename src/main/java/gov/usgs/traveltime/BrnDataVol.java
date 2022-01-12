@@ -187,7 +187,7 @@ public class BrnDataVol {
                 while (Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
 
-                  if (i >= pUp.pUp.length) {
+                  if (i >= pUp.pUp.length - 1) {
                     break;
                   }
                 }
@@ -257,7 +257,7 @@ public class BrnDataVol {
                 while (Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
 
-                  if (i >= pUp.pUp.length) {
+                  if (i >= pUp.pUp.length - 1) {
                     break;
                   }
                 }
@@ -344,7 +344,7 @@ public class BrnDataVol {
                 while (Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
 
-                  if (i >= sUp.pUp.length) {
+                  if (i >= sUp.pUp.length - 1) {
                     break;
                   }
                 }
@@ -410,7 +410,7 @@ public class BrnDataVol {
                 while (Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
 
-                  if (i >= sUp.pUp.length) {
+                  if (i >= sUp.pUp.length - 1) {
                     break;
                   }
                 }
