@@ -264,6 +264,7 @@ public class BrnDataVol {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 while (Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
+                  System.out.println("i = " + i + " i_max = " + sUp.pUp.length);
                 }
 
                 // Correct the tau and x values.
@@ -347,7 +348,6 @@ public class BrnDataVol {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 while (Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
-                  System.out.println("i = " + i + " i_max = " + sUp.pUp.length);
                 }
 
                 // Correct the tau and x values.
