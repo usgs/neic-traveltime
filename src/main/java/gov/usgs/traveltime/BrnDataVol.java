@@ -261,11 +261,11 @@ public class BrnDataVol {
             for (int j = 0; j < ref.pBrn.length; j++) {
               // See if we need this point.
               if (ref.pBrn[j] < pMax + TauUtil.DTOL) {
-                System.out.println("j = " + i + " j_max = " + ref.pBrn.length);
+                System.out.println("j = " + j + " j_max = " + ref.pBrn.length);
                 // pTauUp is a superset of pBrn so we need to sync them.
                 while (Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
-                  System.out.println("i = " + i + " i_max = " + sUp.pUp.length);
+                  System.out.println("i = " + i + " i_max = " + pUp.pUp.length);
                 }
 
                 // Correct the tau and x values.
