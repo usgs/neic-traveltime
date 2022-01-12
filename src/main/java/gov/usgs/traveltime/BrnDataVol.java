@@ -259,24 +259,18 @@ public class BrnDataVol {
             // Correct tau for down-going branches.
             i = 0;
             for (int j = 0; j < ref.pBrn.length; j++) {
-              System.out.println("for: j = " + j + " j_max = " + ref.pBrn.length);
-              System.out.println("for: i = " + i + " i_max = " + pUp.pUp.length);
-              System.out.println("for: ref.pBrn = " + ref.pBrn[j] 
-                + " pMax = " + pMax 
-                + " difference = " + Math.abs(ref.pBrn[j] - pMax)
-                + " limit = " + (pMax + TauUtil.DTOL));
-
-              // See if we need this point.
-              // and make sure we've not hit the end of pUp.pUp
-              if ((ref.pBrn[j] < pMax + TauUtil.DTOL) && (i < pUp.pUp.length)) {
+              // See if we need to correct this point.
+              // Make sure we do not loop past the end of pUp.pUp
+              if ((ref.pBrn[j] < pMax + TauUtil.DTOL) && 
+                  (i < pUp.pUp.length)) {
                 // pTauUp is a superset of pBrn so we need to sync them.
-                //while ((Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) && (i < pUp.pUp.length-1)) {
-                while (Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) {
+                // advance through the pUp.pUp array until we find the index
+                // of pUp.pUp that matches the value in ref.pBrn[j].
+                // To make sure don't loop past the end of pUp.pUp, we check
+                // length-1 because of how the while loop is structured
+                while ((Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) && 
+                       (i < pUp.pUp.length-1)) {
                   i++;
-                  System.out.println("while: j = " + j + " j_max = " + ref.pBrn.length);
-                  System.out.println("while: i = " + i + " i_max = " + pUp.pUp.length);
-                  System.out.println(
-                      "while: ref.pBrn = " + ref.pBrn[j] + " pUp.pUp = " + pUp.pUp[i]);
                 }
 
                 // Correct the tau and x values.
@@ -287,8 +281,10 @@ public class BrnDataVol {
                 if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) {
                   break;
                 }
-                // Otherwise, add one more point and quit.
               } else {
+                // Otherwise, (we've hit the max, or run out of 
+                // elements in pTauUp) 
+                // we add one more point and quit.
                 pBrn[j] = pMax;
                 tauBrn[j] = lastTau();
 
