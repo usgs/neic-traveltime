@@ -259,9 +259,10 @@ public class BrnDataVol {
             // Correct tau for down-going branches.
             i = 0;
             for (int j = 0; j < ref.pBrn.length; j++) {
+              System.out.println("j = " + j + " j_max = " + ref.pBrn.length);
+              
               // See if we need this point.
               if (ref.pBrn[j] < pMax + TauUtil.DTOL) {
-                System.out.println("j = " + j + " j_max = " + ref.pBrn.length);
                 // pTauUp is a superset of pBrn so we need to sync them.
                 while (Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
