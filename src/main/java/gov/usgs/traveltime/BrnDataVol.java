@@ -261,7 +261,10 @@ public class BrnDataVol {
             for (int j = 0; j < ref.pBrn.length; j++) {
               System.out.println("for: j = " + j + " j_max = " + ref.pBrn.length);
               System.out.println("for: i = " + i + " i_max = " + pUp.pUp.length);
-              System.out.println("for: ref.pBrn = " + ref.pBrn[j] + " pMax = " + pMax + " limit = " + pMax + TauUtil.DTOL);
+              System.out.println("for: ref.pBrn = " + ref.pBrn[j] 
+                + " pMax = " + pMax 
+                + " difference = " + Math.abs(ref.pBrn[j] - pMax)
+                + " limit = " + (pMax + TauUtil.DTOL));
 
               // See if we need this point.
               // and make sure we've not hit the end of pUp.pUp
