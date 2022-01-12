@@ -261,7 +261,6 @@ public class BrnDataVol {
             for (int j = 0; j < ref.pBrn.length; j++) {
               System.out.println("for: j = " + j + " j_max = " + ref.pBrn.length);
               System.out.println("for: i = " + i + " i_max = " + pUp.pUp.length);
-              System.out.flush();
 
               // See if we need this point.
               if (ref.pBrn[j] < pMax + TauUtil.DTOL) {
@@ -270,7 +269,8 @@ public class BrnDataVol {
                   i++;
                   System.out.println("while: j = " + j + " j_max = " + ref.pBrn.length);
                   System.out.println("while: i = " + i + " i_max = " + pUp.pUp.length);
-                  System.out.flush();
+                  System.out.println("while: ref.pBrn = " + ref.pBrn[j] + " pUp.pUp = " + pUp.pUp[i]);
+
                 }
 
                 // Correct the tau and x values.
