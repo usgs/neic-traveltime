@@ -162,8 +162,8 @@ public class BrnDataVol {
               len++;
 
               // If this point is equal to pMax, we're done.
-              if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) { 
-                break; 
+              if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) {
+                break;
               }
               // Otherwise, add one more point and quit.
             } else {
@@ -347,6 +347,7 @@ public class BrnDataVol {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 while (Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
+                  System.out.println("i = " + i + " i_max = " + sUp.pUp.length);
                 }
 
                 // Correct the tau and x values.
@@ -460,7 +461,7 @@ public class BrnDataVol {
         ellip = flags.ellip;
       }
 
-    // Un-computed phases might as well not exist.
+      // Un-computed phases might as well not exist.
     } else {
       exists = false;
     }
