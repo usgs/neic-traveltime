@@ -98,6 +98,7 @@ public class BrnDataVol {
         if (ref.signSeg < 0) {
           // This branch starts with a down-going ray.
           exists = true;
+
           // Do things common to all branches.
           phCode = ref.phCode;
           pRange = Arrays.copyOf(ref.pRange, ref.pRange.length);
@@ -110,11 +111,13 @@ public class BrnDataVol {
           len = ref.pBrn.length;
           pBrn = Arrays.copyOf(ref.pBrn, len);
           tauBrn = Arrays.copyOf(ref.tauBrn, len);
+
           // Set up the diffracted range.
           if (ref.hasDiff) {
             xDiff[0] = Math.max(xRange[0], xRange[1]);
             xDiff[1] = ref.xDiff;
           }
+
           // Spline it.
           poly = new double[4][len];
           xBrn = new double[len];
@@ -129,6 +132,7 @@ public class BrnDataVol {
       } else {
         // Assume the branch exists until proven otherwise.
         exists = true;
+
         // Do things common to all branches.
         phCode = ref.phCode;
         pRange = Arrays.copyOf(ref.pRange, ref.pRange.length);
@@ -141,6 +145,7 @@ public class BrnDataVol {
         if (ref.typeSeg[0] == 'P') {
           // Correct ray parameter range.
           pMax = Math.min(pRange[1], pUp.pMax);
+
           // Screen phases that don't exist.
           if (pRange[0] >= pMax) {
             exists = false;
@@ -155,20 +160,26 @@ public class BrnDataVol {
             // See if we need this point.
             if (ref.pBrn[j] < pMax + TauUtil.DTOL) {
               len++;
+
               // If this point is equal to pMax, we're done.
-              if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) break;
+              if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) { 
+                break; 
+              }
               // Otherwise, add one more point and quit.
             } else {
               len++;
+
               break;
             }
           }
+
           // If the branch is empty, it doesn't exist for this source
           // depth.
           if (len == 0) {
             exists = false;
             return;
           }
+
           // Otherwise, allocate the arrays.
           pBrn = new double[len];
           tauBrn = new double[len];
@@ -186,10 +197,6 @@ public class BrnDataVol {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 while (Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
-
-                  if (i >= pUp.pUp.length - 1) {
-                    break;
-                  }
                 }
 
                 // Correct the tau and x values.
@@ -232,6 +239,7 @@ public class BrnDataVol {
                     exists = false;
                     return;
                   }
+
                   xRange[i] += ref.signSeg * pUp.xUp[m];
                   break;
                 }
@@ -256,10 +264,6 @@ public class BrnDataVol {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 while (Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
-
-                  if (i >= pUp.pUp.length - 1) {
-                    break;
-                  }
                 }
 
                 // Correct the tau and x values.
@@ -343,10 +347,6 @@ public class BrnDataVol {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 while (Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
-
-                  if (i >= sUp.pUp.length - 1) {
-                    break;
-                  }
                 }
 
                 // Correct the tau and x values.
@@ -389,11 +389,14 @@ public class BrnDataVol {
                     exists = false;
                     return;
                   }
+
                   xRange[i] += ref.signSeg * sUp.xUp[m];
                   break;
                 }
               }
-              if (m >= sUp.ref.pXUp.length) xRange[i] = lastX();
+              if (m >= sUp.ref.pXUp.length) {
+                xRange[i] = lastX();
+              }
             }
             // Set up the diffracted branch distance range.
             if (ref.hasDiff) {
@@ -409,10 +412,6 @@ public class BrnDataVol {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 while (Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL) {
                   i++;
-
-                  if (i >= sUp.pUp.length - 1) {
-                    break;
-                  }
                 }
 
                 // Correct the tau and x values.
@@ -445,6 +444,7 @@ public class BrnDataVol {
           }
         }
       }
+
       // Complete everything we'll need to compute a travel time.
       xLim = new double[2][len - 1];
       flag = new String[len - 1];
@@ -460,7 +460,7 @@ public class BrnDataVol {
         ellip = flags.ellip;
       }
 
-      // Un-computed phases might as well not exist.
+    // Un-computed phases might as well not exist.
     } else {
       exists = false;
     }
