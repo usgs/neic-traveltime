@@ -192,10 +192,16 @@ public class BrnDataVol {
             // Correct tau for the up-going branch.
             i = 0;
             for (int j = 0; j < ref.pBrn.length; j++) {
-              // See if we need this point.
-              if (ref.pBrn[j] < pMax + TauUtil.DTOL) {
+              // See if we need to correct this point.
+              // Make sure we do not loop past the end of pUp.pUp
+              if ((ref.pBrn[j] < pMax + TauUtil.DTOL) && (i < pUp.pUp.length)) {
                 // pTauUp is a superset of pBrn so we need to sync them.
-                while (Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) {
+                // advance through the pUp.pUp array until we find the index
+                // of pUp.pUp that matches the value in ref.pBrn[j].
+                // To make sure don't loop past the end of pUp.pUp, we check
+                // length-1 because of how the while loop is structured
+                while ((Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL)
+                    && (i < pUp.pUp.length - 1)) {
                   i++;
                 }
 
@@ -207,8 +213,10 @@ public class BrnDataVol {
                 if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) {
                   break;
                 }
-                // Otherwise, add one more point and quit.
               } else {
+                // Otherwise, (we've hit the max, or run out of
+                // elements in pTauUp)
+                // we add one more point and quit.
                 pBrn[j] = pMax;
                 tauBrn[j] = pUp.tauEndUp;
 
@@ -261,15 +269,14 @@ public class BrnDataVol {
             for (int j = 0; j < ref.pBrn.length; j++) {
               // See if we need to correct this point.
               // Make sure we do not loop past the end of pUp.pUp
-              if ((ref.pBrn[j] < pMax + TauUtil.DTOL) && 
-                  (i < pUp.pUp.length)) {
+              if ((ref.pBrn[j] < pMax + TauUtil.DTOL) && (i < pUp.pUp.length)) {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 // advance through the pUp.pUp array until we find the index
                 // of pUp.pUp that matches the value in ref.pBrn[j].
                 // To make sure don't loop past the end of pUp.pUp, we check
                 // length-1 because of how the while loop is structured
-                while ((Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) && 
-                       (i < pUp.pUp.length-1)) {
+                while ((Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL)
+                    && (i < pUp.pUp.length - 1)) {
                   i++;
                 }
 
@@ -282,8 +289,8 @@ public class BrnDataVol {
                   break;
                 }
               } else {
-                // Otherwise, (we've hit the max, or run out of 
-                // elements in pTauUp) 
+                // Otherwise, (we've hit the max, or run out of
+                // elements in pTauUp)
                 // we add one more point and quit.
                 pBrn[j] = pMax;
                 tauBrn[j] = lastTau();
@@ -351,10 +358,16 @@ public class BrnDataVol {
             // Correct tau for the up-going branch.
             i = 0;
             for (int j = 0; j < ref.pBrn.length; j++) {
-              // See if we need this point.
-              if (ref.pBrn[j] < pMax + TauUtil.DTOL) {
+              // See if we need to correct this point.
+              // Make sure we do not loop past the end of sUp.pUp
+              if ((ref.pBrn[j] < pMax + TauUtil.DTOL) && (i < sUp.pUp.length)) {
                 // pTauUp is a superset of pBrn so we need to sync them.
-                while (Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL) {
+                // advance through the sUp.pUp array until we find the index
+                // of sUp.pUp that matches the value in ref.pBrn[j].
+                // To make sure don't loop past the end of sUp.pUp, we check
+                // length-1 because of how the while loop is structured
+                while ((Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL)
+                    && (i < sUp.pUp.length - 1)) {
                   i++;
                 }
 
@@ -366,8 +379,10 @@ public class BrnDataVol {
                 if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) {
                   break;
                 }
-                // Otherwise, add one more point and quit.
               } else {
+                // Otherwise, (we've hit the max, or run out of
+                // elements in pTauUp)
+                // we add one more point and quit.
                 pBrn[j] = pMax;
                 tauBrn[j] = sUp.tauEndUp;
 
@@ -416,10 +431,16 @@ public class BrnDataVol {
             // Correct tau for down-going branches.
             i = 0;
             for (int j = 0; j < ref.pBrn.length; j++) {
-              // See if we need this point.
-              if (ref.pBrn[j] < pMax + TauUtil.DTOL) {
+              // See if we need to correct this point.
+              // Make sure we do not loop past the end of sUp.pUp
+              if ((ref.pBrn[j] < pMax + TauUtil.DTOL) && (i < sUp.pUp.length)) {
                 // pTauUp is a superset of pBrn so we need to sync them.
-                while (Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL) {
+                // advance through the sUp.pUp array until we find the index
+                // of sUp.pUp that matches the value in ref.pBrn[j].
+                // To make sure don't loop past the end of sUp.pUp, we check
+                // length-1 because of how the while loop is structured
+                while ((Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL)
+                    && (i < sUp.pUp.length - 1)) {
                   i++;
                 }
 
@@ -431,8 +452,10 @@ public class BrnDataVol {
                 if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) {
                   break;
                 }
-                // Otherwise, add one more point and quit.
               } else {
+                // Otherwise, (we've hit the max, or run out of
+                // elements in pTauUp)
+                // we add one more point and quit.
                 pBrn[j] = pMax;
                 tauBrn[j] = lastTau();
 
