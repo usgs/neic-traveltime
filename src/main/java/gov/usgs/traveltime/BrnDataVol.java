@@ -267,7 +267,7 @@ public class BrnDataVol {
               // and make sure we've not hit the end of pUp.pUp
               if ((ref.pBrn[j] < pMax + TauUtil.DTOL) && (i < pUp.pUp.length)) {
                 // pTauUp is a superset of pBrn so we need to sync them.
-                while (Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) {
+                while ((Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) && (i < pUp.pUp.length)) {
                   i++;
                   System.out.println("while: j = " + j + " j_max = " + ref.pBrn.length);
                   System.out.println("while: i = " + i + " i_max = " + pUp.pUp.length);
