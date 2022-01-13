@@ -98,6 +98,7 @@ public class BrnDataVol {
         if (ref.signSeg < 0) {
           // This branch starts with a down-going ray.
           exists = true;
+
           // Do things common to all branches.
           phCode = ref.phCode;
           pRange = Arrays.copyOf(ref.pRange, ref.pRange.length);
@@ -110,11 +111,13 @@ public class BrnDataVol {
           len = ref.pBrn.length;
           pBrn = Arrays.copyOf(ref.pBrn, len);
           tauBrn = Arrays.copyOf(ref.tauBrn, len);
+
           // Set up the diffracted range.
           if (ref.hasDiff) {
             xDiff[0] = Math.max(xRange[0], xRange[1]);
             xDiff[1] = ref.xDiff;
           }
+
           // Spline it.
           poly = new double[4][len];
           xBrn = new double[len];
@@ -129,6 +132,7 @@ public class BrnDataVol {
       } else {
         // Assume the branch exists until proven otherwise.
         exists = true;
+
         // Do things common to all branches.
         phCode = ref.phCode;
         pRange = Arrays.copyOf(ref.pRange, ref.pRange.length);
@@ -141,6 +145,7 @@ public class BrnDataVol {
         if (ref.typeSeg[0] == 'P') {
           // Correct ray parameter range.
           pMax = Math.min(pRange[1], pUp.pMax);
+
           // Screen phases that don't exist.
           if (pRange[0] >= pMax) {
             exists = false;
@@ -155,20 +160,26 @@ public class BrnDataVol {
             // See if we need this point.
             if (ref.pBrn[j] < pMax + TauUtil.DTOL) {
               len++;
+
               // If this point is equal to pMax, we're done.
-              if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) break;
+              if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) {
+                break;
+              }
               // Otherwise, add one more point and quit.
             } else {
               len++;
+
               break;
             }
           }
+
           // If the branch is empty, it doesn't exist for this source
           // depth.
           if (len == 0) {
             exists = false;
             return;
           }
+
           // Otherwise, allocate the arrays.
           pBrn = new double[len];
           tauBrn = new double[len];
@@ -179,24 +190,42 @@ public class BrnDataVol {
             xRange[1] = pUp.xEndUp;
 
             // Correct tau for the up-going branch.
+            // We assume that ref.pBrn is a subset of pUp.pUp
+            // We assume that TauUtil.DTOL is being used as a
+            // float epsilon for floating point comparisions
+            // We assume pUp.pUp is the same lenght as pUp.tauUp
+            // We assume that ref.pBrn and pUp.pUp are sorted in
+            // increasing order JMP 1/13/2022
             i = 0;
             for (int j = 0; j < ref.pBrn.length; j++) {
-              // See if we need this point.
-              if (ref.pBrn[j] < pMax + TauUtil.DTOL) {
+              // See if we need to correct this point.
+              // Make sure we do not loop past the end of pUp.pUp
+              if ((ref.pBrn[j] < pMax + TauUtil.DTOL) && (i < pUp.pUp.length)) {
                 // pTauUp is a superset of pBrn so we need to sync them.
-                while (Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) {
+                // advance through the pUp.pUp array until we find the index
+                // of pUp.pUp that matches the value in ref.pBrn[j].
+                // To make sure don't loop past the end of pUp.pUp, we check
+                // length-1 because of how the while loop is structured
+                while ((Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL)
+                    && (i < pUp.pUp.length - 1)) {
                   i++;
                 }
-                ;
+
                 // Correct the tau and x values.
                 pBrn[j] = ref.pBrn[j];
                 tauBrn[j] = pUp.tauUp[i];
+
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) break;
-                // Otherwise, add one more point and quit.
+                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) {
+                  break;
+                }
               } else {
+                // Otherwise, (we've hit the max, or run out of
+                // elements in pTauUp)
+                // we add one more point and quit.
                 pBrn[j] = pMax;
                 tauBrn[j] = pUp.tauEndUp;
+
                 break;
               }
             }
@@ -224,12 +253,17 @@ public class BrnDataVol {
                     exists = false;
                     return;
                   }
+
                   xRange[i] += ref.signSeg * pUp.xUp[m];
                   break;
                 }
               }
-              if (m >= pUp.ref.pXUp.length) xRange[i] = lastX();
+
+              if (m >= pUp.ref.pXUp.length) {
+                xRange[i] = lastX();
+              }
             }
+
             // Set up the diffracted branch distance range.
             if (ref.hasDiff) {
               xDiff[0] = xRange[0];
@@ -237,24 +271,42 @@ public class BrnDataVol {
             }
 
             // Correct tau for down-going branches.
+            // We assume that ref.pBrn is a subset of pUp.pUp
+            // We assume that TauUtil.DTOL is being used as a
+            // float epsilon for floating point comparisions
+            // We assume pUp.pUp is the same lenght as pUp.tauUp
+            // We assume that ref.pBrn and pUp.pUp are sorted in
+            // increasing order JMP 1/13/2022
             i = 0;
             for (int j = 0; j < ref.pBrn.length; j++) {
-              // See if we need this point.
-              if (ref.pBrn[j] < pMax + TauUtil.DTOL) {
+              // See if we need to correct this point.
+              // Make sure we do not loop past the end of pUp.pUp
+              if ((ref.pBrn[j] < pMax + TauUtil.DTOL) && (i < pUp.pUp.length)) {
                 // pTauUp is a superset of pBrn so we need to sync them.
-                while (Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL) {
+                // advance through the pUp.pUp array until we find the index
+                // of pUp.pUp that matches the value in ref.pBrn[j].
+                // To make sure don't loop past the end of pUp.pUp, we check
+                // length-1 because of how the while loop is structured
+                while ((Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtil.DTOL)
+                    && (i < pUp.pUp.length - 1)) {
                   i++;
                 }
-                ;
+
                 // Correct the tau and x values.
                 pBrn[j] = ref.pBrn[j];
                 tauBrn[j] = ref.tauBrn[j] + ref.signSeg * pUp.tauUp[i];
+
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) break;
-                // Otherwise, add one more point and quit.
+                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) {
+                  break;
+                }
               } else {
+                // Otherwise, (we've hit the max, or run out of
+                // elements in pTauUp)
+                // we add one more point and quit.
                 pBrn[j] = pMax;
                 tauBrn[j] = lastTau();
+
                 break;
               }
             }
@@ -274,6 +326,7 @@ public class BrnDataVol {
         } else {
           // Correct ray parameter range.
           pMax = Math.min(pRange[1], sUp.pMax);
+
           // Screen phases that don't exist.
           if (pRange[0] >= pMax) {
             exists = false;
@@ -288,8 +341,11 @@ public class BrnDataVol {
             // See if we need this point.
             if (ref.pBrn[j] < pMax + TauUtil.DTOL) {
               len++;
+
               // If this point is equal to pMax, we're done.
-              if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) break;
+              if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) {
+                break;
+              }
               // Otherwise, add one more point and quit.
             } else {
               len++;
@@ -312,24 +368,42 @@ public class BrnDataVol {
             xRange[1] = sUp.xEndUp;
 
             // Correct tau for the up-going branch.
+            // We assume that ref.pBrn is a subset of sUp.pUp
+            // We assume that TauUtil.DTOL is being used as a
+            // float epsilon for floating point comparisions
+            // We assume sUp.pUp is the same lenght as sUp.tauUp
+            // We assume that ref.pBrn and sUp.pUp are sorted in
+            // increasing order JMP 1/13/2022
             i = 0;
             for (int j = 0; j < ref.pBrn.length; j++) {
-              // See if we need this point.
-              if (ref.pBrn[j] < pMax + TauUtil.DTOL) {
+              // See if we need to correct this point.
+              // Make sure we do not loop past the end of sUp.pUp
+              if ((ref.pBrn[j] < pMax + TauUtil.DTOL) && (i < sUp.pUp.length)) {
                 // pTauUp is a superset of pBrn so we need to sync them.
-                while (Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL) {
+                // advance through the sUp.pUp array until we find the index
+                // of sUp.pUp that matches the value in ref.pBrn[j].
+                // To make sure don't loop past the end of sUp.pUp, we check
+                // length-1 because of how the while loop is structured
+                while ((Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL)
+                    && (i < sUp.pUp.length - 1)) {
                   i++;
                 }
-                ;
+
                 // Correct the tau and x values.
                 pBrn[j] = ref.pBrn[j];
                 tauBrn[j] = sUp.tauUp[i];
+
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) break;
-                // Otherwise, add one more point and quit.
+                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) {
+                  break;
+                }
               } else {
+                // Otherwise, (we've hit the max, or run out of
+                // elements in pTauUp)
+                // we add one more point and quit.
                 pBrn[j] = pMax;
                 tauBrn[j] = sUp.tauEndUp;
+
                 break;
               }
             }
@@ -357,11 +431,14 @@ public class BrnDataVol {
                     exists = false;
                     return;
                   }
+
                   xRange[i] += ref.signSeg * sUp.xUp[m];
                   break;
                 }
               }
-              if (m >= sUp.ref.pXUp.length) xRange[i] = lastX();
+              if (m >= sUp.ref.pXUp.length) {
+                xRange[i] = lastX();
+              }
             }
             // Set up the diffracted branch distance range.
             if (ref.hasDiff) {
@@ -370,24 +447,42 @@ public class BrnDataVol {
             }
 
             // Correct tau for down-going branches.
+            // We assume that ref.pBrn is a subset of sUp.pUp
+            // We assume that TauUtil.DTOL is being used as a
+            // float epsilon for floating point comparisions
+            // We assume sUp.pUp is the same lenght as sUp.tauUp
+            // We assume that ref.pBrn and sUp.pUp are sorted in
+            // increasing order JMP 1/13/2022
             i = 0;
             for (int j = 0; j < ref.pBrn.length; j++) {
-              // See if we need this point.
-              if (ref.pBrn[j] < pMax + TauUtil.DTOL) {
+              // See if we need to correct this point.
+              // Make sure we do not loop past the end of sUp.pUp
+              if ((ref.pBrn[j] < pMax + TauUtil.DTOL) && (i < sUp.pUp.length)) {
                 // pTauUp is a superset of pBrn so we need to sync them.
-                while (Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL) {
+                // advance through the sUp.pUp array until we find the index
+                // of sUp.pUp that matches the value in ref.pBrn[j].
+                // To make sure don't loop past the end of sUp.pUp, we check
+                // length-1 because of how the while loop is structured
+                while ((Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtil.DTOL)
+                    && (i < sUp.pUp.length - 1)) {
                   i++;
                 }
-                ;
+
                 // Correct the tau and x values.
                 pBrn[j] = ref.pBrn[j];
                 tauBrn[j] = ref.tauBrn[j] + ref.signSeg * sUp.tauUp[i];
+
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) break;
-                // Otherwise, add one more point and quit.
+                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtil.DTOL) {
+                  break;
+                }
               } else {
+                // Otherwise, (we've hit the max, or run out of
+                // elements in pTauUp)
+                // we add one more point and quit.
                 pBrn[j] = pMax;
                 tauBrn[j] = lastTau();
+
                 break;
               }
             }
@@ -405,6 +500,7 @@ public class BrnDataVol {
           }
         }
       }
+
       // Complete everything we'll need to compute a travel time.
       xLim = new double[2][len - 1];
       flag = new String[len - 1];
