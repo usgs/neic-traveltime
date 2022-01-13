@@ -190,6 +190,12 @@ public class BrnDataVol {
             xRange[1] = pUp.xEndUp;
 
             // Correct tau for the up-going branch.
+            // We assume that ref.pBrn is a subset of pUp.pUp
+            // We assume that TauUtil.DTOL is being used as a
+            // float epsilon for floating point comparisions
+            // We assume pUp.pUp is the same lenght as pUp.tauUp
+            // We assume that ref.pBrn and pUp.pUp are sorted in
+            // increasing order JMP 1/13/2022
             i = 0;
             for (int j = 0; j < ref.pBrn.length; j++) {
               // See if we need to correct this point.
@@ -265,6 +271,12 @@ public class BrnDataVol {
             }
 
             // Correct tau for down-going branches.
+            // We assume that ref.pBrn is a subset of pUp.pUp
+            // We assume that TauUtil.DTOL is being used as a
+            // float epsilon for floating point comparisions
+            // We assume pUp.pUp is the same lenght as pUp.tauUp
+            // We assume that ref.pBrn and pUp.pUp are sorted in
+            // increasing order JMP 1/13/2022
             i = 0;
             for (int j = 0; j < ref.pBrn.length; j++) {
               // See if we need to correct this point.
@@ -356,6 +368,12 @@ public class BrnDataVol {
             xRange[1] = sUp.xEndUp;
 
             // Correct tau for the up-going branch.
+            // We assume that ref.pBrn is a subset of sUp.pUp
+            // We assume that TauUtil.DTOL is being used as a
+            // float epsilon for floating point comparisions
+            // We assume sUp.pUp is the same lenght as sUp.tauUp
+            // We assume that ref.pBrn and sUp.pUp are sorted in
+            // increasing order JMP 1/13/2022
             i = 0;
             for (int j = 0; j < ref.pBrn.length; j++) {
               // See if we need to correct this point.
@@ -429,6 +447,12 @@ public class BrnDataVol {
             }
 
             // Correct tau for down-going branches.
+            // We assume that ref.pBrn is a subset of sUp.pUp
+            // We assume that TauUtil.DTOL is being used as a
+            // float epsilon for floating point comparisions
+            // We assume sUp.pUp is the same lenght as sUp.tauUp
+            // We assume that ref.pBrn and sUp.pUp are sorted in
+            // increasing order JMP 1/13/2022
             i = 0;
             for (int j = 0; j < ref.pBrn.length; j++) {
               // See if we need to correct this point.
