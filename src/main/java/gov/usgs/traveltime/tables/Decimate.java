@@ -26,9 +26,9 @@ public class Decimate {
   private double[] arrayToDecimate;
 
   /**
-   * Function to calculate a decimation for the array arrayToDecimate such that the differences between the
-   * remaining terms is as close to desiredSpacing as possible. Note that the first and last
-   * elements of arrayToDecimate are always kept. This method figures out the decimation, but
+   * Function to calculate a decimation for the array arrayToDecimate such that the differences
+   * between the remaining terms is as close to desiredSpacing as possible. Note that the first and
+   * last elements of arrayToDecimate are always kept. This method figures out the decimation, but
    * doesn't actually implement it. This "slow" method iterates for as long as it takes to minimize
    * the variance between the final grid and the ideal grid.
    *
@@ -180,8 +180,8 @@ public class Decimate {
    * @param normDistanceGrid An array of doubles containing the normalized distance at the branch
    *     end points
    * @param minDistInterval A double containing the normalized minimum distance interval desired
-   * @return keep A boolean array, containing the flags specifiying the decimated, normalized
-   *     ray parameter grid
+   * @return keep A boolean array, containing the flags specifiying the decimated, normalized ray
+   *     parameter grid
    */
   public boolean[] fastDecimation(
       double[] normRayParamGrid,
@@ -191,7 +191,7 @@ public class Decimate {
     // Scan the current sampling to see if it is already OK.
     boolean[] keep;
     double xCur = normDistanceGrid[1];
-    
+
     for (int i = normRayParamGrid.length - 2; i >= 0; i--) {
       double xLast = xCur;
       xCur = calcX(normRayParamGrid, normTauGrid, normDistanceGrid, i);

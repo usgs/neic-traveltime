@@ -41,7 +41,7 @@ public class MakeTables {
     TauModel depModel;
     SampleSlowness sample;
     Integrate integrate;
-    DecTTbranch decimate;
+    DecimateTTBranch decimate;
     MakeBranches layout;
     TtStatus status;
 
@@ -129,9 +129,9 @@ public class MakeTables {
         }
       }
       // Decimate the default sampling for the up-going branches.
-      decimate = new DecTTbranch(finModel, convert);
-      decimate.upGoingDec('P');
-      decimate.upGoingDec('S');
+      decimate = new DecimateTTBranch(finModel, convert);
+      decimate.upGoingDecimation('P');
+      decimate.upGoingDecimation('S');
       if (TablesUtil.deBugLevel > 0) {
         if (TablesUtil.deBugLevel > 2) {
           finModel.pPieces.printDec();

@@ -35,7 +35,7 @@ public class MakeBranches {
   ArrayList<BranchData> branches;
   TauModel finModel;
   ModConvert convert;
-  DecTTbranch decimate;
+  DecimateTTBranch decimate;
   Spline spline;
 
   /**
@@ -44,7 +44,7 @@ public class MakeBranches {
    * @param finModel Final tau model of the Earth
    * @param decimate Branch decimation class
    */
-  public MakeBranches(TauModel finModel, DecTTbranch decimate) {
+  public MakeBranches(TauModel finModel, DecimateTTBranch decimate) {
     this.finModel = finModel;
     convert = finModel.convert;
     slowOffset = finModel.sPieces.p.length - 1;
@@ -404,7 +404,7 @@ public class MakeBranches {
             xFactor
                 * Math.max(
                     finModel.getDelX(typeSeg[1], shIndex), finModel.getDelX(typeSeg[2], shIndex));
-        decimate.downGoingDec(branch, xTarget, minBrnP);
+        decimate.downGoingDecimation(branch, xTarget, minBrnP);
         // Create the interpolation basis functions.
         spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());
         // We need to name each sub-branch.
@@ -451,7 +451,7 @@ public class MakeBranches {
             * Math.max(
                 finModel.getNextDelX(typeSeg[1], endShell),
                 finModel.getNextDelX(typeSeg[2], endShell));
-    decimate.downGoingDec(branch, xTarget, 0);
+    decimate.downGoingDecimation(branch, xTarget, 0);
     // Create the interpolation basis functions.
     spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());
     if (TablesUtil.deBugLevel > 0) {
@@ -552,7 +552,7 @@ public class MakeBranches {
                     * Math.max(
                         finModel.getDelX(typeSeg[1], shIndex1),
                         finModel.getDelX(typeSeg[2], shIndex2));
-            decimate.downGoingDec(branch, xTarget, minBrnP);
+            decimate.downGoingDecimation(branch, xTarget, minBrnP);
             // Create the interpolation basis functions.
             spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());
             // We need to name each sub-branch.
