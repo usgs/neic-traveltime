@@ -17,7 +17,7 @@ public class FindCaustic implements UnivariateFunction {
   private int modelLimitIndex;
 
   /** A TauInt object containing the Tau-X integration logic */
-  TauInt tauInt;
+  private TauInt tauInt;
 
   /**
    * FindCaustic constructor, stores the tau-x integration routine.
