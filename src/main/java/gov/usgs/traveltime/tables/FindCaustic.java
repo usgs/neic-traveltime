@@ -3,9 +3,9 @@ package gov.usgs.traveltime.tables;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 
 /**
- * Th FindCaustic is an univariate function returning the non-dimensional derivative of range (ray
- * travel distance) as a function of ray parameter. This is intended to be used with the Apache
- * Commons math library suite of root finders
+ * The FindCaustic class is an univariate function class returning the non-dimensional derivative of
+ * range (ray travel distance) as a function of ray parameter. This is intended to be used with the
+ * Apache Commons math library suite of root finders
  *
  * @author Ray Buland
  */
