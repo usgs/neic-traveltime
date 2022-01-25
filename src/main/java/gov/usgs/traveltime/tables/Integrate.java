@@ -39,8 +39,8 @@ public class Integrate {
     finModel.putShells('P', depModel.pShells);
     finModel.putShells('S', depModel.sShells);
     zMax = convert.flatZ(convert.rSurface - TauUtil.MAXDEPTH);
-    zOuterCore = refModel.outerCore.z;
-    zInnerCore = refModel.innerCore.z;
+    zOuterCore = refModel.getOuterCoreModel().z;
+    zInnerCore = refModel.getInnerCoreModel().z;
     if (TablesUtil.deBugLevel > 0) {
       System.out.format("\n\tzMax zOC zIC %8.6f %8.6f %8.6f\n", zMax, zOuterCore, zInnerCore);
     }

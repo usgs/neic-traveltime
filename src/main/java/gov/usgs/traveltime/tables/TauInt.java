@@ -70,8 +70,8 @@ public class TauInt {
                   p,
                   tauModel.getP(j),
                   tauModel.getP(j + 1),
-                  tauModel.getZ(j),
-                  tauModel.getZ(j + 1));
+                  tauModel.getDepth(j),
+                  tauModel.getDepth(j + 1));
       xSum += getXLayer();
     }
     return tauSum;
@@ -99,11 +99,15 @@ public class TauInt {
     for (int j = start; j < end; j++) {
       tauSum +=
           intLayer(
-              p, tauModel.getP(j), tauModel.getP(j + 1), tauModel.getZ(j), tauModel.getZ(j + 1));
+              p,
+              tauModel.getP(j),
+              tauModel.getP(j + 1),
+              tauModel.getDepth(j),
+              tauModel.getDepth(j + 1));
       xSum += getXLayer();
     }
     // Add an increment at the end that's between grid points.
-    tauSum += intLayer(p, tauModel.getP(end), pLast, tauModel.getZ(end), zLast);
+    tauSum += intLayer(p, tauModel.getP(end), pLast, tauModel.getDepth(end), zLast);
     xSum += getXLayer();
     return tauSum;
   }
@@ -129,16 +133,20 @@ public class TauInt {
 
     // Start with an increment at the beginning that's between grid
     // points.
-    tauSum = intLayer(p, pFirst, tauModel.getP(start), zFirst, tauModel.getZ(start));
+    tauSum = intLayer(p, pFirst, tauModel.getP(start), zFirst, tauModel.getDepth(start));
     // Loop over grid points accumulating the integrals.
     for (int j = start; j < end; j++) {
       tauSum +=
           intLayer(
-              p, tauModel.getP(j), tauModel.getP(j + 1), tauModel.getZ(j), tauModel.getZ(j + 1));
+              p,
+              tauModel.getP(j),
+              tauModel.getP(j + 1),
+              tauModel.getDepth(j),
+              tauModel.getDepth(j + 1));
       xSum += getXLayer();
     }
     // Add an increment at the end that's between grid points.
-    tauSum += intLayer(p, tauModel.getP(end), pLast, tauModel.getZ(end), zLast);
+    tauSum += intLayer(p, tauModel.getP(end), pLast, tauModel.getDepth(end), zLast);
     xSum += getXLayer();
     return tauSum;
   }
@@ -161,42 +169,43 @@ public class TauInt {
     xSum = 0d;
     // Loop over grid points accumulating the P slowness integrals.
     for (j = tabModel.size() - 1; j > limit; j--) {
-      if (p > tabModel.getSlow(type, j - 1)) break;
+      if (p > tabModel.getSlowness(type, j - 1)) break;
       tauSum +=
           intLayer(
               p,
-              tabModel.getSlow(type, j),
-              tabModel.getSlow(type, j - 1),
-              tabModel.getZ(j),
-              tabModel.getZ(j - 1));
+              tabModel.getSlowness(type, j),
+              tabModel.getSlowness(type, j - 1),
+              tabModel.getDepth(j),
+              tabModel.getDepth(j - 1));
       xSum += getXLayer();
       //		System.out.format("GetX:  %8.6f %8.6f %8.6f %9.6f %9.6f %9.6f\n", p,
-      //				tabModel.getSlow(type, j), tabModel.getSlow(type, j-1), tabModel.getZ(j),
-      //				tabModel.getZ(j-1), getXLayer());
+      //				tabModel.getSlowness(type, j), tabModel.getSlowness(type, j-1), tabModel.getDepth(j),
+      //				tabModel.getDepth(j-1), getXLayer());
     }
     // Handle the last bit.
     if (p > 0d) {
       iBottom = j;
-      if (p < tabModel.getSlow(type, j)) {
+      if (p < tabModel.getSlowness(type, j)) {
         // Add an increment at the end that's between grid points.
-        if (tabModel.getR(j - 1) > 0d) {
+        if (tabModel.getRadius(j - 1) > 0d) {
           rBottom =
-              tabModel.getR(j)
+              tabModel.getRadius(j)
                   * Math.pow(
-                      p / tabModel.getSlow(type, j),
-                      Math.log(tabModel.getR(j - 1) / tabModel.getR(j))
-                          / Math.log(tabModel.getSlow(type, j - 1) / tabModel.getSlow(type, j)));
+                      p / tabModel.getSlowness(type, j),
+                      Math.log(tabModel.getRadius(j - 1) / tabModel.getRadius(j))
+                          / Math.log(
+                              tabModel.getSlowness(type, j - 1) / tabModel.getSlowness(type, j)));
         } else {
-          rBottom = tabModel.getR(j) * (p / tabModel.getSlow(type, j));
+          rBottom = tabModel.getRadius(j) * (p / tabModel.getSlowness(type, j));
         }
         zLast = Math.log(convert.xNorm * rBottom);
-        tauSum += intLayer(p, tabModel.getSlow(type, j), p, tabModel.getZ(j), zLast);
+        tauSum += intLayer(p, tabModel.getSlowness(type, j), p, tabModel.getDepth(j), zLast);
         xSum += getXLayer();
         //			System.out.format("GetX:  %8.6f %8.6f %8.6f %9.6f %9.6f %9.6f\n", p,
-        //					tabModel.getSlow(type, j), p, tabModel.getZ(j), zLast, getXLayer());
+        //					tabModel.getSlowness(type, j), p, tabModel.getDepth(j), zLast, getXLayer());
       } else {
         // We ended on a model sample.
-        rBottom = tabModel.getR(j);
+        rBottom = tabModel.getRadius(j);
       }
     } else {
       // Finish the straight through ray.
@@ -223,36 +232,37 @@ public class TauInt {
 
     // Loop over grid points accumulating the P slowness integrals.
     for (j = tabModel.size() - 1; j > limit; j--) {
-      if (p > tabModel.getSlow(type, j - 1)) break;
+      if (p > tabModel.getSlowness(type, j - 1)) break;
       x =
           intDeriv(
               p,
-              tabModel.getSlow(type, j),
-              tabModel.getSlow(type, j - 1),
-              tabModel.getZ(j),
-              tabModel.getZ(j - 1));
+              tabModel.getSlowness(type, j),
+              tabModel.getSlowness(type, j - 1),
+              tabModel.getDepth(j),
+              tabModel.getDepth(j - 1));
       dXdPsum += x;
       //		System.out.format("GetDx: %8.6f %8.6f %8.6f %9.6f %9.6f %9.6f\n", p,
-      //				tabModel.getSlow(type, j), tabModel.getSlow(type, j-1), tabModel.getZ(j),
-      //				tabModel.getZ(j-1), x);
+      //				tabModel.getSlowness(type, j), tabModel.getSlowness(type, j-1), tabModel.getDepth(j),
+      //				tabModel.getDepth(j-1), x);
     }
     // Handle the last bit.
-    if (p < tabModel.getSlow(type, j)) {
+    if (p < tabModel.getSlowness(type, j)) {
       // Add an increment at the end that's between grid points.
       rBottom =
-          tabModel.getR(j)
+          tabModel.getRadius(j)
               * Math.pow(
-                  p / tabModel.getSlow(type, j),
-                  Math.log(tabModel.getR(j - 1) / tabModel.getR(j))
-                      / Math.log(tabModel.getSlow(type, j - 1) / tabModel.getSlow(type, j)));
+                  p / tabModel.getSlowness(type, j),
+                  Math.log(tabModel.getRadius(j - 1) / tabModel.getRadius(j))
+                      / Math.log(
+                          tabModel.getSlowness(type, j - 1) / tabModel.getSlowness(type, j)));
       zLast = Math.log(convert.xNorm * rBottom);
-      x = intDeriv(p, tabModel.getSlow(type, j), p, tabModel.getZ(j), zLast);
+      x = intDeriv(p, tabModel.getSlowness(type, j), p, tabModel.getDepth(j), zLast);
       dXdPsum += x;
       //		System.out.format("GetDx: %8.6f %8.6f %8.6f %9.6f %9.6f %9.6f\n", p,
-      //				tabModel.getSlow(type, j), p, tabModel.getZ(j), zLast, x);
+      //				tabModel.getSlowness(type, j), p, tabModel.getDepth(j), zLast, x);
     } else {
       // We ended on a model sample.
-      rBottom = tabModel.getR(j);
+      rBottom = tabModel.getRadius(j);
     }
     return 2d * dXdPsum;
   }

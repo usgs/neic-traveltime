@@ -134,7 +134,7 @@ public class TauModel {
    * @return The Earth model name
    */
   public String getModelName() {
-    return refModel.earthModel;
+    return refModel.getEarthModelName();
   }
 
   /**
@@ -240,7 +240,7 @@ public class TauModel {
     ArrayList<CriticalSlowness> critical;
     CriticalSlowness crit0, crit1;
 
-    critical = locModel.critical;
+    critical = locModel.getCriticalSlownesses();
     slowness = new ArrayList<Double>();
     crit1 = critical.get(critical.size() - 1);
     for (int iCrit = critical.size() - 2; iCrit >= 0; iCrit--) {
@@ -300,9 +300,9 @@ public class TauModel {
     if (type == 'P') {
       pShells = new ArrayList<ModelShell>();
       iEnd = pModel.size() - 1;
-      for (int i = 0; i < refModel.shells.size(); i++) {
-        refShell = refModel.shells.get(i);
-        slowTop = refModel.getSlow(type, refShell.iTop);
+      for (int i = 0; i < refModel.getShells().size(); i++) {
+        refShell = refModel.getShells().get(i);
+        slowTop = refModel.getSlowness(type, refShell.iTop);
         iBeg = iEnd;
         for (iEnd = iBeg; iEnd >= 0; iEnd--) {
           if (pModel.get(iEnd).slow == slowTop) break;
@@ -311,7 +311,7 @@ public class TauModel {
           System.out.format("MakeDepShells: " + "%c %3d %3d %8.6f\n", type, iBeg, iEnd, slowTop);
         newShell = new ModelShell(refShell, pModel.get(iBeg).index);
         newShell.addEnd(pModel.get(iEnd).index, refShell.rTop);
-        if (slowTop > refModel.getSlow(type, refShell.iBot)) {
+        if (slowTop > refModel.getSlowness(type, refShell.iBot)) {
           if (lastShell != null) {
             if (!lastShell.pCode.equals(newShell.pCode)) {
               // Make sure we have continuity.
@@ -338,9 +338,9 @@ public class TauModel {
     } else {
       sShells = new ArrayList<ModelShell>();
       iEnd = sModel.size() - 1;
-      for (int i = 0; i < refModel.shells.size(); i++) {
-        refShell = refModel.shells.get(i);
-        slowTop = refModel.getSlow(type, refShell.iTop);
+      for (int i = 0; i < refModel.getShells().size(); i++) {
+        refShell = refModel.getShells().get(i);
+        slowTop = refModel.getSlowness(type, refShell.iTop);
         iBeg = iEnd;
         for (iEnd = iBeg; iEnd >= 0; iEnd--) {
           if (sModel.get(iEnd).slow == slowTop) break;
@@ -349,7 +349,7 @@ public class TauModel {
           System.out.format("MakeDepShells: " + "%c %3d %3d %8.6f\n", type, iBeg, iEnd, slowTop);
         newShell = new ModelShell(refShell, sModel.get(iBeg).index);
         newShell.addEnd(sModel.get(iEnd).index, refShell.rTop);
-        if (slowTop > refModel.getSlow(type, refShell.iBot)) {
+        if (slowTop > refModel.getSlowness(type, refShell.iBot)) {
           if (lastShell != null) {
             if (!lastShell.sCode.equals(newShell.sCode)) {
               // Make sure we have continuity.

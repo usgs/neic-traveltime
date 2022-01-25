@@ -93,10 +93,10 @@ public class ModelSample {
   }
 
   /**
-   * Eliminate the poorly observed PKJKP phase by replacing the S velocity in the inner core with
-   * the P velocity.
+   * Function to eliminate the poorly observed PKJKP phase by replacing the S velocity in the inner
+   * core with the P velocity.
    */
-  protected void elimPKJKP() {
+  protected void eliminatePKJKP() {
     vs = vp;
   }
 
@@ -114,11 +114,11 @@ public class ModelSample {
   /**
    * Getter for slowness.
    *
-   * @param type Slowness type (P = P-wave, S = S-wave)
+   * @param waveType A char containing the wave type ('P' = compressional, 'S' = shear)
    * @return Non-dimensional Earth flattened slowness
    */
-  public double getSlow(char type) {
-    if (type == 'P') {
+  public double getSlowness(char waveType) {
+    if (waveType == 'P') {
       return slowP;
     } else {
       return slowS;

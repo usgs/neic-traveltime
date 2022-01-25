@@ -51,12 +51,12 @@ public class SampleSlowness {
    */
   public SampleSlowness(EarthModel locModel) {
     this.locModel = locModel;
-    rSurface = locModel.getR(locModel.size() - 1);
-    refModel = locModel.refModel;
-    convert = locModel.convert;
-    model = locModel.model;
-    shells = locModel.shells;
-    critical = locModel.getCritical();
+    rSurface = locModel.getRadius(locModel.size() - 1);
+    refModel = locModel.getReferenceModel();
+    convert = locModel.getModelConvesions();
+    model = locModel.getModel();
+    shells = locModel.getShells();
+    critical = locModel.getCriticalSlownesses();
     tauInt = new TauInt(locModel, convert);
     tauModel = new TauModel(refModel, convert);
     depModel = new TauModel(refModel, convert);
@@ -88,7 +88,7 @@ public class SampleSlowness {
      * ends, this strategy guarantees that all possible branches are
      * sampled exactly at their ends.
      */
-    slowTop = model.get(shell.iTop).getSlow(type);
+    slowTop = model.get(shell.iTop).getSlowness(type);
     for (iCrit = critical.size() - 2; iCrit >= 0; iCrit--) {
       crit = critical.get(iCrit);
       if (crit.getSlowness() < slowTop) {
@@ -316,19 +316,19 @@ public class SampleSlowness {
         // Oops!  Fix the last sample.
         rTarget = sample0.r - TablesUtil.DELRMAX;
         iRadius = tauInt.getIbottom();
-        while (rTarget > locModel.getR(iRadius)) {
+        while (rTarget > locModel.getRadius(iRadius)) {
           iRadius++;
         }
         // Turn the target radius into a slowness increment.
-        model0 = locModel.model.get(iRadius);
-        model1 = locModel.model.get(iRadius - 1);
+        model0 = locModel.getModel().get(iRadius);
+        model1 = locModel.getModel().get(iRadius - 1);
         dSlow =
             Math.abs(
                 sample0.slow
-                    - model0.getSlow(type)
+                    - model0.getSlowness(type)
                         * Math.pow(
                             rTarget / model0.r,
-                            Math.log(model1.getSlow(type) / model0.getSlow(type))
+                            Math.log(model1.getSlowness(type) / model0.getSlowness(type))
                                 / Math.log(model1.r / model0.r)));
         // Do the fixing.
         nSamp = Math.max((int) (Math.abs(pBot - sample0.slow) / dSlow + 0.99d), 1);
@@ -396,13 +396,13 @@ public class SampleSlowness {
     // Initialize temporary variables.
     slowness = tauModel.slowness;
     iCur = shells.get(shells.size() - 1).iTop;
-    slowMax = locModel.getSlow(type, iCur);
+    slowMax = locModel.getSlowness(type, iCur);
     // Find the starting slowness.
     for (iBeg = 0; iBeg < slowness.size(); iBeg++) {
       if (slowness.get(iBeg).equals(slowMax)) break;
     }
     // Add the top point of the model.
-    depModel.add(type, locModel.getR(iCur), slowMax, iBeg);
+    depModel.add(type, locModel.getRadius(iCur), slowMax, iBeg);
     iBeg++;
     if (TablesUtil.deBugLevel > 0) System.out.println();
 
@@ -411,8 +411,8 @@ public class SampleSlowness {
      */
     for (int iShell = shells.size() - 1; iShell >= 0; iShell--) {
       shell = shells.get(iShell);
-      slowTop = locModel.getSlow(type, shell.iTop);
-      slowBot = locModel.getSlow(type, shell.iBot);
+      slowTop = locModel.getSlowness(type, shell.iTop);
+      slowBot = locModel.getSlowness(type, shell.iBot);
       // Only do shells that really have a slowness gradient.
       if (slowBot != slowTop) {
         if (slowBot < slowTop) {
@@ -435,8 +435,8 @@ public class SampleSlowness {
         if (!shell.isDisc) {
           // This is messy for normal model shells.
           iCur = shell.iTop - 1;
-          locSlow0 = locModel.getSlow(type, shell.iTop);
-          locSlow1 = locModel.getSlow(type, iCur);
+          locSlow0 = locModel.getSlowness(type, shell.iTop);
+          locSlow1 = locModel.getSlowness(type, iCur);
           // Loop over the merged slownesses.
           i = iBeg;
           while (i != iEnd) {
@@ -448,20 +448,25 @@ public class SampleSlowness {
               if (mergeSlow == locSlow0) mergeSlow = slowness.get(--i);
               while (mergeSlow > locSlow1) {
                 locSlow0 = locSlow1;
-                locSlow1 = locModel.getSlow(type, --iCur);
+                locSlow1 = locModel.getSlowness(type, --iCur);
               }
               if (TablesUtil.deBugLevel > 2)
                 System.out.format(
                     "\tLVZ: locSlow = " + "%8.6f %8.6f mergeSlow = %8.6f\n",
                     locSlow0, locSlow1, mergeSlow);
               rFound =
-                  getRadius(type, iShell, locModel.getR(iCur), locModel.getR(iCur + 1), mergeSlow);
+                  getRadius(
+                      type,
+                      iShell,
+                      locModel.getRadius(iCur),
+                      locModel.getRadius(iCur + 1),
+                      mergeSlow);
               depModel.add(type, rFound, mergeSlow, i);
               if (TablesUtil.deBugLevel > 1)
                 System.out.format("\tAdd: %3d " + "%7.2f %8.6f\n", i, rFound, slowness.get(i));
               if (mergeSlow == locSlow1) {
                 locSlow0 = locSlow1;
-                locSlow1 = locModel.getSlow(type, --iCur);
+                locSlow1 = locModel.getSlowness(type, --iCur);
                 if (locSlow1 <= locSlow0) i++;
               }
             } else {
@@ -469,46 +474,52 @@ public class SampleSlowness {
               mergeSlow = slowness.get(i);
               while (mergeSlow < locSlow1) {
                 locSlow0 = locSlow1;
-                locSlow1 = locModel.getSlow(type, --iCur);
+                locSlow1 = locModel.getSlowness(type, --iCur);
               }
               if (TablesUtil.deBugLevel > 2)
                 System.out.format(
                     "\t     locSlow = " + "%8.6f %8.6f mergeSlow = %8.6f\n",
                     locSlow0, locSlow1, mergeSlow);
               rFound =
-                  getRadius(type, iShell, locModel.getR(iCur), locModel.getR(iCur + 1), mergeSlow);
+                  getRadius(
+                      type,
+                      iShell,
+                      locModel.getRadius(iCur),
+                      locModel.getRadius(iCur + 1),
+                      mergeSlow);
               depModel.add(type, rFound, mergeSlow, i);
               if (TablesUtil.deBugLevel > 1)
                 System.out.format("\tAdd: %3d " + "%7.2f %8.6f\n", i, rFound, slowness.get(i));
               if (mergeSlow == locSlow1) {
                 locSlow0 = locSlow1;
-                locSlow1 = locModel.getSlow(type, --iCur);
+                locSlow1 = locModel.getSlowness(type, --iCur);
               }
               i++;
             }
           }
           // The last point is the bottom of the shell.
           iCur = shell.iBot;
-          depModel.add(type, locModel.getR(iCur), slowness.get(iEnd), iEnd);
+          depModel.add(type, locModel.getRadius(iCur), slowness.get(iEnd), iEnd);
           if (TablesUtil.deBugLevel > 1)
             System.out.format(
-                "\tAdd: %3d %7.2f " + "%8.6f\n", iEnd, locModel.getR(iCur), slowness.get(iEnd));
+                "\tAdd: %3d %7.2f " + "%8.6f\n",
+                iEnd, locModel.getRadius(iCur), slowness.get(iEnd));
         } else {
           // It's a lot easier for discontinuities.
           iCur = shell.iBot;
           if (iEnd >= iBeg) {
             for (int j = iBeg; j <= iEnd; j++) {
-              depModel.add(type, locModel.getR(iCur), slowness.get(j), j);
+              depModel.add(type, locModel.getRadius(iCur), slowness.get(j), j);
               if (TablesUtil.deBugLevel > 1)
                 System.out.format(
-                    "\tAdd: %3d " + "%7.2f %8.6f\n", j, locModel.getR(iCur), slowness.get(j));
+                    "\tAdd: %3d " + "%7.2f %8.6f\n", j, locModel.getRadius(iCur), slowness.get(j));
             }
           } else {
             for (int j = iBeg - 2; j >= iEnd; j--) {
-              depModel.add(type, locModel.getR(iCur), slowness.get(j), j);
+              depModel.add(type, locModel.getRadius(iCur), slowness.get(j), j);
               if (TablesUtil.deBugLevel > 1)
                 System.out.format(
-                    "\tAdd: %3d " + "%7.2f %8.6f\n", j, locModel.getR(iCur), slowness.get(j));
+                    "\tAdd: %3d " + "%7.2f %8.6f\n", j, locModel.getRadius(iCur), slowness.get(j));
             }
           }
         }

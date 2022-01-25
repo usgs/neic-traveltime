@@ -150,7 +150,7 @@ public class ModDataVol {
    * @param j Array index
    * @return Non-dimensional Earth flattened depth
    */
-  public double getZ(int j) {
+  public double getDepth(int j) {
     return ref.zMod[j];
   }
 

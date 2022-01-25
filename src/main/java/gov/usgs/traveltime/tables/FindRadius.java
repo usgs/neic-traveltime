@@ -43,6 +43,6 @@ public class FindRadius implements UnivariateFunction {
 
   @Override
   public double value(double r) {
-    return convert.flatP(refModel.getVel(type, iShell, r), r) - pTarget;
+    return convert.flatP(refModel.getVelocity(type, iShell, r), r) - pTarget;
   }
 }

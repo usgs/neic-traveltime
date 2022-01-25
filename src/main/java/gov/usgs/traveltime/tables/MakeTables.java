@@ -46,7 +46,7 @@ public class MakeTables {
     TtStatus status;
 
     // Read the model.
-    status = refModel.readModel(modelFile);
+    status = refModel.readModelFile(modelFile);
 
     // If it read OK, process it.
     if (status == TtStatus.SUCCESS) {
@@ -57,7 +57,7 @@ public class MakeTables {
         refModel.printModel();
       }
       // Interpolate the model.
-      convert = refModel.getConvert();
+      convert = refModel.getModelConvesions();
       locModel = new EarthModel(refModel, convert);
       locModel.interpolate();
       if (TablesUtil.deBugLevel > 0) {
@@ -70,7 +70,7 @@ public class MakeTables {
         // Print out the Earth flattened version.
         locModel.printModel(true, true);
         // Critical points are model slownesses that need to be sampled exactly.
-        locModel.printCritical();
+        locModel.printCriticalPoints();
       }
 
       // Make the initial slowness sampling.
