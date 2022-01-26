@@ -24,7 +24,7 @@ public class FindRadius implements UnivariateFunction {
   private EarthModel referenceModel;
 
   /** A ModConvert object containing model dependent constants and conversions */
-  ModConvert modelConversions;
+  private ModConvert modelConversions;
 
   /**
    * FindRadius constructor setting up the the reference Earth model and conversion factors.
