@@ -45,7 +45,7 @@ public class Integrate {
   /**
    * Get the final model (pared down and with integrals).
    *
-   * @return Final tau model
+   * @return A TauModel object containing the final tau model
    */
   public TauModel getFinalModel() {
     return tauFinalModel;

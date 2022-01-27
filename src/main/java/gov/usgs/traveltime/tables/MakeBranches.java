@@ -47,7 +47,7 @@ public class MakeBranches {
   public MakeBranches(TauModel finModel, DecimateTTBranch decimate) {
     this.finModel = finModel;
     convert = finModel.convert;
-    slowOffset = finModel.sPieces.p.length - 1;
+    slowOffset = finModel.sPieces.getRayParameters().length - 1;
     this.decimate = decimate;
     spline = new Spline();
   }
@@ -648,9 +648,9 @@ public class MakeBranches {
 
     // Set up the ray parameter arrays.
     if (upType == 'P') {
-      branch.setRayParameters(finModel.pPieces.proxyP);
+      branch.setRayParameters(finModel.pPieces.getProxyRayParameters());
     } else {
-      branch.setRayParameters(finModel.sPieces.proxyP);
+      branch.setRayParameters(finModel.sPieces.getProxyRayParameters());
     }
     branch.setBasisCoefficients(new double[5][branch.getRayParameters().length]);
     spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());

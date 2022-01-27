@@ -10,7 +10,7 @@ import java.util.ArrayList;
  * @author Ray Buland
  */
 public class TablePieces {
-  IntPieces pPieces, sPieces;
+  BranchIntegrals pPieces, sPieces;
   ArrayList<ModelShell> pShells, sShells;
   ModConvert convert;
 
@@ -23,14 +23,14 @@ public class TablePieces {
     convert = finModel.convert;
     pShells = finModel.pShells;
     sShells = finModel.sShells;
-    pPieces = new IntPieces('P', finModel);
-    sPieces = new IntPieces('S', finModel);
+    pPieces = new BranchIntegrals('P', finModel);
+    sPieces = new BranchIntegrals('S', finModel);
   }
 
   /** Decimate the ray parameter arrays for both the P and S models. */
-  public void decimateP() {
-    pPieces.decimateP();
-    sPieces.decimateP();
+  public void decimateRayParameters() {
+    pPieces.decimateRayParameters();
+    sPieces.decimateRayParameters();
   }
 
   /**
@@ -39,7 +39,7 @@ public class TablePieces {
    * @param type Model type (P = P slowness, S = S slowness)
    * @return Integral pieces
    */
-  public IntPieces getPiece(char type) {
+  public BranchIntegrals getPiece(char type) {
     if (type == 'P') {
       return pPieces;
     } else {
@@ -55,7 +55,7 @@ public class TablePieces {
    * @return Ray parameter
    */
   public double getP(int index) {
-    return sPieces.p[index];
+    return sPieces.getRayParameters()[index];
   }
 
   /**
@@ -64,7 +64,7 @@ public class TablePieces {
    * @return Ray parameter array
    */
   public double[] getP() {
-    return sPieces.p;
+    return sPieces.getRayParameters();
   }
 
   /**
@@ -79,21 +79,21 @@ public class TablePieces {
     switch (shell) {
       case 0:
         if (type == 'P') {
-          return pPieces.mantleTau[index];
+          return pPieces.getMantleTauIntegrals()[index];
         } else {
-          return sPieces.mantleTau[index];
+          return sPieces.getMantleTauIntegrals()[index];
         }
       case 1:
         if (type == 'P') {
-          return pPieces.outerCoreTau[index];
+          return pPieces.getOuterCoreTauIntegrals()[index];
         } else {
-          return sPieces.outerCoreTau[index];
+          return sPieces.getOuterCoreTauIntegrals()[index];
         }
       case 2:
         if (type == 'P') {
-          return pPieces.innerCoreTau[index];
+          return pPieces.getInnerCoreTauIntegrals()[index];
         } else {
-          return sPieces.innerCoreTau[index];
+          return sPieces.getInnerCoreTauIntegrals()[index];
         }
       default:
         return Double.NaN;
@@ -112,21 +112,21 @@ public class TablePieces {
     switch (shell) {
       case 0:
         if (type == 'P') {
-          return pPieces.mantleX[index];
+          return pPieces.getMantleRangeIntegrals()[index];
         } else {
-          return sPieces.mantleX[index];
+          return sPieces.getMantleRangeIntegrals()[index];
         }
       case 1:
         if (type == 'P') {
-          return pPieces.outerCoreX[index];
+          return pPieces.getOuterCoreRangeIntegrals()[index];
         } else {
-          return sPieces.outerCoreX[index];
+          return sPieces.getOuterCoreRangeIntegrals()[index];
         }
       case 2:
         if (type == 'P') {
-          return pPieces.innerCoreX[index];
+          return pPieces.getInnerCoreRangeIntegrals()[index];
         } else {
-          return sPieces.innerCoreX[index];
+          return sPieces.getInnerCoreRangeIntegrals()[index];
         }
       default:
         return Double.NaN;
@@ -180,9 +180,9 @@ public class TablePieces {
    */
   public boolean[] getDecimation(char type) {
     if (type == 'P') {
-      return pPieces.keep;
+      return pPieces.getDecimationKeep();
     } else {
-      return sPieces.keep;
+      return sPieces.getDecimationKeep();
     }
   }
 
@@ -193,33 +193,33 @@ public class TablePieces {
     System.out.println("\n\t\t\tProxy Ranges");
     System.out.println("                  P                            S");
     System.out.println("    slowness      X       delX   slowness" + "      X       delX");
-    nP = pPieces.proxyX.length;
-    nS = sPieces.proxyX.length;
+    nP = pPieces.getProxyRanges().length;
+    nS = sPieces.getProxyRanges().length;
     System.out.format(
         "%3d %8.6f %8.2f            %8.6f %8.2f\n",
         0,
-        pPieces.proxyP[0],
-        convert.dimR(pPieces.proxyX[0]),
-        sPieces.proxyP[0],
-        convert.dimR(sPieces.proxyX[0]));
+        pPieces.getProxyRayParameters()[0],
+        convert.dimR(pPieces.getProxyRanges()[0]),
+        sPieces.getProxyRayParameters()[0],
+        convert.dimR(sPieces.getProxyRanges()[0]));
     for (int j = 1; j < nP; j++) {
       System.out.format(
           "%3d %8.6f %8.2f %8.2f   %8.6f %8.2f %8.2f\n",
           j,
-          pPieces.proxyP[j],
-          convert.dimR(pPieces.proxyX[j]),
-          convert.dimR(pPieces.proxyX[j] - pPieces.proxyX[j - 1]),
-          sPieces.proxyP[j],
-          convert.dimR(sPieces.proxyX[j]),
-          convert.dimR(sPieces.proxyX[j + 1] - sPieces.proxyX[j]));
+          pPieces.getProxyRayParameters()[j],
+          convert.dimR(pPieces.getProxyRanges()[j]),
+          convert.dimR(pPieces.getProxyRanges()[j] - pPieces.getProxyRanges()[j - 1]),
+          sPieces.getProxyRayParameters()[j],
+          convert.dimR(sPieces.getProxyRanges()[j]),
+          convert.dimR(sPieces.getProxyRanges()[j + 1] - sPieces.getProxyRanges()[j]));
     }
     for (int j = nP; j < nS; j++) {
       System.out.format(
           "%3d                              " + "%8.6f %8.2f %8.2f\n",
           j,
-          sPieces.proxyP[j],
-          convert.dimR(sPieces.proxyX[j]),
-          convert.dimR(sPieces.proxyX[j] - sPieces.proxyX[j - 1]));
+          sPieces.getProxyRayParameters()[j],
+          convert.dimR(sPieces.getProxyRanges()[j]),
+          convert.dimR(sPieces.getProxyRanges()[j] - sPieces.getProxyRanges()[j - 1]));
     }
   }
 
@@ -240,11 +240,12 @@ public class TablePieces {
   public void printP() {
     System.out.println("\nMaster Ray Parameters");
     System.out.println("       P        S");
-    for (int j = 0; j < pPieces.p.length; j++) {
-      System.out.format("%3d %8.6f %8.6f\n", j, pPieces.p[j], sPieces.p[j]);
+    for (int j = 0; j < pPieces.getRayParameters().length; j++) {
+      System.out.format(
+          "%3d %8.6f %8.6f\n", j, pPieces.getRayParameters()[j], sPieces.getRayParameters()[j]);
     }
-    for (int j = pPieces.p.length; j < sPieces.p.length; j++) {
-      System.out.format("%3d          %8.6f\n", j, sPieces.p[j]);
+    for (int j = pPieces.getRayParameters().length; j < sPieces.getRayParameters().length; j++) {
+      System.out.format("%3d          %8.6f\n", j, sPieces.getRayParameters()[j]);
     }
   }
 }

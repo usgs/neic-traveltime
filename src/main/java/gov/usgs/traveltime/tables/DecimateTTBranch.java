@@ -47,10 +47,10 @@ public class DecimateTTBranch {
     int k = -1, jLast = 0;
 
     // Run the decimation algorithm.
-    IntPieces piece = finalTTModel.getPiece(type);
-    boolean[] keep = piece.keep;
-    double[] pOld = piece.proxyP;
-    double[] xOld = piece.proxyX;
+    BranchIntegrals piece = finalTTModel.getPiece(type);
+    boolean[] keep = piece.getDecimationKeep();
+    double[] pOld = piece.getProxyRayParameters();
+    double[] xOld = piece.getProxyRanges();
     boolean[] upKeep = dec.slowDecimation(xOld, modelConversions.normR(TablesUtil.DELXUP));
 
     // Do some setup.
@@ -101,7 +101,7 @@ public class DecimateTTBranch {
       }
     }
 
-    piece.update(k + 1, pNew, xNew);
+    piece.updateProxies(k + 1, pNew, xNew);
   }
 
   /**
@@ -119,8 +119,8 @@ public class DecimateTTBranch {
     // Set up.
     int beg = 0, k = -1;
     boolean[] downKeep;
-    IntPieces piece = finalTTModel.getPiece(branch.getRaySegmentPhaseTypes()[0]);
-    boolean[] keep = piece.keep;
+    BranchIntegrals piece = finalTTModel.getPiece(branch.getRaySegmentPhaseTypes()[0]);
+    boolean[] keep = piece.getDecimationKeep();
     double[] pOld = branch.getRayParameters();
     double[] tauOld = branch.getTauValues();
     double[] xOld = branch.getRayTravelDistances();
