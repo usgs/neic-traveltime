@@ -44,7 +44,7 @@ public class BranchIntegrals {
   /** An array of doubles containing the proxy ranges */
   private double[] proxyRanges;
 
-  /** A TauModel containing the final model */
+  /** A TauModel object containing the final model */
   private TauModel finalTTModel;
 
   /** A ModConvert object containing the model dependant conversions */

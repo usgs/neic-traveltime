@@ -154,7 +154,7 @@ public class MakeTables {
         }
         layout.printBranches(false, true);
       }
-      brnData = layout.getBranches();
+      brnData = layout.getBranchList();
       // Do the final decimation.
       finModel.decimateRayParameters();
       if (TablesUtil.deBugLevel > 0) {

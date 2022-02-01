@@ -24,6 +24,15 @@ public class TauModel {
   ModConvert convert;
 
   /**
+   * Get the model dependant conversions.
+   *
+   * @return A ModConvert object holding the model dependant conversions
+   */
+  public ModConvert getModelConversions() {
+    return convert;
+  }
+
+  /**
    * Allocate lists for independent P and S models.
    *
    * @param refModel Reference Earth model
