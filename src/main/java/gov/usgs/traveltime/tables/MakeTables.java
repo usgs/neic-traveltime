@@ -13,176 +13,195 @@ import java.util.ArrayList;
  * @author Ray Buland
  */
 public class MakeTables {
-  EarthModel refModel;
-  TauModel finModel;
-  ArrayList<BranchData> brnData;
+  /** An EarthModel object containing the reference earth model */
+  private EarthModel referenceEarthModel;
+
+  /** A TauModel object containing the final model */
+  private TauModel finalTTModel;
+
+  /** An ArrayList of BranchData objects containing the branch data tables */
+  private ArrayList<BranchData> branchDataTables;
 
   /**
-   * Initialize the reference Earth model. This needs to happen in the constructor to ensure that
-   * the travel-time properties file has been read.
+   * MakeTables constructor, initializes the reference Earth model. This needs to happen in the
+   * constructor to ensure that the travel-time properties file has been read.
    *
-   * @param earthModel Name of the Earth model
+   * @param earthModel A String containing the name of the Earth model to use
    */
   public MakeTables(String earthModel) {
-    refModel = new EarthModel(earthModel, true);
+    referenceEarthModel = new EarthModel(earthModel, true);
   }
 
   /**
    * Create the travel-time tables out of whole cloth.
    *
-   * @param modelFile Name of the Earth model file
-   * @param phaseFile Name of the file of desired phases
-   * @return Model read status
+   * @param earthModelFile A String containing the path to the the Earth model file
+   * @param phaseListFile A string containing the path to the the file of containing the desired
+   *     phases
+   * @return A TtStatus object containing the model read status
    * @throws Exception If an integration interval is illegal
    */
-  public TtStatus buildModel(String modelFile, String phaseFile) throws Exception {
-    EarthModel locModel;
-    ModConvert convert;
-    TauModel depModel;
-    SampleSlowness sample;
-    Integrate integrate;
-    DecimateTTBranch decimate;
-    MakeBranches layout;
-    TtStatus status;
-
+  public TtStatus buildModel(String earthModelFile, String phaseListFile) throws Exception {
     // Read the model.
-    status = refModel.readModelFile(modelFile);
+    TtStatus status = referenceEarthModel.readModelFile(earthModelFile);
 
     // If it read OK, process it.
     if (status == TtStatus.SUCCESS) {
       if (TablesUtil.deBugLevel > 2) {
         // Print the shell summaries.
-        refModel.printShells();
+        referenceEarthModel.printShells();
+
         // Print out the radial version.
-        refModel.printModel();
+        referenceEarthModel.printModel();
       }
+
       // Interpolate the model.
-      convert = refModel.getModelConvesions();
-      locModel = new EarthModel(refModel, convert);
-      locModel.interpolate();
+      ModConvert modelConversions = referenceEarthModel.getModelConvesions();
+      EarthModel localModel = new EarthModel(referenceEarthModel, modelConversions);
+      localModel.interpolate();
+
       if (TablesUtil.deBugLevel > 0) {
         // Print the shell summaries.
-        locModel.printShells();
+        localModel.printShells();
         if (TablesUtil.deBugLevel > 2) {
           // Print out the radial version.
-          locModel.printModel(false, false);
+          localModel.printModel(false, false);
         }
         // Print out the Earth flattened version.
-        locModel.printModel(true, true);
+        localModel.printModel(true, true);
         // Critical points are model slownesses that need to be sampled exactly.
-        locModel.printCriticalPoints();
+        localModel.printCriticalPoints();
       }
 
       // Make the initial slowness sampling.
-      sample = new SampleSlowness(locModel);
-      sample.sample('P');
+      SampleSlowness slownessSampling = new SampleSlowness(localModel);
+      slownessSampling.sample('P');
       if (TablesUtil.deBugLevel > 0) {
-        sample.printModel('P', "Tau");
+        slownessSampling.printModel('P', "Tau");
       }
-      sample.sample('S');
+
+      slownessSampling.sample('S');
       if (TablesUtil.deBugLevel > 0) {
-        sample.printModel('S', "Tau");
+        slownessSampling.printModel('S', "Tau");
       }
+
       // We need a merged set of slownesses for converted branches (e.g., ScP).
-      sample.merge();
+      slownessSampling.merge();
       if (TablesUtil.deBugLevel > 0) {
-        sample.printMerge();
+        slownessSampling.printMerge();
       }
+
       // Fiddle with the sampling so that low velocity zones are
       // better sampled.
-      sample.depthModel('P');
+      slownessSampling.depthModel('P');
       if (TablesUtil.deBugLevel > 0) {
-        sample.depModel.printDepShells('P');
-        sample.printModel('P', "Depth");
+        slownessSampling.depModel.printDepShells('P');
+        slownessSampling.printModel('P', "Depth");
       }
-      sample.depthModel('S');
+
+      slownessSampling.depthModel('S');
       if (TablesUtil.deBugLevel > 0) {
-        sample.depModel.printDepShells('S');
-        sample.printModel('S', "Depth");
+        slownessSampling.depModel.printDepShells('S');
+        slownessSampling.printModel('S', "Depth");
       }
-      depModel = sample.getDepthModel();
+
+      TauModel depthModel = slownessSampling.getDepthModel();
       if (TablesUtil.deBugLevel > 2) {
-        depModel.printDepShells('P');
-        depModel.printDepShells('S');
+        depthModel.printDepShells('P');
+        depthModel.printDepShells('S');
       }
 
       // Do the integrals.
-      integrate = new Integrate(depModel);
+      Integrate integrate = new Integrate(depthModel);
       integrate.doTauIntegrals('P');
       integrate.doTauIntegrals('S');
+
       // The final model only includes depth samples that will be
       // of interest for earthquake location.
-      finModel = integrate.getFinalModel();
+      finalTTModel = integrate.getFinalModel();
       if (TablesUtil.deBugLevel > 1) {
-        finModel.printShellInts('P');
-        finModel.printShellInts('S');
+        finalTTModel.printShellInts('P');
+        finalTTModel.printShellInts('S');
       }
+
       // Reorganize the integral data.
-      finModel.makePieces();
+      finalTTModel.makePieces();
       if (TablesUtil.deBugLevel > 0) {
         // These final shells control making the branches.
-        finModel.printShellSpec('P');
-        finModel.printShellSpec('S');
+        finalTTModel.printShellSpec('P');
+        finalTTModel.printShellSpec('S');
         if (TablesUtil.deBugLevel > 2) {
           // Proxy depth sampling before decimation.
-          finModel.printProxy();
+          finalTTModel.printProxy();
         }
       }
+
       // Decimate the default sampling for the up-going branches.
-      decimate = new DecimateTTBranch(finModel, convert);
+      DecimateTTBranch decimate = new DecimateTTBranch(finalTTModel, modelConversions);
       decimate.upGoingDecimation('P');
       decimate.upGoingDecimation('S');
+
       if (TablesUtil.deBugLevel > 0) {
         if (TablesUtil.deBugLevel > 2) {
-          finModel.pPieces.printDec();
-          finModel.sPieces.printDec();
+          finalTTModel.pPieces.printDec();
+          finalTTModel.sPieces.printDec();
         }
+
         // Proxy depth sampling after decimation.
-        finModel.printProxy();
+        finalTTModel.printProxy();
       }
 
       // Make the branches.
       if (TablesUtil.deBugLevel > 0) {
-        finModel.printDepShells('P');
-        finModel.printDepShells('S');
+        finalTTModel.printDepShells('P');
+        finalTTModel.printDepShells('S');
       }
-      layout = new MakeBranches(finModel, decimate);
-      layout.readPhases(phaseFile); // Read the desired phases from a file
+
+      MakeBranches layout = new MakeBranches(finalTTModel, decimate);
+      layout.readPhases(phaseListFile); // Read the desired phases from a file
+
       if (TablesUtil.deBugLevel > 0) {
         if (TablesUtil.deBugLevel > 1) {
           layout.printPhases();
         }
         layout.printBranches(false, true);
       }
-      brnData = layout.getBranchList();
+
+      branchDataTables = layout.getBranchList();
+
       // Do the final decimation.
-      finModel.decimateRayParameters();
+      finalTTModel.decimateRayParameters();
       if (TablesUtil.deBugLevel > 0) {
-        finModel.printP();
+        finalTTModel.printP();
       }
-      finModel.decimateTauX('P');
-      finModel.decimateTauX('S');
+      finalTTModel.decimateTauX('P');
+      finalTTModel.decimateTauX('S');
+
       // Print the final branches.
       if (TablesUtil.deBugLevel > 2) {
         layout.printBranches(true, true);
       }
+
       // Build the branch end ranges.
-      finModel.setEnds(layout.getBranchEnds());
+      finalTTModel.setEnds(layout.getBranchEnds());
     } else {
       System.out.println("failed to read model: " + status);
     }
+
     return status;
   }
 
   /**
-   * Fill in all the reference data needed to calculate travel times from the table generation.
+   * Function to fill in all the reference data needed to calculate travel times from the table
+   * generation.
    *
-   * @param serName Name of the model serialization file
-   * @param auxTT Auxiliary travel-time data
-   * @return The reference data for all branches
-   * @throws IOException If serialization file write fails
+   * @param modelSerializationFile A string containing the name of the model serialization file
+   * @param AuxTravelTimeData An AuxTtRef object containing the auxiliary travel-time data
+   * @return An AllBrnRef object containing the the reference data for all branches
+   * @throws IOException If the writing of the serialization fails
    */
-  public AllBrnRef fillAllBrnRef(String serName, AuxTtRef auxTT) throws IOException {
-    return new AllBrnRef(serName, finModel, brnData, auxTT);
+  public AllBrnRef fillInBranchReferenceData(
+      String modelSerializationFile, AuxTtRef AuxTravelTimeData) throws IOException {
+    return new AllBrnRef(modelSerializationFile, finalTTModel, branchDataTables, AuxTravelTimeData);
   }
 }

@@ -232,7 +232,7 @@ public class TTSessionLocal {
             }
             // Build the branch reference classes.
             try {
-              allRef = make.fillAllBrnRef(serName, auxTT);
+              allRef = make.fillInBranchReferenceData(serName, auxTT);
             } catch (IOException e) {
               System.out.println(
                   "Unable to write Earth model " + earthModel + " serialization file.");

@@ -278,7 +278,7 @@ public class TTSession {
               prta(ttag + " Need to generate model=" + earthModel);
               MakeTables make = new MakeTables(earthModel);
               make.buildModel(fileNames[0], fileNames[1]);
-              allRef = make.fillAllBrnRef(serName, auxtt);
+              allRef = make.fillInBranchReferenceData(serName, auxtt);
             } catch (Exception e) {
               e.printStackTrace(getPrintStream());
               throw e;

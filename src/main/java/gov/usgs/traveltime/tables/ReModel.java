@@ -37,7 +37,7 @@ public class ReModel {
       // NOTE assumes default model path for now, need to figure out
       // where to get this path. Cmd line arg?
       auxTT = new AuxTtRef(true, false, false, null, null);
-      allRef = make.fillAllBrnRef(null, auxTT);
+      allRef = make.fillInBranchReferenceData(null, auxTT);
       System.out.format(
           "\n***** Table generation time: %5.3f *****\n",
           0.001 * (System.currentTimeMillis() - sysTime));
