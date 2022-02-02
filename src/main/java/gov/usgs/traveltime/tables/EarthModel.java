@@ -66,8 +66,8 @@ public class EarthModel {
   /** An EarthModel object containing the reference earth model information */
   private EarthModel referenceModel;
 
-  /** A ModelInterp object used for interpolations */
-  private ModelInterp modelInterpolations;
+  /** A ModelInterpolation object used for interpolations */
+  private ModelInterpolation ModelInterpolationolations;
 
   /** A ModConvert object containing model dependent constants and conversions */
   ModConvert modelConversions;
@@ -156,7 +156,7 @@ public class EarthModel {
 
     model = new ArrayList<ModelSample>();
     shells = new ArrayList<ModelShell>();
-    modelInterpolations = new ModelInterp(model, shells, isCubic);
+    ModelInterpolationolations = new ModelInterpolation(model, shells, isCubic);
   }
 
   /**
@@ -284,7 +284,7 @@ public class EarthModel {
     eliminatePKJKP();
 
     // Interpolate velocity.
-    modelInterpolations.interpVel();
+    ModelInterpolationolations.interpVel();
 
     // Find important internal boundaries.
     refineBoundaries();
@@ -355,9 +355,9 @@ public class EarthModel {
    */
   public double getVelocity(char waveType, double radius) {
     if (waveType == 'P') {
-      return modelInterpolations.getVp(radius);
+      return ModelInterpolationolations.getCompressionalVelocity(radius);
     } else {
-      return modelInterpolations.getVs(radius);
+      return ModelInterpolationolations.getSheerVelocity(radius);
     }
   }
 
@@ -371,9 +371,9 @@ public class EarthModel {
    */
   public double getVelocity(char waveType, int shellIndex, double radius) {
     if (waveType == 'P') {
-      return modelInterpolations.getVp(shellIndex, radius);
+      return ModelInterpolationolations.getCompressionalVelocity(shellIndex, radius);
     } else {
-      return modelInterpolations.getVs(shellIndex, radius);
+      return ModelInterpolationolations.getSheerVelocity(shellIndex, radius);
     }
   }
 
