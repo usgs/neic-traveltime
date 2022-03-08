@@ -130,13 +130,15 @@ public class ModelShell {
    */
   public boolean isInShell(char type, double slow, ArrayList<ModelSample> model) {
     if (type == 'P') {
-      if (slow >= model.get(iBot).slowP && slow <= model.get(iTop).slowP) {
+      if ((slow >= model.get(iBot).getCompressionalWaveSlowness())
+          && (slow <= model.get(iTop).getCompressionalWaveSlowness())) {
         return true;
       } else {
         return false;
       }
     } else {
-      if (slow >= model.get(iBot).slowS && slow <= model.get(iTop).slowS) {
+      if ((slow >= model.get(iBot).getShearWaveSlowness())
+          && (slow <= model.get(iTop).getShearWaveSlowness())) {
         return true;
       } else {
         return false;

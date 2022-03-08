@@ -83,14 +83,14 @@ public class ModelInterpolation {
 
           // Interpolate Vp.
           for (int j = iBot; j <= iTop; j++) {
-            r[j - iBot] = earthModelData.get(j).r;
-            v[j - iBot] = earthModelData.get(j).vp;
+            r[j - iBot] = earthModelData.get(j).getRadius();
+            v[j - iBot] = earthModelData.get(j).getIsotropicPVelocity();
           }
           interpolatedCompVelocities[i] = cubic.interpolate(r, v);
 
           // Interpolate Vs.
           for (int j = iBot; j <= iTop; j++) {
-            v[j - iBot] = earthModelData.get(j).vs;
+            v[j - iBot] = earthModelData.get(j).getIsotropicSVelocity();
           }
           interpolatedSheerVelocities[i] = cubic.interpolate(r, v);
         } else {
@@ -101,14 +101,14 @@ public class ModelInterpolation {
 
           // Interpolate Vp.
           for (int j = iBot; j <= iTop; j++) {
-            r[j - iBot] = earthModelData.get(j).r;
-            v[j - iBot] = earthModelData.get(j).vp;
+            r[j - iBot] = earthModelData.get(j).getRadius();
+            v[j - iBot] = earthModelData.get(j).getIsotropicPVelocity();
           }
           interpolatedCompVelocities[i] = linear.interpolate(r, v);
 
           // Interpolate Vs.
           for (int j = iBot; j <= iTop; j++) {
-            v[j - iBot] = earthModelData.get(j).vs;
+            v[j - iBot] = earthModelData.get(j).getIsotropicSVelocity();
           }
           interpolatedSheerVelocities[i] = linear.interpolate(r, v);
         }

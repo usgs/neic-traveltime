@@ -292,7 +292,11 @@ public class EarthModel {
     // Initialize the model specific conversion constants.
     modelConversions =
         new ModConvert(
-            upperMantleModel.r, mohoModel.r, conradModel.r, surfaceModel.r, surfaceModel.vs);
+            upperMantleModel.getRadius(),
+            mohoModel.getRadius(),
+            conradModel.getRadius(),
+            surfaceModel.getRadius(),
+            surfaceModel.getIsotropicSVelocity());
 
     // Do the Earth flattening transformation.
     flattenModel();
@@ -384,7 +388,7 @@ public class EarthModel {
    * @return A double containing the non-dimensional Earth flattened depth
    */
   public double getDepth(int index) {
-    return model.get(index).z;
+    return model.get(index).getDepth();
   }
 
   /**
@@ -394,7 +398,7 @@ public class EarthModel {
    * @return A double containing the dimensional Earth radius in kilometers
    */
   public double getRadius(int index) {
-    return model.get(index).r;
+    return model.get(index).getRadius();
   }
 
   /**
@@ -406,9 +410,9 @@ public class EarthModel {
    */
   public double getSlowness(char waveType, int index) {
     if (waveType == 'P') {
-      return model.get(index).slowP;
+      return model.get(index).getCompressionalWaveSlowness();
     } else {
-      return model.get(index).slowS;
+      return model.get(index).getShearWaveSlowness();
     }
   }
 
@@ -491,12 +495,12 @@ public class EarthModel {
     }
 
     // Set the radii.
-    innerCoreRadius = innerCoreModel.r;
-    outerCoreRadius = outerCoreModel.r;
-    upperMantleRadius = upperMantleModel.r;
-    mohoRadius = mohoModel.r;
-    conradRadius = conradModel.r;
-    surfaceRadius = surfaceModel.r;
+    innerCoreRadius = innerCoreModel.getRadius();
+    outerCoreRadius = outerCoreModel.getRadius();
+    upperMantleRadius = upperMantleModel.getRadius();
+    mohoRadius = mohoModel.getRadius();
+    conradRadius = conradModel.getRadius();
+    surfaceRadius = surfaceModel.getRadius();
 
     // Go around again setting up the shells.
     for (int j = 0; j < shells.size(); j++) {
@@ -556,15 +560,30 @@ public class EarthModel {
    */
   private void bridgeVelocity(int index) {
     if (index > 0) {
-      if (Math.abs(model.get(index).vp - model.get(index - 1).vp)
-          <= TablesUtil.VELOCITYTOL * model.get(index).vp) {
-        model.get(index).vp = 0.5d * (model.get(index).vp + model.get(index - 1).vp);
-        model.get(index - 1).vp = model.get(index).vp;
+      if (Math.abs(
+              model.get(index).getIsotropicPVelocity()
+                  - model.get(index - 1).getIsotropicPVelocity())
+          <= TablesUtil.VELOCITYTOL * model.get(index).getIsotropicPVelocity()) {
+        model
+            .get(index)
+            .setIsotropicPVelocity(
+                0.5d
+                    * (model.get(index).getIsotropicPVelocity()
+                        + model.get(index - 1).getIsotropicPVelocity()));
+        model.get(index - 1).setIsotropicPVelocity(model.get(index).getIsotropicPVelocity());
       }
-      if (Math.abs(model.get(index).vs - model.get(index - 1).vs)
-          <= TablesUtil.VELOCITYTOL * model.get(index).vs) {
-        model.get(index).vs = 0.5d * (model.get(index).vs + model.get(index - 1).vs);
-        model.get(index - 1).vs = model.get(index).vs;
+
+      if (Math.abs(
+              model.get(index).getIsotropicSVelocity()
+                  - model.get(index - 1).getIsotropicSVelocity())
+          <= TablesUtil.VELOCITYTOL * model.get(index).getIsotropicSVelocity()) {
+        model
+            .get(index)
+            .setIsotropicSVelocity(
+                0.5d
+                    * (model.get(index).getIsotropicSVelocity()
+                        + model.get(index - 1).getIsotropicSVelocity()));
+        model.get(index - 1).setIsotropicSVelocity(model.get(index).getIsotropicSVelocity());
       }
     }
   }
@@ -584,23 +603,29 @@ public class EarthModel {
               'P',
               j,
               (shell.isDisc ? ShellLoc.BOUNDARY : ShellLoc.SHELL),
-              model.get(shell.iBot).slowP));
+              model.get(shell.iBot).getCompressionalWaveSlowness()));
 
-      if (model.get(shell.iBot).slowP != model.get(shell.iBot).slowS) {
+      if (model.get(shell.iBot).getCompressionalWaveSlowness()
+          != model.get(shell.iBot).getShearWaveSlowness()) {
         criticalSlownesses.add(
             new CriticalSlowness(
                 'S',
                 j,
                 (shell.isDisc ? ShellLoc.BOUNDARY : ShellLoc.SHELL),
-                model.get(shell.iBot).slowS));
+                model.get(shell.iBot).getShearWaveSlowness()));
       }
     }
 
     criticalSlownesses.add(
-        new CriticalSlowness('P', shells.size() - 1, ShellLoc.SHELL, model.get(shell.iTop).slowP));
+        new CriticalSlowness(
+            'P',
+            shells.size() - 1,
+            ShellLoc.SHELL,
+            model.get(shell.iTop).getCompressionalWaveSlowness()));
 
     criticalSlownesses.add(
-        new CriticalSlowness('S', shells.size() - 1, ShellLoc.SHELL, model.get(shell.iTop).slowS));
+        new CriticalSlowness(
+            'S', shells.size() - 1, ShellLoc.SHELL, model.get(shell.iTop).getShearWaveSlowness()));
 
     /*
      * Now look for high slowness zones.  Note that this is not quite the
@@ -617,15 +642,19 @@ public class EarthModel {
         sample = model.get(j);
 
         if (!inLVZ) {
-          if (sample.slowP <= lastSample.slowP) {
+          if (sample.getCompressionalWaveSlowness() <= lastSample.getCompressionalWaveSlowness()) {
             inLVZ = true;
-            criticalSlownesses.add(new CriticalSlowness('P', i, ShellLoc.SHELL, lastSample.slowP));
+            criticalSlownesses.add(
+                new CriticalSlowness(
+                    'P', i, ShellLoc.SHELL, lastSample.getCompressionalWaveSlowness()));
             shell.setLVZ();
           }
         } else {
-          if (sample.slowP >= lastSample.slowP) {
+          if (sample.getCompressionalWaveSlowness() >= lastSample.getCompressionalWaveSlowness()) {
             inLVZ = false;
-            criticalSlownesses.add(new CriticalSlowness('P', i, ShellLoc.SHELL, lastSample.slowP));
+            criticalSlownesses.add(
+                new CriticalSlowness(
+                    'P', i, ShellLoc.SHELL, lastSample.getCompressionalWaveSlowness()));
           }
         }
       }
@@ -643,15 +672,17 @@ public class EarthModel {
         sample = model.get(j);
 
         if (!inLVZ) {
-          if (sample.slowS <= lastSample.slowS) {
+          if (sample.getShearWaveSlowness() <= lastSample.getShearWaveSlowness()) {
             inLVZ = true;
-            criticalSlownesses.add(new CriticalSlowness('S', i, ShellLoc.SHELL, lastSample.slowS));
+            criticalSlownesses.add(
+                new CriticalSlowness('S', i, ShellLoc.SHELL, lastSample.getShearWaveSlowness()));
             shell.setLVZ();
           }
         } else {
-          if (sample.slowS >= lastSample.slowS) {
+          if (sample.getShearWaveSlowness() >= lastSample.getShearWaveSlowness()) {
             inLVZ = false;
-            criticalSlownesses.add(new CriticalSlowness('S', i, ShellLoc.SHELL, lastSample.slowS));
+            criticalSlownesses.add(
+                new CriticalSlowness('S', i, ShellLoc.SHELL, lastSample.getShearWaveSlowness()));
           }
         }
       }
@@ -686,7 +717,7 @@ public class EarthModel {
       for (int j = shells.size() - 1; j >= 0; j--) {
         ModelShell shell = shells.get(j);
 
-        if (crit.getSlowness() >= model.get(shell.iBot).slowP) {
+        if (crit.getSlowness() >= model.get(shell.iBot).getCompressionalWaveSlowness()) {
           crit.setShellIndex('P', j);
           break;
         }
@@ -695,7 +726,7 @@ public class EarthModel {
       for (int j = shells.size() - 1; j >= 0; j--) {
         ModelShell shell = shells.get(j);
 
-        if (crit.getSlowness() >= model.get(shell.iBot).slowS) {
+        if (crit.getSlowness() >= model.get(shell.iBot).getShearWaveSlowness()) {
           crit.setShellIndex('S', j);
           break;
         }
@@ -709,12 +740,12 @@ public class EarthModel {
         "\n%s %d %7.2f %7.2f %7.2f %7.2f %7.2f %7.2f\n",
         earthModelName,
         model.size(),
-        innerCoreModel.r,
-        outerCoreModel.r,
-        upperMantleModel.r,
-        mohoModel.r,
-        conradModel.r,
-        surfaceModel.r);
+        innerCoreModel.getRadius(),
+        outerCoreModel.getRadius(),
+        upperMantleModel.getRadius(),
+        mohoModel.getRadius(),
+        conradModel.getRadius(),
+        surfaceModel.getRadius());
 
     for (int j = 0; j < model.size(); j++) {
       System.out.format("\t%3d: %s\n", j, model.get(j).printSample(false, null));
@@ -735,24 +766,24 @@ public class EarthModel {
             "\n%s %d %7.2f %7.2f %7.2f %7.2f %7.2f %7.2f\n",
             referenceModel.getEarthModelName(),
             model.size(),
-            modelConversions.realZ(referenceModel.surfaceModel.z),
-            modelConversions.realZ(referenceModel.conradModel.z),
-            modelConversions.realZ(referenceModel.mohoModel.z),
-            modelConversions.realZ(referenceModel.upperMantleModel.z),
-            modelConversions.realZ(referenceModel.outerCoreModel.z),
-            modelConversions.realZ(referenceModel.innerCoreModel.z));
+            modelConversions.realZ(referenceModel.surfaceModel.getDepth()),
+            modelConversions.realZ(referenceModel.conradModel.getDepth()),
+            modelConversions.realZ(referenceModel.mohoModel.getDepth()),
+            modelConversions.realZ(referenceModel.upperMantleModel.getDepth()),
+            modelConversions.realZ(referenceModel.outerCoreModel.getDepth()),
+            modelConversions.realZ(referenceModel.innerCoreModel.getDepth()));
         System.out.println("\t        R         Z    slowP    slowS");
       } else {
         System.out.format(
             "\n%s %d %7.4f %7.4f %7.4f %7.4f %7.4f %7.4f\n",
             referenceModel.getEarthModelName(),
             model.size(),
-            referenceModel.surfaceModel.z,
-            referenceModel.conradModel.z,
-            referenceModel.mohoModel.z,
-            referenceModel.upperMantleModel.z,
-            referenceModel.outerCoreModel.z,
-            referenceModel.innerCoreModel.z);
+            referenceModel.surfaceModel.getDepth(),
+            referenceModel.conradModel.getDepth(),
+            referenceModel.mohoModel.getDepth(),
+            referenceModel.upperMantleModel.getDepth(),
+            referenceModel.outerCoreModel.getDepth(),
+            referenceModel.innerCoreModel.getDepth());
         System.out.println("\t        R         Z    slowP    slowS");
       }
 
@@ -769,12 +800,12 @@ public class EarthModel {
           "\n%s %d %7.2f %7.2f %7.2f %7.2f %7.2f %7.2f\n",
           referenceModel.getEarthModelName(),
           model.size(),
-          referenceModel.innerCoreModel.r,
-          referenceModel.outerCoreModel.r,
-          referenceModel.upperMantleModel.r,
-          referenceModel.mohoModel.r,
-          referenceModel.conradModel.r,
-          referenceModel.surfaceModel.r);
+          referenceModel.innerCoreModel.getRadius(),
+          referenceModel.outerCoreModel.getRadius(),
+          referenceModel.upperMantleModel.getRadius(),
+          referenceModel.mohoModel.getRadius(),
+          referenceModel.conradModel.getRadius(),
+          referenceModel.surfaceModel.getRadius());
       System.out.println("                   R     Vp      Vs");
 
       for (int j = 0; j < model.size(); j++) {

@@ -327,9 +327,9 @@ public class SampleSlowness {
                 sample0.slow
                     - model0.getSlowness(type)
                         * Math.pow(
-                            rTarget / model0.r,
+                            rTarget / model0.getRadius(),
                             Math.log(model1.getSlowness(type) / model0.getSlowness(type))
-                                / Math.log(model1.r / model0.r)));
+                                / Math.log(model1.getRadius() / model0.getRadius())));
         // Do the fixing.
         nSamp = Math.max((int) (Math.abs(pBot - sample0.slow) / dSlow + 0.99d), 1);
         pTarget = sample0.slow + (pBot - sample0.slow) / nSamp;
