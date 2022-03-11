@@ -260,8 +260,8 @@ public class ModelShell {
   public void addName(ShellName shellName, double depthTop, double rangeIncrementTarget) {
     if (shellName != null) {
       this.name = shellName.toString();
-      tempPCode = shellName.tmpPcode();
-      tempSCode = shellName.tmpScode();
+      tempPCode = shellName.getTempPCode();
+      tempSCode = shellName.getTempSCode();
 
       if (tempPCode == null && tempSCode == null) {
         tempPCode = String.format("rPd%dP", (int) (depthTop + .5d));

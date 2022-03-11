@@ -6,18 +6,19 @@ import org.apache.commons.math3.analysis.solvers.PegasusSolver;
 import org.apache.commons.math3.exception.NoBracketingException;
 
 /**
- * The slowness sampling is much different from the velocity sampling in the Earth model. In the
- * Earth model, the sampling just needs to be good enough for the spline fits to be reasonable. The
- * slowness sampling is complex for a variety of reasons. In addition to needing to sample the
- * travel times (tau-p) adequately in distance, the Earth model sampling in radius should be sampled
- * finely enough to not miss any important detail and the sampling in slowness must be regular
- * enough to avoid stability problems in the interpolation. To make it even more difficult, all
- * desired phases are generated on the same slowness sampling for production performance reasons.
- * This means that the sampling of P, for example, needs to be fine enough that the sampling of P'P'
- * is also adequate even though the ray travel distances are much larger for the same slowness grid.
- * Note that the over sampling of phases like P are then compensated by decimating the sampling at a
- * later stage. Of course, the decimated P sampling will be a subset of the P'P' sampling, which
- * simplifies computation when compensating for source depth.
+ * The SampleSlowness class contains the slowness sampling The slowness sampling is much different
+ * from the velocity sampling in the Earth model. In the Earth model, the sampling just needs to be
+ * good enough for the spline fits to be reasonable. The slowness sampling is complex for a variety
+ * of reasons. In addition to needing to sample the travel times (tau-p) adequately in distance, the
+ * Earth model sampling in radius should be sampled finely enough to not miss any important detail
+ * and the sampling in slowness must be regular enough to avoid stability problems in the
+ * interpolation. To make it even more difficult, all desired phases are generated on the same
+ * slowness sampling for production performance reasons. This means that the sampling of P, for
+ * example, needs to be fine enough that the sampling of P'P' is also adequate even though the ray
+ * travel distances are much larger for the same slowness grid. Note that the over sampling of
+ * phases like P are then compensated by decimating the sampling at a later stage. Of course, the
+ * decimated P sampling will be a subset of the P'P' sampling, which simplifies computation when
+ * compensating for source depth.
  *
  * @author Ray Buland
  */
@@ -40,23 +41,25 @@ public class SampleSlowness {
   FindRadius findRadius;
 
   /**
-   * The tau model will contain the output of the slowness sampling process. Note that this goes in
-   * several steps. First, an adequate sampling is created for the P- and S-wave slownesses
-   * independently. Then the two slowness samplings are merged. Finally, the P- and S-wave slowness
-   * models are recreated using the merged sampling. The point of all this is to allow converted
-   * phases using a common depth correction (i.e., the up-going branches used to correct depth are
-   * on the same sampling for all possible phases).
+   * SampleSlowness Constructor The tau model will contain the output of the slowness sampling
+   * process. Note that this goes in several steps. First, an adequate sampling is created for the
+   * P- and S-wave slownesses independently. Then the two slowness samplings are merged. Finally,
+   * the P- and S-wave slowness models are recreated using the merged sampling. The point of all
+   * this is to allow converted phases using a common depth correction (i.e., the up-going branches
+   * used to correct depth are on the same sampling for all possible phases).
    *
-   * @param locModel Re-sampled Earth model
+   * @param locModel An EarthModel object containing the re-sampled Earth model
    */
   public SampleSlowness(EarthModel locModel) {
     this.locModel = locModel;
+
     rSurface = locModel.getRadius(locModel.size() - 1);
     refModel = locModel.getReferenceModel();
     convert = locModel.getModelConvesions();
     model = locModel.getModel();
     shells = locModel.getShells();
     critical = locModel.getCriticalSlownesses();
+
     tauInt = new TauInt(locModel, convert);
     tauModel = new TauModel(refModel, convert);
     depModel = new TauModel(refModel, convert);

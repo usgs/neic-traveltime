@@ -19,22 +19,22 @@ public class EarthModel {
   private String earthModelName;
 
   /** A double containing the inner core boundary radius */
-  private double innerCoreRadius = ShellName.INNER_CORE.defRadius();
+  private double innerCoreRadius = ShellName.INNER_CORE.getDefaultRadius();
 
   /** A double containing the outer core boundary radius */
-  private double outerCoreRadius = ShellName.OUTER_CORE.defRadius();
+  private double outerCoreRadius = ShellName.OUTER_CORE.getDefaultRadius();
 
   /** A double containing the upper mantle discontinuity radius */
-  private double upperMantleRadius = ShellName.LOWER_MANTLE.defRadius();
+  private double upperMantleRadius = ShellName.LOWER_MANTLE.getDefaultRadius();
 
   /** A double containing the radius of the Moho discontinuity */
-  private double mohoRadius = ShellName.UPPER_MANTLE.defRadius();
+  private double mohoRadius = ShellName.UPPER_MANTLE.getDefaultRadius();
 
   /** A double containing the radius of the Conrad discontinuity */
-  private double conradRadius = ShellName.LOWER_CRUST.defRadius();
+  private double conradRadius = ShellName.LOWER_CRUST.getDefaultRadius();
 
   /** A double containg the free surface radius */
-  private double surfaceRadius = ShellName.UPPER_CRUST.defRadius();
+  private double surfaceRadius = ShellName.UPPER_CRUST.getDefaultRadius();
 
   /** A ModelSample object containing the model at the inner core boundary */
   private ModelSample innerCoreModel;
@@ -603,7 +603,9 @@ public class EarthModel {
           new CriticalSlowness(
               'P',
               j,
-              (shell.getIsDiscontinuity() ? ShellLoc.BOUNDARY : ShellLoc.SHELL),
+              (shell.getIsDiscontinuity()
+                  ? ShellSlownessLocation.BOUNDARY
+                  : ShellSlownessLocation.SHELL),
               model.get(shell.getBottomSampleIndex()).getCompressionalWaveSlowness()));
 
       if (model.get(shell.getBottomSampleIndex()).getCompressionalWaveSlowness()
@@ -612,7 +614,9 @@ public class EarthModel {
             new CriticalSlowness(
                 'S',
                 j,
-                (shell.getIsDiscontinuity() ? ShellLoc.BOUNDARY : ShellLoc.SHELL),
+                (shell.getIsDiscontinuity()
+                    ? ShellSlownessLocation.BOUNDARY
+                    : ShellSlownessLocation.SHELL),
                 model.get(shell.getBottomSampleIndex()).getShearWaveSlowness()));
       }
     }
@@ -621,14 +625,14 @@ public class EarthModel {
         new CriticalSlowness(
             'P',
             shells.size() - 1,
-            ShellLoc.SHELL,
+            ShellSlownessLocation.SHELL,
             model.get(shell.getTopSampleIndex()).getCompressionalWaveSlowness()));
 
     criticalSlownesses.add(
         new CriticalSlowness(
             'S',
             shells.size() - 1,
-            ShellLoc.SHELL,
+            ShellSlownessLocation.SHELL,
             model.get(shell.getTopSampleIndex()).getShearWaveSlowness()));
 
     /*
@@ -650,7 +654,10 @@ public class EarthModel {
             inLVZ = true;
             criticalSlownesses.add(
                 new CriticalSlowness(
-                    'P', i, ShellLoc.SHELL, lastSample.getCompressionalWaveSlowness()));
+                    'P',
+                    i,
+                    ShellSlownessLocation.SHELL,
+                    lastSample.getCompressionalWaveSlowness()));
             shell.setHasLowVelocityZone(true);
           }
         } else {
@@ -658,7 +665,10 @@ public class EarthModel {
             inLVZ = false;
             criticalSlownesses.add(
                 new CriticalSlowness(
-                    'P', i, ShellLoc.SHELL, lastSample.getCompressionalWaveSlowness()));
+                    'P',
+                    i,
+                    ShellSlownessLocation.SHELL,
+                    lastSample.getCompressionalWaveSlowness()));
           }
         }
       }
@@ -679,14 +689,16 @@ public class EarthModel {
           if (sample.getShearWaveSlowness() <= lastSample.getShearWaveSlowness()) {
             inLVZ = true;
             criticalSlownesses.add(
-                new CriticalSlowness('S', i, ShellLoc.SHELL, lastSample.getShearWaveSlowness()));
+                new CriticalSlowness(
+                    'S', i, ShellSlownessLocation.SHELL, lastSample.getShearWaveSlowness()));
             shell.setHasLowVelocityZone(true);
           }
         } else {
           if (sample.getShearWaveSlowness() >= lastSample.getShearWaveSlowness()) {
             inLVZ = false;
             criticalSlownesses.add(
-                new CriticalSlowness('S', i, ShellLoc.SHELL, lastSample.getShearWaveSlowness()));
+                new CriticalSlowness(
+                    'S', i, ShellSlownessLocation.SHELL, lastSample.getShearWaveSlowness()));
           }
         }
       }

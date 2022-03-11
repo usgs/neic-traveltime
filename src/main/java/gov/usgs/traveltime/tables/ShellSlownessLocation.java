@@ -1,11 +1,11 @@
 package gov.usgs.traveltime.tables;
 
 /**
- * Location of a critical slowness within a shell.
+ * Enumeration class defining the location types of a critical slowness within a shell.
  *
  * @author Ray Buland
  */
-public enum ShellLoc {
+public enum ShellSlownessLocation {
   /** The critical slowness is within a shell. */
   SHELL,
   /** The critical slowness is between shells. */
