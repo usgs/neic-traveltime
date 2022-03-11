@@ -6,11 +6,11 @@ import gov.usgs.traveltime.TauUtil;
 import gov.usgs.traveltime.TtStatus;
 
 /**
- * Test main program for travel-time table generation.
+ * Class to test main program for travel-time table generation.
  *
  * @author Ray Buland
  */
-public class ReModel {
+public class ModelTest {
 
   /**
    * Test driver for the model generation (replacing Fortran programs Remodl and Setbrn generating
@@ -32,21 +32,24 @@ public class ReModel {
     sysTime = System.currentTimeMillis();
     make = new MakeTables(earthModel);
     status = make.buildModel(TauUtil.model("m" + earthModel + ".mod"), TauUtil.model("phases.txt"));
+
     if (status == TtStatus.SUCCESS) {
       // Build the branch reference classes.
       // NOTE assumes default model path for now, need to figure out
       // where to get this path. Cmd line arg?
       auxTT = new AuxTtRef(true, false, false, null, null);
       allRef = make.fillInBranchReferenceData(null, auxTT);
+
       System.out.format(
           "\n***** Table generation time: %5.3f *****\n",
           0.001 * (System.currentTimeMillis() - sysTime));
-      //		allRef.dumpHead();
-      //		allRef.dumpMod('P', true);
-      //		allRef.dumpMod('S', true);
+
+      // allRef.dumpHead();
+      // allRef.dumpMod('P', true);
+      // allRef.dumpMod('S', true);
       allRef.dumpBrn(false);
-      //		allRef.dumpUp('P');
-      //		allRef.dumpUp('S');
+      // allRef.dumpUp('P');
+      // allRef.dumpUp('S');
     } else {
       System.out.println("Read status = " + status);
     }
