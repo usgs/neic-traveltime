@@ -142,9 +142,9 @@ public class TablePieces {
    */
   public double getDelX(char type, int index) {
     if (type == 'P') {
-      return convert.normR(pShells.get(index).delX);
+      return convert.normR(pShells.get(index).getRangeIncrementTarget());
     } else {
-      return convert.normR(sShells.get(index).delX);
+      return convert.normR(sShells.get(index).getRangeIncrementTarget());
     }
   }
 
@@ -158,14 +158,14 @@ public class TablePieces {
   public double getNextDelX(char type, int index) {
     if (type == 'P') {
       for (int j = index + 1; j < pShells.size(); j++) {
-        if (!pShells.get(j).isDisc) {
-          return convert.normR(pShells.get(j).delX);
+        if (!pShells.get(j).getIsDiscontinuity()) {
+          return convert.normR(pShells.get(j).getRangeIncrementTarget());
         }
       }
     } else {
       for (int j = index + 1; j < sShells.size(); j++) {
-        if (!sShells.get(j).isDisc) {
-          return convert.normR(sShells.get(j).delX);
+        if (!sShells.get(j).getIsDiscontinuity()) {
+          return convert.normR(sShells.get(j).getRangeIncrementTarget());
         }
       }
     }

@@ -88,17 +88,19 @@ public class SampleSlowness {
      * ends, this strategy guarantees that all possible branches are
      * sampled exactly at their ends.
      */
-    slowTop = model.get(shell.iTop).getSlowness(type);
+    slowTop = model.get(shell.getTopSampleIndex()).getSlowness(type);
     for (iCrit = critical.size() - 2; iCrit >= 0; iCrit--) {
       crit = critical.get(iCrit);
       if (crit.getSlowness() < slowTop) {
         // Set up limits for this shell.
         iShell = crit.getShellIndex(type);
         shell = shells.get(iShell);
-        delX = convert.normR(shell.delX);
-        limit = shell.iBot;
+        delX = convert.normR(shell.getRangeIncrementTarget());
+        limit = shell.getBottomSampleIndex();
         if (TablesUtil.deBugLevel > 0) {
-          System.out.format("\nShell: %3d %3d %6.2f %s\n", iShell, limit, shell.delX, shell.name);
+          System.out.format(
+              "\nShell: %3d %3d %6.2f %s\n",
+              iShell, limit, shell.getRangeIncrementTarget(), shell.getName());
         }
         slowBot = crit.getSlowness();
         // Sample the top and bottom of this layer.
@@ -395,7 +397,7 @@ public class SampleSlowness {
 
     // Initialize temporary variables.
     slowness = tauModel.slowness;
-    iCur = shells.get(shells.size() - 1).iTop;
+    iCur = shells.get(shells.size() - 1).getTopSampleIndex();
     slowMax = locModel.getSlowness(type, iCur);
     // Find the starting slowness.
     for (iBeg = 0; iBeg < slowness.size(); iBeg++) {
@@ -411,8 +413,8 @@ public class SampleSlowness {
      */
     for (int iShell = shells.size() - 1; iShell >= 0; iShell--) {
       shell = shells.get(iShell);
-      slowTop = locModel.getSlowness(type, shell.iTop);
-      slowBot = locModel.getSlowness(type, shell.iBot);
+      slowTop = locModel.getSlowness(type, shell.getTopSampleIndex());
+      slowBot = locModel.getSlowness(type, shell.getBottomSampleIndex());
       // Only do shells that really have a slowness gradient.
       if (slowBot != slowTop) {
         if (slowBot < slowTop) {
@@ -429,13 +431,13 @@ public class SampleSlowness {
         if (TablesUtil.deBugLevel > 0) {
           System.out.format(
               "Merged indices: %3d %3d %8.6f %8.6f %3d %s\n",
-              iBeg, iEnd, slowness.get(iBeg), slowness.get(iEnd), iShell, shell.name);
+              iBeg, iEnd, slowness.get(iBeg), slowness.get(iEnd), iShell, shell.getName());
         }
         // Fill in a new version of the model.
-        if (!shell.isDisc) {
+        if (!shell.getIsDiscontinuity()) {
           // This is messy for normal model shells.
-          iCur = shell.iTop - 1;
-          locSlow0 = locModel.getSlowness(type, shell.iTop);
+          iCur = shell.getTopSampleIndex() - 1;
+          locSlow0 = locModel.getSlowness(type, shell.getTopSampleIndex());
           locSlow1 = locModel.getSlowness(type, iCur);
           // Loop over the merged slownesses.
           i = iBeg;
@@ -498,7 +500,7 @@ public class SampleSlowness {
             }
           }
           // The last point is the bottom of the shell.
-          iCur = shell.iBot;
+          iCur = shell.getBottomSampleIndex();
           depModel.add(type, locModel.getRadius(iCur), slowness.get(iEnd), iEnd);
           if (TablesUtil.deBugLevel > 1)
             System.out.format(
@@ -506,7 +508,7 @@ public class SampleSlowness {
                 iEnd, locModel.getRadius(iCur), slowness.get(iEnd));
         } else {
           // It's a lot easier for discontinuities.
-          iCur = shell.iBot;
+          iCur = shell.getBottomSampleIndex();
           if (iEnd >= iBeg) {
             for (int j = iBeg; j <= iEnd; j++) {
               depModel.add(type, locModel.getRadius(iCur), slowness.get(j), j);

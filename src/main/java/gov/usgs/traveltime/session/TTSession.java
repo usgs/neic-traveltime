@@ -55,32 +55,10 @@ public class TTSession {
     return ttag + " " + allBrn.toString();
   }
   // logging related stuff
-  // private EdgeThread par;
-  private void prt(String s) {
-    System.out.println(s);
-  }
-
-  private void prta(String s) {
-    System.out.println(s);
-  }
-
-  private void prt(StringBuilder s) {
-    System.out.println(s);
-  }
-
-  private void prta(StringBuilder s) {
-    System.out.println(s);
-  }
-
   private PrintStream getPrintStream() {
     return System.out;
   }
-  // private void prt(String s) {if(par == null) Util.prt(s); else par.prt(s);}
-  // private void prt(StringBuilder s) {if(par == null) Util.prt(s); else par.prt(s);}
-  // private void prta(String s) {if(par == null) Util.prta(s); else par.prta(s);}
-  // private void prta(StringBuilder s) {if(par == null) Util.prta(s); else par.prta(s);}
-  // private PrintStream getPrintStream() {if(par == null) return Util.getOutput(); else return
-  // par.getPrintStream();}
+
   public String getKey() {
     return key;
   }
@@ -244,7 +222,7 @@ public class TTSession {
     try {
       // Read in data common to all models.
       if (auxtt == null) {
-        prta(ttag + " create AuxTtRef ");
+        // prta(ttag + " create AuxTtRef ");
         // NOTE assumes default model path for now, need to figure out
         // where to get this path. Cmd line arg?
         auxtt = new AuxTtRef(true, true, true, null, null);
@@ -260,7 +238,7 @@ public class TTSession {
           if (TauUtil.useFortranFiles) {
             // We're going to read the model tables from the Fortran files.
             try {
-              prta(ttag + " Need to read in model=" + earthModel);
+              // prta(ttag + " Need to read in model=" + earthModel);
               ReadTau readTau = new ReadTau(earthModel);
               readTau.readHeader(TauUtil.model(fileNames[0]));
               //	readTau.dumpSegments();
@@ -275,7 +253,7 @@ public class TTSession {
           } else {
             // We're going to generate the model tables from scratch.
             try {
-              prta(ttag + " Need to generate model=" + earthModel);
+              // prta(ttag + " Need to generate model=" + earthModel);
               MakeTables make = new MakeTables(earthModel);
               make.buildModel(fileNames[0], fileNames[1]);
               allRef = make.fillInBranchReferenceData(serName, auxtt);
@@ -287,7 +265,7 @@ public class TTSession {
         } else {
           // We can just read the model from the serialized files.
           try {
-            prta(ttag + " Serialize model in =" + earthModel);
+            // prta(ttag + " Serialize model in =" + earthModel);
             allRef = new AllBrnRef(serName, earthModel, auxtt);
           } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace(getPrintStream());
@@ -318,10 +296,10 @@ public class TTSession {
       // Get the used list and if the free list is empty, put a new AllBrnVol on it
       // used = modelAllBrnVolAssigned.get(earthModel);
       // if (free.isEmpty()) {
-      prta(
-          ttag
-              + " creating a new AllBrnVol for "
-              + earthModel /*+" #free="+free.size()+" #used="+used.size()*/);
+      // prta(
+      //    ttag
+      //        + " creating a new AllBrnVol for "
+      //        + earthModel /*+" #free="+free.size()+" #used="+used.size()*/);
       allBrn = new AllBrnVol(allRef);
       //  free.add(allBrn);
       // }
@@ -369,7 +347,7 @@ public class TTSession {
         }
       } catch (Exception e) {
         e.printStackTrace(getPrintStream());
-        prta(ttag + " Unknown exception while setting sourceDepth and phList in newSession()!");
+        // prta(ttag + " Unknown exception while setting sourceDepth and phList in newSession()!");
       }
     } catch (IOException | ClassNotFoundException e) {
       e.printStackTrace(getPrintStream());

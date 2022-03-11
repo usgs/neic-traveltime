@@ -87,8 +87,10 @@ public class Integrate {
     int iRay = 0;
     double zLim = modelDepth(waveType);
     int n1 =
-        tauDepthModel.getShell(waveType, 0).iBot
-            - tauDepthModel.getShell(waveType, tauDepthModel.shellSize(waveType) - 1).iTop
+        tauDepthModel.getShell(waveType, 0).getBottomSampleIndex()
+            - tauDepthModel
+                .getShell(waveType, tauDepthModel.shellSize(waveType) - 1)
+                .getTopSampleIndex()
             + 1;
 
     if (TablesUtil.deBugLevel > 0) {

@@ -176,7 +176,7 @@ public class MakeBranches {
               wrapTypes(code[0], code[0], code[0]),
               wrapCounts(1, 1, 1),
               endShellIndex,
-              finalTTModel.getShell(code[0], endShellIndex).iTop);
+              finalTTModel.getShell(code[0], endShellIndex).getTopSampleIndex());
         } else {
           System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
         }
@@ -197,7 +197,7 @@ public class MakeBranches {
                   wrapTypes(code[0], code[1], code[1]),
                   wrapCounts(1, 1, 1),
                   endShellIndex,
-                  finalTTModel.getShell('P', endShellIndex).iTop);
+                  finalTTModel.getShell('P', endShellIndex).getTopSampleIndex());
             } else {
               // If the phase is all S, we use all ray parameters.
               endShellIndex = finalTTModel.getShellIndex('S', ShellName.SURFACE);
@@ -207,7 +207,7 @@ public class MakeBranches {
                   wrapTypes(code[0], code[1], code[1]),
                   wrapCounts(1, 1, 1),
                   endShellIndex,
-                  finalTTModel.getShell('S', endShellIndex).iTop);
+                  finalTTModel.getShell('S', endShellIndex).getTopSampleIndex());
             }
           } else {
             System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
@@ -224,7 +224,7 @@ public class MakeBranches {
                   wrapTypes(code[0], code[0], code[1]),
                   wrapCounts(2, 2, 2),
                   endShellIndex,
-                  finalTTModel.getShell(code[0], endShellIndex).iTop);
+                  finalTTModel.getShell(code[0], endShellIndex).getTopSampleIndex());
             } else {
               // For SP and PS, just use ray parameters from the surface to the
               // core.
@@ -237,8 +237,8 @@ public class MakeBranches {
                   wrapCounts(2, 0, 0),
                   beginShellIndex,
                   endShellIndex,
-                  finalTTModel.getShell('S', beginShellIndex).iTop,
-                  finalTTModel.getShell('P', endShellIndex).iTop);
+                  finalTTModel.getShell('S', beginShellIndex).getTopSampleIndex(),
+                  finalTTModel.getShell('P', endShellIndex).getTopSampleIndex());
             }
           } else {
             System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
@@ -261,7 +261,7 @@ public class MakeBranches {
                 wrapTypes(code[0], code[0], code[2]),
                 wrapCounts(1, 0, 0),
                 endShellIndex,
-                finalTTModel.getShell('P', endShellIndex).iTop);
+                finalTTModel.getShell('P', endShellIndex).getTopSampleIndex());
           } else {
             // If the phase is all S, we use all ray parameters.
             endShellIndex = finalTTModel.getShellIndex('S', ShellName.MANTLE_BOTTOM);
@@ -271,7 +271,7 @@ public class MakeBranches {
                 wrapTypes(code[0], code[0], code[2]),
                 wrapCounts(1, 0, 0),
                 endShellIndex,
-                finalTTModel.getShell('S', endShellIndex).iTop);
+                finalTTModel.getShell('S', endShellIndex).getTopSampleIndex());
           }
         } else {
           System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
@@ -295,7 +295,7 @@ public class MakeBranches {
                 wrapTypes(code[0], code[1], code[5]),
                 wrapCounts(1, 1, 0),
                 endShellIndex,
-                finalTTModel.getShell('P', endShellIndex).iTop);
+                finalTTModel.getShell('P', endShellIndex).getTopSampleIndex());
           } else {
             System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
           }
@@ -313,7 +313,7 @@ public class MakeBranches {
                 wrapTypes(code[0], code[0], code[4]),
                 wrapCounts(1, 1, 0),
                 endShellIndex,
-                finalTTModel.getShell('P', endShellIndex).iTop);
+                finalTTModel.getShell('P', endShellIndex).getTopSampleIndex());
           } else {
             System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
           }
@@ -337,7 +337,7 @@ public class MakeBranches {
                 wrapTypes(code[0], code[0], code[3]),
                 wrapCounts(1, 2, 2),
                 endShellIndex,
-                finalTTModel.getShell('P', endShellIndex).iTop);
+                finalTTModel.getShell('P', endShellIndex).getTopSampleIndex());
           } else {
             // If the phase is all S in the mantle, it still changes things.
             endShellIndex = finalTTModel.getShellIndex('S', ShellName.CORE_TOP);
@@ -347,7 +347,7 @@ public class MakeBranches {
                 wrapTypes(code[0], code[0], code[3]),
                 wrapCounts(1, 2, 2),
                 endShellIndex,
-                finalTTModel.getShell('S', endShellIndex).iTop);
+                finalTTModel.getShell('S', endShellIndex).getTopSampleIndex());
           }
         } else {
           System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
@@ -368,7 +368,7 @@ public class MakeBranches {
               wrapTypes(code[0], code[0], code[2]),
               wrapCounts(1, 1, 1),
               endShellIndex,
-              finalTTModel.getShell('P', endShellIndex).iTop);
+              finalTTModel.getShell('P', endShellIndex).getTopSampleIndex());
         } else {
           System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
         }
@@ -445,8 +445,9 @@ public class MakeBranches {
       ModelShell shell = finalTTModel.getShell(rayTypes[1], shIndex);
 
       // Figure the index of the maximum ray parameter for this branch.
-      int maxRayParamIndex = Math.min(slownessIntegralOffset - shell.iTop, endSlownessIndex);
-      if (shell.getCode(rayTypes[1]).charAt(0) != 'r' && minRayParamIndex < maxRayParamIndex) {
+      int maxRayParamIndex =
+          Math.min(slownessIntegralOffset - shell.getTopSampleIndex(), endSlownessIndex);
+      if (shell.getTempCode(rayTypes[1]).charAt(0) != 'r' && minRayParamIndex < maxRayParamIndex) {
         // Initialize the branch.
         BranchData branch =
             buildBranch(
@@ -470,8 +471,8 @@ public class MakeBranches {
         branch.setPhaseCode(
             makePhCode(
                 shellTravCounts,
-                shell.getCode(rayTypes[1]),
-                shell.getCode(rayTypes[2]),
+                shell.getTempCode(rayTypes[1]),
+                shell.getTempCode(rayTypes[2]),
                 rayTypes[0]));
 
         if (TablesUtil.deBugLevel > 0) {
@@ -582,19 +583,22 @@ public class MakeBranches {
       ModelShell shell1 = finalTTModel.getShell(rayTypes[1], shIndex1);
 
       // Figure the index of the maximum ray parameter for the first ray type.
-      int maxBrnP1 = Math.min(slownessIntegralOffset - shell1.iTop, endSlownessIndex);
+      int maxBrnP1 =
+          Math.min(slownessIntegralOffset - shell1.getTopSampleIndex(), endSlownessIndex);
 
-      if (shell1.getCode(rayTypes[1]).charAt(0) != 'r' && minRayParamIndex < maxBrnP1) {
+      if (shell1.getTempCode(rayTypes[1]).charAt(0) != 'r' && minRayParamIndex < maxBrnP1) {
         // Now find an index of the maximum ray parameter for the second ray
         // type that works.
         do {
           ModelShell shell2 = finalTTModel.getShell(rayTypes[2], shIndex2);
-          int maxBrnP2 = Math.min(slownessIntegralOffset - shell2.iTop, endSlownessIndex);
+          int maxBrnP2 =
+              Math.min(slownessIntegralOffset - shell2.getTopSampleIndex(), endSlownessIndex);
           int maxRayParamIndex;
 
-          if ((shell2.getCode(rayTypes[2]).charAt(0) != 'r' && minRayParamIndex < maxBrnP2)
+          if ((shell2.getTempCode(rayTypes[2]).charAt(0) != 'r' && minRayParamIndex < maxBrnP2)
               || shIndex2 == finalTTModel.shellSize(rayTypes[2]) - 1) {
-            if (slownessIntegralOffset - shell1.iTop <= slownessIntegralOffset - shell2.iTop) {
+            if (slownessIntegralOffset - shell1.getTopSampleIndex()
+                <= slownessIntegralOffset - shell2.getTopSampleIndex()) {
               useShell2 = false;
               maxRayParamIndex = maxBrnP1;
 
@@ -654,8 +658,8 @@ public class MakeBranches {
             branch.setPhaseCode(
                 makePhCode(
                     shellTravCounts,
-                    shell1.getCode(rayTypes[1]),
-                    shell2.getCode(rayTypes[2]),
+                    shell1.getTempCode(rayTypes[1]),
+                    shell2.getTempCode(rayTypes[2]),
                     rayTypes[0]));
             if (TablesUtil.deBugLevel > 0) {
               if (TablesUtil.deBugLevel > 1) {

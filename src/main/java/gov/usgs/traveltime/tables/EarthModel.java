@@ -252,7 +252,7 @@ public class EarthModel {
       // Trap discontinuities.
       if (r == rLast) {
         if (model.size() > 1) {
-          shells.get(shells.size() - 1).addEnd(model.size() - 2, r);
+          shells.get(shells.size() - 1).addTop(model.size() - 2, r);
           shells.add(new ModelShell(model.size() - 2, model.size() - 1, r));
           bridgeVelocity(model.size() - 1);
         }
@@ -264,7 +264,7 @@ public class EarthModel {
     }
 
     // Done, finalize the outermost shell.
-    shells.get(shells.size() - 1).addEnd(model.size() - 1, rLast);
+    shells.get(shells.size() - 1).addTop(model.size() - 1, rLast);
 
     // Do some crude checks.
     if (i != n) {
@@ -313,14 +313,14 @@ public class EarthModel {
 
       // Initialize the interpolated model shell.
       ModelShell newShell;
-      if (!referenceShell.isDisc) {
+      if (!referenceShell.getIsDiscontinuity()) {
         newShell = new ModelShell(referenceShell, model.size());
-        model.add(new ModelSample(referenceModel.model.get(referenceShell.iBot)));
+        model.add(new ModelSample(referenceModel.model.get(referenceShell.getBottomSampleIndex())));
         bridgeVelocity(model.size() - 1);
 
         // Figure how many samples we'll need.
         double r0 = r1;
-        r1 = referenceShell.rTop;
+        r1 = referenceShell.getTopSampleRadius();
         int numSamples = (int) ((r1 - r0) / TablesUtil.RESAMPLE - 0.5d);
         double dr = (r1 - r0) / (numSamples + 1);
 
@@ -333,11 +333,11 @@ public class EarthModel {
         }
 
         // Add the top of the shell.
-        newShell.addEnd(model.size(), r1);
-        model.add(new ModelSample(referenceModel.model.get(referenceShell.iTop)));
+        newShell.addTop(model.size(), r1);
+        model.add(new ModelSample(referenceModel.model.get(referenceShell.getTopSampleIndex())));
       } else {
         newShell = new ModelShell(referenceShell, model.size() - 1);
-        newShell.addEnd(model.size(), r1);
+        newShell.addTop(model.size(), r1);
       }
 
       shells.add(newShell);
@@ -441,7 +441,7 @@ public class EarthModel {
    */
   private void eliminatePKJKP() {
     ModelShell shell = shells.get(0);
-    for (int j = shell.iBot; j <= shell.iTop; j++) {
+    for (int j = shell.getBottomSampleIndex(); j <= shell.getTopSampleIndex(); j++) {
       model.get(j).eliminatePKJKP();
     }
   }
@@ -460,8 +460,8 @@ public class EarthModel {
 
     // Find the closest boundary to target boundaries.
     for (int j = 0; j < shells.size(); j++) {
-      double rDisc = shells.get(j).rTop;
-      int iTop = shells.get(j).iTop;
+      double rDisc = shells.get(j).getTopSampleRadius();
+      int iTop = shells.get(j).getTopSampleIndex();
 
       if (Math.abs(rDisc - innerCoreRadius) < Math.abs(tempIC - innerCoreRadius)) {
         tempIC = rDisc;
@@ -505,8 +505,9 @@ public class EarthModel {
     // Go around again setting up the shells.
     for (int j = 0; j < shells.size(); j++) {
       ModelShell shell = shells.get(j);
-      if (!shell.isDisc) {
-        double rDisc = shell.rTop;
+      if (!shell.getIsDiscontinuity()) {
+        double rDisc = shell.getTopSampleRadius();
+
         if (rDisc <= innerCoreRadius) {
           shell.addName(ShellName.INNER_CORE, Double.NaN, TablesUtil.DELX[0]);
         } else if (rDisc <= outerCoreRadius) {
@@ -526,8 +527,8 @@ public class EarthModel {
     // Go around yet again setting up the discontinuities.
     for (int j = 0; j < shells.size(); j++) {
       ModelShell shell = shells.get(j);
-      if (shell.isDisc) {
-        double rDisc = shell.rTop;
+      if (shell.getIsDiscontinuity()) {
+        double rDisc = shell.getTopSampleRadius();
 
         if (rDisc == innerCoreRadius) {
           shell.addName(ShellName.INNER_CORE_BOUNDARY, Double.NaN, TablesUtil.DELX[1]);
@@ -602,17 +603,17 @@ public class EarthModel {
           new CriticalSlowness(
               'P',
               j,
-              (shell.isDisc ? ShellLoc.BOUNDARY : ShellLoc.SHELL),
-              model.get(shell.iBot).getCompressionalWaveSlowness()));
+              (shell.getIsDiscontinuity() ? ShellLoc.BOUNDARY : ShellLoc.SHELL),
+              model.get(shell.getBottomSampleIndex()).getCompressionalWaveSlowness()));
 
-      if (model.get(shell.iBot).getCompressionalWaveSlowness()
-          != model.get(shell.iBot).getShearWaveSlowness()) {
+      if (model.get(shell.getBottomSampleIndex()).getCompressionalWaveSlowness()
+          != model.get(shell.getBottomSampleIndex()).getShearWaveSlowness()) {
         criticalSlownesses.add(
             new CriticalSlowness(
                 'S',
                 j,
-                (shell.isDisc ? ShellLoc.BOUNDARY : ShellLoc.SHELL),
-                model.get(shell.iBot).getShearWaveSlowness()));
+                (shell.getIsDiscontinuity() ? ShellLoc.BOUNDARY : ShellLoc.SHELL),
+                model.get(shell.getBottomSampleIndex()).getShearWaveSlowness()));
       }
     }
 
@@ -621,11 +622,14 @@ public class EarthModel {
             'P',
             shells.size() - 1,
             ShellLoc.SHELL,
-            model.get(shell.iTop).getCompressionalWaveSlowness()));
+            model.get(shell.getTopSampleIndex()).getCompressionalWaveSlowness()));
 
     criticalSlownesses.add(
         new CriticalSlowness(
-            'S', shells.size() - 1, ShellLoc.SHELL, model.get(shell.iTop).getShearWaveSlowness()));
+            'S',
+            shells.size() - 1,
+            ShellLoc.SHELL,
+            model.get(shell.getTopSampleIndex()).getShearWaveSlowness()));
 
     /*
      * Now look for high slowness zones.  Note that this is not quite the
@@ -635,9 +639,9 @@ public class EarthModel {
     boolean inLVZ = false;
     for (int i = 0; i < shells.size(); i++) {
       shell = shells.get(i);
-      ModelSample sample = model.get(shell.iBot);
+      ModelSample sample = model.get(shell.getBottomSampleIndex());
 
-      for (int j = shell.iBot + 1; j <= shell.iTop; j++) {
+      for (int j = shell.getBottomSampleIndex() + 1; j <= shell.getTopSampleIndex(); j++) {
         ModelSample lastSample = sample;
         sample = model.get(j);
 
@@ -647,7 +651,7 @@ public class EarthModel {
             criticalSlownesses.add(
                 new CriticalSlowness(
                     'P', i, ShellLoc.SHELL, lastSample.getCompressionalWaveSlowness()));
-            shell.setLVZ();
+            shell.setHasLowVelocityZone(true);
           }
         } else {
           if (sample.getCompressionalWaveSlowness() >= lastSample.getCompressionalWaveSlowness()) {
@@ -665,9 +669,9 @@ public class EarthModel {
 
     for (int i = 0; i < shells.size(); i++) {
       shell = shells.get(i);
-      ModelSample sample = model.get(shell.iBot);
+      ModelSample sample = model.get(shell.getBottomSampleIndex());
 
-      for (int j = shell.iBot + 1; j <= shell.iTop; j++) {
+      for (int j = shell.getBottomSampleIndex() + 1; j <= shell.getTopSampleIndex(); j++) {
         ModelSample lastSample = sample;
         sample = model.get(j);
 
@@ -676,7 +680,7 @@ public class EarthModel {
             inLVZ = true;
             criticalSlownesses.add(
                 new CriticalSlowness('S', i, ShellLoc.SHELL, lastSample.getShearWaveSlowness()));
-            shell.setLVZ();
+            shell.setHasLowVelocityZone(true);
           }
         } else {
           if (sample.getShearWaveSlowness() >= lastSample.getShearWaveSlowness()) {
@@ -717,7 +721,8 @@ public class EarthModel {
       for (int j = shells.size() - 1; j >= 0; j--) {
         ModelShell shell = shells.get(j);
 
-        if (crit.getSlowness() >= model.get(shell.iBot).getCompressionalWaveSlowness()) {
+        if (crit.getSlowness()
+            >= model.get(shell.getBottomSampleIndex()).getCompressionalWaveSlowness()) {
           crit.setShellIndex('P', j);
           break;
         }
@@ -726,7 +731,7 @@ public class EarthModel {
       for (int j = shells.size() - 1; j >= 0; j--) {
         ModelShell shell = shells.get(j);
 
-        if (crit.getSlowness() >= model.get(shell.iBot).getShearWaveSlowness()) {
+        if (crit.getSlowness() >= model.get(shell.getBottomSampleIndex()).getShearWaveSlowness()) {
           crit.setShellIndex('S', j);
           break;
         }

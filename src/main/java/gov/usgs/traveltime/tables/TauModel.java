@@ -311,7 +311,7 @@ public class TauModel {
       iEnd = pModel.size() - 1;
       for (int i = 0; i < refModel.getShells().size(); i++) {
         refShell = refModel.getShells().get(i);
-        slowTop = refModel.getSlowness(type, refShell.iTop);
+        slowTop = refModel.getSlowness(type, refShell.getTopSampleIndex());
         iBeg = iEnd;
         for (iEnd = iBeg; iEnd >= 0; iEnd--) {
           if (pModel.get(iEnd).slow == slowTop) break;
@@ -319,19 +319,19 @@ public class TauModel {
         if (TablesUtil.deBugLevel > 1)
           System.out.format("MakeDepShells: " + "%c %3d %3d %8.6f\n", type, iBeg, iEnd, slowTop);
         newShell = new ModelShell(refShell, pModel.get(iBeg).index);
-        newShell.addEnd(pModel.get(iEnd).index, refShell.rTop);
-        if (slowTop > refModel.getSlowness(type, refShell.iBot)) {
+        newShell.addTop(pModel.get(iEnd).index, refShell.getTopSampleRadius());
+        if (slowTop > refModel.getSlowness(type, refShell.getBottomSampleIndex())) {
           if (lastShell != null) {
-            if (!lastShell.pCode.equals(newShell.pCode)) {
+            if (!lastShell.getTempPCode().equals(newShell.getTempPCode())) {
               // Make sure we have continuity.
-              lastShell.iTop = newShell.iBot;
+              lastShell.setTopSampleIndex(newShell.getBottomSampleIndex());
               pShells.add(newShell);
               lastShell = newShell;
             } else {
               // Merge the two shells unless the last shell is an LVZ.
-              if (lastShell.iBot > newShell.iTop) {
-                lastShell.iTop = newShell.iTop;
-                lastShell.rTop = newShell.rTop;
+              if (lastShell.getBottomSampleIndex() > newShell.getTopSampleIndex()) {
+                lastShell.setTopSampleIndex(newShell.getTopSampleIndex());
+                lastShell.setTopSampleRadius(newShell.getTopSampleRadius());
               } else {
                 pShells.add(newShell);
                 lastShell = newShell;
@@ -349,7 +349,7 @@ public class TauModel {
       iEnd = sModel.size() - 1;
       for (int i = 0; i < refModel.getShells().size(); i++) {
         refShell = refModel.getShells().get(i);
-        slowTop = refModel.getSlowness(type, refShell.iTop);
+        slowTop = refModel.getSlowness(type, refShell.getTopSampleIndex());
         iBeg = iEnd;
         for (iEnd = iBeg; iEnd >= 0; iEnd--) {
           if (sModel.get(iEnd).slow == slowTop) break;
@@ -357,19 +357,19 @@ public class TauModel {
         if (TablesUtil.deBugLevel > 1)
           System.out.format("MakeDepShells: " + "%c %3d %3d %8.6f\n", type, iBeg, iEnd, slowTop);
         newShell = new ModelShell(refShell, sModel.get(iBeg).index);
-        newShell.addEnd(sModel.get(iEnd).index, refShell.rTop);
-        if (slowTop > refModel.getSlowness(type, refShell.iBot)) {
+        newShell.addTop(sModel.get(iEnd).index, refShell.getTopSampleRadius());
+        if (slowTop > refModel.getSlowness(type, refShell.getBottomSampleIndex())) {
           if (lastShell != null) {
-            if (!lastShell.sCode.equals(newShell.sCode)) {
+            if (!lastShell.getTempSCode().equals(newShell.getTempSCode())) {
               // Make sure we have continuity.
-              lastShell.iTop = newShell.iBot;
+              lastShell.setTopSampleIndex(newShell.getBottomSampleIndex());
               sShells.add(newShell);
               lastShell = newShell;
             } else {
               // Merge the two shells unless the last shell is an LVZ.
-              if (lastShell.iBot > newShell.iTop) {
-                lastShell.iTop = newShell.iTop;
-                lastShell.rTop = newShell.rTop;
+              if (lastShell.getBottomSampleIndex() > newShell.getTopSampleIndex()) {
+                lastShell.setTopSampleIndex(newShell.getTopSampleIndex());
+                lastShell.setTopSampleRadius(newShell.getTopSampleRadius());
               } else {
                 sShells.add(newShell);
                 lastShell = newShell;
@@ -394,13 +394,13 @@ public class TauModel {
   private void fixLvzShells(char type, ArrayList<ModelShell> shells) {
     int n;
 
-    n = shells.get(shells.size() - 1).iBot;
+    n = shells.get(shells.size() - 1).getBottomSampleIndex();
     for (int j = shells.size() - 2; j >= 0; j--) {
-      if (shells.get(j).iBot < n) {
+      if (shells.get(j).getBottomSampleIndex() < n) {
         shells.remove(j);
       } else {
-        shells.get(j).iTop = n;
-        n = shells.get(j).iBot;
+        shells.get(j).setTopSampleIndex(n);
+        n = shells.get(j).getBottomSampleIndex();
       }
     }
   }
@@ -458,11 +458,11 @@ public class TauModel {
   public int getShell(char type, ShellName name) {
     if (type == 'P') {
       for (int j = 0; j < pShells.size(); j++) {
-        if (pShells.get(j).name.equals(name.name())) return j;
+        if (pShells.get(j).getName().equals(name.name())) return j;
       }
     } else {
       for (int j = 0; j < sShells.size(); j++) {
-        if (sShells.get(j).name.equals(name.name())) return j;
+        if (sShells.get(j).getName().equals(name.name())) return j;
       }
     }
     return -1;
@@ -852,9 +852,9 @@ public class TauModel {
    */
   public double getDelX(char type, int index) {
     if (type == 'P') {
-      return convert.normR(pShells.get(index).delX);
+      return convert.normR(pShells.get(index).getRangeIncrementTarget());
     } else {
-      return convert.normR(sShells.get(index).delX);
+      return convert.normR(sShells.get(index).getRangeIncrementTarget());
     }
   }
 
@@ -868,14 +868,14 @@ public class TauModel {
   public double getNextDelX(char type, int index) {
     if (type == 'P') {
       for (int j = index + 1; j < pShells.size(); j++) {
-        if (!pShells.get(j).isDisc) {
-          return convert.normR(pShells.get(j).delX);
+        if (!pShells.get(j).getIsDiscontinuity()) {
+          return convert.normR(pShells.get(j).getRangeIncrementTarget());
         }
       }
     } else {
       for (int j = index + 1; j < sShells.size(); j++) {
-        if (!sShells.get(j).isDisc) {
-          return convert.normR(sShells.get(j).delX);
+        if (!sShells.get(j).getIsDiscontinuity()) {
+          return convert.normR(sShells.get(j).getRangeIncrementTarget());
         }
       }
     }

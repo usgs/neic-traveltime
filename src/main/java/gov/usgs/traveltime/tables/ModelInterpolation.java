@@ -66,10 +66,10 @@ public class ModelInterpolation {
 
     // Loop over shells doing the interpolation.
     for (int i = 0; i < earthModelShells.size(); i++) {
-      if (!earthModelShells.get(i).isDisc) {
+      if (!earthModelShells.get(i).getIsDiscontinuity()) {
         // Allocate some temporary storage.
-        int iBot = earthModelShells.get(i).iBot;
-        int iTop = earthModelShells.get(i).iTop;
+        int iBot = earthModelShells.get(i).getBottomSampleIndex();
+        int iTop = earthModelShells.get(i).getTopSampleIndex();
         int n = iTop - iBot + 1;
         double[] r = new double[n];
         double[] v = new double[n];
