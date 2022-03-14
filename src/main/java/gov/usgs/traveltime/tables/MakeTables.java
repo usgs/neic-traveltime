@@ -56,7 +56,7 @@ public class MakeTables {
       }
 
       // Interpolate the model.
-      ModConvert modelConversions = referenceEarthModel.getModelConvesions();
+      ModConvert modelConversions = referenceEarthModel.getModelConversions();
       EarthModel localModel = new EarthModel(referenceEarthModel, modelConversions);
       localModel.interpolate();
 
@@ -95,17 +95,17 @@ public class MakeTables {
       // better sampled.
       slownessSampling.depthModel('P');
       if (TablesUtil.deBugLevel > 0) {
-        slownessSampling.depModel.printDepShells('P');
+        slownessSampling.getTauDepthModel().printDepShells('P');
         slownessSampling.printModel('P', "Depth");
       }
 
       slownessSampling.depthModel('S');
       if (TablesUtil.deBugLevel > 0) {
-        slownessSampling.depModel.printDepShells('S');
+        slownessSampling.getTauDepthModel().printDepShells('S');
         slownessSampling.printModel('S', "Depth");
       }
 
-      TauModel depthModel = slownessSampling.getDepthModel();
+      TauModel depthModel = slownessSampling.getTauDepthModel();
       if (TablesUtil.deBugLevel > 2) {
         depthModel.printDepShells('P');
         depthModel.printDepShells('S');

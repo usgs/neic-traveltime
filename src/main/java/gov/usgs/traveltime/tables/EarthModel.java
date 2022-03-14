@@ -131,7 +131,7 @@ public class EarthModel {
    *
    * @return A ModConvert object containing model dependent constants and conversions
    */
-  public ModConvert getModelConvesions() {
+  public ModConvert getModelConversions() {
     return modelConversions;
   }
 
