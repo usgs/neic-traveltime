@@ -48,7 +48,7 @@ public class SampleSlowness {
   private ModConvert modelConversions;
 
   /** A TauInt object containing the Tau-X integration logic */
-  private TauInt tauInt;
+  private TauIntegrate tauInt;
 
   /** An array list of ModelSample objects containing the model */
   private ArrayList<ModelSample> model;
@@ -116,7 +116,7 @@ public class SampleSlowness {
     shells = resampledModel.getShells();
     criticalSlownesses = resampledModel.getCriticalSlownesses();
 
-    tauInt = new TauInt(resampledModel, modelConversions);
+    tauInt = new TauIntegrate(resampledModel, modelConversions);
     tauModel = new TauModel(referenceModel, modelConversions);
     tauDepthModel = new TauModel(referenceModel, modelConversions);
     temporaryModel = new ArrayList<TauSample>();
@@ -166,16 +166,16 @@ public class SampleSlowness {
 
         // Sample the top and bottom of this layer.
         temporaryModel.clear();
-        tauInt.intX(waveType, slowTop, deepestSampleIndex);
-        double xTop = tauInt.getXSum();
-        double rTop = tauInt.getRbottom();
+        tauInt.integrateDist(waveType, slowTop, deepestSampleIndex);
+        double xTop = tauInt.getSummaryIntDist();
+        double rTop = tauInt.getBottomingRadius();
         lastRadius = rTop;
 
         // We can save this one now.
         temporaryModel.add(new TauSample(rTop, slowTop, xTop));
-        tauInt.intX(waveType, slowBot, deepestSampleIndex);
-        double xBot = tauInt.getXSum();
-        double rBot = tauInt.getRbottom();
+        tauInt.integrateDist(waveType, slowBot, deepestSampleIndex);
+        double xBot = tauInt.getSummaryIntDist();
+        double rBot = tauInt.getBottomingRadius();
 
         // Figure out the initial sampling.
         int nSamp = Math.max((int) (Math.abs(xBot - xTop) / rangeStepLength + 0.8), 1);
@@ -188,8 +188,9 @@ public class SampleSlowness {
 
         for (int k = 1; k < nSamp; k++) {
           double slow = slowTop - Math.max(k * k * dSlow, k * slowMin);
-          tauInt.intX(waveType, slow, deepestSampleIndex);
-          temporaryModel.add(new TauSample(tauInt.getRbottom(), slow, tauInt.getXSum()));
+          tauInt.integrateDist(waveType, slow, deepestSampleIndex);
+          temporaryModel.add(
+              new TauSample(tauInt.getBottomingRadius(), slow, tauInt.getSummaryIntDist()));
         }
 
         // Now save the bottom.
@@ -229,8 +230,9 @@ public class SampleSlowness {
             double pCaustic = getCaustic(waveType, sample2.slow, sample0.slow, deepestSampleIndex);
 
             if (!Double.isNaN(pCaustic)) {
-              tauInt.intX(waveType, pCaustic, deepestSampleIndex);
-              sample1 = new TauSample(tauInt.getRbottom(), pCaustic, tauInt.getXSum());
+              tauInt.integrateDist(waveType, pCaustic, deepestSampleIndex);
+              sample1 =
+                  new TauSample(tauInt.getBottomingRadius(), pCaustic, tauInt.getSummaryIntDist());
               temporaryModel.set(bottomSampleIndex, sample1);
 
               if (TablesUtil.deBugLevel > 0) {
@@ -269,8 +271,8 @@ public class SampleSlowness {
     if (temporaryModel.size() == 2) {
       double slow = temporaryModel.get(0).slow - 0.25d * slownessIncrement;
 
-      tauInt.intX(waveType, slow, deepestSampleIndex);
-      double x = tauInt.getXSum();
+      tauInt.integrateDist(waveType, slow, deepestSampleIndex);
+      double x = tauInt.getSummaryIntDist();
 
       if (TablesUtil.deBugLevel > 0) {
         System.out.format("    extra = %8.6f " + "%8.6f\n", slow, x);
@@ -278,7 +280,7 @@ public class SampleSlowness {
 
       if ((x - temporaryModel.get(0).x) * (temporaryModel.get(1).x - x) <= 0d) {
         temporaryModel.add(temporaryModel.get(1));
-        temporaryModel.set(1, new TauSample(tauInt.getRbottom(), slow, x));
+        temporaryModel.set(1, new TauSample(tauInt.getBottomingRadius(), slow, x));
       }
     }
   }
@@ -386,9 +388,10 @@ public class SampleSlowness {
         // Find the slowness that gives the desired range.
         double targetRayParam =
             getRange(waveType, sample1.slow, sample0.slow, targetRange, deepestSampleIndex);
-        tauInt.intX(waveType, targetRayParam, deepestSampleIndex);
+        tauInt.integrateDist(waveType, targetRayParam, deepestSampleIndex);
         tauModel.add(
-            waveType, new TauSample(tauInt.getRbottom(), targetRayParam, tauInt.getXSum()));
+            waveType,
+            new TauSample(tauInt.getBottomingRadius(), targetRayParam, tauInt.getSummaryIntDist()));
 
         if (TablesUtil.deBugLevel > 0) {
           System.out.format(
@@ -407,8 +410,8 @@ public class SampleSlowness {
         // Oops!  Fix the last sample.
         nSamp = Math.max((int) (Math.abs(pBot - sample0.slow) / TablesUtil.DELPMAX + 0.99d), 1);
         double targetRayParam = sample0.slow + (pBot - sample0.slow) / nSamp;
-        tauInt.intX(waveType, targetRayParam, deepestSampleIndex);
-        sample1.update(tauInt.getRbottom(), targetRayParam, tauInt.getXSum());
+        tauInt.integrateDist(waveType, targetRayParam, deepestSampleIndex);
+        sample1.update(tauInt.getBottomingRadius(), targetRayParam, tauInt.getSummaryIntDist());
 
         if (TablesUtil.deBugLevel > 0) {
           System.out.format(" dpmax  %3d %s\n", tauModel.size(waveType) - 1, sample1);
@@ -430,7 +433,7 @@ public class SampleSlowness {
       if (Math.abs(sample1.r - lastRadius) > TablesUtil.DELRMAX) {
         // Oops!  Fix the last sample.
         double rTarget = sample0.r - TablesUtil.DELRMAX;
-        int iRadius = tauInt.getIbottom();
+        int iRadius = tauInt.getBottomIndex();
 
         while (rTarget > resampledModel.getRadius(iRadius)) {
           iRadius++;
@@ -451,8 +454,8 @@ public class SampleSlowness {
         // Do the fixing.
         nSamp = Math.max((int) (Math.abs(pBot - sample0.slow) / dSlow + 0.99d), 1);
         double targetRayParam = sample0.slow + (pBot - sample0.slow) / nSamp;
-        tauInt.intX(waveType, targetRayParam, deepestSampleIndex);
-        sample1.update(tauInt.getRbottom(), targetRayParam, tauInt.getXSum());
+        tauInt.integrateDist(waveType, targetRayParam, deepestSampleIndex);
+        sample1.update(tauInt.getBottomingRadius(), targetRayParam, tauInt.getSummaryIntDist());
 
         if (TablesUtil.deBugLevel > 0) {
           System.out.format(

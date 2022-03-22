@@ -34,7 +34,7 @@ public class Integrate {
   private TauModel tauFinalModel;
 
   /** A TauInt object containing the Tau-X integration logic */
-  private TauInt tauInt;
+  private TauIntegrate tauInt;
 
   /** A ModConvert object containing model dependent constants and conversions */
   private ModConvert modelConversions;
@@ -62,7 +62,7 @@ public class Integrate {
     modelConversions = tauDepthModel.convert;
     tauFinalModel = new TauModel(referenceModel, modelConversions);
     tauFinalModel.initIntegrals();
-    tauInt = new TauInt();
+    tauInt = new TauIntegrate();
     slowness = tauDepthModel.slowness;
     tauFinalModel.putSlowness(slowness);
     tauFinalModel.putShells('P', tauDepthModel.pShells);
@@ -137,8 +137,9 @@ public class Integrate {
           }
 
           tau[iRay] +=
-              tauInt.intLayer(slowness.get(j), sample0.slow, sample1.slow, sample0.z, sample1.z);
-          x[iRay] += tauInt.getXLayer();
+              tauInt.integrateLayer(
+                  slowness.get(j), sample0.slow, sample1.slow, sample0.z, sample1.z);
+          x[iRay] += tauInt.getLayerIntDist();
         }
 
         if (sample0.z >= zLim) {

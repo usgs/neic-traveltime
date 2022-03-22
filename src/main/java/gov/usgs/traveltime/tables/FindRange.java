@@ -21,14 +21,14 @@ public class FindRange implements UnivariateFunction {
   private double targetRange;
 
   /** A TauInt object containing the Tau-X integration logic */
-  private TauInt tauInt;
+  private TauIntegrate tauInt;
 
   /**
    * FindRange constructor, stores the tau-x integration routine.
    *
    * @param tauInt A TauInt object containing the Tau-X integration logic
    */
-  public FindRange(TauInt tauInt) {
+  public FindRange(TauIntegrate tauInt) {
     this.tauInt = tauInt;
   }
 
@@ -57,13 +57,13 @@ public class FindRange implements UnivariateFunction {
   @Override
   public double value(double rayParameter) {
     try {
-      tauInt.intX(waveType, rayParameter, modelLimitIndex);
+      tauInt.integrateDist(waveType, rayParameter, modelLimitIndex);
     } catch (Exception e) {
       System.out.println("Bad tau integration interval!");
       e.printStackTrace();
       System.exit(TtStatus.BAD_TAU_INTERVAL.status());
     }
 
-    return tauInt.getXSum() - targetRange;
+    return tauInt.getSummaryIntDist() - targetRange;
   }
 }

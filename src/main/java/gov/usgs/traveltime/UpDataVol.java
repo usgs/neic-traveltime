@@ -1,8 +1,8 @@
 package gov.usgs.traveltime;
 
 import gov.usgs.traveltime.tables.Decimate;
-import gov.usgs.traveltime.tables.TauInt;
 import gov.usgs.traveltime.tables.TauIntegralException;
+import gov.usgs.traveltime.tables.TauIntegrate;
 import java.util.Arrays;
 
 /**
@@ -30,7 +30,7 @@ public class UpDataVol {
   UpDataRef ref;
   ModDataVol modPri, modSec;
   ModConvert cvt;
-  TauInt intPri, intSec;
+  TauIntegrate intPri, intSec;
   Decimate dec;
 
   /**
@@ -50,8 +50,8 @@ public class UpDataVol {
     this.cvt = cvt;
 
     // Set up the integration routines.
-    intPri = new TauInt(modPri);
-    intSec = new TauInt(modSec);
+    intPri = new TauIntegrate(modPri);
+    intSec = new TauIntegrate(modSec);
     // Set up the decimation.
     dec = new Decimate();
   }
@@ -114,14 +114,14 @@ public class UpDataVol {
           //		System.out.println("j  p tau (before): "+(j+1)+" "+
           //				(float)ref.pTauUp[j]+" "+(float)tauUp[j]);
           tauUp[j] -=
-              intPri.intLayer(
+              intPri.integrateLayer(
                   ref.pTauUp[j], pSource, modPri.ref.pMod[iSrc], zSource, modPri.ref.zMod[iSrc]);
           //		System.out.println("     tau (after): "+(float)tauUp[j]+" "+
           //				(float)ref.pXUp[i]);
 
           // See if we need to correct an end point distance as well.
           if (Math.abs(ref.pTauUp[j] - ref.pXUp[i]) <= TauUtil.DTOL) {
-            xInt = intPri.getXLayer();
+            xInt = intPri.getLayerIntDist();
             xUp[i++] -= xInt;
             //			System.out.println("i  x (after) dx = "+i+" "+
             //					(float)xUp[i-1]+" "+(float)xInt);
@@ -136,8 +136,8 @@ public class UpDataVol {
      */
     //	System.out.println("\nEnd integral: "+(float)pMax+" "+iSrc+" "+
     //			(float)pSource+" "+(float)zSource);
-    tauEndUp = intPri.intRange(pMax, 0, iSrc - 1, pSource, zSource);
-    xEndUp = intPri.getXSum();
+    tauEndUp = intPri.integrateRange(pMax, 0, iSrc - 1, pSource, zSource);
+    xEndUp = intPri.getSummaryIntDist();
     //	System.out.println("tau x = "+(float)tauEndUp+" "+xEndUp);
 
     /**
@@ -150,8 +150,8 @@ public class UpDataVol {
       //	System.out.println("\nLVZ integral: "+(float)pMax+" "+iSrc+" "+
       //			iBot+" "+(float)pSource+" "+(float)zSource+" "+(float)pMax+
       //			" "+(float)zMax);
-      tauEndLvz = intPri.intRange(pMax, iSrc, iBot, pSource, zSource, pMax, zMax);
-      xEndLvz = intPri.getXSum();
+      tauEndLvz = intPri.integrateRange(pMax, iSrc, iBot, pSource, zSource, pMax, zMax);
+      xEndLvz = intPri.getSummaryIntDist();
       //	System.out.println("tau x = "+(float)tauEndLvz+" "+xEndLvz);
     } else {
       tauEndLvz = 0d;
@@ -167,8 +167,8 @@ public class UpDataVol {
       iBot = modSec.iSource;
       //	System.out.println("\nCnv integral: "+(float)pMax+" "+iBot+" "+
       //			(float)pMax+" "+(float)zMax);
-      tauEndCnv = intSec.intRange(pMax, 0, iBot - 1, pMax, zMax);
-      xEndCnv = intSec.getXSum();
+      tauEndCnv = intSec.integrateRange(pMax, 0, iBot - 1, pMax, zMax);
+      xEndCnv = intSec.getSummaryIntDist();
       //	System.out.println("tau x = "+(float)tauEndCnv+" "+xEndCnv);
     } catch (BadDepthException | TauIntegralException e) {
       tauEndCnv = 0d;
@@ -222,7 +222,7 @@ public class UpDataVol {
       dp = 0.75d * pMax / Math.pow(lenNew - 2, power);
       for (int j = 1; j < lenNew - 1; j++) {
         pDec[j] = pMax - dp * Math.pow(lenNew - j - 1, power--);
-        tauDec[j] = intPri.intRange(pDec[j], 0, iSrc - 1, pSource, zSource);
+        tauDec[j] = intPri.integrateRange(pDec[j], 0, iSrc - 1, pSource, zSource);
       }
       pDec[lenNew - 1] = pMax;
       tauDec[lenNew - 1] = tauEndUp;

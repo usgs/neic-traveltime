@@ -17,14 +17,14 @@ public class FindCaustic implements UnivariateFunction {
   private int modelLimitIndex;
 
   /** A TauInt object containing the Tau-X integration logic */
-  private TauInt tauInt;
+  private TauIntegrate tauInt;
 
   /**
    * FindCaustic constructor, stores the tau-x integration routine.
    *
    * @param tauInt A TauInt object containing the Tau-X integration logic
    */
-  public FindCaustic(TauInt tauInt) {
+  public FindCaustic(TauIntegrate tauInt) {
     this.tauInt = tauInt;
   }
 
@@ -48,13 +48,13 @@ public class FindCaustic implements UnivariateFunction {
    */
   @Override
   public double value(double rayParameter) {
-    double normIntTau = tauInt.intDxDp(waveType, rayParameter, modelLimitIndex);
+    double normIntTau = tauInt.integrateTauDist(waveType, rayParameter, modelLimitIndex);
 
     // normIntTau blows up at the top of shells.  Back off until we get
     // a finite value.
     while (Double.isNaN(normIntTau)) {
       rayParameter -= TablesUtil.SLOWOFF;
-      normIntTau = tauInt.intDxDp(waveType, rayParameter, modelLimitIndex);
+      normIntTau = tauInt.integrateTauDist(waveType, rayParameter, modelLimitIndex);
     }
 
     return normIntTau;
