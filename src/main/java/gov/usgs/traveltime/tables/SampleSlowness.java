@@ -226,8 +226,12 @@ public class SampleSlowness {
           sample1 = sample2;
           sample2 = temporaryModel.get(bottomSampleIndex + 1);
 
-          if ((sample1.x - sample0.x) * (sample2.x - sample1.x) <= 0d) {
-            double pCaustic = getCaustic(waveType, sample2.slow, sample0.slow, deepestSampleIndex);
+          if ((sample1.getRayTravelDistance() - sample0.getRayTravelDistance())
+                  * (sample2.getRayTravelDistance() - sample1.getRayTravelDistance())
+              <= 0d) {
+            double pCaustic =
+                getCaustic(
+                    waveType, sample2.getSlowness(), sample0.getSlowness(), deepestSampleIndex);
 
             if (!Double.isNaN(pCaustic)) {
               tauInt.integrateDist(waveType, pCaustic, deepestSampleIndex);
@@ -269,7 +273,7 @@ public class SampleSlowness {
    */
   private void testSampling(char waveType, double slownessIncrement) throws Exception {
     if (temporaryModel.size() == 2) {
-      double slow = temporaryModel.get(0).slow - 0.25d * slownessIncrement;
+      double slow = temporaryModel.get(0).getSlowness() - 0.25d * slownessIncrement;
 
       tauInt.integrateDist(waveType, slow, deepestSampleIndex);
       double x = tauInt.getSummaryIntDist();
@@ -278,7 +282,9 @@ public class SampleSlowness {
         System.out.format("    extra = %8.6f " + "%8.6f\n", slow, x);
       }
 
-      if ((x - temporaryModel.get(0).x) * (temporaryModel.get(1).x - x) <= 0d) {
+      if ((x - temporaryModel.get(0).getRayTravelDistance())
+              * (temporaryModel.get(1).getRayTravelDistance() - x)
+          <= 0d) {
         temporaryModel.add(temporaryModel.get(1));
         temporaryModel.set(1, new TauSample(tauInt.getBottomingRadius(), slow, x));
       }
@@ -342,9 +348,9 @@ public class SampleSlowness {
     }
 
     // Figure out the initial sampling.
-    double targetRange = temporaryModel.get(topSampleIndex).x;
-    double xBot = temporaryModel.get(bottomSampleIndex).x;
-    double pBot = temporaryModel.get(bottomSampleIndex).slow;
+    double targetRange = temporaryModel.get(topSampleIndex).getRayTravelDistance();
+    double xBot = temporaryModel.get(bottomSampleIndex).getRayTravelDistance();
+    double pBot = temporaryModel.get(bottomSampleIndex).getSlowness();
     int nSamp = Math.max((int) (Math.abs(xBot - targetRange) / rangeStepLength + 0.8), 1);
     double dX = (xBot - targetRange) / nSamp;
 
@@ -372,7 +378,9 @@ public class SampleSlowness {
         for (; iTmp <= bottomSampleIndex; iTmp++) {
           sample0 = sample1;
           sample1 = temporaryModel.get(iTmp);
-          if ((targetRange - sample1.x) * (targetRange - sample0.x) <= 0d) {
+          if ((targetRange - sample1.getRayTravelDistance())
+                  * (targetRange - sample0.getRayTravelDistance())
+              <= 0d) {
             break;
           }
         }
@@ -382,12 +390,17 @@ public class SampleSlowness {
           iTmp = bottomSampleIndex;
           System.out.format(
               "====> Off-the-end: %3d %8.6f %8.6f %8.6f\n",
-              iTmp, targetRange, sample1.x, sample0.x);
+              iTmp, targetRange, sample1.getRayTravelDistance(), sample0.getRayTravelDistance());
         }
 
         // Find the slowness that gives the desired range.
         double targetRayParam =
-            getRange(waveType, sample1.slow, sample0.slow, targetRange, deepestSampleIndex);
+            getRange(
+                waveType,
+                sample1.getSlowness(),
+                sample0.getSlowness(),
+                targetRange,
+                deepestSampleIndex);
         tauInt.integrateDist(waveType, targetRayParam, deepestSampleIndex);
         tauModel.add(
             waveType,
@@ -406,10 +419,12 @@ public class SampleSlowness {
       sample1 = tauModel.getLast(waveType);
 
       // Make sure our slowness sampling is OK.
-      if (Math.abs(sample1.slow - sample0.slow) > TablesUtil.DELPMAX) {
+      if (Math.abs(sample1.getSlowness() - sample0.getSlowness()) > TablesUtil.DELPMAX) {
         // Oops!  Fix the last sample.
-        nSamp = Math.max((int) (Math.abs(pBot - sample0.slow) / TablesUtil.DELPMAX + 0.99d), 1);
-        double targetRayParam = sample0.slow + (pBot - sample0.slow) / nSamp;
+        nSamp =
+            Math.max(
+                (int) (Math.abs(pBot - sample0.getSlowness()) / TablesUtil.DELPMAX + 0.99d), 1);
+        double targetRayParam = sample0.getSlowness() + (pBot - sample0.getSlowness()) / nSamp;
         tauInt.integrateDist(waveType, targetRayParam, deepestSampleIndex);
         sample1.update(tauInt.getBottomingRadius(), targetRayParam, tauInt.getSummaryIntDist());
 
@@ -418,7 +433,7 @@ public class SampleSlowness {
         }
 
         // Reset the range sampling.
-        targetRange = sample1.x;
+        targetRange = sample1.getRayTravelDistance();
         nSamp = Math.max((int) (Math.abs(xBot - targetRange) / rangeStepLength + 0.8), 1);
         dX = (xBot - targetRange) / nSamp;
 
@@ -430,9 +445,9 @@ public class SampleSlowness {
       }
 
       // Make sure our radius sampling is OK too.
-      if (Math.abs(sample1.r - lastRadius) > TablesUtil.DELRMAX) {
+      if (Math.abs(sample1.getRadius() - lastRadius) > TablesUtil.DELRMAX) {
         // Oops!  Fix the last sample.
-        double rTarget = sample0.r - TablesUtil.DELRMAX;
+        double rTarget = sample0.getRadius() - TablesUtil.DELRMAX;
         int iRadius = tauInt.getBottomIndex();
 
         while (rTarget > resampledModel.getRadius(iRadius)) {
@@ -444,7 +459,7 @@ public class SampleSlowness {
         ModelSample model1 = resampledModel.getModel().get(iRadius - 1);
         double dSlow =
             Math.abs(
-                sample0.slow
+                sample0.getSlowness()
                     - model0.getSlowness(waveType)
                         * Math.pow(
                             rTarget / model0.getRadius(),
@@ -452,8 +467,8 @@ public class SampleSlowness {
                                 / Math.log(model1.getRadius() / model0.getRadius())));
 
         // Do the fixing.
-        nSamp = Math.max((int) (Math.abs(pBot - sample0.slow) / dSlow + 0.99d), 1);
-        double targetRayParam = sample0.slow + (pBot - sample0.slow) / nSamp;
+        nSamp = Math.max((int) (Math.abs(pBot - sample0.getSlowness()) / dSlow + 0.99d), 1);
+        double targetRayParam = sample0.getSlowness() + (pBot - sample0.getSlowness()) / nSamp;
         tauInt.integrateDist(waveType, targetRayParam, deepestSampleIndex);
         sample1.update(tauInt.getBottomingRadius(), targetRayParam, tauInt.getSummaryIntDist());
 
@@ -463,7 +478,7 @@ public class SampleSlowness {
         }
 
         // Reset the range sampling.
-        targetRange = sample1.x;
+        targetRange = sample1.getRayTravelDistance();
         nSamp = Math.max((int) (Math.abs(xBot - targetRange) / rangeStepLength + 0.8), 1);
         dX = (xBot - targetRange) / nSamp;
 
@@ -474,7 +489,7 @@ public class SampleSlowness {
         iTmp = topSampleIndex + 1;
       }
 
-      lastRadius = sample1.r;
+      lastRadius = sample1.getRadius();
     } while (Math.abs(targetRange - xBot) > TablesUtil.XTOL);
 
     if (TablesUtil.deBugLevel > 0) {

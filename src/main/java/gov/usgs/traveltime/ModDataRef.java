@@ -76,8 +76,8 @@ public class ModDataRef implements Serializable {
     indexOffset = sample.getIndex();
     for (int j = 0; j < n; j++) {
       sample = finModel.getSample(typeMod, j);
-      zMod[j] = sample.getZ();
-      pMod[j] = sample.getSlow();
+      zMod[j] = sample.getDepth();
+      pMod[j] = sample.getSlowness();
       if (j < n - 3) indexUp[j] = Math.max(sample.getIndex() - indexOffset, -1);
     }
   }

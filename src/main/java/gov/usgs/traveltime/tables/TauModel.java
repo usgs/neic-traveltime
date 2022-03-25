@@ -299,7 +299,7 @@ public class TauModel {
   public int getIndex(char modelType, double slowness) {
     if (modelType == 'P') {
       for (int j = 0; j < slownessModelP.size(); j++) {
-        if (slownessModelP.get(j).slow == slowness) {
+        if (slownessModelP.get(j).getSlowness() == slowness) {
           return j;
         }
       }
@@ -307,7 +307,7 @@ public class TauModel {
       return -1;
     } else {
       for (int j = 0; j < slownessModelS.size(); j++) {
-        if (slownessModelS.get(j).slow == slowness) {
+        if (slownessModelS.get(j).getSlowness() == slowness) {
           return j;
         }
       }
@@ -369,9 +369,9 @@ public class TauModel {
             "\tInterval: " + "%8.6f %8.6f\n", crit0.getSlowness(), crit1.getSlowness());
       }
 
-      if (crit0.getSlowness() <= slownessModelP.get(beginIndexP - 1).slow) {
+      if (crit0.getSlowness() <= slownessModelP.get(beginIndexP - 1).getSlowness()) {
         for (endIndexP = beginIndexP; endIndexP < slownessModelP.size(); endIndexP++) {
-          if (crit1.getSlowness() == slownessModelP.get(endIndexP).slow) {
+          if (crit1.getSlowness() == slownessModelP.get(endIndexP).getSlowness()) {
             break;
           }
         }
@@ -380,7 +380,7 @@ public class TauModel {
       }
 
       for (endIndexS = beginIndexS; endIndexS < slownessModelS.size(); endIndexS++) {
-        if (crit1.getSlowness() == slownessModelS.get(endIndexS).slow) {
+        if (crit1.getSlowness() == slownessModelS.get(endIndexS).getSlowness()) {
           break;
         }
       }
@@ -392,11 +392,11 @@ public class TauModel {
 
       if (endIndexP - beginIndexP > endIndexS - beginIndexS) {
         for (int j = beginIndexP; j <= endIndexP; j++) {
-          slowness.add(slownessModelP.get(j).slow);
+          slowness.add(slownessModelP.get(j).getSlowness());
         }
       } else {
         for (int j = beginIndexS; j <= endIndexS; j++) {
-          slowness.add(slownessModelS.get(j).slow);
+          slowness.add(slownessModelS.get(j).getSlowness());
         }
       }
 
@@ -436,7 +436,7 @@ public class TauModel {
         int iBeg = iEnd;
 
         for (iEnd = iBeg; iEnd >= 0; iEnd--) {
-          if (slownessModelP.get(iEnd).slow == slowTop) {
+          if (slownessModelP.get(iEnd).getSlowness() == slowTop) {
             break;
           }
         }
@@ -445,8 +445,8 @@ public class TauModel {
           System.out.format(
               "MakeDepShells: " + "%c %3d %3d %8.6f\n", modelType, iBeg, iEnd, slowTop);
         }
-        ModelShell newShell = new ModelShell(refShell, slownessModelP.get(iBeg).index);
-        newShell.addTop(slownessModelP.get(iEnd).index, refShell.getTopSampleRadius());
+        ModelShell newShell = new ModelShell(refShell, slownessModelP.get(iBeg).getIndex());
+        newShell.addTop(slownessModelP.get(iEnd).getIndex(), refShell.getTopSampleRadius());
 
         if (slowTop > referenceModel.getSlowness(modelType, refShell.getBottomSampleIndex())) {
           if (lastShell != null) {
@@ -483,7 +483,7 @@ public class TauModel {
         int iBeg = iEnd;
 
         for (iEnd = iBeg; iEnd >= 0; iEnd--) {
-          if (slownessModelS.get(iEnd).slow == slowTop) {
+          if (slownessModelS.get(iEnd).getSlowness() == slowTop) {
             break;
           }
         }
@@ -492,8 +492,8 @@ public class TauModel {
               "MakeDepShells: " + "%c %3d %3d %8.6f\n", modelType, iBeg, iEnd, slowTop);
         }
 
-        ModelShell newShell = new ModelShell(refShell, slownessModelS.get(iBeg).index);
-        newShell.addTop(slownessModelS.get(iEnd).index, refShell.getTopSampleRadius());
+        ModelShell newShell = new ModelShell(refShell, slownessModelS.get(iBeg).getIndex());
+        newShell.addTop(slownessModelS.get(iEnd).getIndex(), refShell.getTopSampleRadius());
 
         if (slowTop > referenceModel.getSlowness(modelType, refShell.getBottomSampleIndex())) {
           if (lastShell != null) {
@@ -1312,13 +1312,17 @@ public class TauModel {
 
       return String.format(
           "%3d %9.6f %8.6f",
-          integralsP.get(n).tau.length, slownessModelP.get(n).z, slownessModelP.get(n).slow);
+          integralsP.get(n).tau.length,
+          slownessModelP.get(n).getDepth(),
+          slownessModelP.get(n).getSlowness());
     } else {
       int n = slownessModelS.size() - 1;
 
       return String.format(
           "%3d %9.6f %8.6f",
-          integralsS.get(n).tau.length, slownessModelS.get(n).z, slownessModelS.get(n).slow);
+          integralsS.get(n).tau.length,
+          slownessModelS.get(n).getDepth(),
+          slownessModelS.get(n).getSlowness());
     }
   }
 
@@ -1335,22 +1339,28 @@ public class TauModel {
         if (integralsP.get(j) != null) {
           System.out.format(
               "Lev1 %3d %3d %9.6f %8.6f\n",
-              j, integralsP.get(j).tau.length, slownessModelP.get(j).z, slownessModelP.get(j).slow);
+              j,
+              integralsP.get(j).tau.length,
+              slownessModelP.get(j).getDepth(),
+              slownessModelP.get(j).getSlowness());
         }
       }
 
       for (int j = n - 3; j < n - 1; j++) {
         System.out.format(
             "Lev2 %3d %3d %9.6f %8.6f\n",
-            j, integralsP.get(j).tau.length, slownessModelP.get(j).z, slownessModelP.get(j).slow);
+            j,
+            integralsP.get(j).tau.length,
+            slownessModelP.get(j).getDepth(),
+            slownessModelP.get(j).getSlowness());
       }
 
       System.out.format(
           "Lev3 %3d %3d %9.6f %8.6f\n",
           n - 1,
           integralsP.get(n - 1).tau.length,
-          slownessModelP.get(n - 1).z,
-          slownessModelP.get(n - 1).slow);
+          slownessModelP.get(n - 1).getDepth(),
+          slownessModelP.get(n - 1).getSlowness());
     } else {
       int n = integralsS.size();
 
@@ -1358,22 +1368,28 @@ public class TauModel {
         if (integralsS.get(j) != null) {
           System.out.format(
               "Lev1 %3d %3d %9.6f %8.6f\n",
-              j, integralsS.get(j).tau.length, slownessModelS.get(j).z, slownessModelS.get(j).slow);
+              j,
+              integralsS.get(j).tau.length,
+              slownessModelS.get(j).getDepth(),
+              slownessModelS.get(j).getSlowness());
         }
       }
 
       for (int j = n - 3; j < n - 1; j++) {
         System.out.format(
             "Lev2 %3d %3d %9.6f %8.6f\n",
-            j, integralsS.get(j).tau.length, slownessModelS.get(j).z, slownessModelS.get(j).slow);
+            j,
+            integralsS.get(j).tau.length,
+            slownessModelS.get(j).getDepth(),
+            slownessModelS.get(j).getSlowness());
       }
 
       System.out.format(
           "Lev3 %3d %3d %9.6f %8.6f\n",
           n - 1,
           integralsS.get(n - 1).tau.length,
-          slownessModelS.get(n - 1).z,
-          slownessModelS.get(n - 1).slow);
+          slownessModelS.get(n - 1).getDepth(),
+          slownessModelS.get(n - 1).getSlowness());
     }
   }
 

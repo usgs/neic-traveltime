@@ -104,7 +104,7 @@ public class Integrate {
 
     TauSample sample1 = tauDepthModel.getSample(waveType, 0);
     tauFinalModel.add(waveType, sample1, -1);
-    double zLast = sample1.z;
+    double zLast = sample1.getDepth();
 
     // Loop over depth intervals.
     boolean disc = false;
@@ -112,7 +112,7 @@ public class Integrate {
       TauSample sample0 = sample1;
       sample1 = tauDepthModel.getSample(waveType, i);
 
-      if (sample0.z != sample1.z) {
+      if (sample0.getDepth() != sample1.getDepth()) {
         // Normal interval: do integrals for all ray parameters.
         if (disc) {
           disc = false;
@@ -131,19 +131,23 @@ public class Integrate {
          */
         iRay = 0;
         for (int j = nP; j >= 0 && iRay < n; j--, iRay++) {
-          if (sample1.slow < slowness.get(j)) {
+          if (sample1.getSlowness() < slowness.get(j)) {
             n = iRay;
             break;
           }
 
           tau[iRay] +=
               tauInt.integrateLayer(
-                  slowness.get(j), sample0.slow, sample1.slow, sample0.z, sample1.z);
+                  slowness.get(j),
+                  sample0.getSlowness(),
+                  sample1.getSlowness(),
+                  sample0.getDepth(),
+                  sample1.getDepth());
           x[iRay] += tauInt.getLayerIntDist();
         }
 
-        if (sample0.z >= zLim) {
-          if (sample0.z >= maximumDepth) {
+        if (sample0.getDepth() >= zLim) {
+          if (sample0.getDepth() >= maximumDepth) {
             numSamples++;
             tauFinalModel.add(
                 waveType,
@@ -162,15 +166,15 @@ public class Integrate {
             tauFinalModel.add(waveType, sample1, numSamples);
           }
         }
-        zLast = sample0.z;
+        zLast = sample0.getDepth();
       } else {
         // We're in a discontinuity.
-        if (sample0.z != zLast) {
+        if (sample0.getDepth() != zLast) {
           // Save the integrals at the bottom of the mantle and outer core.
-          if (sample0.z == outerCoreDepth || sample0.z == innerCoreDepth) {
+          if (sample0.getDepth() == outerCoreDepth || sample0.getDepth() == innerCoreDepth) {
             numSamples++;
 
-            if (sample0.z == outerCoreDepth) {
+            if (sample0.getDepth() == outerCoreDepth) {
               tauFinalModel.add(
                   waveType,
                   sample0,
@@ -187,14 +191,18 @@ public class Integrate {
             if (TablesUtil.deBugLevel > 0) {
               System.out.format(
                   "lev2 %c %3d %3d %9.6f %8.6f\n",
-                  waveType, tauFinalModel.size(waveType) - 1, iRay, sample0.z, sample0.slow);
+                  waveType,
+                  tauFinalModel.size(waveType) - 1,
+                  iRay,
+                  sample0.getDepth(),
+                  sample0.getSlowness());
             }
           } else {
             disc = true;
           }
 
           // Flag high slowness zones below discontinuities.
-          if (sample1.slow > sample0.slow) {
+          if (sample1.getSlowness() > sample0.getSlowness()) {
             tauFinalModel.setLowVelocityZone(waveType);
 
             if (TablesUtil.deBugLevel > 0) {
@@ -203,7 +211,7 @@ public class Integrate {
             }
           }
 
-          zLast = sample0.z;
+          zLast = sample0.getDepth();
         }
       }
     }
@@ -215,7 +223,11 @@ public class Integrate {
     if (TablesUtil.deBugLevel > 0) {
       System.out.format(
           "lev3 %c %3d %3d %9.6f %8.6f\n",
-          waveType, tauFinalModel.size(waveType) - 1, iRay, sample1.z, sample1.slow);
+          waveType,
+          tauFinalModel.size(waveType) - 1,
+          iRay,
+          sample1.getDepth(),
+          sample1.getSlowness());
       tauFinalModel.printModel(waveType, "Final");
     }
 
@@ -237,30 +249,30 @@ public class Integrate {
     } else {
       int j;
       for (j = 0; j < tauDepthModel.size('P'); j++) {
-        if (tauDepthModel.getSample('P', j).z < maximumDepth) {
+        if (tauDepthModel.getSample('P', j).getDepth() < maximumDepth) {
           break;
         }
       }
 
-      double pLim = tauDepthModel.getSample('P', j).slow;
+      double pLim = tauDepthModel.getSample('P', j).getSlowness();
       if (TablesUtil.deBugLevel > 0) {
         System.out.format(
             "\ni maximumDepth pLim zm = %3d %9.6f %8.6f %9.6f\n",
-            j, maximumDepth, pLim, tauDepthModel.getSample('P', j).z);
+            j, maximumDepth, pLim, tauDepthModel.getSample('P', j).getDepth());
       }
 
       for (j = 0; j < tauDepthModel.size('S'); j++) {
-        if (tauDepthModel.getSample('S', j).slow <= pLim) {
+        if (tauDepthModel.getSample('S', j).getSlowness() <= pLim) {
           break;
         }
       }
 
       if (TablesUtil.deBugLevel > 0) {
         System.out.format(
-            "i pLim zLim = %3d %8.6f %9.6f\n", j, pLim, tauDepthModel.getSample('S', j).z);
+            "i pLim zLim = %3d %8.6f %9.6f\n", j, pLim, tauDepthModel.getSample('S', j).getDepth());
       }
 
-      return tauDepthModel.getSample('S', j).z;
+      return tauDepthModel.getSample('S', j).getDepth();
     }
   }
 }
