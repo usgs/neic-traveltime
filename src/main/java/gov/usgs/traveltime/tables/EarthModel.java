@@ -127,7 +127,7 @@ public class EarthModel {
   }
 
   /**
-   * Gett the model dependent constants and conversions
+   * Get the model dependent constants and conversions
    *
    * @return A ModConvert object containing model dependent constants and conversions
    */

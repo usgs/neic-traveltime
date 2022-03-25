@@ -101,11 +101,11 @@ public class AllBrnRef {
       throws IOException {
 
     // Remember the input data.
-    this.modelName = finModel.getModelName();
+    this.modelName = finModel.getReferenceEarthModelName();
     this.auxtt = auxtt;
 
     // Set up the conversion constants, etc.
-    cvt = finModel.getConvert();
+    cvt = finModel.getModelConversions();
 
     // Set up the Earth model.
     pModel = new ModDataRef(finModel, cvt, 'P');

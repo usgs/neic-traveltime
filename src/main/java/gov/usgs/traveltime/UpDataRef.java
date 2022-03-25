@@ -73,20 +73,22 @@ public class UpDataRef implements Serializable {
     this.typeUp = typeUp;
 
     // Set up the ray parameter sampling.  This is common to all depths.
-    pTauUp = Arrays.copyOf(finModel.getP(typeUp), finModel.getTauInt(typeUp, 1).length);
-    pXUp = Arrays.copyOf(finModel.getPxUp(), finModel.getPxUp().length);
+    pTauUp =
+        Arrays.copyOf(
+            finModel.getRayParameters(typeUp), finModel.getTauIntegrals(typeUp, 1).length);
+    pXUp = Arrays.copyOf(finModel.getRayParamBranchEnds(), finModel.getRayParamBranchEnds().length);
 
     // Set the outer dimension.
-    n = finModel.intsRealSize(typeUp);
+    n = finModel.numUpperMantleInts(typeUp);
     tauUp = new double[n][];
     xUp = new double[n][];
 
     // Fill in the arrays.
-    for (int i = 0; i < finModel.intsSize(typeUp) - 3; i++) {
-      if (finModel.getTauInt(typeUp, i) != null) {
+    for (int i = 0; i < finModel.numIntegrals(typeUp) - 3; i++) {
+      if (finModel.getTauIntegrals(typeUp, i) != null) {
         // Tau is easy.
-        n = finModel.getTauInt(typeUp, i).length;
-        tauUp[++k] = Arrays.copyOf(finModel.getTauInt(typeUp, i), n);
+        n = finModel.getTauIntegrals(typeUp, i).length;
+        tauUp[++k] = Arrays.copyOf(finModel.getTauIntegrals(typeUp, i), n);
         // We have to do this the hard way since we can't use toArray to go
         // from Double to double.
         xUpTmp = finModel.getXUp(typeUp, i);

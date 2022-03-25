@@ -58,15 +58,15 @@ public class Integrate {
    */
   public Integrate(TauModel tauDepthModel) {
     this.tauDepthModel = tauDepthModel;
-    referenceModel = tauDepthModel.refModel;
-    modelConversions = tauDepthModel.convert;
+    referenceModel = tauDepthModel.getReferenceModel();
+    modelConversions = tauDepthModel.getModelConversions();
     tauFinalModel = new TauModel(referenceModel, modelConversions);
     tauFinalModel.initIntegrals();
     tauInt = new TauIntegrate();
-    slowness = tauDepthModel.slowness;
+    slowness = tauDepthModel.getSlowness();
     tauFinalModel.putSlowness(slowness);
-    tauFinalModel.putShells('P', tauDepthModel.pShells);
-    tauFinalModel.putShells('S', tauDepthModel.sShells);
+    tauFinalModel.putShells('P', tauDepthModel.getShellModelP());
+    tauFinalModel.putShells('S', tauDepthModel.getShellModelS());
     maximumDepth = modelConversions.flatZ(modelConversions.rSurface - TauUtil.MAXDEPTH);
     outerCoreDepth = referenceModel.getOuterCoreModel().getDepth();
     innerCoreDepth = referenceModel.getInnerCoreModel().getDepth();
@@ -154,7 +154,9 @@ public class Integrate {
             if (TablesUtil.deBugLevel > 0) {
               System.out.format(
                   "lev1 %c %3d %s\n",
-                  waveType, tauFinalModel.size(waveType) - 1, tauFinalModel.stringLast(waveType));
+                  waveType,
+                  tauFinalModel.size(waveType) - 1,
+                  tauFinalModel.stringLastIntegral(waveType));
             }
           } else {
             tauFinalModel.add(waveType, sample1, numSamples);
@@ -193,7 +195,7 @@ public class Integrate {
 
           // Flag high slowness zones below discontinuities.
           if (sample1.slow > sample0.slow) {
-            tauFinalModel.setLvz(waveType);
+            tauFinalModel.setLowVelocityZone(waveType);
 
             if (TablesUtil.deBugLevel > 0) {
               System.out.format(
@@ -218,7 +220,7 @@ public class Integrate {
     }
 
     // We'll still need access to the merged slownesses.
-    tauFinalModel.putSlowness(tauDepthModel.slowness);
+    tauFinalModel.putSlowness(tauDepthModel.getSlowness());
   }
 
   /**

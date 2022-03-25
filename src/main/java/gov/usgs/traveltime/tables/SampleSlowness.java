@@ -534,7 +534,7 @@ public class SampleSlowness {
     ModelShell shell = null;
 
     // Initialize temporary variables.
-    ArrayList<Double> slowness = tauModel.slowness;
+    ArrayList<Double> slowness = tauModel.getSlowness();
     int iCur = shells.get(shells.size() - 1).getTopSampleIndex();
     double slowMax = resampledModel.getSlowness(waveType, iCur);
 
@@ -719,8 +719,8 @@ public class SampleSlowness {
       }
     }
 
-    tauDepthModel.putSlowness(tauModel.slowness);
-    tauDepthModel.makeDepShells(waveType);
+    tauDepthModel.putSlowness(tauModel.getSlowness());
+    tauDepthModel.makeDepthShells(waveType);
   }
 
   /**
@@ -778,8 +778,8 @@ public class SampleSlowness {
   }
 
   /** Function to print the merged slowness Earth model sampling. */
-  public void printMerge() {
-    tauModel.printMerge();
+  public void printMergedSlownesses() {
+    tauModel.printMergedSlownesses();
   }
 
   /**
@@ -788,6 +788,6 @@ public class SampleSlowness {
    * @param A char containing the velocity/slowness wave type (P = P-wave, S = S-wave)
    */
   public void printShells(char waveType) {
-    tauDepthModel.printDepShells(waveType);
+    tauDepthModel.printDepthShells(waveType);
   }
 }

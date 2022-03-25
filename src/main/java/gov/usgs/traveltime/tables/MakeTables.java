@@ -88,27 +88,27 @@ public class MakeTables {
       // We need a merged set of slownesses for converted branches (e.g., ScP).
       slownessSampling.merge();
       if (TablesUtil.deBugLevel > 0) {
-        slownessSampling.printMerge();
+        slownessSampling.printMergedSlownesses();
       }
 
       // Fiddle with the sampling so that low velocity zones are
       // better sampled.
       slownessSampling.depthModel('P');
       if (TablesUtil.deBugLevel > 0) {
-        slownessSampling.getTauDepthModel().printDepShells('P');
+        slownessSampling.getTauDepthModel().printDepthShells('P');
         slownessSampling.printModel('P', "Depth");
       }
 
       slownessSampling.depthModel('S');
       if (TablesUtil.deBugLevel > 0) {
-        slownessSampling.getTauDepthModel().printDepShells('S');
+        slownessSampling.getTauDepthModel().printDepthShells('S');
         slownessSampling.printModel('S', "Depth");
       }
 
       TauModel depthModel = slownessSampling.getTauDepthModel();
       if (TablesUtil.deBugLevel > 2) {
-        depthModel.printDepShells('P');
-        depthModel.printDepShells('S');
+        depthModel.printDepthShells('P');
+        depthModel.printDepthShells('S');
       }
 
       // Do the integrals.
@@ -120,19 +120,19 @@ public class MakeTables {
       // of interest for earthquake location.
       finalTTModel = integrate.getFinalModel();
       if (TablesUtil.deBugLevel > 1) {
-        finalTTModel.printShellInts('P');
-        finalTTModel.printShellInts('S');
+        finalTTModel.printShellIntegrals('P');
+        finalTTModel.printShellIntegrals('S');
       }
 
       // Reorganize the integral data.
       finalTTModel.makePieces();
       if (TablesUtil.deBugLevel > 0) {
         // These final shells control making the branches.
-        finalTTModel.printShellSpec('P');
-        finalTTModel.printShellSpec('S');
+        finalTTModel.printSpecialTauIntegrals('P');
+        finalTTModel.printSpecialTauIntegrals('S');
         if (TablesUtil.deBugLevel > 2) {
           // Proxy depth sampling before decimation.
-          finalTTModel.printProxy();
+          finalTTModel.printProxyRanges();
         }
       }
 
@@ -143,18 +143,18 @@ public class MakeTables {
 
       if (TablesUtil.deBugLevel > 0) {
         if (TablesUtil.deBugLevel > 2) {
-          finalTTModel.pPieces.printDec();
-          finalTTModel.sPieces.printDec();
+          finalTTModel.getIntPiecesP().printDec();
+          finalTTModel.getIntPiecesS().printDec();
         }
 
         // Proxy depth sampling after decimation.
-        finalTTModel.printProxy();
+        finalTTModel.printProxyRanges();
       }
 
       // Make the branches.
       if (TablesUtil.deBugLevel > 0) {
-        finalTTModel.printDepShells('P');
-        finalTTModel.printDepShells('S');
+        finalTTModel.printDepthShells('P');
+        finalTTModel.printDepthShells('S');
       }
 
       MakeBranches layout = new MakeBranches(finalTTModel, decimate);
@@ -172,10 +172,10 @@ public class MakeTables {
       // Do the final decimation.
       finalTTModel.decimateRayParameters();
       if (TablesUtil.deBugLevel > 0) {
-        finalTTModel.printP();
+        finalTTModel.printRayParameters();
       }
-      finalTTModel.decimateTauX('P');
-      finalTTModel.decimateTauX('S');
+      finalTTModel.decimateTauRange('P');
+      finalTTModel.decimateTauRange('S');
 
       // Print the final branches.
       if (TablesUtil.deBugLevel > 2) {

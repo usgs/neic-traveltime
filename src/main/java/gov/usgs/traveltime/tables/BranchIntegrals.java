@@ -151,13 +151,13 @@ public class BranchIntegrals {
    */
   public BranchIntegrals(char modelType, TauModel finalTTModel) {
     this.finalTTModel = finalTTModel;
-    this.modelConversions = finalTTModel.convert;
+    this.modelConversions = finalTTModel.getModelConversions();
     this.modelType = modelType;
 
     if (modelType == 'P') {
-      rawIntegrals = finalTTModel.pInts;
+      rawIntegrals = finalTTModel.getIntegralsP();
     } else {
-      rawIntegrals = finalTTModel.sInts;
+      rawIntegrals = finalTTModel.getIntegralsS();
     }
 
     setShellIntegrals(modelType);
@@ -201,12 +201,15 @@ public class BranchIntegrals {
    */
   private void setShellIntegrals(char modelType) {
     // Get the pieces we need.
-    mantleTauIntegrals = finalTTModel.getTauInt(modelType, ShellName.CORE_MANTLE_BOUNDARY);
-    mantleRangeIntegrals = finalTTModel.getXInt(modelType, ShellName.CORE_MANTLE_BOUNDARY);
-    double[] ocCumulativeTauInt = finalTTModel.getTauInt(modelType, ShellName.INNER_CORE_BOUNDARY);
-    double[] ocCumulativeRangeInt = finalTTModel.getXInt(modelType, ShellName.INNER_CORE_BOUNDARY);
-    double[] icCumulativeTauInt = finalTTModel.getTauInt(modelType, ShellName.CENTER);
-    double[] icCumulativeRangeInt = finalTTModel.getXInt(modelType, ShellName.CENTER);
+    mantleTauIntegrals = finalTTModel.getTauIntegrals(modelType, ShellName.CORE_MANTLE_BOUNDARY);
+    mantleRangeIntegrals =
+        finalTTModel.getRangeIntegrals(modelType, ShellName.CORE_MANTLE_BOUNDARY);
+    double[] ocCumulativeTauInt =
+        finalTTModel.getTauIntegrals(modelType, ShellName.INNER_CORE_BOUNDARY);
+    double[] ocCumulativeRangeInt =
+        finalTTModel.getRangeIntegrals(modelType, ShellName.INNER_CORE_BOUNDARY);
+    double[] icCumulativeTauInt = finalTTModel.getTauIntegrals(modelType, ShellName.CENTER);
+    double[] icCumulativeRangeInt = finalTTModel.getRangeIntegrals(modelType, ShellName.CENTER);
 
     // Initialize the difference arrays.
     innerCoreTauIntegrals = new double[mantleTauIntegrals.length];
@@ -242,7 +245,7 @@ public class BranchIntegrals {
 
     // Put together a list of maximum range differences.
     for (int i = 1; i < n - 3; i++) {
-      double[] x = finalTTModel.getXInt(modelType, i);
+      double[] x = finalTTModel.getRangeIntegrals(modelType, i);
 
       if (x != null) {
         int m = x.length;
@@ -259,7 +262,7 @@ public class BranchIntegrals {
 
     // Now put the range differences back together to sort of look
     // like a range.
-    ArrayList<Double> slowness = finalTTModel.slowness;
+    ArrayList<Double> slowness = finalTTModel.getSlowness();
     n = slowness.size() - 1;
     rayParameters = new double[n1];
     proxyRayParameters = new double[proxyRanges.length];
@@ -299,7 +302,7 @@ public class BranchIntegrals {
   }
 
   /** Function to print out the shell integrals. */
-  public void printShellInts() {
+  public void printShellIntegrals() {
     System.out.format("\n\t\tShell Integrals for %c-waves\n", modelType);
     System.out.println("                        Tau                    " + "   X");
     System.out.println("        p     Mantle     OC       IC     Mantle" + "   OC     IC");

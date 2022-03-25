@@ -81,7 +81,7 @@ public class MakeBranches {
   public MakeBranches(TauModel finalTTModel, DecimateTTBranch branchDecimator) {
     this.finalTTModel = finalTTModel;
     modelConversions = finalTTModel.getModelConversions();
-    slownessIntegralOffset = finalTTModel.sPieces.getRayParameters().length - 1;
+    slownessIntegralOffset = finalTTModel.getIntPiecesS().getRayParameters().length - 1;
     this.branchDecimator = branchDecimator;
     spline = new Spline();
   }
@@ -460,8 +460,8 @@ public class MakeBranches {
         double xTarget =
             decimationFactor
                 * Math.max(
-                    finalTTModel.getDelX(rayTypes[1], shIndex),
-                    finalTTModel.getDelX(rayTypes[2], shIndex));
+                    finalTTModel.getRangeIncrementTarget(rayTypes[1], shIndex),
+                    finalTTModel.getRangeIncrementTarget(rayTypes[2], shIndex));
         branchDecimator.downGoingDecimation(branch, xTarget, minRayParamIndex);
 
         // Create the interpolation basis functions.
@@ -521,8 +521,8 @@ public class MakeBranches {
     double xTarget =
         compDecimationFactor(shellTravCounts, true)
             * Math.max(
-                finalTTModel.getNextDelX(rayTypes[1], endShellIndex),
-                finalTTModel.getNextDelX(rayTypes[2], endShellIndex));
+                finalTTModel.getNextRangeIncrementTarget(rayTypes[1], endShellIndex),
+                finalTTModel.getNextRangeIncrementTarget(rayTypes[2], endShellIndex));
     branchDecimator.downGoingDecimation(branch, xTarget, 0);
 
     // Create the interpolation basis functions.
@@ -647,8 +647,8 @@ public class MakeBranches {
             double xTarget =
                 decimationFactor
                     * Math.max(
-                        finalTTModel.getDelX(rayTypes[1], shIndex1),
-                        finalTTModel.getDelX(rayTypes[2], shIndex2));
+                        finalTTModel.getRangeIncrementTarget(rayTypes[1], shIndex1),
+                        finalTTModel.getRangeIncrementTarget(rayTypes[2], shIndex2));
             branchDecimator.downGoingDecimation(branch, xTarget, minRayParamIndex);
 
             // Create the interpolation basis functions.
@@ -750,9 +750,9 @@ public class MakeBranches {
 
     // Set up the ray parameter arrays.
     if (upType == 'P') {
-      branch.setRayParameters(finalTTModel.pPieces.getProxyRayParameters());
+      branch.setRayParameters(finalTTModel.getIntPiecesP().getProxyRayParameters());
     } else {
-      branch.setRayParameters(finalTTModel.sPieces.getProxyRayParameters());
+      branch.setRayParameters(finalTTModel.getIntPiecesS().getProxyRayParameters());
     }
 
     branch.setBasisCoefficients(new double[5][branch.getRayParameters().length]);
@@ -833,17 +833,17 @@ public class MakeBranches {
 
     // Add up the branch data.
     for (int i = minRayParamIndex, k = 0; i <= maxRayParamIndex; i++, k++) {
-      rayParameters[k] = finalTTModel.getP(i);
+      rayParameters[k] = finalTTModel.getRayParameters(i);
 
       for (int j = 0; j < shellTravCounts.length; j++) {
         tauValues[k] +=
             shellTravCounts[j]
-                * (finalTTModel.getTauSpec(rayTypes[1], i, j)
-                    + finalTTModel.getTauSpec(rayTypes[2], i, j));
+                * (finalTTModel.getSpecialTauIntegrals(rayTypes[1], i, j)
+                    + finalTTModel.getSpecialTauIntegrals(rayTypes[2], i, j));
         rayTravelDistances[k] +=
             shellTravCounts[j]
-                * (finalTTModel.getXspec(rayTypes[1], i, j)
-                    + finalTTModel.getXspec(rayTypes[2], i, j));
+                * (finalTTModel.getSpecialRangeIntegrals(rayTypes[1], i, j)
+                    + finalTTModel.getSpecialRangeIntegrals(rayTypes[2], i, j));
       }
     }
 
@@ -864,38 +864,46 @@ public class MakeBranches {
     int lvzIndex = finalTTModel.getIndex(rayTypes[1], rayParameters[0]);
 
     if (lvzIndex >= 0) {
-      if (finalTTModel.getLvz(rayTypes[1], lvzIndex)) {
+      if (finalTTModel.getLowVelocityZone(rayTypes[1], lvzIndex)) {
         // We have a low velocity zone on the down-going ray.
         for (int j = 0; j < shellTravCounts.length; j++) {
           tauValues[0] -=
-              shellTravCounts[j] * finalTTModel.getTauSpec(rayTypes[1], minRayParamIndex, j);
+              shellTravCounts[j]
+                  * finalTTModel.getSpecialTauIntegrals(rayTypes[1], minRayParamIndex, j);
           rayTravelDistances[0] -=
-              shellTravCounts[j] * finalTTModel.getXspec(rayTypes[1], minRayParamIndex, j);
+              shellTravCounts[j]
+                  * finalTTModel.getSpecialRangeIntegrals(rayTypes[1], minRayParamIndex, j);
         }
 
         tauValues[0] +=
-            shellTravCounts[0] * finalTTModel.getTauInt(rayTypes[1], lvzIndex)[minRayParamIndex];
+            shellTravCounts[0]
+                * finalTTModel.getTauIntegrals(rayTypes[1], lvzIndex)[minRayParamIndex];
         rayTravelDistances[0] +=
-            shellTravCounts[0] * finalTTModel.getXInt(rayTypes[1], lvzIndex)[minRayParamIndex];
+            shellTravCounts[0]
+                * finalTTModel.getRangeIntegrals(rayTypes[1], lvzIndex)[minRayParamIndex];
       }
     }
 
     lvzIndex = finalTTModel.getIndex(rayTypes[2], rayParameters[0]);
 
     if (lvzIndex >= 0) {
-      if (finalTTModel.getLvz(rayTypes[2], lvzIndex)) {
+      if (finalTTModel.getLowVelocityZone(rayTypes[2], lvzIndex)) {
         // We have a low velocity zone on the returning ray.
         for (int j = 0; j < shellTravCounts.length; j++) {
           tauValues[0] -=
-              shellTravCounts[j] * finalTTModel.getTauSpec(rayTypes[2], minRayParamIndex, j);
+              shellTravCounts[j]
+                  * finalTTModel.getSpecialTauIntegrals(rayTypes[2], minRayParamIndex, j);
           rayTravelDistances[0] -=
-              shellTravCounts[j] * finalTTModel.getXspec(rayTypes[2], minRayParamIndex, j);
+              shellTravCounts[j]
+                  * finalTTModel.getSpecialRangeIntegrals(rayTypes[2], minRayParamIndex, j);
         }
 
         tauValues[0] +=
-            shellTravCounts[0] * finalTTModel.getTauInt(rayTypes[2], lvzIndex)[minRayParamIndex];
+            shellTravCounts[0]
+                * finalTTModel.getTauIntegrals(rayTypes[2], lvzIndex)[minRayParamIndex];
         rayTravelDistances[0] +=
-            shellTravCounts[0] * finalTTModel.getXInt(rayTypes[2], lvzIndex)[minRayParamIndex];
+            shellTravCounts[0]
+                * finalTTModel.getRangeIntegrals(rayTypes[2], lvzIndex)[minRayParamIndex];
       }
     }
   }
