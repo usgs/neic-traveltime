@@ -36,10 +36,10 @@ public class TauModel {
   private ArrayList<ModelShell> shellModelS = null;
 
   /** An ArrayList of TauXsample objects containing the P integrals */
-  private ArrayList<TauXsample> integralsP = null;
+  private ArrayList<TauRangeSample> integralsP = null;
 
   /** An ArrayList of TauXsample objects containing the S integrals */
-  private ArrayList<TauXsample> integralsS = null;
+  private ArrayList<TauRangeSample> integralsS = null;
 
   /** An BranchIntegrals objects containing the P integral branch pieces */
   private BranchIntegrals intPiecesP;
@@ -100,7 +100,7 @@ public class TauModel {
    *
    * @return An ArrayList of TauXsample objects containing the P integrals
    */
-  public ArrayList<TauXsample> getIntegralsP() {
+  public ArrayList<TauRangeSample> getIntegralsP() {
     return integralsP;
   }
 
@@ -109,7 +109,7 @@ public class TauModel {
    *
    * @return An ArrayList of TauXsample objects containing the S integrals
    */
-  public ArrayList<TauXsample> getIntegralsS() {
+  public ArrayList<TauRangeSample> getIntegralsS() {
     return integralsS;
   }
 
@@ -167,8 +167,8 @@ public class TauModel {
    * them separately.
    */
   public void initIntegrals() {
-    integralsP = new ArrayList<TauXsample>();
-    integralsS = new ArrayList<TauXsample>();
+    integralsP = new ArrayList<TauRangeSample>();
+    integralsS = new ArrayList<TauRangeSample>();
   }
 
   /**
@@ -241,7 +241,7 @@ public class TauModel {
    * @param index An integer containing the desired index of the sample
    * @param tauRangeInt A TauXsample object containing the set of tau and range integrals
    */
-  public void add(char modelType, TauSample sample, int index, TauXsample tauRangeInt) {
+  public void add(char modelType, TauSample sample, int index, TauRangeSample tauRangeInt) {
     if (modelType == 'P') {
       for (int j = integralsP.size(); j < slownessModelP.size(); j++) {
         integralsP.add(null);
@@ -771,9 +771,9 @@ public class TauModel {
    */
   public void setLowVelocityZone(char modelType) {
     if (modelType == 'P') {
-      integralsP.get(integralsP.size() - 1).lvz = true;
+      integralsP.get(integralsP.size() - 1).setLowVelocityZone(true);
     } else {
-      integralsS.get(integralsS.size() - 1).lvz = true;
+      integralsS.get(integralsS.size() - 1).setLowVelocityZone(true);
     }
   }
 
@@ -790,13 +790,13 @@ public class TauModel {
   public boolean getLowVelocityZone(char modelType, int modelIndex) {
     if (modelType == 'P') {
       if (integralsP.get(modelIndex) != null) {
-        return integralsP.get(modelIndex).lvz;
+        return integralsP.get(modelIndex).getLowVelocityZone();
       } else {
         return false;
       }
     } else {
       if (integralsS.get(modelIndex) != null) {
-        return integralsS.get(modelIndex).lvz;
+        return integralsS.get(modelIndex).getLowVelocityZone();
       } else {
         return false;
       }
@@ -813,13 +813,13 @@ public class TauModel {
   public double[] getTauIntegrals(char modelType, int depthIndex) {
     if (modelType == 'P') {
       if (integralsP.get(depthIndex) != null) {
-        return integralsP.get(depthIndex).tau;
+        return integralsP.get(depthIndex).getTauIntegrals();
       } else {
         return null;
       }
     } else {
       if (integralsS.get(depthIndex) != null) {
-        return integralsS.get(depthIndex).tau;
+        return integralsS.get(depthIndex).getTauIntegrals();
       } else {
         return null;
       }
@@ -839,15 +839,15 @@ public class TauModel {
     if (modelType == 'P') {
       n = integralsP.size();
       for (int j = n - 3; j < n; j++) {
-        if (name == integralsP.get(j).name) {
-          return integralsP.get(j).tau;
+        if (name == integralsP.get(j).getName()) {
+          return integralsP.get(j).getTauIntegrals();
         }
       }
     } else {
       n = integralsS.size();
       for (int j = n - 3; j < n; j++) {
-        if (name == integralsS.get(j).name) {
-          return integralsS.get(j).tau;
+        if (name == integralsS.get(j).getName()) {
+          return integralsS.get(j).getTauIntegrals();
         }
       }
     }
@@ -864,13 +864,13 @@ public class TauModel {
   public double[] getRangeIntegrals(char modelType, int depthIndex) {
     if (modelType == 'P') {
       if (integralsP.get(depthIndex) != null) {
-        return integralsP.get(depthIndex).x;
+        return integralsP.get(depthIndex).getRangeIntegrals();
       } else {
         return null;
       }
     } else {
       if (integralsS.get(depthIndex) != null) {
-        return integralsS.get(depthIndex).x;
+        return integralsS.get(depthIndex).getRangeIntegrals();
       } else {
         return null;
       }
@@ -889,16 +889,16 @@ public class TauModel {
       int n = integralsP.size();
 
       for (int j = n - 3; j < n; j++) {
-        if (name == integralsP.get(j).name) {
-          return integralsP.get(j).x;
+        if (name == integralsP.get(j).getName()) {
+          return integralsP.get(j).getRangeIntegrals();
         }
       }
     } else {
       int n = integralsS.size();
 
       for (int j = n - 3; j < n; j++) {
-        if (name == integralsS.get(j).name) {
-          return integralsS.get(j).x;
+        if (name == integralsS.get(j).getName()) {
+          return integralsS.get(j).getRangeIntegrals();
         }
       }
     }
@@ -1109,7 +1109,7 @@ public class TauModel {
     p = getRayParameters(modelType);
     if (modelType == 'P') {
       if (integralsP.get(index) != null) {
-        x = integralsP.get(index).x;
+        x = integralsP.get(index).getRangeIntegrals();
         for (int j = 0; j < x.length; j++) {
           if (rayParamBranchEnds[i] == p[j]) {
             xUp.add(x[j]);
@@ -1121,7 +1121,7 @@ public class TauModel {
       }
     } else {
       if (integralsS.get(index) != null) {
-        x = integralsS.get(index).x;
+        x = integralsS.get(index).getRangeIntegrals();
         for (int j = 0; j < x.length; j++) {
           if (rayParamBranchEnds[i] == p[j]) {
             xUp.add(x[j]);
@@ -1163,7 +1163,10 @@ public class TauModel {
           if (integralsP.get(j) != null) {
             System.out.format(
                 "%3d %s %3d %s\n",
-                j, slownessModelP.get(j), integralsP.get(j).tau.length, integralsP.get(j).name);
+                j,
+                slownessModelP.get(j),
+                integralsP.get(j).getTauIntegrals().length,
+                integralsP.get(j).getName());
           } else {
             System.out.format("%3d %s null\n", j, slownessModelP.get(j));
           }
@@ -1179,7 +1182,10 @@ public class TauModel {
           if (integralsS.get(j) != null) {
             System.out.format(
                 "%3d %s %3d %s\n",
-                j, slownessModelS.get(j), integralsS.get(j).tau.length, integralsS.get(j).name);
+                j,
+                slownessModelS.get(j),
+                integralsS.get(j).getTauIntegrals().length,
+                integralsS.get(j).getName());
           } else {
             System.out.format("%3d %s null\n", j, slownessModelS.get(j));
           }
@@ -1231,19 +1237,25 @@ public class TauModel {
                 "%3d %s  %3d %s  %3d\n",
                 j,
                 slownessModelP.get(j),
-                integralsP.get(j).tau.length,
+                integralsP.get(j).getTauIntegrals().length,
                 slownessModelS.get(j),
-                integralsS.get(j).tau.length);
+                integralsS.get(j).getTauIntegrals().length);
           } else {
             System.out.format(
                 "%3d %s  %3d %s null\n",
-                j, slownessModelP.get(j), integralsP.get(j).tau.length, slownessModelS.get(j));
+                j,
+                slownessModelP.get(j),
+                integralsP.get(j).getTauIntegrals().length,
+                slownessModelS.get(j));
           }
         } else {
           if (integralsS.get(j) != null) {
             System.out.format(
                 "%3d %s null %s  %3d\n",
-                j, slownessModelP.get(j), slownessModelS.get(j), integralsS.get(j).tau.length);
+                j,
+                slownessModelP.get(j),
+                slownessModelS.get(j),
+                integralsS.get(j).getTauIntegrals().length);
           } else {
             System.out.format(
                 "%3d %s null %s null\n", j, slownessModelP.get(j), slownessModelS.get(j));
@@ -1255,7 +1267,7 @@ public class TauModel {
         if (integralsS.get(j) != null) {
           System.out.format(
               "%3d                                    %s  %3d\n",
-              j, slownessModelS.get(j), integralsS.get(j).tau.length);
+              j, slownessModelS.get(j), integralsS.get(j).getTauIntegrals().length);
         } else {
           System.out.format(
               "%3d                                    %s null\n", j, slownessModelS.get(j));
@@ -1312,7 +1324,7 @@ public class TauModel {
 
       return String.format(
           "%3d %9.6f %8.6f",
-          integralsP.get(n).tau.length,
+          integralsP.get(n).getTauIntegrals().length,
           slownessModelP.get(n).getDepth(),
           slownessModelP.get(n).getSlowness());
     } else {
@@ -1320,7 +1332,7 @@ public class TauModel {
 
       return String.format(
           "%3d %9.6f %8.6f",
-          integralsS.get(n).tau.length,
+          integralsS.get(n).getTauIntegrals().length,
           slownessModelS.get(n).getDepth(),
           slownessModelS.get(n).getSlowness());
     }
@@ -1340,7 +1352,7 @@ public class TauModel {
           System.out.format(
               "Lev1 %3d %3d %9.6f %8.6f\n",
               j,
-              integralsP.get(j).tau.length,
+              integralsP.get(j).getTauIntegrals().length,
               slownessModelP.get(j).getDepth(),
               slownessModelP.get(j).getSlowness());
         }
@@ -1350,7 +1362,7 @@ public class TauModel {
         System.out.format(
             "Lev2 %3d %3d %9.6f %8.6f\n",
             j,
-            integralsP.get(j).tau.length,
+            integralsP.get(j).getTauIntegrals().length,
             slownessModelP.get(j).getDepth(),
             slownessModelP.get(j).getSlowness());
       }
@@ -1358,7 +1370,7 @@ public class TauModel {
       System.out.format(
           "Lev3 %3d %3d %9.6f %8.6f\n",
           n - 1,
-          integralsP.get(n - 1).tau.length,
+          integralsP.get(n - 1).getTauIntegrals().length,
           slownessModelP.get(n - 1).getDepth(),
           slownessModelP.get(n - 1).getSlowness());
     } else {
@@ -1369,7 +1381,7 @@ public class TauModel {
           System.out.format(
               "Lev1 %3d %3d %9.6f %8.6f\n",
               j,
-              integralsS.get(j).tau.length,
+              integralsS.get(j).getTauIntegrals().length,
               slownessModelS.get(j).getDepth(),
               slownessModelS.get(j).getSlowness());
         }
@@ -1379,7 +1391,7 @@ public class TauModel {
         System.out.format(
             "Lev2 %3d %3d %9.6f %8.6f\n",
             j,
-            integralsS.get(j).tau.length,
+            integralsS.get(j).getTauIntegrals().length,
             slownessModelS.get(j).getDepth(),
             slownessModelS.get(j).getSlowness());
       }
@@ -1387,7 +1399,7 @@ public class TauModel {
       System.out.format(
           "Lev3 %3d %3d %9.6f %8.6f\n",
           n - 1,
-          integralsS.get(n - 1).tau.length,
+          integralsS.get(n - 1).getTauIntegrals().length,
           slownessModelS.get(n - 1).getDepth(),
           slownessModelS.get(n - 1).getSlowness());
     }
@@ -1405,40 +1417,40 @@ public class TauModel {
 
     if (modelType == 'P') {
       int n = integralsP.size();
-      TauXsample mantle = integralsP.get(n - 3);
-      TauXsample outerCore = integralsP.get(n - 2);
-      TauXsample innerCore = integralsP.get(n - 1);
+      TauRangeSample mantle = integralsP.get(n - 3);
+      TauRangeSample outerCore = integralsP.get(n - 2);
+      TauRangeSample innerCore = integralsP.get(n - 1);
 
-      for (int j = 0, k = slowness.size() - 1; j < mantle.tau.length; j++, k--) {
+      for (int j = 0, k = slowness.size() - 1; j < mantle.getTauIntegrals().length; j++, k--) {
         System.out.format(
             "%3d %8.6f %8.6f %8.6f %8.6f %6.2f %6.2f %6.2f\n",
             j,
             slowness.get(k),
-            mantle.tau[j],
-            outerCore.tau[j],
-            innerCore.tau[j],
-            Math.toDegrees(mantle.x[j]),
-            Math.toDegrees(outerCore.x[j]),
-            Math.toDegrees(innerCore.x[j]));
+            mantle.getTauIntegrals()[j],
+            outerCore.getTauIntegrals()[j],
+            innerCore.getTauIntegrals()[j],
+            Math.toDegrees(mantle.getRangeIntegrals()[j]),
+            Math.toDegrees(outerCore.getRangeIntegrals()[j]),
+            Math.toDegrees(innerCore.getRangeIntegrals()[j]));
       }
     } else {
       int n = integralsS.size();
-      TauXsample mantle = integralsS.get(n - 3);
-      TauXsample outerCore = integralsS.get(n - 2);
-      TauXsample innerCore = integralsS.get(n - 1);
-      n = mantle.tau.length - 1;
+      TauRangeSample mantle = integralsS.get(n - 3);
+      TauRangeSample outerCore = integralsS.get(n - 2);
+      TauRangeSample innerCore = integralsS.get(n - 1);
+      n = mantle.getTauIntegrals().length - 1;
 
       for (int j = n, k = slowness.size() - 1; j >= 0; j--, k--) {
         System.out.format(
             "%3d %8.6f %8.6f %8.6f %8.6f %6.2f %6.2f %6.2f\n",
             n - j,
             slowness.get(k),
-            mantle.tau[j],
-            outerCore.tau[j],
-            innerCore.tau[j],
-            Math.toDegrees(mantle.x[j]),
-            Math.toDegrees(outerCore.x[j]),
-            Math.toDegrees(innerCore.x[j]));
+            mantle.getTauIntegrals()[j],
+            outerCore.getTauIntegrals()[j],
+            innerCore.getTauIntegrals()[j],
+            Math.toDegrees(mantle.getRangeIntegrals()[j]),
+            Math.toDegrees(outerCore.getRangeIntegrals()[j]),
+            Math.toDegrees(innerCore.getRangeIntegrals()[j]));
       }
     }
   }

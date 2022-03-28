@@ -153,7 +153,7 @@ public class Integrate {
                 waveType,
                 sample1,
                 numSamples,
-                new TauXsample(iRay, tau, x, ShellName.UPPER_MANTLE));
+                new TauRangeSample(iRay, tau, x, ShellName.UPPER_MANTLE));
 
             if (TablesUtil.deBugLevel > 0) {
               System.out.format(
@@ -179,13 +179,13 @@ public class Integrate {
                   waveType,
                   sample0,
                   numSamples,
-                  new TauXsample(n1, tau, x, ShellName.CORE_MANTLE_BOUNDARY));
+                  new TauRangeSample(n1, tau, x, ShellName.CORE_MANTLE_BOUNDARY));
             } else {
               tauFinalModel.add(
                   waveType,
                   sample0,
                   numSamples,
-                  new TauXsample(n1, tau, x, ShellName.INNER_CORE_BOUNDARY));
+                  new TauRangeSample(n1, tau, x, ShellName.INNER_CORE_BOUNDARY));
             }
 
             if (TablesUtil.deBugLevel > 0) {
@@ -218,7 +218,8 @@ public class Integrate {
 
     // Save the integrals down to the center of the Earth.
     numSamples++;
-    tauFinalModel.add(waveType, sample1, numSamples, new TauXsample(n1, tau, x, ShellName.CENTER));
+    tauFinalModel.add(
+        waveType, sample1, numSamples, new TauRangeSample(n1, tau, x, ShellName.CENTER));
 
     if (TablesUtil.deBugLevel > 0) {
       System.out.format(

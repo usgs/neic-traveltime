@@ -51,7 +51,7 @@ public class BranchIntegrals {
   private ModConvert modelConversions;
 
   /** An ArrayList of TauXsample objects containing the raw integrals */
-  private ArrayList<TauXsample> rawIntegrals;
+  private ArrayList<TauRangeSample> rawIntegrals;
 
   /**
    * Get the array of decimation keep flags
