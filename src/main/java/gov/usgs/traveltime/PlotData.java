@@ -65,7 +65,7 @@ public class PlotData {
           TravelTime = ttList.getPhase(j);
           if (TravelTime.tt <= maxTime) {
             TravelTimePlot.addPoint(
-                TravelTime.phCode,
+                TravelTime.phaseCode,
                 TravelTime.uniqueCode,
                 delta,
                 TravelTime.tt,

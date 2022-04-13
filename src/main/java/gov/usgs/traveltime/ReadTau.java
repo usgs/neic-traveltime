@@ -57,7 +57,7 @@ public class ReadTau {
    *
    *    Branch parameters (record 4)
    * nbrn -> numBrn											Number of travel-time branches
-   * phcd -> phCode[numBrn]							Branch phase codes
+   * phcd -> phaseCode[numBrn]							Branch phase codes
    * jndx -> indexBrn[numBrn][2]				Branch indices into the branch specification
    * px -> pBrn[numBrn][2]							Slowness range for branches
    * xt -> xBrn[numBrn][2]							Distance ranges for branches
@@ -83,7 +83,7 @@ public class ReadTau {
    * taut -> tauSpec[numSpec]						Surface focus tau(p) for all branches
    * coef -> basisSpec[numSpec][5]			Interpolation basis functions for tau(p)
    */
-  String[] phCode;
+  String[] phaseCode;
   int recSizeUp, numSpec, numSeg, numBrn = 0;
   // int len2;
   int[] numMod = null, numTauUp = null, numXUp = null, numRec;
@@ -325,10 +325,10 @@ public class ReadTau {
 
       // Branch level information: phcd, px, xt, jndx.
       byte[] temp = new byte[8];
-      phCode = new String[numBrn];
-      for (int j = 0; j < phCode.length; j++) {
+      phaseCode = new String[numBrn];
+      for (int j = 0; j < phaseCode.length; j++) {
         byteBuf.get(temp);
-        phCode[j] = new String(temp).trim();
+        phaseCode[j] = new String(temp).trim();
       }
       byteBuf.position(byteBuf.position() + temp.length * (JBRN - numBrn));
 
@@ -619,8 +619,8 @@ public class ReadTau {
   /** Print the contents of the fourth header record to the console. */
   public void dumpRec4() {
 
-    System.out.println("\nphCode:");
-    for (int j = 0; j < phCode.length; j++) System.out.println("" + j + ": " + phCode[j]);
+    System.out.println("\nphaseCode:");
+    for (int j = 0; j < phaseCode.length; j++) System.out.println("" + j + ": " + phaseCode[j]);
 
     System.out.println("\npBrn:");
     for (int j = 0; j < pBrn.length; j++)
@@ -724,7 +724,7 @@ public class ReadTau {
 
   /** Print the branch variables all together mimicking the Setbrn formatting. */
   public void dumpBranches() {
-    System.out.println("\n     Branch Summary (indexBrn, pBrn, xBrn, and phCode)");
+    System.out.println("\n     Branch Summary (indexBrn, pBrn, xBrn, and phaseCode)");
     for (int j = 0; j < numBrn; j++) {
       System.out.format(
           "%2d:  %4d  %4d  %8.6f  %8.6f  %6.2f  %6.2f  %s\n",
@@ -735,7 +735,7 @@ public class ReadTau {
           pBrn[j][1],
           Math.toDegrees(xBrn[j][0]),
           Math.toDegrees(xBrn[j][1]),
-          phCode[j]);
+          phaseCode[j]);
     }
   }
 

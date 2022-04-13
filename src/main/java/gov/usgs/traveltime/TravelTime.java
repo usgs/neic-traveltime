@@ -169,7 +169,7 @@ public class TravelTime {
   public void dumpPhases() {
     String phaseString = String.format("Depth = %5.1f  Delta = %6.2f", depth, distance);
     phaseString +=
-        "\n    phCode   TravelTime    distDrv    dpthDrv   spread  observ  phGrp  auxGrp canUse isReg  isDpth dis";
+        "\n    phaseCode   TravelTime    distDrv    dpthDrv   spread  observ  phGrp  auxGrp canUse isReg  isDpth dis";
     if (phaseTravelTimes.size() > 0) {
       for (int j = 0; j < phaseTravelTimes.size(); j++) {
         phaseString += String.format("\n%2d  %s", j, phaseTravelTimes.get(j));

@@ -365,6 +365,6 @@ public class TravelTimeLocalSession {
    * @param full If true, print the detailed branch specification as well
    */
   public void printRefBranches(boolean full) {
-    allBrn.ref.dumpBrn(full);
+    allBrn.ref.dumpBranchData(full);
   }
 }

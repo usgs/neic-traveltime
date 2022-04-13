@@ -7,7 +7,7 @@ package gov.usgs.traveltime;
  * @author Ray Buland
  */
 public class TravelTimeData implements Comparable<TravelTimeData> {
-  String phCode; // Phase code
+  String phaseCode; // Phase code
   String[] uniqueCode; // Unique phase codes
   double tt; // Travel time (s)
   double dTdD; // Derivative of time with respect to distance (s/degree)
@@ -28,7 +28,7 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
   /**
    * The constructor accepts basic travel time information.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @param uniqueCode Unique phase code
    * @param tt Travel time
    * @param dTdD Derivative of time with respect to distance
@@ -37,14 +37,14 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
    * @param corrTt True if the travel-time itself needs to be modified by the statistical bias
    */
   public TravelTimeData(
-      String phCode,
+      String phaseCode,
       String[] uniqueCode,
       double tt,
       double dTdD,
       double dTdZ,
       double dXdP,
       boolean corrTt) {
-    this.phCode = phCode;
+    this.phaseCode = phaseCode;
     this.uniqueCode = uniqueCode;
     this.tt = tt;
     this.dTdD = dTdD;
@@ -100,7 +100,7 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
    * @param replace Replacement string
    */
   public void replace(String find, String replace) {
-    phCode = phCode.replace(find, replace);
+    phaseCode = phaseCode.replace(find, replace);
     dis = false;
   }
 
@@ -109,8 +109,8 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
    *
    * @return Phase code
    */
-  public String getPhCode() {
-    return phCode;
+  public String getphaseCode() {
+    return phaseCode;
   }
 
   /**
@@ -261,7 +261,7 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
   public String toString() {
     return String.format(
         "%-8s %7.2f %10.2e %10.2e %6.2f %7.1f  " + "%-6s %-6s %-6b %-6b %-6b %-6b",
-        phCode,
+        phaseCode,
         tt,
         dTdD,
         dTdZ,

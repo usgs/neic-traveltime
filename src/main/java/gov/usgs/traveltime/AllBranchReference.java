@@ -12,9 +12,10 @@ import java.util.ArrayList;
 
 /**
  * The AllBranchReference class is the umbrella storage for all non-volatile travel-time data.
- * Currently, the data is loaded into appropriate classes from the FORTRAN-ish ReadTau class in the
- * constructor. However, in the future, it will read files written by other Java classes. Note that
- * after the data is loaded, ReadTau and all it's storage may be sent to the garbage collector.
+ * Currently, the data is loaded into appropriate classes from the FORTRAN-ish ReadTau class
+ * travelTimeInformation the constructor. However, travelTimeInformation the future, it will read
+ * files written by other Java classes. Note that after the data is loaded, ReadTau and all it's
+ * storage may be sent to the garbage collector.
  *
  * @author Ray Buland
  */
@@ -23,20 +24,25 @@ public class AllBranchReference {
   private final String earthModelName;
 
   /** A ModelDataReference object holding the P wave earth mode data */
-  private final ModelDataReference EarthModelP;
+  private final ModelDataReference earthModelP;
 
   /** A ModelDataReference object holding the S wave earth mode data */
-  private final ModelDataReference EarthModelS;
+  private final ModelDataReference earthModels;
 
-  /** An array of */
-  final BranchDataReference[] branches; // Surface focus branch data
+  /** An array of BranchDataReference objects containing the surface focus branch data */
+  private final BranchDataReference[] surfaceBranches;
 
-  final UpGoingDataReference pUp, sUp; // Up-going branch data
+  /** An UpGoingDataReference object containing the up-going P branch data */
+  private final UpGoingDataReference upgoingPBranchData;
+
+  /** An UpGoingDataReference object containing the up-going S branch data */
+  private final UpGoingDataReference upgoingSBranchData;
 
   /** A ModelConversions object containing model dependent constants and conversions */
   private final ModelConversions modelConversions;
 
-  final AuxiliaryTTReference auxtt; // Model independent auxiliary data
+  /** A AuxiliaryTTReference object holding the model independent auxiliary data */
+  private final AuxiliaryTTReference auxTTData;
 
   /**
    * Function to return the model name
@@ -62,7 +68,7 @@ public class AllBranchReference {
    * @return A ModelDataReference object holding the P wave earth mode data
    */
   public ModelDataReference getEarthModelP() {
-    return EarthModelP;
+    return earthModelP;
   }
 
   /**
@@ -71,178 +77,242 @@ public class AllBranchReference {
    * @return A ModelDataReference object holding the S wave earth mode data
    */
   public ModelDataReference getEarthModelS() {
-    return EarthModelS;
+    return earthModels;
   }
 
   /**
-   * Load all data from TauRead into more convenient Java classes.
+   * Get tthe surface focus branch data
    *
-   * @param serName Name of the model serialization file
-   * @param in The TauRead data source
-   * @param auxtt The auxiliary data source
-   * @throws IOException If serialization file write fails
+   * @return An array of BranchDataReference objects containing the surface focus branch data
    */
-  public AllBranchReference(String serName, ReadTau in, AuxiliaryTTReference auxtt)
-      throws IOException {
-    String[] segCode;
-
-    // Remember the input data.
-    this.earthModelName = in.modelName;
-    this.auxtt = auxtt;
-
-    // Set up the conversion constants, etc.
-    modelConversions = new ModelConversions(in);
-
-    // Set up the Earth model.
-    EarthModelP = new ModelDataReference(in, modelConversions, 'P');
-    EarthModelS = new ModelDataReference(in, modelConversions, 'S');
-
-    // Set up the segment codes first.
-    segCode = new String[in.numSeg];
-    int i = -1;
-    int endSeg = 0;
-    for (int j = 0; j < in.numBrn; j++) {
-      // Look for a new segment.
-      if (in.indexBrn[j][0] > endSeg) {
-        endSeg = in.indexSeg[++i][1];
-      }
-      // Set the segment code.
-      segCode[i] = TauUtilities.phSeg(in.phCode[j]);
-    }
-
-    // Load the branch data.
-    branches = new BranchDataReference[in.numBrn];
-    ExtraPhases extra = new ExtraPhases(auxtt);
-    i = -1;
-    endSeg = 0;
-    // Loop over branches setting them up.
-    for (int j = 0; j < in.numBrn; j++) {
-      // Look for a new segment.
-      if (in.indexBrn[j][0] > endSeg) {
-        endSeg = in.indexSeg[++i][1];
-      }
-      // Load the branch data.
-      branches[j] = new BranchDataReference(in, j, i, segCode[i], extra, auxtt);
-    }
-
-    // Set up the up-going branch data.
-    pUp = new UpGoingDataReference(in, 'P');
-    sUp = new UpGoingDataReference(in, 'S');
-
-    // Serialize the model out.
-    if (serName != null) {
-      serialOut(serName);
-    }
+  public BranchDataReference[] getSurfaceBranches() {
+    return surfaceBranches;
   }
 
   /**
-   * Load data from the tau-p table generation classes into the classes supporting the actual
-   * travel-time generation. Note that this two step process provides the flexibility to get the
-   * data from various places and also allows the reference classes to make all the data final.
+   * Get the up-going P branch data
    *
-   * @param serName Name of the model serialization file
-   * @param finModel Travel-time table generation final tau model
-   * @param brnData Travel-time table generation branch data
-   * @param auxtt The auxiliary data source
+   * @return An UpGoingDataReference object containing the up-going P branch data
+   */
+  public UpGoingDataReference getUpgoingPBranchData() {
+    return upgoingPBranchData;
+  }
+
+  /**
+   * Get the up-going S branch data
+   *
+   * @return An UpGoingDataReference object containing the up-going S branch data
+   */
+  public UpGoingDataReference getUpgoingSBranchData() {
+    return upgoingSBranchData;
+  }
+
+  /**
+   * Get the model independent auxiliary data
+   *
+   * @return A AuxiliaryTTReference object holding the model independent auxiliary data
+   */
+  public AuxiliaryTTReference getAuxTTData() {
+    return auxTTData;
+  }
+
+  /**
+   * AllBranchReference constuctor, load all data from the legacy FORTRAN generated format for
+   * travel-time header and table information into more convenient Java classes.
+   *
+   * @param serializationFileName A string containing the path and name of the model serialization
+   *     file
+   * @param travelTimeInformation A ReadTau object containing the travel-time header and table
+   *     information read from the legacy FORTRAN generated format
+   * @param auxTTData An AuxiliaryTTReference object holding the model independent auxiliary data
    * @throws IOException If serialization file write fails
    */
   public AllBranchReference(
-      String serName, TauModel finModel, ArrayList<BranchData> brnData, AuxiliaryTTReference auxtt)
+      String serializationFileName, ReadTau travelTimeInformation, AuxiliaryTTReference auxTTData)
       throws IOException {
-
     // Remember the input data.
-    this.earthModelName = finModel.getReferenceEarthModelName();
-    this.auxtt = auxtt;
+    this.earthModelName = travelTimeInformation.modelName;
+    this.auxTTData = auxTTData;
 
     // Set up the conversion constants, etc.
-    modelConversions = finModel.getModelConversions();
+    modelConversions = new ModelConversions(travelTimeInformation);
 
     // Set up the Earth model.
-    EarthModelP = new ModelDataReference(finModel, modelConversions, 'P');
-    EarthModelS = new ModelDataReference(finModel, modelConversions, 'S');
+    earthModelP = new ModelDataReference(travelTimeInformation, modelConversions, 'P');
+    earthModels = new ModelDataReference(travelTimeInformation, modelConversions, 'S');
+
+    // Set up the segment codes first.
+    String[] segmentCodes = new String[travelTimeInformation.numSeg];
+    int i = -1;
+    int endSegmentIndex = 0;
+
+    // loop over surfaceBranches looking for segment codes
+    for (int j = 0; j < travelTimeInformation.numBrn; j++) {
+      // Look for a new segment.
+      if (travelTimeInformation.indexBrn[j][0] > endSegmentIndex) {
+        endSegmentIndex = travelTimeInformation.indexSeg[++i][1];
+      }
+
+      // Set the segment code.
+      segmentCodes[i] = TauUtilities.phSeg(travelTimeInformation.phaseCode[j]);
+    }
 
     // Load the branch data.
-    branches = new BranchDataReference[brnData.size()];
-    ExtraPhases extra = new ExtraPhases(auxtt);
-    // Loop over branches setting them up.
-    for (int j = 0; j < branches.length; j++) {
-      branches[j] = new BranchDataReference(brnData.get(j), j, extra, auxtt);
+    surfaceBranches = new BranchDataReference[travelTimeInformation.numBrn];
+    ExtraPhases extra = new ExtraPhases(auxTTData);
+    i = -1;
+    endSegmentIndex = 0;
+
+    // Loop over surfaceBranches setting them up.
+    for (int j = 0; j < travelTimeInformation.numBrn; j++) {
+      // Look for a new segment.
+      if (travelTimeInformation.indexBrn[j][0] > endSegmentIndex) {
+        endSegmentIndex = travelTimeInformation.indexSeg[++i][1];
+      }
+
+      // Load the branch data.
+      surfaceBranches[j] =
+          new BranchDataReference(travelTimeInformation, j, i, segmentCodes[i], extra, auxTTData);
     }
 
     // Set up the up-going branch data.
-    pUp = new UpGoingDataReference(finModel, 'P');
-    sUp = new UpGoingDataReference(finModel, 'S');
+    upgoingPBranchData = new UpGoingDataReference(travelTimeInformation, 'P');
+    upgoingSBranchData = new UpGoingDataReference(travelTimeInformation, 'S');
 
     // Serialize the model out.
-    if (serName != null) {
-      serialOut(serName);
+    if (serializationFileName != null) {
+      serializeModelToFile(serializationFileName);
     }
   }
 
   /**
-   * Load data from the model serialization file.
+   * AllBranchReference constuctor, Load data from the tau-p table generation classes into the
+   * classes supporting the actual travel-time generation. Note that this two step process provides
+   * the flexibility to get the data from various places and also allows the reference classes to
+   * make all the data final.
    *
-   * @param serName Name of the model serialization file
-   * @param earthModelName Earth model name
-   * @param auxtt The auxiliary data source
+   * @param serializationFileName A string containing the path and name of the model serialization
+   *     file
+   * @param finalTauModel A TauModel object containing the travel-time table generation final tau
+   *     model
+   * @param branchData An ArrayList of BranchData objects holding the travel-time table generation
+   *     branch data
+   * @param auxTTData An AuxiliaryTTReference object holding the model independent auxiliary data
+   * @throws IOException If serialization file write fails
+   */
+  public AllBranchReference(
+      String serializationFileName,
+      TauModel finalTauModel,
+      ArrayList<BranchData> branchData,
+      AuxiliaryTTReference auxTTData)
+      throws IOException {
+
+    // Remember the input data.
+    this.earthModelName = finalTauModel.getReferenceEarthModelName();
+    this.auxTTData = auxTTData;
+
+    // Set up the conversion constants, etc.
+    modelConversions = finalTauModel.getModelConversions();
+
+    // Set up the Earth model.
+    earthModelP = new ModelDataReference(finalTauModel, modelConversions, 'P');
+    earthModels = new ModelDataReference(finalTauModel, modelConversions, 'S');
+
+    // Load the branch data.
+    surfaceBranches = new BranchDataReference[branchData.size()];
+    ExtraPhases extra = new ExtraPhases(auxTTData);
+
+    // Loop over surfaceBranches setting them up.
+    for (int j = 0; j < surfaceBranches.length; j++) {
+      surfaceBranches[j] = new BranchDataReference(branchData.get(j), j, extra, auxTTData);
+    }
+
+    // Set up the up-going branch data.
+    upgoingPBranchData = new UpGoingDataReference(finalTauModel, 'P');
+    upgoingSBranchData = new UpGoingDataReference(finalTauModel, 'S');
+
+    // Serialize the model out.
+    if (serializationFileName != null) {
+      serializeModelToFile(serializationFileName);
+    }
+  }
+
+  /**
+   * AllBranchReference, load data from the model serialization file.
+   *
+   * @param serializationFileName A string containing the path and name of the model serialization
+   *     file
+   * @param earthModelName A string containing the earth model name
+   * @param auxTTDataAn AuxiliaryTTReference object holding the model independent auxiliary data
    * @throws IOException If serialization read fails
    * @throws ClassNotFoundException Serialization object mismatch
    */
-  public AllBranchReference(String serName, String earthModelName, AuxiliaryTTReference auxtt)
+  public AllBranchReference(
+      String serializationFileName, String earthModelName, AuxiliaryTTReference auxTTData)
       throws IOException, ClassNotFoundException {
-    FileInputStream serIn;
-    ObjectInputStream objIn;
-    FileLock lock;
-
     // Remember the input data.
     this.earthModelName = earthModelName;
-    this.auxtt = auxtt;
+    this.auxTTData = auxTTData;
 
     // Read the model.
-    serIn = new FileInputStream(serName);
-    objIn = new ObjectInputStream(serIn);
+    FileInputStream serIn = new FileInputStream(serializationFileName);
+    ObjectInputStream objIn = new ObjectInputStream(serIn);
+
     // Wait for a shared lock for reading.
-    lock = serIn.getChannel().lock(0, Long.MAX_VALUE, true);
+    FileLock lock = serIn.getChannel().lock(0, Long.MAX_VALUE, true);
+
     //	System.out.println("AllBrnRef read lock: valid = "+lock.isValid()+
     //			" shared = "+lock.isShared());
+
+    // read in the model conversions
     modelConversions = (ModelConversions) objIn.readObject();
-    EarthModelP = (ModelDataReference) objIn.readObject();
-    EarthModelS = (ModelDataReference) objIn.readObject();
-    branches = (BranchDataReference[]) objIn.readObject();
-    pUp = (UpGoingDataReference) objIn.readObject();
-    sUp = (UpGoingDataReference) objIn.readObject();
-    if (lock.isValid()) lock.release();
+
+    // read in the model data
+    earthModelP = (ModelDataReference) objIn.readObject();
+    earthModels = (ModelDataReference) objIn.readObject();
+
+    // read in the branches
+    surfaceBranches = (BranchDataReference[]) objIn.readObject();
+    upgoingPBranchData = (UpGoingDataReference) objIn.readObject();
+    upgoingSBranchData = (UpGoingDataReference) objIn.readObject();
+
+    // release the lock
+    if (lock.isValid()) {
+      lock.release();
+    }
+
+    // close the files
     objIn.close();
     serIn.close();
   }
 
   /**
-   * Get the number of travel-time branches loaded.
+   * Function to get the number of travel-time surface branches loaded.
    *
-   * @return Number of travel-time branches loaded.
+   * @return Number of travel-time surface branches loaded.
    */
-  public int getNoBranches() {
-    return branches.length;
+  public int getNumberOfBranches() {
+    return surfaceBranches.length;
   }
 
   /**
-   * Serialize the model classes out to a file.
+   * Function to Serialize the model classes out to a file.
    *
-   * @param serName Name of the model serialization file
+   * @param serializationFileName A string containing the path and name of the model serialization
+   *     file
    * @throws IOException On any serialization IO error
    */
-  private void serialOut(String serName) throws IOException {
-    FileOutputStream serOut;
-    ObjectOutputStream objOut;
-    FileLock lock;
-
+  private void serializeModelToFile(String serializationFileName) throws IOException {
     // Write out the serialized file.
-    serOut = new FileOutputStream(serName);
-    objOut = new ObjectOutputStream(serOut);
+    FileOutputStream serOut = new FileOutputStream(serializationFileName);
+    ObjectOutputStream objOut = new ObjectOutputStream(serOut);
+
     // Wait for an exclusive lock for writing.
-    lock = serOut.getChannel().lock();
+    FileLock lock = serOut.getChannel().lock();
+
     //	System.out.println("AllBrnRef write lock: valid = "+lock.isValid()+
     //			" shared = "+lock.isShared());
+
     /*
      * The Earth model data can be read and written very quickly, so for persistent
      * applications such as the travel time or location server, serialization is
@@ -250,19 +320,31 @@ public class AllBranchReference {
      * that start and stop frequently, the serialization should save some set up
      * time.
      */
+
+    // write out the model conversions
     objOut.writeObject(modelConversions);
-    objOut.writeObject(EarthModelP);
-    objOut.writeObject(EarthModelS);
-    objOut.writeObject(branches);
-    objOut.writeObject(pUp);
-    objOut.writeObject(sUp);
-    if (lock.isValid()) lock.release();
+
+    // write the model data
+    objOut.writeObject(earthModelP);
+    objOut.writeObject(earthModels);
+
+    // write the branch data
+    objOut.writeObject(surfaceBranches);
+    objOut.writeObject(upgoingPBranchData);
+    objOut.writeObject(upgoingSBranchData);
+
+    // release the lock
+    if (lock.isValid()) {
+      lock.release();
+    }
+
+    // close the files
     objOut.close();
     serOut.close();
   }
 
-  /** Print global or header data for debugging purposes. */
-  public void dumpHead() {
+  /** Function to print global or header data for debugging purposes. */
+  public void dumpHeaderData() {
     System.out.println("\n     " + earthModelName);
     System.out.format(
         "Normalization: xNorm =%11.4e  vNorm =%11.4e  " + "tNorm =%11.4e\n",
@@ -276,88 +358,97 @@ public class AllBranchReference {
   }
 
   /**
-   * Print model parameters for debugging purposes.
+   * Function to print model parameters for debugging purposes.
    *
-   * @param typeMod Wave type ('P' or 'S')
-   * @param nice If true print the model in dimensional units
+   * @param waveType A char containing the wave type ('P' = compressional, 'S' = shear)
+   * @param nice A boolean flag indicating whether to print the model travelTimeInformation
+   *     dimensional units
    */
-  public void dumpMod(char typeMod, boolean nice) {
-    if (typeMod == 'P') {
-      EarthModelP.dumpMod(nice);
-    } else if (typeMod == 'S') {
-      EarthModelS.dumpMod(nice);
+  public void dumpModelParams(char waveType, boolean nice) {
+    if (waveType == 'P') {
+      earthModelP.dumpMod(nice);
+    } else if (waveType == 'S') {
+      earthModels.dumpMod(nice);
     }
   }
 
   /**
-   * Print data for one travel-time branch for debugging purposes.
+   * Function to print surface branch data for one travel-time branch for debugging purposes.
    *
-   * @param iBrn Branch number
-   * @param full If true print the detailed branch specification as well
+   * @param branchIndex An integer containing the branch index number
+   * @param full A boolean flag indicating whether to print the detailed branch specification as
+   *     well
    */
-  public void dumpBrn(int iBrn, boolean full) {
-    branches[iBrn].dumpBrn(full);
+  public void dumpBranchData(int branchIndex, boolean full) {
+    surfaceBranches[branchIndex].dumpBrn(full);
   }
 
   /**
-   * Print data for one travel-time phase code for debugging purposes.
+   * Function to print surface branch data for one travel-time phase code for debugging purposes.
    *
-   * @param phCode Phase code
-   * @param full If true, print the detailed specification for each branch as well
+   * @param phaseCode A string containing the desired phase code
+   * @param full A boolean flag indicating whether to print the detailed branch specification as
+   *     well
    */
-  public void dumpBrn(String phCode, boolean full) {
-    for (int j = 0; j < branches.length; j++) {
-      if (branches[j].phCode.equals(phCode)) branches[j].dumpBrn(full);
+  public void dumpBranchData(String phaseCode, boolean full) {
+    for (int j = 0; j < surfaceBranches.length; j++) {
+      if (surfaceBranches[j].phaseCode.equals(phaseCode)) {
+        surfaceBranches[j].dumpBrn(full);
+      }
     }
   }
 
   /**
-   * Print data for all travel-time segments for debugging purposes.
+   * Function to print data for all surface branches for debugging purposes.
    *
-   * @param full If true, print the detailed specification for each branch as well
+   * @param full A boolean flag indicating whether to print the detailed branch specification as
+   *     well
    */
-  public void dumpBrn(boolean full) {
-    for (int j = 0; j < branches.length; j++) {
-      branches[j].dumpBrn(full);
+  public void dumpBranchData(boolean full) {
+    for (int j = 0; j < surfaceBranches.length; j++) {
+      surfaceBranches[j].dumpBrn(full);
     }
   }
 
   /**
-   * Print data for one travel-time segment for debugging purposes.
+   * Function to print data for one travel-time segment for debugging purposes.
    *
-   * @param seg Segment phase code
-   * @param full If true, print the detailed specification for each branch as well
+   * @param segmentPhaseCode A String containing the segment phase code
+   * @param full A boolean flag indicating whether to print the detailed branch specification as
+   *     well
    */
-  public void dumpSeg(String seg, boolean full) {
-    for (int j = 0; j < branches.length; j++) {
-      if (branches[j].getPhSeg().equals(seg)) branches[j].dumpBrn(full);
+  public void dumpSegment(String segmentPhaseCode, boolean full) {
+    for (int j = 0; j < surfaceBranches.length; j++) {
+      if (surfaceBranches[j].getPhSeg().equals(segmentPhaseCode)) {
+        surfaceBranches[j].dumpBrn(full);
+      }
     }
   }
 
   /**
-   * Print data for one up-going branch for debugging purposes.
+   * Function to print data for one up-going branch for debugging purposes.
    *
-   * @param typeUp Wave type ('P' or 'S')
-   * @param iUp Depth index
+   * @param waveType A char containing the wave type ('P' = compressional, 'S' = shear)
+   * @param depthIndex An integer contaiing the depth index
    */
-  public void dumpUp(char typeUp, int iUp) {
-    if (typeUp == 'P') {
-      pUp.dumpUp(iUp);
-    } else if (typeUp == 'S') {
-      sUp.dumpUp(iUp);
+  public void dumpUpGoingData(char waveType, int depthIndex) {
+    if (waveType == 'P') {
+      upgoingPBranchData.dumpUp(depthIndex);
+    } else if (waveType == 'S') {
+      upgoingSBranchData.dumpUp(depthIndex);
     }
   }
 
   /**
-   * Print data for all up-going branches for debugging purposes.
+   * Function to print data for all up-going branches for debugging purposes.
    *
-   * @param typeUp Wave type ('P' or 'S')
+   * @param waveType A char containing the wave type ('P' = compressional, 'S' = shear)
    */
-  public void dumpUp(char typeUp) {
-    if (typeUp == 'P') {
-      pUp.dumpUp(EarthModelP, modelConversions);
-    } else if (typeUp == 'S') {
-      sUp.dumpUp(EarthModelS, modelConversions);
+  public void dumpUpGoingData(char waveType) {
+    if (waveType == 'P') {
+      upgoingPBranchData.dumpUp(earthModelP, modelConversions);
+    } else if (waveType == 'S') {
+      upgoingSBranchData.dumpUp(earthModels, modelConversions);
     }
   }
 }

@@ -31,7 +31,7 @@ public class TravelTimePlot {
   /**
    * Add one plot point for one travel-time branch.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @param uniqueCode A unique phase code for branches with duplicate names (two versions for
    *     PKPab/PKPbc)
    * @param delta Distance in degrees
@@ -41,7 +41,7 @@ public class TravelTimePlot {
    * @param dTdD Ray parameter in seconds/degree
    */
   public void addPoint(
-      String phCode,
+      String phaseCode,
       String[] uniqueCode,
       double delta,
       double tt,
@@ -51,14 +51,14 @@ public class TravelTimePlot {
     String key;
     TravelTimeBranch branch;
 
-    if (!phCode.contains("bc")) {
+    if (!phaseCode.contains("bc")) {
       key = uniqueCode[0];
     } else {
       key = uniqueCode[1];
     }
     branch = branches.get(key);
     if (branch == null) {
-      branch = new TravelTimeBranch(phCode);
+      branch = new TravelTimeBranch(phaseCode);
       branches.put(key, branch);
     }
     branch.addPoint(new TravelTimePlotPoint(delta, tt, spread, observ, dTdD));

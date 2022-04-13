@@ -122,7 +122,7 @@ public class TravelTimeService implements gov.usgs.processingformats.TravelTimeS
           // build travel time data
           gov.usgs.processingformats.TravelTimeData data =
               new gov.usgs.processingformats.TravelTimeData();
-          data.Phase = phase.phCode;
+          data.Phase = phase.phaseCode;
           data.TravelTime = phase.tt;
           data.DistanceDerivative = phase.dTdD;
           data.DepthDerivative = phase.dTdZ;
@@ -249,7 +249,7 @@ public class TravelTimeService implements gov.usgs.processingformats.TravelTimeS
 
         // build travel time branch
         TravelTimePlotDataBranch dataBranch = new TravelTimePlotDataBranch();
-        dataBranch.Phase = branch.phCode;
+        dataBranch.Phase = branch.phaseCode;
 
         ArrayList<TravelTimePlotDataSample> dataSamples = new ArrayList<TravelTimePlotDataSample>();
         for (int i = 0; i < branch.branch.size(); i++) {

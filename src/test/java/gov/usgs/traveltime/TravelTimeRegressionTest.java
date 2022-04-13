@@ -73,7 +73,7 @@ public class TravelTimeRegressionTest {
 
     // check the first TravelTime
     TravelTimeData firstTravelTime = ttList1.getPhase(0);
-    Assertions.assertEquals("Pg", firstTravelTime.getPhCode(), "TravelTime first phase code:");
+    Assertions.assertEquals("Pg", firstTravelTime.getphaseCode(), "TravelTime first phase code:");
     Assertions.assertEquals(
         19.234, firstTravelTime.getTT(), 0.001, "TravelTime first arrival time:");
     Assertions.assertEquals(
@@ -106,7 +106,7 @@ public class TravelTimeRegressionTest {
 
     // check the first TravelTime
     firstTravelTime = ttList2.getPhase(0);
-    Assertions.assertEquals("P", firstTravelTime.getPhCode(), "TravelTime first phase code:");
+    Assertions.assertEquals("P", firstTravelTime.getphaseCode(), "TravelTime first phase code:");
     Assertions.assertEquals(
         779.729, firstTravelTime.getTT(), 0.001, "TravelTime first arrival time:");
     Assertions.assertEquals(
@@ -139,7 +139,8 @@ public class TravelTimeRegressionTest {
 
     // check the first TravelTime
     firstTravelTime = ttList3.getPhase(0);
-    Assertions.assertEquals("PKPdf", firstTravelTime.getPhCode(), "TravelTime first phase code:");
+    Assertions.assertEquals(
+        "PKPdf", firstTravelTime.getphaseCode(), "TravelTime first phase code:");
     Assertions.assertEquals(
         1210.790, firstTravelTime.getTT(), 0.001, "TravelTime first arrival time:");
     Assertions.assertEquals(

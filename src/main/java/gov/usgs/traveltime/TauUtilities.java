@@ -176,73 +176,73 @@ public class TauUtilities {
   /**
    * Create a segment code by stripping a phase code of unnecessary frippery.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @return Segment code
    */
-  public static String phSeg(String phCode) {
+  public static String phSeg(String phaseCode) {
     int index;
     String phGen;
 
-    if ((index = phCode.indexOf("df")) >= 0) return phCode.substring(0, index);
-    if ((index = phCode.indexOf("ab")) >= 0) return phCode.substring(0, index);
-    if ((index = phCode.indexOf("ac")) >= 0) return phCode.substring(0, index);
-    if ((index = phCode.indexOf("g")) >= 0) {
-      phGen = phCode.substring(0, index) + phCode.substring(index + 1, phCode.length());
+    if ((index = phaseCode.indexOf("df")) >= 0) return phaseCode.substring(0, index);
+    if ((index = phaseCode.indexOf("ab")) >= 0) return phaseCode.substring(0, index);
+    if ((index = phaseCode.indexOf("ac")) >= 0) return phaseCode.substring(0, index);
+    if ((index = phaseCode.indexOf("g")) >= 0) {
+      phGen = phaseCode.substring(0, index) + phaseCode.substring(index + 1, phaseCode.length());
       if ((index = phGen.indexOf("g")) >= 0) return phGen.substring(0, index);
       else return phGen;
     }
-    if ((index = phCode.indexOf("b")) >= 0) {
-      phGen = phCode.substring(0, index) + phCode.substring(index + 1, phCode.length());
+    if ((index = phaseCode.indexOf("b")) >= 0) {
+      phGen = phaseCode.substring(0, index) + phaseCode.substring(index + 1, phaseCode.length());
       if ((index = phGen.indexOf("b")) >= 0) return phGen.substring(0, index);
       else return phGen;
     }
-    if ((index = phCode.indexOf("n")) >= 0) {
-      phGen = phCode.substring(0, index) + phCode.substring(index + 1, phCode.length());
+    if ((index = phaseCode.indexOf("n")) >= 0) {
+      phGen = phaseCode.substring(0, index) + phaseCode.substring(index + 1, phaseCode.length());
       if ((index = phGen.indexOf("n")) >= 0) return phGen.substring(0, index);
       else return phGen;
     }
-    return phCode;
+    return phaseCode;
   }
 
   /**
    * Make phase codes unique by appending a reference number. This is needed to keep branches
    * straight in the plot data.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @return Unique phase code
    */
-  public static String uniqueCode(String phCode) {
+  public static String uniqueCode(String phaseCode) {
     Integer no;
 
     if (unique == null) unique = new TreeMap<String, Integer>();
-    no = unique.get(phCode);
+    no = unique.get(phaseCode);
     if (no != null) {
-      unique.replace(phCode, ++no);
+      unique.replace(phaseCode, ++no);
     } else {
       no = 0;
-      unique.put(phCode, no);
+      unique.put(phaseCode, no);
     }
-    return phCode + no;
+    return phaseCode + no;
   }
 
   /**
    * Classify seismic phases according to their wave type at the receiver.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @return 'P' for a p-wave, 'S' for an s-wave, 'L' for an Lg, and 'R' for an LR.
    */
-  public static char arrivalType(String phCode) {
+  public static char arrivalType(String phaseCode) {
     // Try the common cases first.
-    for (int j = phCode.length() - 1; j >= 0; j--) {
-      if (phCode.charAt(j) == 'P') {
+    for (int j = phaseCode.length() - 1; j >= 0; j--) {
+      if (phaseCode.charAt(j) == 'P') {
         return 'P';
-      } else if (phCode.charAt(j) == 'S') {
+      } else if (phaseCode.charAt(j) == 'S') {
         return 'S';
       }
     }
     // Then do the special cases.
-    if (phCode.equals("Lg")) return 'L';
-    else if (phCode.equals("LR")) return 'R';
+    if (phaseCode.equals("Lg")) return 'L';
+    else if (phaseCode.equals("LR")) return 'R';
     // This should never happen.
     else return ' ';
   }
@@ -250,12 +250,12 @@ public class TauUtilities {
   /**
    * Determine if a phase has been converted at the Earth's surface.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @return True if the phase has been converted at the surface
    */
-  public static boolean isConverted(String phCode) {
-    if ((phCode.contains("p") || phCode.contains("P"))
-        && (phCode.contains("s") || phCode.contains("S"))) {
+  public static boolean isConverted(String phaseCode) {
+    if ((phaseCode.contains("p") || phaseCode.contains("P"))
+        && (phaseCode.contains("s") || phaseCode.contains("S"))) {
       return true;
     } else {
       return false;
@@ -270,7 +270,7 @@ public class TauUtilities {
    */
   public static void filterDef(ArrayList<TravelTimeData> TravelTimes) {
     for (int j = 1; j < TravelTimes.size(); j++) {
-      if (TravelTimes.get(j).phCode.equals(TravelTimes.get(j - 1).phCode)
+      if (TravelTimes.get(j).phaseCode.equals(TravelTimes.get(j - 1).phaseCode)
           && TravelTimes.get(j).tt - TravelTimes.get(j - 1).tt <= DTCHATTER) {
         TravelTimes.remove(j--);
       }
@@ -330,7 +330,7 @@ public class TauUtilities {
   public static void filterBack(ArrayList<TravelTimeData> TravelTimes) {
     for (int j = 0; j < TravelTimes.size() - 1; j++) {
       for (int i = j + 1; i < TravelTimes.size(); i++) {
-        if (TravelTimes.get(j).phCode.equals(TravelTimes.get(i).phCode)) {
+        if (TravelTimes.get(j).phaseCode.equals(TravelTimes.get(i).phaseCode)) {
           TravelTimes.remove(i--);
         }
       }
@@ -351,11 +351,13 @@ public class TauUtilities {
   public static void filterTect(ArrayList<TravelTimeData> TravelTimes) {
     for (int j = 0; j < TravelTimes.size(); j++) {
       // Turn Pbs into Pgs.
-      if (TravelTimes.get(j).phCode.contains("Pb") && !TravelTimes.get(j).phCode.contains("K")) {
+      if (TravelTimes.get(j).phaseCode.contains("Pb")
+          && !TravelTimes.get(j).phaseCode.contains("K")) {
         TravelTimes.get(j).replace("Pb", "Pg");
       }
       // Turn Sbs into Sgs.
-      if (TravelTimes.get(j).phCode.contains("Sb") && !TravelTimes.get(j).phCode.contains("K")) {
+      if (TravelTimes.get(j).phaseCode.contains("Sb")
+          && !TravelTimes.get(j).phaseCode.contains("K")) {
         TravelTimes.get(j).replace("Sb", "Sg");
       }
     }
@@ -390,7 +392,8 @@ public class TauUtilities {
       for (int j = 0; j < TravelTimes.size(); j++) {
         if (delta > MAXDELSN) {
           // Filter Sn, pSn, and sSn at large distances.
-          if (TravelTimes.get(j).phCode.contains("Sn") && TravelTimes.get(j).phCode.length() < 4) {
+          if (TravelTimes.get(j).phaseCode.contains("Sn")
+              && TravelTimes.get(j).phaseCode.length() < 4) {
             TravelTimes.remove(j);
             break;
           }

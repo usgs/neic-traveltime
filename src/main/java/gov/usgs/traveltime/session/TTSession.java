@@ -24,7 +24,8 @@ import java.util.TreeMap;
 /** @author U.S. Geological Survey &lt;ketchum at usgs.gov&gt; */
 public class TTSession {
   private static AuxiliaryTTReference auxtt;
-  private static final TreeMap<String, AllBranchReference> modelData = new TreeMap();
+  private static final TreeMap<String, AllBranchReference> modelData =
+      new TreeMap<String, AllBranchReference>();
   // private static final TreeMap<String, ArrayList<AllBranchVolume>> modelAllBranchVolumeFree = new
   // TreeMap<>();
   // private static final TreeMap<String, ArrayList<AllBranchVolume>> modelAllBranchVolumeAssigned =
@@ -274,7 +275,7 @@ public class TTSession {
           }
         }
         modelData.put(earthModel, allRef);
-        allRef.dumpBrn(false);
+        allRef.dumpBranchData(false);
       }
       // At this point, we've either found the reference part of the model
       // or read it in.  Now Set up the (depth dependent) volatile part.

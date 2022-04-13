@@ -129,7 +129,7 @@ public class AuxiliaryTTReference {
       // Scan phase statistics until we run out.
       do {
         TravelTimeStatistics = read1StatHead();
-        TravelTimeStatisticss.put(TravelTimeStatistics.phCode, TravelTimeStatistics);
+        TravelTimeStatisticss.put(TravelTimeStatistics.phaseCode, TravelTimeStatistics);
         read1StatData(new TravelTimeStatisticsLinearFit(TravelTimeStatistics));
       } while (scan.hasNext());
       inStats.close();
@@ -142,7 +142,7 @@ public class AuxiliaryTTReference {
       nDepth = eDepth.EllipticityDepths.length;
       do {
         Ellipticity = read1Ellipticity();
-        Ellipticitys.put(Ellipticity.phCode, Ellipticity);
+        Ellipticitys.put(Ellipticity.phaseCode, Ellipticity);
       } while (scan.hasNext());
       inEllipticity.close();
 
@@ -464,15 +464,15 @@ public class AuxiliaryTTReference {
    * @return Statistics object
    */
   private TravelTimeStatistics read1StatHead() {
-    String phCode;
+    String phaseCode;
     int minDelta, maxDelta;
     TravelTimeStatistics TravelTimeStatistics;
 
     // Get the phase header.
-    phCode = nextCode;
+    phaseCode = nextCode;
     minDelta = scan.nextInt();
     maxDelta = scan.nextInt();
-    TravelTimeStatistics = new TravelTimeStatistics(phCode, minDelta, maxDelta);
+    TravelTimeStatistics = new TravelTimeStatistics(phaseCode, minDelta, maxDelta);
     return TravelTimeStatistics;
   }
 
@@ -619,7 +619,7 @@ public class AuxiliaryTTReference {
    * @return Ellipticity object
    */
   private Ellipticity read1Ellipticity() {
-    String phCode;
+    String phaseCode;
     int nDelta;
     @SuppressWarnings("unused")
     double delta;
@@ -628,7 +628,7 @@ public class AuxiliaryTTReference {
     Ellipticity Ellipticity;
 
     // Read the header.
-    phCode = scan.next();
+    phaseCode = scan.next();
     nDelta = scan.nextInt();
     minDelta = scan.nextDouble();
     maxDelta = scan.nextDouble();
@@ -645,40 +645,40 @@ public class AuxiliaryTTReference {
       for (int i = 0; i < nDepth; i++) t2[j][i] = scan.nextDouble();
     }
     // Return the result.
-    Ellipticity = new Ellipticity(phCode, minDelta, maxDelta, t0, t1, t2);
+    Ellipticity = new Ellipticity(phaseCode, minDelta, maxDelta, t0, t1, t2);
     return Ellipticity;
   }
 
   /**
    * Get the Ellipticity correction data for the desired phase.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @return Ellipticity data
    */
-  public Ellipticity findEllipticity(String phCode) {
+  public Ellipticity findEllipticity(String phaseCode) {
     if (Ellipticitys == null) return null;
-    else return Ellipticitys.get(phCode);
+    else return Ellipticitys.get(phaseCode);
   }
 
   /** Reorganize the flags from ArrayLists of phases by group to a TreeMap of flags by phase. */
   private void makePhFlags() {
-    String phCode, PhaseGroup;
+    String phaseCode, PhaseGroup;
 
     // Search the phase groups for phases.
     for (int j = 0; j < PhaseGroups.size(); j++) {
       PhaseGroup = PhaseGroups.get(j).groupName;
       for (int i = 0; i < PhaseGroups.get(j).phases.size(); i++) {
-        phCode = PhaseGroups.get(j).phases.get(i);
-        unTangle(phCode, PhaseGroup);
+        phaseCode = PhaseGroups.get(j).phases.get(i);
+        unTangle(phaseCode, PhaseGroup);
         phFlags.put(
-            phCode,
+            phaseCode,
             new TravelTimeFlags(
                 PhaseGroup,
                 compGroup(PhaseGroup),
-                isRegional(phCode),
-                isDepthPh(phCode),
-                canUse(phCode),
-                isDisPh(phCode),
+                isRegional(phaseCode),
+                isDepthPh(phaseCode),
+                canUse(phaseCode),
+                isDisPh(phaseCode),
                 TravelTimeStatistics,
                 Ellipticity,
                 upEllipticity));
@@ -689,17 +689,17 @@ public class AuxiliaryTTReference {
       if (auxGroups.get(j) != null) {
         PhaseGroup = auxGroups.get(j).groupName;
         for (int i = 0; i < auxGroups.get(j).phases.size(); i++) {
-          phCode = auxGroups.get(j).phases.get(i);
-          unTangle(phCode, PhaseGroup);
+          phaseCode = auxGroups.get(j).phases.get(i);
+          unTangle(phaseCode, PhaseGroup);
           phFlags.put(
-              phCode,
+              phaseCode,
               new TravelTimeFlags(
                   PhaseGroup,
                   compGroup(PhaseGroup),
-                  isRegional(phCode),
-                  isDepthPh(phCode),
-                  canUse(phCode),
-                  isDisPh(phCode),
+                  isRegional(phaseCode),
+                  isDepthPh(phaseCode),
+                  canUse(phaseCode),
+                  isDisPh(phaseCode),
                   TravelTimeStatistics,
                   Ellipticity,
                   upEllipticity));
@@ -711,22 +711,22 @@ public class AuxiliaryTTReference {
   /**
    * Do some fiddling to add the statistics and Ellipticity correction.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @param PhaseGroup Group code
    */
-  private void unTangle(String phCode, String PhaseGroup) {
+  private void unTangle(String phaseCode, String PhaseGroup) {
     // Get the travel-time statistics.
-    TravelTimeStatistics = findStats(phCode);
+    TravelTimeStatistics = findStats(phaseCode);
     // The Ellipticity is a little messier.
-    Ellipticity = findEllipticity(phCode);
+    Ellipticity = findEllipticity(phaseCode);
     if (Ellipticity == null) Ellipticity = findEllipticity(PhaseGroup);
     if (Ellipticity == null) {
-      if (phCode.equals("pwP")) Ellipticity = findEllipticity("pP");
-      else if (phCode.equals("PKPpre")) Ellipticity = findEllipticity("PKPdf");
+      if (phaseCode.equals("pwP")) Ellipticity = findEllipticity("pP");
+      else if (phaseCode.equals("PKPpre")) Ellipticity = findEllipticity("PKPdf");
       else if (PhaseGroup.contains("PKP")) Ellipticity = findEllipticity(PhaseGroup + "bc");
     }
     // Add up-going Ellipticity corrections.
-    if ((PhaseGroup.equals("P") || PhaseGroup.equals("S")) && !phCode.contains("dif")) {
+    if ((PhaseGroup.equals("P") || PhaseGroup.equals("S")) && !phaseCode.contains("dif")) {
       upEllipticity = findEllipticity(PhaseGroup + "up");
     } else {
       upEllipticity = null;
@@ -736,11 +736,11 @@ public class AuxiliaryTTReference {
   /**
    * Get flags, etc. by phase code.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @return Flags object
    */
-  public TravelTimeFlags findFlags(String phCode) {
-    return phFlags.get(phCode);
+  public TravelTimeFlags findFlags(String phaseCode) {
+    return phFlags.get(phaseCode);
   }
 
   /** Print phase flags. */
@@ -761,11 +761,11 @@ public class AuxiliaryTTReference {
           flags.isDepth,
           flags.dis);
       if (flags.TravelTimeStatistics == null) System.out.print("   stats = null    ");
-      else System.out.format("   stats = %-8s", flags.TravelTimeStatistics.phCode);
+      else System.out.format("   stats = %-8s", flags.TravelTimeStatistics.phaseCode);
       if (flags.Ellipticity == null) System.out.print(" Ellipticity = null    ");
-      else System.out.format(" Ellipticity = %-8s", flags.Ellipticity.phCode);
+      else System.out.format(" Ellipticity = %-8s", flags.Ellipticity.phaseCode);
       if (flags.upEllipticity == null) System.out.println(" upEllipticity = null");
-      else System.out.format(" upEllipticity = %-8s\n", flags.upEllipticity.phCode);
+      else System.out.format(" upEllipticity = %-8s\n", flags.upEllipticity.phaseCode);
     }
   }
 }

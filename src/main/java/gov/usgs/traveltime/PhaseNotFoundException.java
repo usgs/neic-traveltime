@@ -2,14 +2,14 @@ package gov.usgs.traveltime;
 
 public class PhaseNotFoundException extends Exception {
   private static final long serialVersionUID = 1L;
-  String phCode;
+  String phaseCode;
 
-  public PhaseNotFoundException(String phCode) {
-    super(phCode);
-    this.phCode = phCode;
+  public PhaseNotFoundException(String phaseCode) {
+    super(phaseCode);
+    this.phaseCode = phaseCode;
   }
 
   public String toString() {
-    return "Phase not found (" + phCode + ")";
+    return "Phase not found (" + phaseCode + ")";
   }
 }

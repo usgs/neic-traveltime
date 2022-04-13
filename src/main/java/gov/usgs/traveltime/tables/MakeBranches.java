@@ -469,7 +469,7 @@ public class MakeBranches {
 
         // We need to name each sub-branch.
         branch.setPhaseCode(
-            makePhCode(
+            makephaseCode(
                 shellTravCounts,
                 shell.getTempCode(rayTypes[1]),
                 shell.getTempCode(rayTypes[2]),
@@ -656,7 +656,7 @@ public class MakeBranches {
 
             // We need to name each sub-branch.
             branch.setPhaseCode(
-                makePhCode(
+                makephaseCode(
                     shellTravCounts,
                     shell1.getTempCode(rayTypes[1]),
                     shell2.getTempCode(rayTypes[2]),
@@ -954,7 +954,7 @@ public class MakeBranches {
    *     upper case for down-going)
    * @return A string containing the sub-branch phase code
    */
-  private String makePhCode(
+  private String makephaseCode(
       double[] shellTravCounts, String downCode, String retCode, char upType) {
     // Set a default to work with.
     String newCode = downCode.substring(1, 2) + retCode.substring(2);

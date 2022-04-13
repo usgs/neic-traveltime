@@ -74,14 +74,16 @@ public class AllBranchVolume {
     pModel = new ModDataVol(ref.getEarthModelP(), cvt);
     sModel = new ModDataVol(ref.getEarthModelS(), cvt);
     // Set up the up-going branch data.
-    pUp = new UpGoingDataVolume(ref.pUp, pModel, sModel, cvt);
-    sUp = new UpGoingDataVolume(ref.sUp, sModel, pModel, cvt);
+    pUp = new UpGoingDataVolume(ref.getUpgoingPBranchData(), pModel, sModel, cvt);
+    sUp = new UpGoingDataVolume(ref.getUpgoingSBranchData(), sModel, pModel, cvt);
 
     // Set up the branch data.
-    branches = new BranchDataVolume[ref.branches.length];
+    branches = new BranchDataVolume[ref.getSurfaceBranches().length];
     spline = new Spline();
     for (int j = 0; j < branches.length; j++) {
-      branches[j] = new BranchDataVolume(ref.branches[j], pUp, sUp, cvt, ref.auxtt, spline);
+      branches[j] =
+          new BranchDataVolume(
+              ref.getSurfaceBranches()[j], pUp, sUp, cvt, ref.getAuxTTData(), spline);
     }
   }
 
@@ -256,7 +258,7 @@ public class AllBranchVolume {
           for (int j = 0; j < branches.length; j++) {
             // See if this phase is selected (unless it's NEIC-useless).
             if (returnAllPhases || !branches[j].isUseless) {
-              branches[j].setCompute(testList(ref.branches[j].phCode));
+              branches[j].setCompute(testList(ref.getSurfaceBranches()[j].phaseCode));
             } else {
               branches[j].setCompute(false);
             }
@@ -449,8 +451,8 @@ public class AllBranchVolume {
         if (ttList.getNumPhases() > lastTT) {
           for (int k = lastTT; k < ttList.getNumPhases(); k++) {
             TravelTime = ttList.getPhase(k);
-            flags = ref.auxtt.findFlags(TravelTime.phCode);
-            if (TravelTime.phCode.equals("pwP")) delTT = k;
+            flags = ref.getAuxTTData().findFlags(TravelTime.phaseCode);
+            if (TravelTime.phaseCode.equals("pwP")) delTT = k;
             // There's a special case for up-going P and S.
             if (TravelTime.dTdZ > 0d
                 && (flags.PhaseGroup.equals("P") || flags.PhaseGroup.equals("S"))) {
@@ -459,14 +461,14 @@ public class AllBranchVolume {
               upGoing = false;
             }
             // Set the correction to surface focus.
-            if (TravelTime.phCode.charAt(0) == 'L') {
+            if (TravelTime.phaseCode.charAt(0) == 'L') {
               // Travel-time corrections and correction to surface focus
               // don't make sense for surface waves.
               delCorUp = 0d;
             } else {
               // Get the correction.
               try {
-                delCorUp = upRay(TravelTime.phCode, TravelTime.dTdD);
+                delCorUp = upRay(TravelTime.phaseCode, TravelTime.dTdD);
               } catch (PhaseNotFoundException e) {
                 // This should never happen.
                 System.out.println(e.toString());
@@ -474,7 +476,7 @@ public class AllBranchVolume {
               }
               // This is the normal case.  Do various travel-time corrections.
               if (!TauUtilities.noCorr) {
-                TravelTime.tt += elevCorr(TravelTime.phCode, elev, TravelTime.dTdD, rstt);
+                TravelTime.tt += elevCorr(TravelTime.phaseCode, elev, TravelTime.dTdD, rstt);
                 // If this was a complex request, do the Ellipticity and bounce
                 // point corrections.
                 if (complexRequest) {
@@ -483,12 +485,13 @@ public class AllBranchVolume {
 
                   // The bounce point correction is not.  See if there is a bounce.
                   if (branches[j].ref.phRefl != null) {
-                    if (ref.auxtt.topoMap != null) {
+                    if (ref.getAuxTTData().topoMap != null) {
                       // If so, we may need to do some preliminary work.
                       if (branches[j].ref.phRefl.equals("SP")) {
                         tmpCode = "S";
                       } else if (branches[j].ref.phRefl.equals("PS")) {
-                        tmpCode = TravelTime.phCode.substring(0, TravelTime.phCode.indexOf('S'));
+                        tmpCode =
+                            TravelTime.phaseCode.substring(0, TravelTime.phaseCode.indexOf('S'));
                       } else {
                         tmpCode = null;
                       }
@@ -499,7 +502,8 @@ public class AllBranchVolume {
                         } catch (PhaseNotFoundException e) {
                           // This should never happen.
                           System.out.println(e.toString());
-                          //				System.out.format("Phase = %-8s delta = %6.2f\n", TravelTime.phCode,
+                          //				System.out.format("Phase = %-8s delta = %6.2f\n",
+                          // TravelTime.phaseCode,
                           // staDelta);
                           delCorDn = 0.5d * staDelta;
                         }
@@ -510,7 +514,7 @@ public class AllBranchVolume {
                       if (TravelTime.dTdD > 0d) {
                         reflCorr =
                             reflCorr(
-                                TravelTime.phCode,
+                                TravelTime.phaseCode,
                                 branches[j].ref,
                                 eqLat,
                                 eqLon,
@@ -522,7 +526,7 @@ public class AllBranchVolume {
                       } else {
                         reflCorr =
                             reflCorr(
-                                TravelTime.phCode,
+                                TravelTime.phaseCode,
                                 branches[j].ref,
                                 eqLat,
                                 eqLon,
@@ -537,14 +541,14 @@ public class AllBranchVolume {
                     }
                     if (!Double.isNaN(reflCorr)) {
                       TravelTime.tt += reflCorr;
-                      if (TravelTime.phCode.equals("pwP")) delTT = -1;
+                      if (TravelTime.phaseCode.equals("pwP")) delTT = -1;
                     }
                   }
                 }
               }
             }
             // Add auxiliary information.
-            addAux(TravelTime.phCode, xs[i], delCorUp, TravelTime, upGoing);
+            addAux(TravelTime.phaseCode, xs[i], delCorUp, TravelTime, upGoing);
           }
           // If there was no pwP, get rid of the estimate.
           if (delTT >= 0) {
@@ -562,20 +566,20 @@ public class AllBranchVolume {
     	if(rsttList != null) {
     		for(int j=0; j<rsttList.size(); j++) {
     			TravelTime = ttList.get(j);
-    			flags = ref.auxtt.findFlags(TravelTime.phCode);
+    			flags = ref.getAuxTTData().findFlags(TravelTime.phaseCode);
     			// There's a special case for up-going P and S.
     			if(TravelTime.dTdZ > 0d && (flags.PhaseGroup.equals("P") ||
     					flags.PhaseGroup.equals("S"))) upGoing = true;
     			else upGoing = false;
     			// Set the correction to surface focus.
-    			if(TravelTime.phCode.charAt(0) == 'L') {
+    			if(TravelTime.phaseCode.charAt(0) == 'L') {
     				// Travel-time corrections and correction to surface focus
     				// don't make sense for surface waves.
     				delCorUp = 0d;
     			} else {
     				// Get the correction.
     				try {
-    					delCorUp = upRay(TravelTime.phCode, TravelTime.dTdD);
+    					delCorUp = upRay(TravelTime.phaseCode, TravelTime.dTdD);
     				} catch (PhaseNotFoundException e) {
     					// This should never happen.
     					e.printStackTrace();
@@ -583,7 +587,7 @@ public class AllBranchVolume {
     				}
     			}
     			// Add auxiliary information.
-    			addAux(TravelTime.phCode, xs[0], delCorUp, TravelTime, upGoing);
+    			addAux(TravelTime.phaseCode, xs[0], delCorUp, TravelTime, upGoing);
     		}
     		rsttMerge(ttList, rsttList);
     	}
@@ -596,26 +600,26 @@ public class AllBranchVolume {
   /**
    * Compute the elevation correction for one phase.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @param elev Elevation in kilometers
    * @param dTdD Ray parameter in seconds/degree
    * @param rstt True if RSTT is being used for crustal phases
    * @return Elevation correction in seconds
    */
-  public double elevCorr(String phCode, double elev, double dTdD, boolean rstt) {
+  public double elevCorr(String phaseCode, double elev, double dTdD, boolean rstt) {
     char type;
 
     // We don't want any corrections if RSTT is used for regional phases.
-    if (rstt && ref.auxtt.phFlags.get(phCode).isRegional) {
+    if (rstt && ref.getAuxTTData().phFlags.get(phaseCode).isRegional) {
       return 0d;
     }
     // Don't do an elevation correction for surface waves.
-    if (phCode.startsWith("L")) {
+    if (phaseCode.startsWith("L")) {
       return 0d;
     }
 
     // Otherwise, the correction depends on the phase type at the station.
-    type = TauUtilities.arrivalType(phCode);
+    type = TauUtilities.arrivalType(phaseCode);
     if (type == 'P') {
       return TauUtilities.topoCorr(elev, TauUtilities.DEFVP, dTdD / cvt.deg2km);
     } else if (type == 'S') {
@@ -658,7 +662,7 @@ public class AllBranchVolume {
    * correction for bounces at the bottom of the ocean. Note that pwP is a very special case as it
    * will only exist if pP bounces at the bottom of the ocean.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @param brnRef Branch data reference object
    * @param eqLat Geographic source latitude in degrees
    * @param eqLon Source longitude in degrees
@@ -670,7 +674,7 @@ public class AllBranchVolume {
    * @return Bounce point correction in seconds
    */
   public double reflCorr(
-      String phCode,
+      String phaseCode,
       BranchDataReference brnRef,
       double eqLat,
       double eqLon,
@@ -711,14 +715,14 @@ public class AllBranchVolume {
     refLat = TauUtilities.projLat(eqLat, eqLon, refDelta, azimuth);
     refLon = TauUtilities.projLon;
     // Get the elevation at that point.
-    elev = ref.auxtt.topoMap.getElev(refLat, refLon);
+    elev = ref.getAuxTTData().topoMap.getElev(refLat, refLon);
 
     // Do the correction.
     switch (brnRef.convRefl) {
         // Handle all reflecting P phases.
       case "PP":
         // pwP is a very special case.
-        if (phCode.equals("pwP")) {
+        if (phaseCode.equals("pwP")) {
           if (elev <= -1.5d) {
             /* Like pP, we need a negative correction for bouncing at the
              * bottom of the ocean , but also a positive correction for
@@ -755,23 +759,23 @@ public class AllBranchVolume {
   /**
    * Add the phase statistics and phase flags.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @param xs Source-receiver distance in radians
    * @param delCorUp Surface focus correction in degrees
    * @param TravelTime Travel-time object to update
    * @param upGoing True if the phase is an up-going P or S
    */
   protected void addAux(
-      String phCode, double xs, double delCorUp, TravelTimeData TravelTime, boolean upGoing) {
+      String phaseCode, double xs, double delCorUp, TravelTimeData TravelTime, boolean upGoing) {
     double del, spd, obs, dSdD;
 
     // Add the phase statistics.  First, convert distance to degrees
     del = Math.toDegrees(xs);
     // Apply the surface focus correction.
-    if (phCode.charAt(0) == 'p' || phCode.charAt(0) == 's') {
+    if (phaseCode.charAt(0) == 'p' || phaseCode.charAt(0) == 's') {
       // For surface reflections, just subtract the up-going distance.
       del = Math.max(del - delCorUp, 0.01d);
-    } else if (phCode.charAt(0) != 'L') {
+    } else if (phaseCode.charAt(0) != 'L') {
       // For a down-going ray.
       del = del + delCorUp;
     }
@@ -804,22 +808,22 @@ public class AllBranchVolume {
   /**
    * Compute the distance and travel-time for one surface focus ray.
    *
-   * @param phCode Phase code for the desired branch
+   * @param phaseCode Phase code for the desired branch
    * @param dTdD Desired ray parameter in seconds/degree
    * @return Source-receiver distance in degrees
    * @throws PhaseNotFoundException If the desired arrival doesn't exist
    */
-  public double oneRay(String phCode, double dTdD) throws PhaseNotFoundException {
+  public double oneRay(String phaseCode, double dTdD) throws PhaseNotFoundException {
     String tmpCode;
     double tcorr;
 
-    if (phCode.contains("bc")) {
-      tmpCode = TauUtilities.phSeg(phCode) + "ab";
+    if (phaseCode.contains("bc")) {
+      tmpCode = TauUtilities.phSeg(phaseCode) + "ab";
     } else {
-      tmpCode = phCode;
+      tmpCode = phaseCode;
     }
     for (lastBrn = 0; lastBrn < branches.length; lastBrn++) {
-      if (tmpCode.equals(branches[lastBrn].phCode)) {
+      if (tmpCode.equals(branches[lastBrn].phaseCode)) {
         tcorr = branches[lastBrn].oneRay(dTdD);
         if (!Double.isNaN(tcorr)) {
           return tcorr;
@@ -833,19 +837,19 @@ public class AllBranchVolume {
    * Compute the distance and travel-time for the portion of a surface focus ray cut off by the
    * source depth. This provides the distance needed to correct a down-going ray to surface focus.
    *
-   * @param phCode Phase code of the phase being corrected
+   * @param phaseCode Phase code of the phase being corrected
    * @param dTdD Desired ray parameter in seconds/degree
    * @return Distance cut off in degrees
    * @throws PhaseNotFoundException If the up-going arrival doesn't exist
    */
-  public double upRay(String phCode, double dTdD) throws PhaseNotFoundException {
-    char type = phCode.charAt(0);
+  public double upRay(String phaseCode, double dTdD) throws PhaseNotFoundException {
+    char type = phaseCode.charAt(0);
     if (type == 'p' || type == 'P') {
       lastBrn = upBrnP;
     } else if (type == 's' || type == 'S') {
       lastBrn = upBrnS;
     } else {
-      throw new PhaseNotFoundException(phCode);
+      throw new PhaseNotFoundException(phaseCode);
     }
     if (lastBrn < 0) {
       return 0d;
@@ -899,12 +903,12 @@ public class AllBranchVolume {
 
     // Loop over the phase list entries expanding into a list of keywords.
     for (int j = 0; j < phList.length; j++) {
-      PhaseGroup = ref.auxtt.findGroup(phList[j]);
+      PhaseGroup = ref.getAuxTTData().findGroup(phList[j]);
       // If the phase and group are the same, the list is generic.
       if (PhaseGroup.equals(phList[j])) {
         expList.add(PhaseGroup);
-        if (ref.auxtt.isPrimary()) {
-          auxGroup = ref.auxtt.compGroup(PhaseGroup);
+        if (ref.getAuxTTData().isPrimary()) {
+          auxGroup = ref.getAuxTTData().compGroup(PhaseGroup);
           if (auxGroup != null) expList.add(auxGroup);
         }
         // Otherwise, just keep the phase code or special keyword.
@@ -920,32 +924,32 @@ public class AllBranchVolume {
    * This is because the Fortran implementation predated the phase groups and the phase groups were
    * developed and integrated with the Locator rather than the travel-time package.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @return True if the phase code matches any of the phase list keywords
    */
-  private boolean testList(String phCode) {
+  private boolean testList(String phaseCode) {
     String keyword;
 
     for (int j = 0; j < expList.size(); j++) {
       keyword = expList.get(j);
       // Local phases.
       if (keyword.toLowerCase().equals("ploc")) {
-        if (ref.auxtt.isRegional(phCode)) {
+        if (ref.getAuxTTData().isRegional(phaseCode)) {
           return true;
         }
         // Depth phases.
       } else if (keyword.toLowerCase().equals("pdep")) {
-        if (ref.auxtt.isDepthPh(phCode)) {
+        if (ref.getAuxTTData().isDepthPh(phaseCode)) {
           return true;
         }
         // Basic phases (everything that can be used in a location).
       } else if (keyword.toLowerCase().equals("basic")) {
-        if (ref.auxtt.canUse(phCode)) {
+        if (ref.getAuxTTData().canUse(phaseCode)) {
           return true;
         }
         // Otherwise, see if we want this specific (or generic) phase.
       } else {
-        if (keyword.equals(phCode) || keyword.equals(ref.auxtt.findGroup(phCode))) {
+        if (keyword.equals(phaseCode) || keyword.equals(ref.getAuxTTData().findGroup(phaseCode))) {
           return true;
         }
       }
@@ -1030,14 +1034,14 @@ public class AllBranchVolume {
   /**
    * Print data for one travel-time phase code for debugging purposes.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @param full If true, print the detailed branch specification as well
    * @param all If true print even more specifications
    * @param sci if true, print in scientific notation
    */
-  public void dumpBrn(String phCode, boolean full, boolean all, boolean sci) {
+  public void dumpBrn(String phaseCode, boolean full, boolean all, boolean sci) {
     for (int j = 0; j < branches.length; j++) {
-      if (branches[j].phCode.equals(phCode)) branches[j].dumpBrn(full, all, sci, true, false);
+      if (branches[j].phaseCode.equals(phaseCode)) branches[j].dumpBrn(full, all, sci, true, false);
     }
   }
 

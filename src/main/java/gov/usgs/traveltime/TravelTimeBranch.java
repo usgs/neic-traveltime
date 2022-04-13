@@ -8,16 +8,16 @@ import java.util.ArrayList;
  * @author Ray Buland
  */
 public class TravelTimeBranch {
-  String phCode; // Phase code
+  String phaseCode; // Phase code
   ArrayList<TravelTimePlotPoint> branch;
 
   /**
    * Initialize the branch.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    */
-  public TravelTimeBranch(String phCode) {
-    this.phCode = phCode;
+  public TravelTimeBranch(String phaseCode) {
+    this.phaseCode = phaseCode;
     branch = new ArrayList<TravelTimePlotPoint>();
   }
 
@@ -37,7 +37,7 @@ public class TravelTimeBranch {
 
   /** Print out the branch data */
   public void printBranch() {
-    System.out.println("\n" + phCode + ":");
+    System.out.println("\n" + phaseCode + ":");
     for (int j = 0; j < branch.size(); j++) {
       System.out.println("\t" + branch.get(j));
     }

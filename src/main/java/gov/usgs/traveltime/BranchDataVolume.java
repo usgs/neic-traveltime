@@ -13,7 +13,7 @@ public class BranchDataVolume {
   boolean compute; // True if travel times should be computed
   boolean exists; // True if the corrected branch still exists
   boolean isUseless; // True if the phase just gets in the way
-  String phCode; // Corrected phase code
+  String phaseCode; // Corrected phase code
   String[] uniqueCode; // Local storage for diffracted and add on phases
   double[] pRange; // Corrected slowness range for this branch
   double[] xRange; // Corrected distance range for this branch
@@ -72,7 +72,7 @@ public class BranchDataVolume {
     this.spline = spline;
 
     // Do branch summary information.
-    isUseless = auxtt.isChaff(ref.phCode);
+    isUseless = auxtt.isChaff(ref.phaseCode);
     compute = true;
     exists = true;
     xDiff = new double[2];
@@ -105,12 +105,12 @@ public class BranchDataVolume {
           exists = true;
 
           // Do things common to all branches.
-          phCode = ref.phCode;
+          phaseCode = ref.phaseCode;
           pRange = Arrays.copyOf(ref.pRange, ref.pRange.length);
           xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
           pCaustic = pRange[1];
           pEnd = Double.NaN;
-          flags = auxtt.findFlags(phCode);
+          flags = auxtt.findFlags(phaseCode);
 
           // Make a local copy of the reference p and tau.
           len = ref.pBrn.length;
@@ -139,12 +139,12 @@ public class BranchDataVolume {
         exists = true;
 
         // Do things common to all branches.
-        phCode = ref.phCode;
+        phaseCode = ref.phaseCode;
         pRange = Arrays.copyOf(ref.pRange, ref.pRange.length);
         xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
         pCaustic = pRange[1];
         pEnd = Double.NaN;
-        flags = auxtt.findFlags(phCode);
+        flags = auxtt.findFlags(phaseCode);
 
         // Do phases that start as P.
         if (ref.typeSeg[0] == 'P') {
@@ -514,7 +514,7 @@ public class BranchDataVolume {
       // Now that we know what type of phase we have, select the right
       // statistics and Ellipticity correction.
       if (ref.isUpGoing) {
-        TravelTimeStatistics = auxtt.findStats(phCode);
+        TravelTimeStatistics = auxtt.findStats(phaseCode);
         Ellipticity = auxtt.findEllipticity(flags.PhaseGroup + "up");
       } else {
         TravelTimeStatistics = flags.TravelTimeStatistics;
@@ -733,7 +733,7 @@ public class BranchDataVolume {
       else xTries[j] = 2;
     }
     // Fix the phase code for the up-going branch.
-    if (ref.isUpGoing && tagBrn != ' ') phCode = "" + phCode.charAt(0) + tagBrn;
+    if (ref.isUpGoing && tagBrn != ' ') phaseCode = "" + phaseCode.charAt(0) + tagBrn;
   }
 
   /**
@@ -799,9 +799,9 @@ public class BranchDataVolume {
                   found = true;
                   ps = pEnd - dp;
                   // Fiddle the phase code for bc branches.
-                  if (phCode.contains("ab") && ps <= pCaustic)
-                    tmpCode = TauUtilities.phSeg(phCode) + "bc";
-                  else tmpCode = phCode;
+                  if (phaseCode.contains("ab") && ps <= pCaustic)
+                    tmpCode = TauUtilities.phSeg(phaseCode) + "bc";
+                  else tmpCode = phaseCode;
                   // Add it.
                   ttList.addPhase(
                       tmpCode,
@@ -830,9 +830,9 @@ public class BranchDataVolume {
               found = true;
               ps = pEnd - dp;
               // Fiddle the phase code for bc branches.
-              if (phCode.contains("ab") && ps <= pCaustic)
-                tmpCode = TauUtilities.phSeg(phCode) + "bc";
-              else tmpCode = phCode;
+              if (phaseCode.contains("ab") && ps <= pCaustic)
+                tmpCode = TauUtilities.phSeg(phaseCode) + "bc";
+              else tmpCode = phaseCode;
               // add it.
               ttList.addPhase(
                   tmpCode,
@@ -998,7 +998,7 @@ public class BranchDataVolume {
       if (exists) {
         if (returnAllPhases || !isUseless) {
           if (ref.isUpGoing) {
-            branchString += String.format("\n         phase = %2s up  ", phCode);
+            branchString += String.format("\n         phase = %2s up  ", phaseCode);
 
             if (ref.hasDiff) {
               branchString += String.format("diff = %s  ", ref.phDiff);
@@ -1013,7 +1013,7 @@ public class BranchDataVolume {
                     "\nSegment: code = %s  type = %c        sign = %2d" + "  count = %d\n",
                     ref.phSeg, ref.typeSeg[0], ref.signSeg, ref.countSeg);
           } else {
-            branchString += String.format("\n         phase = %s  ", phCode);
+            branchString += String.format("\n         phase = %s  ", phaseCode);
 
             if (ref.hasDiff) {
               branchString += String.format("diff = %s  ", ref.phDiff);
@@ -1221,13 +1221,13 @@ public class BranchDataVolume {
             }
           }
         } else {
-          branchString += String.format("\n          phase = %s is useless\n", ref.phCode);
+          branchString += String.format("\n          phase = %s is useless\n", ref.phaseCode);
         }
       } else {
         if (ref.isUpGoing) {
-          branchString += String.format("\n          phase = %s up doesn't exist\n", ref.phCode);
+          branchString += String.format("\n          phase = %s up doesn't exist\n", ref.phaseCode);
         } else {
-          branchString += String.format("\n          phase = %s doesn't exist\n", ref.phCode);
+          branchString += String.format("\n          phase = %s doesn't exist\n", ref.phaseCode);
         }
       }
     }
@@ -1252,7 +1252,7 @@ public class BranchDataVolume {
     if (ref.isUpGoing) {
       return String.format(
           "%-2s up    %7.4f %7.4f %7.2f %7.2f %7.4f" + "          %c %c %c %2d %d\n",
-          phCode,
+          phaseCode,
           pRange[0],
           pRange[1],
           Math.toDegrees(xRange[0]),
@@ -1266,7 +1266,7 @@ public class BranchDataVolume {
     } else if (ref.hasDiff) {
       return String.format(
           "%-8s %7.4f %7.4f %7.2f %7.2f %7.4f %7.2f" + "  %c %c %c %2d %d\n",
-          phCode,
+          phaseCode,
           pRange[0],
           pRange[1],
           Math.toDegrees(xRange[0]),
@@ -1281,7 +1281,7 @@ public class BranchDataVolume {
     } else {
       return String.format(
           "%-8s %7.4f %7.4f %7.2f %7.2f %7.4f" + "          %c %c %c %2d %d\n",
-          phCode,
+          phaseCode,
           pRange[0],
           pRange[1],
           Math.toDegrees(xRange[0]),

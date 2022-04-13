@@ -34,16 +34,16 @@ public class ExtraPhases {
    * branches, but only the deepest is diffracted. For the same reason, the up-going branch must not
    * be presented to this method.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @return True if there is a diffracted branch
    */
-  public boolean hasDiff(String phCode) {
+  public boolean hasDiff(String phaseCode) {
     for (int j = 0; j < diffCode.length; j++) {
-      if (phCode.equals(diffCode[j])) {
+      if (phaseCode.equals(diffCode[j])) {
         if (!diffUsed[j]) {
           diffUsed[j] = true;
           phDiff = TauUtilities.phSeg(diffCode[j]) + "dif";
-          if (phCode.contains("ab")) phLim = coreLim;
+          if (phaseCode.contains("ab")) phLim = coreLim;
           else phLim = mantleLim;
           return true;
         }
@@ -74,23 +74,23 @@ public class ExtraPhases {
   /**
    * Add-on phases are made up out of whole cloth when a base phase is processed for arrivals.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @param xMin Minimum distance for this phase in radians
    * @return True if this phase code has an add-on associated with it
    */
-  public boolean hasAddOn(String phCode, double xMin) {
+  public boolean hasAddOn(String phaseCode, double xMin) {
     TravelTimeFlags flags;
 
-    flags = auxtt.findFlags(phCode);
+    flags = auxtt.findFlags(phaseCode);
     // Check for phases missing from the groups file.
     if (flags == null) {
-      System.out.println("Warning: " + phCode + " is not in the groups.txt file!");
+      System.out.println("Warning: " + phaseCode + " is not in the groups.txt file!");
       return false;
     }
     if (flags.TravelTimeStatistics == null) return false;
     // Otherwise, see if an add on phase is listed.
     for (int j = 0; j < baseCode.length; j++) {
-      if (phCode.equals(baseCode[j])) {
+      if (phaseCode.equals(baseCode[j])) {
         if (!addOnUsed[j]) {
           if (!baseCode[j].equals("Sn")) {
             // In the general case, we want the first branch.

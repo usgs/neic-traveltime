@@ -178,7 +178,7 @@ public class TravelTimeStatisticsLinearFit {
     char[] flag;
     // Print the header.
     System.out.println(
-        "\n" + TravelTimeStatistics.phCode + "     " + minDelta + "     " + maxDelta);
+        "\n" + TravelTimeStatistics.phaseCode + "     " + minDelta + "     " + maxDelta);
 
     // If the arrays still exist, dump the raw statistics.
     flag = new char[3];

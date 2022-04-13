@@ -293,7 +293,7 @@ public class TTSessionPool {
         for (int delta = 2; delta < 90; delta = delta + 10) {
           TravelTime TravelTime = session.getTT((double) delta, 0.);
           for (int i = 0; i < TravelTime.getNumPhases(); i++) {
-            String phase = TravelTime.getPhase(i).getPhCode();
+            String phase = TravelTime.getPhase(i).getphaseCode();
             if (phase.equalsIgnoreCase("P")
                 || phase.equalsIgnoreCase("Pn")
                 || phase.equalsIgnoreCase("Pn")) {

@@ -9,7 +9,7 @@ import java.io.Serializable;
  */
 public class Ellipticity implements Serializable {
   private static final long serialVersionUID = 1L;
-  final String phCode; // Phase code
+  final String phaseCode; // Phase code
   final double minDelta; // Minimum distance in degrees
   final double maxDelta; // Maximum distance in degrees
   final double[][] t0, t1, t2; // Ellipticity correction constants
@@ -19,7 +19,7 @@ public class Ellipticity implements Serializable {
   /**
    * Save Ellipticity correction data for one phase.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @param minDelta Minimum distance in degrees
    * @param maxDelta Maximum distance in degrees
    * @param t0 Distance-depth array for parameter t0
@@ -27,13 +27,13 @@ public class Ellipticity implements Serializable {
    * @param t2 Distance-depth array for parameter t2
    */
   public Ellipticity(
-      String phCode,
+      String phaseCode,
       double minDelta,
       double maxDelta,
       double[][] t0,
       double[][] t1,
       double[][] t2) {
-    this.phCode = phCode;
+    this.phaseCode = phaseCode;
     this.minDelta = minDelta;
     this.maxDelta = maxDelta;
     this.t0 = t0;

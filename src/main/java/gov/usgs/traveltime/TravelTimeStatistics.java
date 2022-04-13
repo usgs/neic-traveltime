@@ -16,7 +16,7 @@ import java.util.ArrayList;
  */
 public class TravelTimeStatistics implements Serializable {
   private static final long serialVersionUID = 1L;
-  String phCode; // Phase code
+  String phaseCode; // Phase code
   int minDelta; // Minimum distance in degrees
   int maxDelta; // Maximum distance in degrees
   ArrayList<TravelTimeStatisticsSegment> bias; // Measured arrival time bias (s)
@@ -26,12 +26,12 @@ public class TravelTimeStatistics implements Serializable {
   /**
    * Initialize the phase statistics.
    *
-   * @param phCode Phase code
+   * @param phaseCode Phase code
    * @param minDelta Minimum observed distance in degrees
    * @param maxDelta Maximum observed distance in degrees
    */
-  protected TravelTimeStatistics(String phCode, int minDelta, int maxDelta) {
-    this.phCode = phCode;
+  protected TravelTimeStatistics(String phaseCode, int minDelta, int maxDelta) {
+    this.phaseCode = phaseCode;
     this.minDelta = minDelta;
     this.maxDelta = maxDelta;
     // set up storage for the linear fits.
@@ -137,7 +137,7 @@ public class TravelTimeStatistics implements Serializable {
   /** Print the travel-time statistics. */
   protected void dumpStats() {
     // Print the header.
-    System.out.println("\n" + phCode + "     " + minDelta + "     " + maxDelta);
+    System.out.println("\n" + phaseCode + "     " + minDelta + "     " + maxDelta);
 
     // Print the data.
     System.out.println("Bias:");
