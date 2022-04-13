@@ -56,7 +56,7 @@ public class PlotData {
     if (!Double.isNaN(depth) && depth >= 0d && depth <= TauUtilities.MAXDEPTH) {
       TravelTimePlot = new TravelTimePlot();
       // A simple request is all we can do.
-      allBrn.newSession(depth, phList, returnAllPhases, returnBackBranches, tectonic, false);
+      allBrn.newSession(depth, phList, returnAllPhases, returnBackBranches, tectonic);
       // Loop over distances.
       for (double delta = 0d; delta <= maxDelta; delta += deltaIncrement) {
         ttList = allBrn.getTT(0d, delta);

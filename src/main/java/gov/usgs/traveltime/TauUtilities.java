@@ -39,9 +39,8 @@ public class TauUtilities {
   /** LR group velocity in kilometers/second. */
   public static final double LRGRPVEL = 3.5d;
   /**
-   * Maximum credible Pn source-receiver distance in degrees. Note that these maximum regional phase
-   * distances are mostly needed for RSTT. Because of the nature of the algorithm, there are no
-   * inherent distance limits for any of the phases.
+   * Maximum credible Pn source-receiver distance in degrees. Because of the nature of the
+   * algorithm, there are no inherent distance limits for any of the phases.
    */
   public static final double MAXDELPN = 21.5d;
   /**

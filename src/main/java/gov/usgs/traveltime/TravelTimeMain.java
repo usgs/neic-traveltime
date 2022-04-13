@@ -151,7 +151,6 @@ public class TravelTimeMain {
     // Flags for ttlist.
     boolean returnAllPhases = false;
     boolean returnBackBranches = false;
-    boolean rstt = false;
     boolean tectonic = false;
     // Simulate a simple travel time request.
     double[] delta = {1d, 2d, 3d, 5d, 10d, 20d, 40d, 60d, 90d, 120d, 150d, 180d};
@@ -194,10 +193,10 @@ public class TravelTimeMain {
       //		TablesUtil.deBugLevel = 3;
       if (local) {
         ttLocal.newSession(
-            earthModel, sourceDepth, phList, returnAllPhases, returnBackBranches, tectonic, rstt);
+            earthModel, sourceDepth, phList, returnAllPhases, returnBackBranches, tectonic);
         // Set up a complex session.
         //			ttLocal.newSession(earthModel, sourceDepth, phList, sourceLat,
-        //					sourceLon, returnAllPhases, returnBackBranches, tectonic, rstt);
+        //					sourceLon, returnAllPhases, returnBackBranches, tectonic);
         //			ttLocal.printRefBranches(false);
         //			ttLocal.printBranches(false, false, false, returnAllPhases);
         //			ttLocal.printCaustics(false, false, false, returnAllPhases);
@@ -212,7 +211,6 @@ public class TravelTimeMain {
                 returnAllPhases,
                 returnBackBranches,
                 tectonic,
-                rstt,
                 false);
       }
 

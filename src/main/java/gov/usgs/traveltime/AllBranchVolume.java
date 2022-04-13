@@ -29,7 +29,6 @@ public class AllBranchVolume {
   boolean returnAllPhases; // Do all phases (including useless ones)
   boolean returnBackBranches; // Return back branches as well as primary arrivals
   boolean tectonic; // True if the source is in a tectonic province
-  boolean rstt; // Use RSTT for local phases
   double lastDepth = Double.NaN; // Last depth computed in kilometers
   AllBranchReference ref;
   ModelConversions cvt;
@@ -57,8 +56,7 @@ public class AllBranchVolume {
         + " flgs="
         + (!returnAllPhases ? "U" : "u")
         + (!returnBackBranches ? "b" : "B")
-        + (tectonic ? "T" : "t")
-        + (rstt ? "R" : "r");
+        + (tectonic ? "T" : "t");
   }
 
   /**
@@ -116,7 +114,6 @@ public class AllBranchVolume {
    * @param returnAllPhases If false, only provide "useful" crustal phases
    * @param returnBackBranches If false, suppress back branches
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
-   * @param rstt If true, use RSTT crustal phases
    * @throws BadDepthException If the depth is out of range
    * @throws TauIntegralException If the tau integral doesn't make sense
    */
@@ -127,8 +124,7 @@ public class AllBranchVolume {
       String[] phList,
       boolean returnAllPhases,
       boolean returnBackBranches,
-      boolean tectonic,
-      boolean rstt)
+      boolean tectonic)
       throws BadDepthException, TauIntegralException {
     // See if the epicenter makes sense.
     if (!Double.isNaN(latitude)
@@ -146,7 +142,7 @@ public class AllBranchVolume {
       eqLat = Double.NaN;
       eqLon = Double.NaN;
     }
-    setSession(depth, phList, returnAllPhases, returnBackBranches, tectonic, rstt);
+    setSession(depth, phList, returnAllPhases, returnBackBranches, tectonic);
   }
 
   /**
@@ -158,7 +154,6 @@ public class AllBranchVolume {
    * @param returnAllPhases If false, only provide "useful" crustal phases
    * @param returnBackBranches If false, suppress back branches
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
-   * @param rstt If true, use RSTT crustal phases
    * @throws BadDepthException If the depth is out of range
    * @throws TauIntegralException If the tau integral doesn't make sense
    */
@@ -167,13 +162,12 @@ public class AllBranchVolume {
       String[] phList,
       boolean returnAllPhases,
       boolean returnBackBranches,
-      boolean tectonic,
-      boolean rstt)
+      boolean tectonic)
       throws BadDepthException, TauIntegralException {
     complexSession = false;
     eqLat = Double.NaN;
     eqLon = Double.NaN;
-    setSession(depth, phList, returnAllPhases, returnBackBranches, tectonic, rstt);
+    setSession(depth, phList, returnAllPhases, returnBackBranches, tectonic);
   }
 
   /**
@@ -185,7 +179,6 @@ public class AllBranchVolume {
    * @param returnAllPhases If false, only provide "useful" crustal phases
    * @param returnBackBranches If false, suppress back branches
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
-   * @param rstt If true, use RSTT crustal phases
    * @throws BadDepthException If the depth is out of range
    * @throws TauIntegralException If the tau integral doesn't make sense
    */
@@ -194,8 +187,7 @@ public class AllBranchVolume {
       String[] phList,
       boolean returnAllPhases,
       boolean returnBackBranches,
-      boolean tectonic,
-      boolean rstt)
+      boolean tectonic)
       throws BadDepthException, TauIntegralException {
     char tagBrn;
     double xMin;
@@ -207,8 +199,6 @@ public class AllBranchVolume {
       // Remember the session control flags.
       this.returnAllPhases = returnAllPhases;
       this.returnBackBranches = returnBackBranches;
-      this.tectonic = tectonic;
-      this.rstt = rstt;
 
       if (depth != lastDepth) {
         // Set up the new source depth.
@@ -476,7 +466,7 @@ public class AllBranchVolume {
               }
               // This is the normal case.  Do various travel-time corrections.
               if (!TauUtilities.noCorr) {
-                TravelTime.tt += elevCorr(TravelTime.phaseCode, elev, TravelTime.dTdD, rstt);
+                TravelTime.tt += elevCorr(TravelTime.phaseCode, elev, TravelTime.dTdD);
                 // If this was a complex request, do the Ellipticity and bounce
                 // point corrections.
                 if (complexRequest) {
@@ -560,38 +550,6 @@ public class AllBranchVolume {
       }
     }
 
-    // Rough in RSTT.
-    /*	if(rstt) {
-    	rsttList = addRSTT();
-    	if(rsttList != null) {
-    		for(int j=0; j<rsttList.size(); j++) {
-    			TravelTime = ttList.get(j);
-    			flags = ref.getAuxTTData().findFlags(TravelTime.phaseCode);
-    			// There's a special case for up-going P and S.
-    			if(TravelTime.dTdZ > 0d && (flags.PhaseGroup.equals("P") ||
-    					flags.PhaseGroup.equals("S"))) upGoing = true;
-    			else upGoing = false;
-    			// Set the correction to surface focus.
-    			if(TravelTime.phaseCode.charAt(0) == 'L') {
-    				// Travel-time corrections and correction to surface focus
-    				// don't make sense for surface waves.
-    				delCorUp = 0d;
-    			} else {
-    				// Get the correction.
-    				try {
-    					delCorUp = upRay(TravelTime.phaseCode, TravelTime.dTdD);
-    				} catch (PhaseNotFoundException e) {
-    					// This should never happen.
-    					e.printStackTrace();
-    					delCorUp = 0d;
-    				}
-    			}
-    			// Add auxiliary information.
-    			addAux(TravelTime.phaseCode, xs[0], delCorUp, TravelTime, upGoing);
-    		}
-    		rsttMerge(ttList, rsttList);
-    	}
-    } */
     // Sort the arrivals into increasing time order, filter, etc.
     ttList.finalizeTravelTimes(tectonic, returnBackBranches);
     return ttList;
@@ -603,16 +561,11 @@ public class AllBranchVolume {
    * @param phaseCode Phase code
    * @param elev Elevation in kilometers
    * @param dTdD Ray parameter in seconds/degree
-   * @param rstt True if RSTT is being used for crustal phases
    * @return Elevation correction in seconds
    */
-  public double elevCorr(String phaseCode, double elev, double dTdD, boolean rstt) {
+  public double elevCorr(String phaseCode, double elev, double dTdD) {
     char type;
 
-    // We don't want any corrections if RSTT is used for regional phases.
-    if (rstt && ref.getAuxTTData().phFlags.get(phaseCode).isRegional) {
-      return 0d;
-    }
     // Don't do an elevation correction for surface waves.
     if (phaseCode.startsWith("L")) {
       return 0d;

@@ -55,7 +55,6 @@ public class TravelTimeLocalSession {
    * @param returnAllPhases If true, provide all phases
    * @param returnBackBranches If true, return all back branches
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
-   * @param useRSTT If true, use RSTT crustal phases
    * @throws BadDepthException If the depth is out of range
    * @throws TauIntegralException If the tau integrals fail
    */
@@ -65,12 +64,11 @@ public class TravelTimeLocalSession {
       String[] phases,
       boolean returnAllPhases,
       boolean returnBackBranches,
-      boolean tectonic,
-      boolean useRSTT)
+      boolean tectonic)
       throws BadDepthException, TauIntegralException {
 
     setModel(earthModel.toLowerCase());
-    allBrn.newSession(sourceDepth, phases, returnAllPhases, returnBackBranches, tectonic, useRSTT);
+    allBrn.newSession(sourceDepth, phases, returnAllPhases, returnBackBranches, tectonic);
   }
 
   /**
@@ -84,7 +82,6 @@ public class TravelTimeLocalSession {
    * @param returnAllPhases If true, provide all phases
    * @param returnBackBranches If true, return all back branches
    * @param tectonic If true, map Pb and Sb onto Pg and Sg
-   * @param useRSTT If true, use RSTT crustal phases
    * @throws BadDepthException If the depth is out of range
    * @throws TauIntegralException If the tau integrals fail
    */
@@ -96,20 +93,12 @@ public class TravelTimeLocalSession {
       double srcLong,
       boolean returnAllPhases,
       boolean returnBackBranches,
-      boolean tectonic,
-      boolean useRSTT)
+      boolean tectonic)
       throws BadDepthException, TauIntegralException {
 
     setModel(earthModel.toLowerCase());
     allBrn.newSession(
-        srcLat,
-        srcLong,
-        sourceDepth,
-        phases,
-        returnAllPhases,
-        returnBackBranches,
-        tectonic,
-        useRSTT);
+        srcLat, srcLong, sourceDepth, phases, returnAllPhases, returnBackBranches, tectonic);
   }
 
   /**

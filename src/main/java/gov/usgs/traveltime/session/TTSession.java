@@ -40,7 +40,6 @@ public class TTSession {
   private boolean convertTectonic;
   private boolean returnBackBranches; // The TT package want nobackBranches which is the opposite
   private boolean returnAllPhases; // The TT package whats useful which is the opposite
-  private boolean useRSTT;
   private boolean isPlot;
   private String[] phList;
   private StringBuilder ttag = new StringBuilder(4);
@@ -81,7 +80,6 @@ public class TTSession {
    * @param allPhases If true all phase return (this is !useful for the TT package)
    * @param returnBackBranches Return back branches (TT this is !noBackBranch)
    * @param tectonic source is a tectonic province
-   * @param useRSTT Use RSTT instead for all local phases
    * @param isPlot Call in plot mode
    * @throws IOException If unable to read auxiliary or travel-time information
    */
@@ -92,8 +90,7 @@ public class TTSession {
       boolean allPhases,
       boolean returnBackBranches,
       boolean tectonic,
-      boolean useRSTT,
-      boolean isPlot /*, EdgeThread parent*/)
+      boolean isPlot)
       throws Exception {
     makeTTSession(
         earthModel,
@@ -104,7 +101,6 @@ public class TTSession {
         allPhases,
         returnBackBranches,
         tectonic,
-        useRSTT,
         isPlot);
   }
   /**
@@ -118,7 +114,6 @@ public class TTSession {
    * @param allPhases If true all phase return (this is !useful for the TT package)
    * @param returnBackBranches Return back branches (TT this is !noBackBranch)
    * @param tectonic source is a tectonic province
-   * @param useRSTT Use RSTT instead for all local phases
    * @param isPlot Call in plot mode
    * @throws IOException If unable to read auxiliary or travel-time information
    */
@@ -131,8 +126,7 @@ public class TTSession {
       boolean allPhases,
       boolean returnBackBranches,
       boolean tectonic,
-      boolean useRSTT,
-      boolean isPlot /*, EdgeThread parent*/)
+      boolean isPlot)
       throws Exception {
     makeTTSession(
         earthModel,
@@ -143,7 +137,6 @@ public class TTSession {
         allPhases,
         returnBackBranches,
         tectonic,
-        useRSTT,
         isPlot);
   }
 
@@ -157,7 +150,6 @@ public class TTSession {
         .append(returnAllPhases ? "P" : "p")
         .append(returnBackBranches ? "B" : "b")
         .append(convertTectonic ? "T" : "t")
-        .append(useRSTT ? "R" : "r")
         .append(isPlot ? "P" : "p")
         .append("):");
   }
@@ -172,7 +164,6 @@ public class TTSession {
    * @param allPhases If true all phase return (this is !useful for the TT package)
    * @param returnBackBranches Return back branches (TT this is !noBackBranch)
    * @param tectonic source is a tectonic province
-   * @param useRSTT Use RSTT instead for all local phases
    * @param isPlot Call in plot mode
    * @throws IOException
    */
@@ -185,7 +176,6 @@ public class TTSession {
       boolean allPhases,
       boolean returnBackBranches,
       boolean tectonic,
-      boolean useRSTT,
       boolean isPlot)
       throws Exception {
     // par = parent;
@@ -217,7 +207,6 @@ public class TTSession {
     convertTectonic = tectonic;
     this.returnAllPhases = allPhases;
     this.returnBackBranches = returnBackBranches;
-    this.useRSTT = useRSTT;
     this.isPlot = isPlot;
     makeTTag();
 
@@ -319,8 +308,7 @@ public class TTSession {
         if (!isPlot) {
           // Set up to generate travel-times (e.g., for earthquake location).
           if (Double.isNaN(sourceLatitude)) {
-            allBrn.newSession(
-                sourceDepth, phList, allPhases, returnBackBranches, tectonic, useRSTT);
+            allBrn.newSession(sourceDepth, phList, allPhases, returnBackBranches, tectonic);
           } else {
             allBrn.newSession(
                 sourceLatitude,
@@ -329,8 +317,7 @@ public class TTSession {
                 phList,
                 allPhases,
                 returnBackBranches,
-                tectonic,
-                useRSTT);
+                tectonic);
           }
         } else {
           // Generate a travel-time chart.
@@ -391,7 +378,6 @@ public class TTSession {
    * @param allPhases This is passed to the TT package as useful = !allPhases
    * @param backBrn This is passed to the TT package at noBackBranches = !backBrn
    * @param tectonic in a tectonic region
-   * @param rstt If true, use RSTT for local phase
    * @param plot If true, call in ploc mode
    * @throws Exception If the depth is out of range
    */
@@ -403,13 +389,12 @@ public class TTSession {
       boolean allPhases,
       boolean backBrn,
       boolean tectonic,
-      boolean rstt,
       boolean plot)
       throws Exception {
     if (Double.isNaN(latitude)) {
-      allBrn.newSession(latitude, longitude, depth, phList, allPhases, backBrn, tectonic, rstt);
+      allBrn.newSession(latitude, longitude, depth, phList, allPhases, backBrn, tectonic);
     } else {
-      allBrn.newSession(depth, phList, allPhases, backBrn, tectonic, rstt);
+      allBrn.newSession(depth, phList, allPhases, backBrn, tectonic);
     }
     makeTTag();
   }
@@ -422,7 +407,6 @@ public class TTSession {
    * @param allPhases This is passed to the TT package as useful = !allPhases
    * @param backBrn This is passed to the TT package at noBackBranches = !backBrn
    * @param tectonic in a tectonic region
-   * @param rstt If true, use RSTT for local phase
    * @param plot If true, call in ploc mode
    * @throws Exception If the depth is out of range
    */
@@ -432,10 +416,9 @@ public class TTSession {
       boolean allPhases,
       boolean backBrn,
       boolean tectonic,
-      boolean rstt,
       boolean plot)
       throws Exception {
-    allBrn.newSession(depth, phList, allPhases, backBrn, tectonic, rstt);
+    allBrn.newSession(depth, phList, allPhases, backBrn, tectonic);
     makeTTag();
   }
 
@@ -534,8 +517,7 @@ public class TTSession {
     if (args.length >= 4) phList = args[3].split(":,");
     try {
       TTSession session =
-          TTSessionPool.getTravelTimeSession(
-              model, depth, phList, true, false, false, false, false);
+          TTSessionPool.getTravelTimeSession(model, depth, phList, true, false, false, false);
       TravelTime TravelTime = session.getTT(delta, 0.);
       System.out.println(
           "Phase     TTravelTime      dTdD     dTdZ  Spread   Obsrv PhGrp  AuxGrp    Use   Regn Depth  Dis   isDpth="

@@ -38,7 +38,6 @@ public class TTSessionPool {
    * @param allPhases If true, calls return all phase
    * @param backBranches If true, call return back branches
    * @param tectonic Region is tectonic
-   * @param rstt If true, use RSTT for local travel times
    * @param plot If true, this returns plot mode
    * @return A TTSession set to the arguments
    * @throws IOException If unable to read auxiliary or travel-time information
@@ -52,10 +51,9 @@ public class TTSessionPool {
       boolean allPhases,
       boolean backBranches,
       boolean tectonic,
-      boolean rstt,
-      boolean plot /*, EdgeThread parent*/)
+      boolean plot)
       throws IOException, Exception {
-    return common(model, depth, phaseList, lat, lng, allPhases, backBranches, tectonic, rstt, plot);
+    return common(model, depth, phaseList, lat, lng, allPhases, backBranches, tectonic, plot);
   }
 
   /**
@@ -69,7 +67,6 @@ public class TTSessionPool {
    * @param allPhases If true, calls return all phase
    * @param backBranches If true, call return back branches
    * @param tectonic Region is tectonic
-   * @param rstt If true, use RSTT for local travel times
    * @param plot If true, this returns plot mode
    * @return A TTSession set to the arguments
    * @throws IOException If unable to read auxiliary or travel-time information
@@ -81,20 +78,10 @@ public class TTSessionPool {
       boolean allPhases,
       boolean backBranches,
       boolean tectonic,
-      boolean rstt,
-      boolean plot /*, EdgeThread parent*/)
+      boolean plot)
       throws IOException, Exception {
     return common(
-        model,
-        depth,
-        phaseList,
-        Double.NaN,
-        Double.NaN,
-        allPhases,
-        backBranches,
-        tectonic,
-        rstt,
-        plot);
+        model, depth, phaseList, Double.NaN, Double.NaN, allPhases, backBranches, tectonic, plot);
   }
 
   /**
@@ -108,7 +95,6 @@ public class TTSessionPool {
    * @param allPhases If true, calls return all phase
    * @param backBranches If true, call return back branches
    * @param tectonic Region is tectonic
-   * @param rstt If true, use RSTT for local travel times
    * @param plot If true, this returns plot mode
    * @return A TTSession set to the arguments
    * @throws IOException If unable to read auxiliary or travel-time information
@@ -122,8 +108,7 @@ public class TTSessionPool {
       boolean allPhases,
       boolean backBranches,
       boolean tectonic,
-      boolean rstt,
-      boolean plot /*, EdgeThread parent*/)
+      boolean plot)
       throws IOException, Exception {
     // Create the String array with the phase list from the ArrayList of phases
     String[] phList = null;
@@ -133,7 +118,7 @@ public class TTSessionPool {
         phaseList.toArray(phList);
       }
     }
-    return common(model, depth, phList, lat, lng, allPhases, backBranches, tectonic, rstt, plot);
+    return common(model, depth, phList, lat, lng, allPhases, backBranches, tectonic, plot);
   }
 
   public static TTSession getTravelTimeSession(
@@ -143,8 +128,7 @@ public class TTSessionPool {
       boolean allPhases,
       boolean backBranches,
       boolean tectonic,
-      boolean rstt,
-      boolean plot /*, EdgeThread parent*/)
+      boolean plot)
       throws IOException, Exception {
     String[] phList = null;
     if (phaseList != null) {
@@ -154,16 +138,7 @@ public class TTSessionPool {
       }
     }
     return common(
-        model,
-        depth,
-        phList,
-        Double.NaN,
-        Double.NaN,
-        allPhases,
-        backBranches,
-        tectonic,
-        rstt,
-        plot);
+        model, depth, phList, Double.NaN, Double.NaN, allPhases, backBranches, tectonic, plot);
   }
 
   /**
@@ -177,7 +152,6 @@ public class TTSessionPool {
    * @param allPhases If true, calls return all phase
    * @param backBranches If true, call return back branches
    * @param tectonic Region is tectonic
-   * @param rstt If true, use RSTT for local travel times
    * @param plot If true, this returns plot mode
    * @return A TTSession set to the arguments
    * @throws IOException
@@ -191,8 +165,7 @@ public class TTSessionPool {
       boolean allPhases,
       boolean backBranches,
       boolean tectonic,
-      boolean rstt,
-      boolean plot /*, EdgeThread parent*/)
+      boolean plot)
       throws IOException, Exception {
 
     String key = model;
@@ -219,24 +192,14 @@ public class TTSessionPool {
       used.add(session);
       frees.remove(frees.size() - 1);
       if (Double.isNaN(lat)) {
-        session.newSession(depth, phList, rstt, backBranches, tectonic, rstt, plot);
+        session.newSession(depth, phList, allPhases, backBranches, tectonic, plot);
       } else {
-        session.newSession(lat, lng, depth, phList, rstt, backBranches, tectonic, rstt, plot);
+        session.newSession(lat, lng, depth, phList, allPhases, backBranches, tectonic, plot);
       }
     } else {
       // There is not a free session, so create one and add it to the used list
       session =
-          new TTSession(
-              model,
-              depth,
-              phList,
-              lat,
-              lng,
-              allPhases,
-              backBranches,
-              tectonic,
-              rstt,
-              plot /*, parent*/);
+          new TTSession(model, depth, phList, lat, lng, allPhases, backBranches, tectonic, plot);
       used.add(session);
       System.out.println(
           "Create new TTSession #used=" + used.size() + " #fr=" + frees.size() + " " + session);
@@ -274,18 +237,17 @@ public class TTSessionPool {
     boolean allPhases = true;
     boolean backBranches = false;
     boolean tectonic = false;
-    boolean rstt = false;
     boolean plot = false;
     String[] phList = new String[0];
     try {
       // Get a TTSession variable
       TTSession session =
           TTSessionPool.getTravelTimeSession(
-              "ak135", 100, phList, allPhases, backBranches, tectonic, rstt, plot);
+              "ak135", 100, phList, allPhases, backBranches, tectonic, plot);
       // for depths from 33 to 400 in 10 km steps
       for (int depth = 33; depth < 400; depth = depth + 10) {
         // Set new depth with same flags
-        session.newSession(depth, phList, allPhases, backBranches, tectonic, rstt, plot);
+        session.newSession(depth, phList, allPhases, backBranches, tectonic, plot);
         System.out.println(
             "         Phase     TTravelTime      dTdD     dTdZ  Spread   Obsrv PhGrp  AuxGrp    Use   Regn Depth  Dis   isDpth="
                 + depth);
@@ -293,7 +255,7 @@ public class TTSessionPool {
         for (int delta = 2; delta < 90; delta = delta + 10) {
           TravelTime TravelTime = session.getTT((double) delta, 0.);
           for (int i = 0; i < TravelTime.getNumPhases(); i++) {
-            String phase = TravelTime.getPhase(i).getphaseCode();
+            String phase = TravelTime.getPhase(i).getPhaseCode();
             if (phase.equalsIgnoreCase("P")
                 || phase.equalsIgnoreCase("Pn")
                 || phase.equalsIgnoreCase("Pn")) {

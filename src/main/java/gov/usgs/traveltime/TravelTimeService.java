@@ -74,8 +74,7 @@ public class TravelTimeService implements gov.usgs.processingformats.TravelTimeS
           request.Source.Longitude,
           request.ReturnAllPhases,
           request.ReturnBackBranches,
-          request.ConvertTectonic,
-          false);
+          request.ConvertTectonic);
 
       // for each Receiver in the request
       responseList = new ArrayList<TravelTimeReceiver>();
@@ -223,8 +222,7 @@ public class TravelTimeService implements gov.usgs.processingformats.TravelTimeS
           request.Source.Longitude,
           returnAllPhases,
           returnBackBranches,
-          convertTectonic,
-          false);
+          convertTectonic);
 
       // allocate response
       branchList = new ArrayList<TravelTimePlotDataBranch>();

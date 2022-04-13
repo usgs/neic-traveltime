@@ -109,7 +109,7 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
    *
    * @return Phase code
    */
-  public String getphaseCode() {
+  public String getPhaseCode() {
     return phaseCode;
   }
 

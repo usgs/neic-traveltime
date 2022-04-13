@@ -31,7 +31,6 @@ public class TravelTimeRegressionTest {
     double sourceDepth = 10.0;
     boolean returnAllPhases = false;
     boolean returnBackBranches = false;
-    boolean rstt = false;
     boolean tectonic = false;
     String[] phList = null;
     double delta1 = 1.0;
@@ -51,7 +50,7 @@ public class TravelTimeRegressionTest {
     // Set up a simple session.
     try {
       ttLocal.newSession(
-          earthModel, sourceDepth, phList, returnAllPhases, returnBackBranches, tectonic, rstt);
+          earthModel, sourceDepth, phList, returnAllPhases, returnBackBranches, tectonic);
 
     } catch (Exception e) {
       System.out.println("Session setup failed");
@@ -73,7 +72,7 @@ public class TravelTimeRegressionTest {
 
     // check the first TravelTime
     TravelTimeData firstTravelTime = ttList1.getPhase(0);
-    Assertions.assertEquals("Pg", firstTravelTime.getphaseCode(), "TravelTime first phase code:");
+    Assertions.assertEquals("Pg", firstTravelTime.getPhaseCode(), "TravelTime first phase code:");
     Assertions.assertEquals(
         19.234, firstTravelTime.getTT(), 0.001, "TravelTime first arrival time:");
     Assertions.assertEquals(
@@ -106,7 +105,7 @@ public class TravelTimeRegressionTest {
 
     // check the first TravelTime
     firstTravelTime = ttList2.getPhase(0);
-    Assertions.assertEquals("P", firstTravelTime.getphaseCode(), "TravelTime first phase code:");
+    Assertions.assertEquals("P", firstTravelTime.getPhaseCode(), "TravelTime first phase code:");
     Assertions.assertEquals(
         779.729, firstTravelTime.getTT(), 0.001, "TravelTime first arrival time:");
     Assertions.assertEquals(
@@ -140,7 +139,7 @@ public class TravelTimeRegressionTest {
     // check the first TravelTime
     firstTravelTime = ttList3.getPhase(0);
     Assertions.assertEquals(
-        "PKPdf", firstTravelTime.getphaseCode(), "TravelTime first phase code:");
+        "PKPdf", firstTravelTime.getPhaseCode(), "TravelTime first phase code:");
     Assertions.assertEquals(
         1210.790, firstTravelTime.getTT(), 0.001, "TravelTime first arrival time:");
     Assertions.assertEquals(
