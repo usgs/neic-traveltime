@@ -1,7 +1,7 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.ModConvert;
-import gov.usgs.traveltime.TauUtil;
+import gov.usgs.traveltime.ModelConversions;
+import gov.usgs.traveltime.TauUtilities;
 import java.util.ArrayList;
 
 /**
@@ -36,8 +36,8 @@ public class Integrate {
   /** A TauInt object containing the Tau-X integration logic */
   private TauIntegrate tauInt;
 
-  /** A ModConvert object containing model dependent constants and conversions */
-  private ModConvert modelConversions;
+  /** A ModelConversions object containing model dependent constants and conversions */
+  private ModelConversions modelConversions;
 
   /** An ArrayList of doubles containing the slowness values */
   private ArrayList<Double> slowness;
@@ -67,7 +67,7 @@ public class Integrate {
     tauFinalModel.putSlowness(slowness);
     tauFinalModel.putShells('P', tauDepthModel.getShellModelP());
     tauFinalModel.putShells('S', tauDepthModel.getShellModelS());
-    maximumDepth = modelConversions.flatZ(modelConversions.rSurface - TauUtil.MAXDEPTH);
+    maximumDepth = modelConversions.flatZ(modelConversions.rSurface - TauUtilities.MAXDEPTH);
     outerCoreDepth = referenceModel.getOuterCoreModel().getDepth();
     innerCoreDepth = referenceModel.getInnerCoreModel().getDepth();
 

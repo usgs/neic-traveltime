@@ -1,8 +1,8 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.ModConvert;
-import gov.usgs.traveltime.TauUtil;
-import gov.usgs.traveltime.TtStatus;
+import gov.usgs.traveltime.ModelConversions;
+import gov.usgs.traveltime.TauUtilities;
+import gov.usgs.traveltime.TravelTimeStatus;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -69,8 +69,8 @@ public class EarthModel {
   /** A ModelInterpolation object used for interpolations */
   private ModelInterpolation ModelInterpolationolations;
 
-  /** A ModConvert object containing model dependent constants and conversions */
-  ModConvert modelConversions;
+  /** A ModelConversions object containing model dependent constants and conversions */
+  ModelConversions modelConversions;
 
   /**
    * Function to return the name of this earth model.
@@ -129,9 +129,9 @@ public class EarthModel {
   /**
    * Get the model dependent constants and conversions
    *
-   * @return A ModConvert object containing model dependent constants and conversions
+   * @return A ModelConversions object containing model dependent constants and conversions
    */
-  public ModConvert getModelConversions() {
+  public ModelConversions getModelConversions() {
     return modelConversions;
   }
 
@@ -164,9 +164,9 @@ public class EarthModel {
    * going to re-interpolate it.
    *
    * @param referenceModel An EarthModel file containing the reference Earth model information
-   * @param modelConversions A ModConvert object containing the model dependent constants
+   * @param modelConversions A ModelConversions object containing the model dependent constants
    */
-  public EarthModel(EarthModel referenceModel, ModConvert modelConversions) {
+  public EarthModel(EarthModel referenceModel, ModelConversions modelConversions) {
     this.referenceModel = referenceModel;
     this.modelConversions = modelConversions;
     this.earthModelName = referenceModel.getEarthModelName();
@@ -181,9 +181,9 @@ public class EarthModel {
    * and initialize critical points.
    *
    * @param modelFile A String containing the path to the Earth model file
-   * @return Return a TtStatus object containing the travel-time status
+   * @return Return a TravelTimeStatus object containing the travel-time status
    */
-  public TtStatus readModelFile(String modelFile) {
+  public TravelTimeStatus readModelFile(String modelFile) {
     /*
      * We have to read everything in, but we don't need density,
      * anisotropy, or attenuation for the travel-times.
@@ -196,7 +196,7 @@ public class EarthModel {
     try {
       inModel = new BufferedInputStream(new FileInputStream(modelFile));
     } catch (FileNotFoundException e) {
-      return TtStatus.BAD_MODEL_READ;
+      return TravelTimeStatus.BAD_MODEL_READ;
     }
 
     Scanner scan = new Scanner(inModel);
@@ -211,7 +211,7 @@ public class EarthModel {
               + modelCheck
               + ") *****\n");
       scan.close();
-      return TtStatus.BAD_MODEL_FILE;
+      return TravelTimeStatus.BAD_MODEL_FILE;
     }
 
     int n = scan.nextInt();
@@ -236,7 +236,7 @@ public class EarthModel {
       if (r < rLast) {
         System.out.format("\n***** Error: radius %7.2f out of order " + "*****\n\n", r);
         scan.close();
-        return TtStatus.BAD_MODEL_FILE;
+        return TravelTimeStatus.BAD_MODEL_FILE;
       }
 
       rho = scan.nextDouble();
@@ -291,7 +291,7 @@ public class EarthModel {
 
     // Initialize the model specific conversion constants.
     modelConversions =
-        new ModConvert(
+        new ModelConversions(
             upperMantleModel.getRadius(),
             mohoModel.getRadius(),
             conradModel.getRadius(),
@@ -301,7 +301,7 @@ public class EarthModel {
     // Do the Earth flattening transformation.
     flattenModel();
     referenceModel = this;
-    return TtStatus.SUCCESS;
+    return TravelTimeStatus.SUCCESS;
   }
 
   /** Function to interpolate the reference Earth model at a standard sampling. */
@@ -451,12 +451,12 @@ public class EarthModel {
    * phase codes.
    */
   private void refineBoundaries() {
-    double tempIC = TauUtil.DMAX,
-        tempOC = TauUtil.DMAX,
-        tempUM = TauUtil.DMAX,
-        tempM = TauUtil.DMAX,
-        tempC = TauUtil.DMAX,
-        tempFS = TauUtil.DMAX;
+    double tempIC = TauUtilities.DMAX,
+        tempOC = TauUtilities.DMAX,
+        tempUM = TauUtilities.DMAX,
+        tempM = TauUtilities.DMAX,
+        tempC = TauUtilities.DMAX,
+        tempFS = TauUtilities.DMAX;
 
     // Find the closest boundary to target boundaries.
     for (int j = 0; j < shells.size(); j++) {

@@ -17,14 +17,14 @@ public class ExtraPhases {
   final boolean[] addOnUsed = {false, false, false, false, false};
   String phDiff, phAddOn;
   double phLim;
-  AuxTtRef auxtt;
+  AuxiliaryTTReference auxtt;
 
   /**
    * Remember the auxiliary phase information.
    *
    * @param auxtt Travel-time auxiliary information
    */
-  public ExtraPhases(AuxTtRef auxtt) {
+  public ExtraPhases(AuxiliaryTTReference auxtt) {
     this.auxtt = auxtt;
   }
 
@@ -42,7 +42,7 @@ public class ExtraPhases {
       if (phCode.equals(diffCode[j])) {
         if (!diffUsed[j]) {
           diffUsed[j] = true;
-          phDiff = TauUtil.phSeg(diffCode[j]) + "dif";
+          phDiff = TauUtilities.phSeg(diffCode[j]) + "dif";
           if (phCode.contains("ab")) phLim = coreLim;
           else phLim = mantleLim;
           return true;
@@ -79,7 +79,7 @@ public class ExtraPhases {
    * @return True if this phase code has an add-on associated with it
    */
   public boolean hasAddOn(String phCode, double xMin) {
-    TtFlags flags;
+    TravelTimeFlags flags;
 
     flags = auxtt.findFlags(phCode);
     // Check for phases missing from the groups file.
@@ -87,7 +87,7 @@ public class ExtraPhases {
       System.out.println("Warning: " + phCode + " is not in the groups.txt file!");
       return false;
     }
-    if (flags.ttStat == null) return false;
+    if (flags.TravelTimeStatistics == null) return false;
     // Otherwise, see if an add on phase is listed.
     for (int j = 0; j < baseCode.length; j++) {
       if (phCode.equals(baseCode[j])) {
@@ -98,7 +98,7 @@ public class ExtraPhases {
             phAddOn = addOnCode[j];
             return true;
           } else {
-            if (xMin < TauUtil.SNDELMIN) {
+            if (xMin < TauUtilities.SNDELMIN) {
               // For Sn we want the second branch.
               addOnUsed[j] = true;
               phAddOn = addOnCode[j];

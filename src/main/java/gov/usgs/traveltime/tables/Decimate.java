@@ -1,6 +1,6 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.TauUtil;
+import gov.usgs.traveltime.TauUtilities;
 import java.util.Arrays;
 
 /**
@@ -223,7 +223,7 @@ public class Decimate {
         double desiredSpacing = normDistanceGrid[0] + dx;
         int iBeg = 1;
         int iEnd = 0;
-        double xLeast = TauUtil.DMAX;
+        double xLeast = TauUtilities.DMAX;
 
         // Scan the ray parameter grid looking for points to kill.
         for (int j = 1; j <= i; j++) {
@@ -239,7 +239,7 @@ public class Decimate {
             // Reset the kill pointers.
             iBeg = iEnd + 2;
             iEnd = j - 1;
-            xLeast = TauUtil.DMAX;
+            xLeast = TauUtilities.DMAX;
             desiredSpacing += (int) ((xCur - desiredSpacing - dx2) / dx + rnd) * dx;
           }
 

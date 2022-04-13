@@ -1,6 +1,6 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.TtStatus;
+import gov.usgs.traveltime.TravelTimeStatus;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 
 /**
@@ -61,7 +61,7 @@ public class FindRange implements UnivariateFunction {
     } catch (Exception e) {
       System.out.println("Bad tau integration interval!");
       e.printStackTrace();
-      System.exit(TtStatus.BAD_TAU_INTERVAL.status());
+      System.exit(TravelTimeStatus.BAD_TAU_INTERVAL.status());
     }
 
     return tauInt.getSummaryIntDist() - targetRange;

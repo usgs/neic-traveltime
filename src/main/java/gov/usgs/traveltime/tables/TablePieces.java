@@ -1,6 +1,6 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.ModConvert;
+import gov.usgs.traveltime.ModelConversions;
 import java.util.ArrayList;
 
 /**
@@ -22,8 +22,8 @@ public class TablePieces {
   /** An ArrayList of ModelShell objects containing the S shells */
   private ArrayList<ModelShell> shellModelS;
 
-  /** A ModConvert object containing the model dependant conversions */
-  private ModConvert modelConversions;
+  /** A ModelConversions object containing the model dependant conversions */
+  private ModelConversions modelConversions;
 
   /**
    * TablePieces constructor. Initialize bits and pieces for each phase type.

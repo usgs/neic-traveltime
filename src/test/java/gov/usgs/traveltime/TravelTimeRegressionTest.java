@@ -38,11 +38,11 @@ public class TravelTimeRegressionTest {
     double delta2 = 90.0;
     double delta3 = 180.0;
     double elev = 0.0d;
-    TTSessionLocal ttLocal = null;
+    TravelTimeLocalSession ttLocal = null;
 
     try {
       // Initialize the local travel-time manager.
-      ttLocal = new TTSessionLocal(true, true, true, modelPath, modelPath);
+      ttLocal = new TravelTimeLocalSession(true, true, true, modelPath, modelPath);
     } catch (IOException | ClassNotFoundException e) {
       System.out.println("Unable to read travel-time auxiliary data.");
       Assertions.fail("Unable to read travel-time auxiliary data");
@@ -66,76 +66,86 @@ public class TravelTimeRegressionTest {
     Assertions.assertEquals(86, ttLocal.getBranchCount(returnAllPhases), "BranchList Size Check:");
 
     // check the travel time package at distance of 1 degree
-    TTime ttList1 = ttLocal.getTT(elev, delta1);
+    TravelTime ttList1 = ttLocal.getTT(elev, delta1);
 
-    // check number of ttimes
-    Assertions.assertEquals(20, ttList1.getNumPhases(), "tTimes Size Check:");
+    // check number of TravelTimes
+    Assertions.assertEquals(20, ttList1.getNumPhases(), "TravelTimes Size Check:");
 
-    // check the first ttime
-    TTimeData firstTTime = ttList1.getPhase(0);
-    Assertions.assertEquals("Pg", firstTTime.getPhCode(), "tTime first phase code:");
-    Assertions.assertEquals(19.234, firstTTime.getTT(), 0.001, "tTime first arrival time:");
+    // check the first TravelTime
+    TravelTimeData firstTravelTime = ttList1.getPhase(0);
+    Assertions.assertEquals("Pg", firstTravelTime.getPhCode(), "TravelTime first phase code:");
     Assertions.assertEquals(
-        19.070, firstTTime.getDTdD(), 0.001, "tTime first tangential derivative time:");
+        19.234, firstTravelTime.getTT(), 0.001, "TravelTime first arrival time:");
     Assertions.assertEquals(
-        0.0148, firstTTime.getDTdZ(), 0.0001, "tTime first vertical derivative time:");
+        19.070, firstTravelTime.getDTdD(), 0.001, "TravelTime first tangential derivative time:");
     Assertions.assertEquals(
-        0.0012, firstTTime.getDXdP(), 0.0001, "tTime first ray parameter derivative time:");
-    Assertions.assertEquals(0.666, firstTTime.getSpread(), 0.001, "tTime first spread:");
-    Assertions.assertEquals(14873.999, firstTTime.getObserv(), 0.001, "tTime first observability:");
-    Assertions.assertEquals(5.0, firstTTime.getWindow(), 0.001, "tTime first association window:");
-    Assertions.assertEquals("P", firstTTime.getPhGroup(), "tTime first phase group:");
-    Assertions.assertEquals("PKP", firstTTime.getAuxGroup(), "tTime first auxiliary phase group:");
-    Assertions.assertEquals(true, firstTTime.isRegional(), "tTime first regional flag:");
-    Assertions.assertEquals(false, firstTTime.isDepth(), "tTime first depth flag:");
-    Assertions.assertEquals(true, firstTTime.canUse(), "tTime first phase use flag:");
-    Assertions.assertEquals(false, firstTTime.getDis(), "tTime first disrespect flag:");
+        0.0148, firstTravelTime.getDTdZ(), 0.0001, "TravelTime first vertical derivative time:");
+    Assertions.assertEquals(
+        0.0012,
+        firstTravelTime.getDXdP(),
+        0.0001,
+        "TravelTime first ray parameter derivative time:");
+    Assertions.assertEquals(0.666, firstTravelTime.getSpread(), 0.001, "TravelTime first spread:");
+    Assertions.assertEquals(
+        14873.999, firstTravelTime.getObserv(), 0.001, "TravelTime first observability:");
+    Assertions.assertEquals(
+        5.0, firstTravelTime.getWindow(), 0.001, "TravelTime first association window:");
+    Assertions.assertEquals("P", firstTravelTime.getPhaseGroup(), "TravelTime first phase group:");
+    Assertions.assertEquals(
+        "PKP", firstTravelTime.getAuxGroup(), "TravelTime first auxiliary phase group:");
+    Assertions.assertEquals(true, firstTravelTime.isRegional(), "TravelTime first regional flag:");
+    Assertions.assertEquals(false, firstTravelTime.isDepth(), "TravelTime first depth flag:");
+    Assertions.assertEquals(true, firstTravelTime.canUse(), "TravelTime first phase use flag:");
+    Assertions.assertEquals(false, firstTravelTime.getDis(), "TravelTime first disrespect flag:");
 
     // check the travel time package at distance of 90 degrees
-    TTime ttList2 = ttLocal.getTT(elev, delta2);
+    TravelTime ttList2 = ttLocal.getTT(elev, delta2);
 
-    // check number of ttimes
-    Assertions.assertEquals(32, ttList2.getNumPhases(), "tTimes Size Check:");
+    // check number of TravelTimes
+    Assertions.assertEquals(32, ttList2.getNumPhases(), "TravelTimes Size Check:");
 
-    // check the first ttime
-    firstTTime = ttList2.getPhase(0);
-    Assertions.assertEquals("P", firstTTime.getPhCode(), "tTime first phase code:");
-    Assertions.assertEquals(779.729, firstTTime.getTT(), 0.001, "tTime first arrival time:");
+    // check the first TravelTime
+    firstTravelTime = ttList2.getPhase(0);
+    Assertions.assertEquals("P", firstTravelTime.getPhCode(), "TravelTime first phase code:");
     Assertions.assertEquals(
-        4.655, firstTTime.getDTdD(), 0.001, "tTime first tangential derivative time:");
+        779.729, firstTravelTime.getTT(), 0.001, "TravelTime first arrival time:");
     Assertions.assertEquals(
-        -0.1672, firstTTime.getDTdZ(), 0.0001, "tTime first vertical derivative time:");
+        4.655, firstTravelTime.getDTdD(), 0.001, "TravelTime first tangential derivative time:");
     Assertions.assertEquals(
-        -0.0088, firstTTime.getDXdP(), 0.0001, "tTime first ray parameter derivative time:");
-    Assertions.assertEquals(1.102, firstTTime.getSpread(), 0.001, "tTime first spread:");
-    Assertions.assertEquals(12898.048, firstTTime.getObserv(), 0.001, "tTime first observability:");
+        -0.1672, firstTravelTime.getDTdZ(), 0.0001, "TravelTime first vertical derivative time:");
     Assertions.assertEquals(
-        7.715, firstTTime.getWindow(), 0.001, "tTime first association window:");
-    Assertions.assertEquals("P", firstTTime.getPhGroup(), "tTime first phase group:");
-    Assertions.assertEquals("PKP", firstTTime.getAuxGroup(), "tTime first auxiliary phase group:");
-    Assertions.assertEquals(false, firstTTime.isRegional(), "tTime first regional flag:");
-    Assertions.assertEquals(false, firstTTime.isDepth(), "tTime first depth flag:");
-    Assertions.assertEquals(true, firstTTime.canUse(), "tTime first phase use flag:");
-    Assertions.assertEquals(false, firstTTime.getDis(), "tTime first disrespect flag:");
+        -0.0088,
+        firstTravelTime.getDXdP(),
+        0.0001,
+        "TravelTime first ray parameter derivative time:");
+    Assertions.assertEquals(1.102, firstTravelTime.getSpread(), 0.001, "TravelTime first spread:");
+    Assertions.assertEquals(
+        12898.048, firstTravelTime.getObserv(), 0.001, "TravelTime first observability:");
+    Assertions.assertEquals(
+        7.715, firstTravelTime.getWindow(), 0.001, "TravelTime first association window:");
+    Assertions.assertEquals("P", firstTravelTime.getPhaseGroup(), "TravelTime first phase group:");
+    Assertions.assertEquals(
+        "PKP", firstTravelTime.getAuxGroup(), "TravelTime first auxiliary phase group:");
+    Assertions.assertEquals(false, firstTravelTime.isRegional(), "TravelTime first regional flag:");
+    Assertions.assertEquals(false, firstTravelTime.isDepth(), "TravelTime first depth flag:");
+    Assertions.assertEquals(true, firstTravelTime.canUse(), "TravelTime first phase use flag:");
+    Assertions.assertEquals(false, firstTravelTime.getDis(), "TravelTime first disrespect flag:");
 
     // check the travel time package at distance of 180 degrees
-    TTime ttList3 = ttLocal.getTT(elev, delta3);
+    TravelTime ttList3 = ttLocal.getTT(elev, delta3);
 
-    // check number of ttimes
-    Assertions.assertEquals(12, ttList3.getNumPhases(), "tTimes Size Check:");
+    // check number of TravelTimes
+    Assertions.assertEquals(12, ttList3.getNumPhases(), "TravelTimes Size Check:");
 
-    // check the first ttime
-    firstTTime = ttList3.getPhase(0);
-    Assertions.assertEquals("PKPdf", firstTTime.getPhCode(), "tTime first phase code:");
-    Assertions.assertEquals(1210.790, firstTTime.getTT(), 0.001, "tTime first arrival time:");
+    // check the first TravelTime
+    firstTravelTime = ttList3.getPhase(0);
+    Assertions.assertEquals("PKPdf", firstTravelTime.getPhCode(), "TravelTime first phase code:");
     Assertions.assertEquals(
-        3.315E-9, firstTTime.getDTdD(), 0.001, "tTime first tangential derivative time:");
+        1210.790, firstTravelTime.getTT(), 0.001, "TravelTime first arrival time:");
     Assertions.assertEquals(
-        -0.1724, firstTTime.getDTdZ(), 0.0001, "tTime first vertical derivative time:");
+        3.315E-9, firstTravelTime.getDTdD(), 0.001, "TravelTime first tangential derivative time:");
     Assertions.assertEquals(
-        -0.0052, firstTTime.getDXdP(), 0.0001, "tTime first ray parameter derivative time:");
-    Assertions.assertEquals(1.468, firstTTime.getSpread(), 0.001, "tTime first spread:");
-    Assertions.assertEquals(3.733, firstTTime.getObserv(), 0.001, "tTime first observability:");
+        -0.1724, firstTravelTime.getDTdZ(), 0.0001, "TravelTime first vertical derivative time:");
     Assertions.assertEquals(
         10.278, firstTTime.getWindow(), 0.001, "tTime first association window:");
     Assertions.assertEquals("PKP", firstTTime.getPhGroup(), "tTime first phase group:");

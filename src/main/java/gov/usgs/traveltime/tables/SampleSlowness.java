@@ -1,6 +1,6 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.ModConvert;
+import gov.usgs.traveltime.ModelConversions;
 import java.util.ArrayList;
 import org.apache.commons.math3.analysis.solvers.PegasusSolver;
 import org.apache.commons.math3.exception.NoBracketingException;
@@ -44,8 +44,8 @@ public class SampleSlowness {
   /** A TauModel object containing the tau-p slowness depth model */
   private TauModel tauDepthModel;
 
-  /** A ModConvert object containing the model dependant conversions */
-  private ModConvert modelConversions;
+  /** A ModelConversions object containing the model dependant conversions */
+  private ModelConversions modelConversions;
 
   /** A TauInt object containing the Tau-X integration logic */
   private TauIntegrate tauInt;

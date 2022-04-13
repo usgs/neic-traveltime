@@ -1,6 +1,6 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.ModConvert;
+import gov.usgs.traveltime.ModelConversions;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.TreeSet;
@@ -47,8 +47,8 @@ public class TauModel {
   /** An BranchIntegrals objects containing the S integral branch pieces */
   private BranchIntegrals intPiecesS;
 
-  /** A ModConvert object containing model dependent constants and conversions */
-  private ModConvert modelConversions;
+  /** A ModelConversions object containing model dependent constants and conversions */
+  private ModelConversions modelConversions;
 
   /**
    * Get the reference earth model.
@@ -62,9 +62,9 @@ public class TauModel {
   /**
    * Get the model dependant constants and conversions.
    *
-   * @return A ModConvert object holding the model dependant constants and conversions
+   * @return A ModelConversions object holding the model dependant constants and conversions
    */
-  public ModConvert getModelConversions() {
+  public ModelConversions getModelConversions() {
     return modelConversions;
   }
 
@@ -153,9 +153,9 @@ public class TauModel {
    * TauModel constructor, allocates lists for independent P and S models.
    *
    * @param referenceModel An EarthModel object containing the reference Earth model
-   * @param modelConversions A ModConvert object holding the model dependent conversions
+   * @param modelConversions A ModelConversions object holding the model dependent conversions
    */
-  public TauModel(EarthModel referenceModel, ModConvert modelConversions) {
+  public TauModel(EarthModel referenceModel, ModelConversions modelConversions) {
     this.referenceModel = referenceModel;
     this.modelConversions = modelConversions;
     slownessModelP = new ArrayList<TauSample>();

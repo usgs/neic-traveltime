@@ -13,8 +13,8 @@ public class ModDataVol {
   int iSource; // Model index of the current source depth
   boolean onModelGrid; // True if the source depth is exactly on a grid point.
   double pFound, zFound, pMax = Double.NaN;
-  ModDataRef ref; // Non-volatile model information
-  ModConvert cvt; // Model dependent conversion factors
+  ModelDataReference ref; // Non-volatile model information
+  ModelConversions cvt; // Model dependent conversion factors
 
   /** Private logging object. */
   private static final Logger LOGGER = Logger.getLogger(ModDataVol.class.getName());
@@ -26,7 +26,7 @@ public class ModDataVol {
    * @param ref Model reference data source
    * @param cvt The Earth model units converter
    */
-  public ModDataVol(ModDataRef ref, ModConvert cvt) {
+  public ModDataVol(ModelDataReference ref, ModelConversions cvt) {
     this.ref = ref;
     this.cvt = cvt;
   }
@@ -51,7 +51,7 @@ public class ModDataVol {
     zFound = z;
     pMax = Double.NaN;
     // If we're on a grid point, return that.
-    if (Math.abs(z - ref.zMod[iSource]) <= TauUtil.DTOL) {
+    if (Math.abs(z - ref.zMod[iSource]) <= TauUtilities.DTOL) {
       onModelGrid = true;
       pFound = ref.pMod[iSource];
     }
@@ -87,7 +87,7 @@ public class ModDataVol {
     } else {
       for (iSource = ref.indexUp.length - 1; iSource >= 0; iSource--) {
         if (ref.pMod[iSource] >= p) {
-          if (Math.abs(ref.pMod[iSource] - p) <= TauUtil.DTOL) iSource++;
+          if (Math.abs(ref.pMod[iSource] - p) <= TauUtilities.DTOL) iSource++;
           break;
         }
       }
@@ -100,7 +100,7 @@ public class ModDataVol {
     }
     pFound = p;
     // If we're on a grid point, return that.
-    if (Math.abs(p - ref.pMod[iSource]) <= TauUtil.DTOL) {
+    if (Math.abs(p - ref.pMod[iSource]) <= TauUtilities.DTOL) {
       zFound = ref.zMod[iSource];
       onModelGrid = true;
     }
@@ -114,7 +114,7 @@ public class ModDataVol {
                               * (Math.exp(ref.zMod[iSource] - ref.zMod[iSource - 1]) - 1d)
                               / (ref.pMod[iSource] - ref.pMod[iSource - 1])
                           + 1d,
-                      TauUtil.DMIN));
+                      TauUtilities.DMIN));
       onModelGrid = false;
     }
     return zFound;

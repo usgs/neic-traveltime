@@ -1,6 +1,6 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.ModConvert;
+import gov.usgs.traveltime.ModelConversions;
 
 /**
  * ModelSample class contains all model parameters at one radius.
@@ -204,9 +204,9 @@ public class ModelSample {
   /**
    * Function to non-dimensionalize the sample and apply the Earth flattening transformation.
    *
-   * @param convert A ModConvert object containing the model sensitive conversion constants
+   * @param convert A ModelConversions object containing the model sensitive conversion constants
    */
-  public void flatten(ModConvert convert) {
+  public void flatten(ModelConversions convert) {
     depth = convert.flatZ(radius);
     compressionalWaveSlowness = convert.flatP(isotropicPVelocity, radius);
     shearWaveSlowness = convert.flatP(isotropicSVelocity, radius);
@@ -230,11 +230,11 @@ public class ModelSample {
    * Function to create a string representing the model sample.
    *
    * @param flat A boolean flag, if true print the Earth flattened parameters
-   * @param convert A ModConvert object containing the model sensitive conversion constants, if not
-   *     null, convert to dimensional depth
+   * @param convert A ModelConversions object containing the model sensitive conversion constants,
+   *     if not null, convert to dimensional depth
    * @return String describing this model sample
    */
-  public String printSample(boolean flat, ModConvert convert) {
+  public String printSample(boolean flat, ModelConversions convert) {
 
     if (flat) {
       if (convert == null) {

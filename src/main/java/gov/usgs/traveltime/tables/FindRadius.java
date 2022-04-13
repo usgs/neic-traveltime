@@ -1,6 +1,6 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.ModConvert;
+import gov.usgs.traveltime.ModelConversions;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 
 /**
@@ -23,8 +23,8 @@ public class FindRadius implements UnivariateFunction {
   /** A EarthModel object containing the reference earth model */
   private EarthModel referenceModel;
 
-  /** A ModConvert object containing model dependent constants and conversions */
-  private ModConvert modelConversions;
+  /** A ModelConversions object containing model dependent constants and conversions */
+  private ModelConversions modelConversions;
 
   /**
    * FindRadius constructor setting up the the reference Earth model and conversion factors.
@@ -32,7 +32,7 @@ public class FindRadius implements UnivariateFunction {
    * @param referenceModel Reference Earth model
    * @param modelConversions Model specific conversion factors
    */
-  public FindRadius(EarthModel referenceModel, ModConvert modelConversions) {
+  public FindRadius(EarthModel referenceModel, ModelConversions modelConversions) {
     this.referenceModel = referenceModel;
     this.modelConversions = modelConversions;
   }

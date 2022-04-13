@@ -1,9 +1,9 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.AllBrnRef;
-import gov.usgs.traveltime.AuxTtRef;
-import gov.usgs.traveltime.TauUtil;
-import gov.usgs.traveltime.TtStatus;
+import gov.usgs.traveltime.AllBranchReference;
+import gov.usgs.traveltime.AuxiliaryTTReference;
+import gov.usgs.traveltime.TauUtilities;
+import gov.usgs.traveltime.TravelTimeStatus;
 
 /**
  * Class to test main program for travel-time table generation.
@@ -24,20 +24,22 @@ public class ModelTest {
     double sysTime;
     String earthModel = "ak135";
     MakeTables make;
-    AuxTtRef auxTT = null;
-    AllBrnRef allRef;
-    TtStatus status;
+    AuxiliaryTTReference auxTT = null;
+    AllBranchReference allRef;
+    TravelTimeStatus status;
 
     TablesUtil.deBugLevel = 1;
     sysTime = System.currentTimeMillis();
     make = new MakeTables(earthModel);
-    status = make.buildModel(TauUtil.model("m" + earthModel + ".mod"), TauUtil.model("phases.txt"));
+    status =
+        make.buildModel(
+            TauUtilities.model("m" + earthModel + ".mod"), TauUtilities.model("phases.txt"));
 
-    if (status == TtStatus.SUCCESS) {
+    if (status == TravelTimeStatus.SUCCESS) {
       // Build the branch reference classes.
       // NOTE assumes default model path for now, need to figure out
       // where to get this path. Cmd line arg?
-      auxTT = new AuxTtRef(true, false, false, null, null);
+      auxTT = new AuxiliaryTTReference(true, false, false, null, null);
       allRef = make.fillInBranchReferenceData(null, auxTT);
 
       System.out.format(

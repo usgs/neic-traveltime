@@ -1,6 +1,6 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.ModConvert;
+import gov.usgs.traveltime.ModelConversions;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -47,8 +47,8 @@ public class BranchIntegrals {
   /** A TauModel object containing the final model */
   private TauModel finalTTModel;
 
-  /** A ModConvert object containing the model dependant conversions */
-  private ModConvert modelConversions;
+  /** A ModelConversions object containing the model dependant conversions */
+  private ModelConversions modelConversions;
 
   /** An ArrayList of TauXsample objects containing the raw integrals */
   private ArrayList<TauRangeSample> rawIntegrals;

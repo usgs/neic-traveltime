@@ -1,8 +1,8 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.ModConvert;
+import gov.usgs.traveltime.ModelConversions;
 import gov.usgs.traveltime.Spline;
-import gov.usgs.traveltime.TtStatus;
+import gov.usgs.traveltime.TravelTimeStatus;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -54,11 +54,11 @@ public class MakeBranches {
   /** A TauModel object containing the final model */
   private TauModel finalTTModel;
 
-  /** A ModConvert object containing the model dependant conversions */
-  private ModConvert modelConversions;
+  /** A ModelConversions object containing the model dependant conversions */
+  private ModelConversions modelConversions;
 
-  /** A DecimateTTBranch object containing the Branch decimation class */
-  private DecimateTTBranch branchDecimator;
+  /** A DecimateTravelTimeBranch object containing the Branch decimation class */
+  private DecimateTravelTimeBranch branchDecimator;
 
   /** A Spline object holding the spline interpolation routines */
   private Spline spline;
@@ -76,9 +76,9 @@ public class MakeBranches {
    * MakeBranches Constructor, set the pieces we'll need.
    *
    * @param finalTTModel A TauModel object containing the final model
-   * @param branchDecimator A DecimateTTBranch containing the Branch decimation class
+   * @param branchDecimator A DecimateTravelTimeBranch containing the Branch decimation class
    */
-  public MakeBranches(TauModel finalTTModel, DecimateTTBranch branchDecimator) {
+  public MakeBranches(TauModel finalTTModel, DecimateTravelTimeBranch branchDecimator) {
     this.finalTTModel = finalTTModel;
     modelConversions = finalTTModel.getModelConversions();
     slownessIntegralOffset = finalTTModel.getIntPiecesS().getRayParameters().length - 1;
@@ -90,9 +90,9 @@ public class MakeBranches {
    * Function to read in a list of desired phases for the branches from a file.
    *
    * @param phaseFile A string containing the path to the the file containing the desired phases
-   * @return A TtStatus object reporting the travel-time status.
+   * @return A TravelTimeStatus object reporting the travel-time status.
    */
-  public TtStatus readPhases(String phaseFile) {
+  public TravelTimeStatus readPhases(String phaseFile) {
     BufferedInputStream inPhases = null;
     Scanner scan;
 
@@ -100,7 +100,7 @@ public class MakeBranches {
     try {
       inPhases = new BufferedInputStream(new FileInputStream(phaseFile));
     } catch (FileNotFoundException e) {
-      return TtStatus.BAD_PHASE_LIST;
+      return TravelTimeStatus.BAD_PHASE_LIST;
     }
 
     // Read the desired phases.
@@ -115,14 +115,14 @@ public class MakeBranches {
     try {
       inPhases.close();
     } catch (IOException e) {
-      return TtStatus.BAD_PHASE_LIST;
+      return TravelTimeStatus.BAD_PHASE_LIST;
     }
 
     if (phaseList.size() == 0) {
-      return TtStatus.BAD_PHASE_LIST;
+      return TravelTimeStatus.BAD_PHASE_LIST;
     } else {
       doBranches();
-      return TtStatus.SUCCESS;
+      return TravelTimeStatus.SUCCESS;
     }
   }
 
@@ -130,21 +130,21 @@ public class MakeBranches {
    * Function to read in a list of desired phases for the branches from a list.
    *
    * @param phaseList An arraylist of strings containing the desired phases
-   * @return A TtStatus object reporting the travel-time status.
+   * @return A TravelTimeStatus object reporting the travel-time status.
    */
-  public TtStatus getPhases(ArrayList<String> phaseList) {
+  public TravelTimeStatus getPhases(ArrayList<String> phaseList) {
     if (phaseList == null) {
-      return TtStatus.BAD_PHASE_LIST;
+      return TravelTimeStatus.BAD_PHASE_LIST;
     }
 
     if (phaseList.size() == 0) {
-      return TtStatus.BAD_PHASE_LIST;
+      return TravelTimeStatus.BAD_PHASE_LIST;
     }
 
     this.phaseList = phaseList;
     doBranches();
 
-    return TtStatus.SUCCESS;
+    return TravelTimeStatus.SUCCESS;
   }
 
   /** Function that uses the phase codes to figure out what sort of branchs to set up. */

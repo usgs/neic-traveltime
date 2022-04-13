@@ -8,17 +8,17 @@ import gov.usgs.traveltime.tables.TauIntegralException;
  * @author Ray Buland
  */
 public class PlotData {
-  AllBrnVol allBrn;
-  TTime ttList;
-  TTimeData tTime;
-  TtPlot ttPlot;
+  AllBranchVolume allBrn;
+  TravelTime ttList;
+  TravelTimeData TravelTime;
+  TravelTimePlot TravelTimePlot;
 
   /**
    * Remember the travel-time driver.
    *
    * @param allBrn All branches travel-time object
    */
-  public PlotData(AllBrnVol allBrn) {
+  public PlotData(AllBranchVolume allBrn) {
     this.allBrn = allBrn;
   }
 
@@ -47,14 +47,14 @@ public class PlotData {
       double deltaStep)
       throws BadDepthException, TauIntegralException {
 
-    double deltaIncrement = TauUtil.DDELPLOT;
+    double deltaIncrement = TauUtilities.DDELPLOT;
     if (deltaStep > 0) {
       deltaIncrement = deltaStep;
     }
 
     // Make sure the depth is in range.
-    if (!Double.isNaN(depth) && depth >= 0d && depth <= TauUtil.MAXDEPTH) {
-      ttPlot = new TtPlot();
+    if (!Double.isNaN(depth) && depth >= 0d && depth <= TauUtilities.MAXDEPTH) {
+      TravelTimePlot = new TravelTimePlot();
       // A simple request is all we can do.
       allBrn.newSession(depth, phList, returnAllPhases, returnBackBranches, tectonic, false);
       // Loop over distances.
@@ -62,23 +62,23 @@ public class PlotData {
         ttList = allBrn.getTT(0d, delta);
         // Loop over phases sorting them into branches.
         for (int j = 0; j < ttList.getNumPhases(); j++) {
-          tTime = ttList.getPhase(j);
-          if (tTime.tt <= maxTime) {
-            ttPlot.addPoint(
-                tTime.phCode,
-                tTime.uniqueCode,
+          TravelTime = ttList.getPhase(j);
+          if (TravelTime.tt <= maxTime) {
+            TravelTimePlot.addPoint(
+                TravelTime.phCode,
+                TravelTime.uniqueCode,
                 delta,
-                tTime.tt,
-                tTime.spread,
-                tTime.observ,
-                tTime.dTdD);
+                TravelTime.tt,
+                TravelTime.spread,
+                TravelTime.observ,
+                TravelTime.dTdD);
           }
         }
       }
-      ttPlot.sortBranches();
+      TravelTimePlot.sortBranches();
       // If the depth is bad, we can't do anything.
     } else {
-      ttPlot = null;
+      TravelTimePlot = null;
     }
   }
 
@@ -87,12 +87,12 @@ public class PlotData {
    *
    * @return Travel-time plot data
    */
-  public TtPlot getPlot() {
-    return ttPlot;
+  public TravelTimePlot getPlot() {
+    return TravelTimePlot;
   }
 
   /** Print plot data for all travel-time branches. */
   public void print() {
-    ttPlot.printBranches();
+    TravelTimePlot.printBranches();
   }
 }

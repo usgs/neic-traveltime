@@ -7,15 +7,15 @@
  */
 package gov.usgs.traveltime.session;
 
-import gov.usgs.traveltime.AllBrnRef;
-import gov.usgs.traveltime.AllBrnVol;
-import gov.usgs.traveltime.AuxTtRef;
+import gov.usgs.traveltime.AllBranchReference;
+import gov.usgs.traveltime.AllBranchVolume;
+import gov.usgs.traveltime.AuxiliaryTTReference;
 import gov.usgs.traveltime.FileChanged;
 import gov.usgs.traveltime.PlotData;
 import gov.usgs.traveltime.ReadTau;
-import gov.usgs.traveltime.TTime;
-import gov.usgs.traveltime.TauUtil;
-import gov.usgs.traveltime.TtPlot;
+import gov.usgs.traveltime.TauUtilities;
+import gov.usgs.traveltime.TravelTime;
+import gov.usgs.traveltime.TravelTimePlot;
 import gov.usgs.traveltime.tables.MakeTables;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -23,11 +23,12 @@ import java.util.TreeMap;
 
 /** @author U.S. Geological Survey &lt;ketchum at usgs.gov&gt; */
 public class TTSession {
-  private static AuxTtRef auxtt;
-  private static final TreeMap<String, AllBrnRef> modelData = new TreeMap();
-  // private static final TreeMap<String, ArrayList<AllBrnVol>> modelAllBrnVolFree = new
+  private static AuxiliaryTTReference auxtt;
+  private static final TreeMap<String, AllBranchReference> modelData = new TreeMap();
+  // private static final TreeMap<String, ArrayList<AllBranchVolume>> modelAllBranchVolumeFree = new
   // TreeMap<>();
-  // private static final TreeMap<String, ArrayList<AllBrnVol>> modelAllBrnVolAssigned = new
+  // private static final TreeMap<String, ArrayList<AllBranchVolume>> modelAllBranchVolumeAssigned =
+  // new
   // TreeMap<>();
 
   // Session variables
@@ -45,7 +46,7 @@ public class TTSession {
   private String key;
 
   // Variables used within a Session
-  private AllBrnVol allBrn; // The current session with depth object to query for stuff
+  private AllBranchVolume allBrn; // The current session with depth object to query for stuff
   private PlotData plotData; // Travel-time plot data
   private String serName; // Serialized file name for this model
   private String[] fileNames; // Raw input file names for this model
@@ -63,11 +64,11 @@ public class TTSession {
     return key;
   }
   /**
-   * Return the working AllBrnVol for this session
+   * Return the working AllBranchVolume for this session
    *
-   * @return The current AllBrnVol
+   * @return The current AllBranchVolume
    */
-  public AllBrnVol getAllBrnVol() {
+  public AllBranchVolume getAllBranchVolume() {
     return allBrn;
   }
   /**
@@ -222,30 +223,30 @@ public class TTSession {
     try {
       // Read in data common to all models.
       if (auxtt == null) {
-        // prta(ttag + " create AuxTtRef ");
+        // prta(ttag + " create AuxiliaryTTReference ");
         // NOTE assumes default model path for now, need to figure out
         // where to get this path. Cmd line arg?
-        auxtt = new AuxTtRef(true, true, true, null, null);
+        auxtt = new AuxiliaryTTReference(true, true, true, null, null);
       }
 
       // See if we know this model.
-      AllBrnRef allRef = modelData.get(earthModel);
+      AllBranchReference allRef = modelData.get(earthModel);
 
       // If not, set it up.
       if (allRef == null) {
         if (modelChanged(earthModel)) {
           // The Earth model files have changed--regenerate them.
-          if (TauUtil.useFortranFiles) {
+          if (TauUtilities.useFortranFiles) {
             // We're going to read the model tables from the Fortran files.
             try {
               // prta(ttag + " Need to read in model=" + earthModel);
               ReadTau readTau = new ReadTau(earthModel);
-              readTau.readHeader(TauUtil.model(fileNames[0]));
+              readTau.readHeader(TauUtilities.model(fileNames[0]));
               //	readTau.dumpSegments();
               //	readTau.dumpBranches();
-              readTau.readTable(TauUtil.model(fileNames[1]));
+              readTau.readTable(TauUtilities.model(fileNames[1]));
               //	readTau.dumpUp(15);
-              allRef = new AllBrnRef(serName, readTau, auxtt);
+              allRef = new AllBranchReference(serName, readTau, auxtt);
             } catch (IOException e) {
               e.printStackTrace(getPrintStream());
               throw e;
@@ -266,7 +267,7 @@ public class TTSession {
           // We can just read the model from the serialized files.
           try {
             // prta(ttag + " Serialize model in =" + earthModel);
-            allRef = new AllBrnRef(serName, earthModel, auxtt);
+            allRef = new AllBranchReference(serName, earthModel, auxtt);
           } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace(getPrintStream());
             throw e;
@@ -278,33 +279,33 @@ public class TTSession {
       // At this point, we've either found the reference part of the model
       // or read it in.  Now Set up the (depth dependent) volatile part.
       // See if this model is on the Free Tree
-      /* The modelAllVolFree is a list of AllBrnVol which are not in use (free list)
+      /* The modelAllVolFree is a list of AllBranchVolume which are not in use (free list)
          The modelAllBrnAssigned is the list of busy ones.  The tremmat is done by
          earth model.  They are moved to free list when the Session is closed.
       */
-      /*synchronized (modelAllBrnVolFree) {
-      ArrayList<AllBrnVol> free = modelAllBrnVolFree.get(earthModel);
-      ArrayList<AllBrnVol> used;
+      /*synchronized (modelAllBranchVolumeFree) {
+      ArrayList<AllBranchVolume> free = modelAllBranchVolumeFree.get(earthModel);
+      ArrayList<AllBranchVolume> used;
       if (free == null) {
         // create the used and free list for this model type
-        free = new ArrayList<AllBrnVol>(10);
-        used = new ArrayList<AllBrnVol>(10);
-        modelAllBrnVolFree.put(earthModel, free);
-        modelAllBrnVolAssigned.put(earthModel, used);
+        free = new ArrayList<AllBranchVolume>(10);
+        used = new ArrayList<AllBranchVolume>(10);
+        modelAllBranchVolumeFree.put(earthModel, free);
+        modelAllBranchVolumeAssigned.put(earthModel, used);
       }*/
 
-      // Get the used list and if the free list is empty, put a new AllBrnVol on it
-      // used = modelAllBrnVolAssigned.get(earthModel);
+      // Get the used list and if the free list is empty, put a new AllBranchVolume on it
+      // used = modelAllBranchVolumeAssigned.get(earthModel);
       // if (free.isEmpty()) {
       // prta(
       //    ttag
-      //        + " creating a new AllBrnVol for "
+      //        + " creating a new AllBranchVolume for "
       //        + earthModel /*+" #free="+free.size()+" #used="+used.size()*/);
-      allBrn = new AllBrnVol(allRef);
+      allBrn = new AllBranchVolume(allRef);
       //  free.add(allBrn);
       // }
 
-      // get a allBrnVol from the free list and put it on the used list
+      // get a AllBranchVolume from the free list and put it on the used list
       // allBrn = free.get(free.size() - 1);
       // free.remove(free.size() - 1);
       // used.add(allBrn);
@@ -364,16 +365,16 @@ public class TTSession {
   private boolean modelChanged(String earthModel) {
     // We need two files in either case.
     fileNames = new String[2];
-    if (TauUtil.useFortranFiles) {
+    if (TauUtilities.useFortranFiles) {
       // Names for the Fortran files.
-      serName = TauUtil.serialize(earthModel + "_for.ser");
-      fileNames[0] = TauUtil.model(earthModel + ".hed");
-      fileNames[1] = TauUtil.model(earthModel + ".tbl");
+      serName = TauUtilities.serialize(earthModel + "_for.ser");
+      fileNames[0] = TauUtilities.model(earthModel + ".hed");
+      fileNames[1] = TauUtilities.model(earthModel + ".tbl");
     } else {
       // Names for generating the model.
-      serName = TauUtil.serialize(earthModel + "_gen.ser");
-      fileNames[0] = TauUtil.model("m" + earthModel + ".mod");
-      fileNames[1] = TauUtil.model("phases.txt");
+      serName = TauUtilities.serialize(earthModel + "_gen.ser");
+      fileNames[0] = TauUtilities.model("m" + earthModel + ".mod");
+      fileNames[1] = TauUtilities.model("phases.txt");
     }
     return FileChanged.isChanged(serName, fileNames);
   }
@@ -438,11 +439,11 @@ public class TTSession {
   }
 
   /** @param obj */
-  /*private void freeAllBrnVol(AllBrnVol obj) {
+  /*private void freeAllBranchVolume(AllBranchVolume obj) {
     String model = obj.getEarthModel();
-    synchronized(modelAllBrnVolFree) {
-      ArrayList<AllBrnVol> free = modelAllBrnVolFree.get(earthModel);
-      ArrayList<AllBrnVol> used = modelAllBrnVolAssigned.get(earthModel);
+    synchronized(modelAllBranchVolumeFree) {
+      ArrayList<AllBranchVolume> free = modelAllBranchVolumeFree.get(earthModel);
+      ArrayList<AllBranchVolume> used = modelAllBranchVolumeAssigned.get(earthModel);
       if(free != null && used != null) {
         for(int i=0; i<used.size(); i++) {
           if(used.get(i) == obj) {
@@ -452,8 +453,8 @@ public class TTSession {
             return;
           }
         }
-        prta(ttag+"TTS: **** free of AllBrnVol not found on Used list! "+obj);
-        new RuntimeException("TTS: free of AllBrnVold not found "+obj).printStackTrace(getPrintStream());
+        prta(ttag+"TTS: **** free of AllBranchVolume not found on Used list! "+obj);
+        new RuntimeException("TTS: free of AllBranchVolumed not found "+obj).printStackTrace(getPrintStream());
       }
       else {
         prta(ttag+"TTS: **** free or used not available for model="+earthModel);
@@ -465,13 +466,13 @@ public class TTSession {
    *
    * @param recDistance In degrees
    * @param recElevation of receiver
-   * @return A TTime structure with the travel time
+   * @return A TravelTime structure with the travel time
    */
-  public synchronized TTime getTT(double recDistance, double recElevation) {
+  public synchronized TravelTime getTT(double recDistance, double recElevation) {
     if (allBrn == null) return null;
 
-    TTime ttime = allBrn.getTT(recElevation, recDistance);
-    return ttime;
+    TravelTime TravelTime = allBrn.getTT(recElevation, recDistance);
+    return TravelTime;
   }
   /**
    * NOTE: JSON does not contain the azimuth but contains both distance and lat/long????
@@ -483,11 +484,11 @@ public class TTSession {
    * @param azimuth Azimuth
    * @return List of travel times
    */
-  public synchronized TTime getTT(
+  public synchronized TravelTime getTT(
       double recLat, double recLong, double recElev, double delta, double azimuth) {
     if (allBrn == null) return null;
-    TTime ttime = allBrn.getTT(recLat, recLong, recElev, delta, azimuth);
-    return ttime;
+    TravelTime TravelTime = allBrn.getTT(recLat, recLong, recElev, delta, azimuth);
+    return TravelTime;
   }
 
   /**
@@ -495,7 +496,7 @@ public class TTSession {
    *
    * @return Travel-time plot data
    */
-  public synchronized TtPlot getPlot() {
+  public synchronized TravelTimePlot getPlot() {
     return plotData.getPlot();
   }
 
@@ -504,15 +505,15 @@ public class TTSession {
    *
    * @return Travel-time auxiliary information
    */
-  public AuxTtRef getAuxTT() {
+  public AuxiliaryTTReference getAuxTT() {
     return auxtt;
   }
 
-  /** close this session which also frees the allBrnVol in use */
+  /** close this session which also frees the AllBranchVolume in use */
   public void close() {
     TTSessionPool.releaseSession(this);
     // if(allBrn != null) {
-    //  freeAllBrnVol(allBrn);
+    //  freeAllBranchVolume(allBrn);
     //
     // allBrn = null;
   }
@@ -534,15 +535,15 @@ public class TTSession {
       TTSession session =
           TTSessionPool.getTravelTimeSession(
               model, depth, phList, true, false, false, false, false);
-      TTime ttime = session.getTT(delta, 0.);
+      TravelTime TravelTime = session.getTT(delta, 0.);
       System.out.println(
-          "Phase     TTtime      dTdD     dTdZ  Spread   Obsrv PhGrp  AuxGrp    Use   Regn Depth  Dis   isDpth="
+          "Phase     TTravelTime      dTdD     dTdZ  Spread   Obsrv PhGrp  AuxGrp    Use   Regn Depth  Dis   isDpth="
               + depth
               + " delta="
               + delta);
 
-      for (int i = 0; i < ttime.getNumPhases(); i++) {
-        System.out.print(ttime.getPhase(i).toString());
+      for (int i = 0; i < TravelTime.getNumPhases(); i++) {
+        System.out.print(TravelTime.getPhase(i).toString());
       }
     } catch (Exception e) {
       e.printStackTrace();

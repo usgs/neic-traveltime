@@ -18,8 +18,8 @@ import java.nio.ShortBuffer;
 public class Topography implements Serializable {
   private static final long serialVersionUID = 1L;
   short[][] topo; // Global topography on a 20" grid in kilometers
-  TopoLons topoLons; // Virtual array of longitude sample points
-  TopoLats topoLats; // Virtual array of latitude sample points
+  TopographicLongitudes TopographicLongitudes; // Virtual array of longitude sample points
+  TopographicLatitudes TopographicLatitudes; // Virtual array of latitude sample points
 
   /**
    * The constructor reads in the topography file.
@@ -31,8 +31,8 @@ public class Topography implements Serializable {
     // Read the topography data.
     readTopo(topoFile);
     // Set up the virtual arrays of latitude and longitude sample points.
-    topoLons = new TopoLons();
-    topoLats = new TopoLats();
+    TopographicLongitudes = new TopographicLongitudes();
+    TopographicLatitudes = new TopographicLatitudes();
   }
 
   /**
@@ -157,6 +157,8 @@ public class Topography implements Serializable {
    */
   public double getElev(double latitude, double longitude) {
     // The data is stored as meters of elevation in short integers.
-    return 0.001d * TauUtil.biLinear(longitude, latitude, topoLons, topoLats, topo);
+    return 0.001d
+        * TauUtilities.biLinear(
+            longitude, latitude, TopographicLongitudes, TopographicLatitudes, topo);
   }
 }

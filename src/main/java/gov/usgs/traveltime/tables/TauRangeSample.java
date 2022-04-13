@@ -67,8 +67,8 @@ public class TauRangeSample {
   }
 
   /**
-   * Copy the partial tau and range integrals. The shell names are only used for the special cases
-   * of all integrals in the mantle, outer core, and inner core.
+   * TauRangeSample constructor, Copies the partial tau and range integrals. The shell names are
+   * only used for the special cases of all integrals in the mantle, outer core, and inner core.
    *
    * @param length An integer containing the length of the tau and range integral arrays.
    * @param tauIntegrals An array of double values containing the tau integrals
@@ -84,7 +84,7 @@ public class TauRangeSample {
   }
 
   /**
-   * Update the tauIntegrals and range arrays with decimated versions.
+   * Function to update the tauIntegrals and range arrays with decimated versions.
    *
    * @param length An integer containing the length of the tau and range integral arrays.
    * @param newTau An array of double values containing the decimated tau integrals

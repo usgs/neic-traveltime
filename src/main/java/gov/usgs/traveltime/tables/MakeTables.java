@@ -1,9 +1,9 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.AllBrnRef;
-import gov.usgs.traveltime.AuxTtRef;
-import gov.usgs.traveltime.ModConvert;
-import gov.usgs.traveltime.TtStatus;
+import gov.usgs.traveltime.AllBranchReference;
+import gov.usgs.traveltime.AuxiliaryTTReference;
+import gov.usgs.traveltime.ModelConversions;
+import gov.usgs.traveltime.TravelTimeStatus;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -38,15 +38,15 @@ public class MakeTables {
    * @param earthModelFile A String containing the path to the the Earth model file
    * @param phaseListFile A string containing the path to the the file of containing the desired
    *     phases
-   * @return A TtStatus object containing the model read status
+   * @return A TravelTimeStatus object containing the model read status
    * @throws Exception If an integration interval is illegal
    */
-  public TtStatus buildModel(String earthModelFile, String phaseListFile) throws Exception {
+  public TravelTimeStatus buildModel(String earthModelFile, String phaseListFile) throws Exception {
     // Read the model.
-    TtStatus status = referenceEarthModel.readModelFile(earthModelFile);
+    TravelTimeStatus status = referenceEarthModel.readModelFile(earthModelFile);
 
     // If it read OK, process it.
-    if (status == TtStatus.SUCCESS) {
+    if (status == TravelTimeStatus.SUCCESS) {
       if (TablesUtil.deBugLevel > 2) {
         // Print the shell summaries.
         referenceEarthModel.printShells();
@@ -56,7 +56,7 @@ public class MakeTables {
       }
 
       // Interpolate the model.
-      ModConvert modelConversions = referenceEarthModel.getModelConversions();
+      ModelConversions modelConversions = referenceEarthModel.getModelConversions();
       EarthModel localModel = new EarthModel(referenceEarthModel, modelConversions);
       localModel.interpolate();
 
@@ -137,7 +137,8 @@ public class MakeTables {
       }
 
       // Decimate the default sampling for the up-going branches.
-      DecimateTTBranch decimate = new DecimateTTBranch(finalTTModel, modelConversions);
+      DecimateTravelTimeBranch decimate =
+          new DecimateTravelTimeBranch(finalTTModel, modelConversions);
       decimate.upGoingDecimation('P');
       decimate.upGoingDecimation('S');
 
@@ -196,12 +197,14 @@ public class MakeTables {
    * generation.
    *
    * @param modelSerializationFile A string containing the name of the model serialization file
-   * @param AuxTravelTimeData An AuxTtRef object containing the auxiliary travel-time data
+   * @param AuxTravelTimeData An AuxiliaryTTReference object containing the auxiliary travel-time
+   *     data
    * @return An AllBrnRef object containing the the reference data for all branches
    * @throws IOException If the writing of the serialization fails
    */
-  public AllBrnRef fillInBranchReferenceData(
-      String modelSerializationFile, AuxTtRef AuxTravelTimeData) throws IOException {
-    return new AllBrnRef(modelSerializationFile, finalTTModel, branchDataTables, AuxTravelTimeData);
+  public AllBranchReference fillInBranchReferenceData(
+      String modelSerializationFile, AuxiliaryTTReference AuxTravelTimeData) throws IOException {
+    return new AllBranchReference(
+        modelSerializationFile, finalTTModel, branchDataTables, AuxTravelTimeData);
   }
 }

@@ -1,6 +1,6 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.ModConvert;
+import gov.usgs.traveltime.ModelConversions;
 
 /**
  * The TauSample class encapsulates one sample in the alternative view of the Earth model suitable
@@ -91,9 +91,9 @@ public class TauSample {
    * @param radius A double containing the dimensional Earth radius in kilometers
    * @param slowness A double containing the non-dimensional slowness
    * @param index Index into the merged slownesses
-   * @param convert A ModConvert object containing the model dependant conversions
+   * @param convert A ModelConversions object containing the model dependant conversions
    */
-  public TauSample(double radius, double slowness, int index, ModConvert convert) {
+  public TauSample(double radius, double slowness, int index, ModelConversions convert) {
     this.radius = radius;
     this.slowness = slowness;
     this.index = index;
