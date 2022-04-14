@@ -59,7 +59,7 @@ public class PlotData {
       allBrn.newSession(depth, phList, returnAllPhases, returnBackBranches, tectonic);
       // Loop over distances.
       for (double delta = 0d; delta <= maxDelta; delta += deltaIncrement) {
-        ttList = allBrn.getTT(0d, delta);
+        ttList = allBrn.getTravelTime(0d, delta);
         // Loop over phases sorting them into branches.
         for (int j = 0; j < ttList.getNumPhases(); j++) {
           TravelTime = ttList.getPhase(j);

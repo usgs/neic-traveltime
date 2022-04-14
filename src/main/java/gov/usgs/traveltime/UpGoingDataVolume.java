@@ -28,7 +28,7 @@ public class UpGoingDataVolume {
   double[] pDec; // Decimated up-going branch ray parameters
   double[] tauDec; // Decimated up-going branch tau
   UpGoingDataReference ref;
-  ModDataVol modPri, modSec;
+  ModelDataVolume modPri, modSec;
   ModelConversions cvt;
   TauIntegrate intPri, intSec;
   Decimate dec;
@@ -44,7 +44,10 @@ public class UpGoingDataVolume {
    * @param cvt Model specific conversions
    */
   public UpGoingDataVolume(
-      UpGoingDataReference ref, ModDataVol modPri, ModDataVol modSec, ModelConversions cvt) {
+      UpGoingDataReference ref,
+      ModelDataVolume modPri,
+      ModelDataVolume modSec,
+      ModelConversions cvt) {
     this.ref = ref;
     this.modPri = modPri;
     this.modSec = modSec;

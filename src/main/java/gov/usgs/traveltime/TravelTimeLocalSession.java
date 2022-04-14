@@ -109,7 +109,7 @@ public class TravelTimeLocalSession {
    * @return An array list of travel times
    */
   public TravelTime getTT(double recElev, double delta) {
-    return allBrn.getTT(recElev, delta);
+    return allBrn.getTravelTime(recElev, delta);
   }
 
   /**
@@ -124,7 +124,7 @@ public class TravelTimeLocalSession {
    */
   public TravelTime getTT(
       double recLat, double recLong, double recElev, double delta, double azimuth) {
-    return allBrn.getTT(recLat, recLong, recElev, delta, azimuth);
+    return allBrn.getTravelTime(recLat, recLong, recElev, delta, azimuth);
   }
 
   /**
@@ -354,6 +354,6 @@ public class TravelTimeLocalSession {
    * @param full If true, print the detailed branch specification as well
    */
   public void printRefBranches(boolean full) {
-    allBrn.ref.dumpBranchData(full);
+    allBrn.getAllBranchReference().dumpBranchData(full);
   }
 }

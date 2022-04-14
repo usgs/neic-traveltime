@@ -957,7 +957,7 @@ public class BranchDataVolume {
    *
    * @return Travel-time in seconds
    */
-  public double geTravelTimeCorr() {
+  public double getTravelTimeCorrection() {
     return tCorr;
   }
 

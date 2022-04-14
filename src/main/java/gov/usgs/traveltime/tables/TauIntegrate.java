@@ -1,7 +1,7 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.ModDataVol;
 import gov.usgs.traveltime.ModelConversions;
+import gov.usgs.traveltime.ModelDataVolume;
 import gov.usgs.traveltime.TauUtilities;
 
 /**
@@ -23,8 +23,8 @@ public class TauIntegrate {
   /** A double containign the bottoming radius for a range of layers. */
   private double bottomingRadius = Double.NaN;
 
-  /** A ModDataVol object containing the tau model data */
-  private ModDataVol tauModel = null;
+  /** A ModelDataVolume object containing the tau model data */
+  private ModelDataVolume tauModel = null;
 
   /** An EarthModel object containing the earth model data */
   private EarthModel earthModel = null;
@@ -82,7 +82,7 @@ public class TauIntegrate {
    *
    * @param tauModel Model data
    */
-  public TauIntegrate(ModDataVol tauModel) {
+  public TauIntegrate(ModelDataVolume tauModel) {
     this.tauModel = tauModel;
   }
 

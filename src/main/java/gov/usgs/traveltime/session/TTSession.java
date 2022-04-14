@@ -455,7 +455,7 @@ public class TTSession {
   public synchronized TravelTime getTT(double recDistance, double recElevation) {
     if (allBrn == null) return null;
 
-    TravelTime TravelTime = allBrn.getTT(recElevation, recDistance);
+    TravelTime TravelTime = allBrn.getTravelTime(recElevation, recDistance);
     return TravelTime;
   }
   /**
@@ -471,7 +471,7 @@ public class TTSession {
   public synchronized TravelTime getTT(
       double recLat, double recLong, double recElev, double delta, double azimuth) {
     if (allBrn == null) return null;
-    TravelTime TravelTime = allBrn.getTT(recLat, recLong, recElev, delta, azimuth);
+    TravelTime TravelTime = allBrn.getTravelTime(recLat, recLong, recElev, delta, azimuth);
     return TravelTime;
   }
 

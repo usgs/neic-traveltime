@@ -110,9 +110,11 @@ public class TauUtilities {
    * Receiver azimuth relative to the source in degrees clockwise from north (available after
    * calling delAz).
    */
-  public static double azimuth = Double.NaN;
+  public static double recieverAzimuth = Double.NaN;
+
   /** Longitude in degrees projected from an epicenter by a distance and azimuth. */
   public static double projLon = Double.NaN;
+
   /** Storage for unique codes. */
   private static TreeMap<String, Integer> unique;
 
@@ -473,7 +475,7 @@ public class TauUtilities {
 
     // South Pole:
     if (staSinLat <= TauUtilities.DTOL) {
-      azimuth = 180d;
+      recieverAzimuth = 180d;
       return Math.toDegrees(Math.PI - Math.acos(eqCosLat));
     }
 
@@ -487,10 +489,10 @@ public class TauUtilities {
 
     // Do the azimuth.
     if (Math.abs(tm1) <= TauUtilities.DTOL && Math.abs(tm2) <= TauUtilities.DTOL) {
-      azimuth = 0d; // North Pole.
+      recieverAzimuth = 0d; // North Pole.
     } else {
-      azimuth = Math.toDegrees(Math.atan2(tm1, tm2));
-      if (azimuth < 0d) azimuth += 360;
+      recieverAzimuth = Math.toDegrees(Math.atan2(tm1, tm2));
+      if (recieverAzimuth < 0d) recieverAzimuth += 360;
     }
 
     // Do delta.
@@ -512,8 +514,18 @@ public class TauUtilities {
    * @param azimuth Azimuth to project in degrees
    * @return Projected geographic latitude in degrees
    */
-  public static double projLat(double latitude, double longitude, double delta, double azimuth) {
-    double projLat, coLat, sinLat, cosLat, sinDel, cosDel, sinAzim, cosAzim, cTheta, sinNewLat;
+  public static double projectLatitude(
+      double latitude, double longitude, double delta, double azimuth) {
+    double projectedLatitude,
+        coLat,
+        sinLat,
+        cosLat,
+        sinDel,
+        cosDel,
+        sinAzim,
+        cosAzim,
+        cTheta,
+        sinNewLat;
 
     coLat = TauUtilities.geoCen(latitude);
     if (longitude < 0d) longitude += 360d;
@@ -526,11 +538,11 @@ public class TauUtilities {
     cosAzim = Math.cos(Math.toRadians(azimuth));
 
     cTheta = sinDel * sinLat * cosAzim + cosLat * cosDel;
-    projLat = Math.acos(cTheta);
-    sinNewLat = Math.sin(projLat);
+    projectedLatitude = Math.acos(cTheta);
+    sinNewLat = Math.sin(projectedLatitude);
     if (coLat == 0d) {
       projLon = azimuth;
-    } else if (projLat == 0d) {
+    } else if (projectedLatitude == 0d) {
       projLon = 0d;
     } else {
       projLon =
@@ -542,7 +554,7 @@ public class TauUtilities {
     }
     if (projLon > 360d) projLon -= 360d;
     if (projLon > 180d) projLon -= 360d;
-    return geoLat(Math.toDegrees(projLat));
+    return geoLat(Math.toDegrees(projectedLatitude));
   }
 
   /**
@@ -553,7 +565,7 @@ public class TauUtilities {
    * @param dTdD Ray parameter in seconds/kilometers
    * @return Elevation correction in seconds
    */
-  public static double topoCorr(double elev, double vel, double dTdD) {
+  public static double elevationCorrection(double elev, double vel, double dTdD) {
     return (elev / vel) * Math.sqrt(Math.abs(1. - Math.min(Math.pow(vel * dTdD, 2d), 1d)));
   }
 

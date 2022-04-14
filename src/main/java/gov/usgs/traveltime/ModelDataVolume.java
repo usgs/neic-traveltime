@@ -9,7 +9,7 @@ import java.util.logging.Logger;
  *
  * @author Ray Buland
  */
-public class ModDataVol {
+public class ModelDataVolume {
   int iSource; // Model index of the current source depth
   boolean onModelGrid; // True if the source depth is exactly on a grid point.
   double pFound, zFound, pMax = Double.NaN;
@@ -17,7 +17,7 @@ public class ModDataVol {
   ModelConversions cvt; // Model dependent conversion factors
 
   /** Private logging object. */
-  private static final Logger LOGGER = Logger.getLogger(ModDataVol.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(ModelDataVolume.class.getName());
 
   /**
    * Load data from the FORTRAN file reader for the Earth model for one wave type. The file data
@@ -26,7 +26,7 @@ public class ModDataVol {
    * @param ref Model reference data source
    * @param cvt The Earth model units converter
    */
-  public ModDataVol(ModelDataReference ref, ModelConversions cvt) {
+  public ModelDataVolume(ModelDataReference ref, ModelConversions cvt) {
     this.ref = ref;
     this.cvt = cvt;
   }
