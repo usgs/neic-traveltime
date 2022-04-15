@@ -130,7 +130,7 @@ public class BranchDataReference implements Serializable {
     }
 
     // Set the useless phase flag.
-    isUseless = auxtt.isChaff(phaseCode);
+    isUseless = auxtt.isUselessPhase(phaseCode);
 
     if (phaseCode != null) {
       if (phaseCode.equals("PnPn")) {
@@ -254,7 +254,7 @@ public class BranchDataReference implements Serializable {
     }
 
     // Set the useless phase flag.
-    isUseless = auxtt.isChaff(phaseCode);
+    isUseless = auxtt.isUselessPhase(phaseCode);
 
     if (phaseCode != null) {
       if (phaseCode.equals("PnPn")) {

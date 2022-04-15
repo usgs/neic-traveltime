@@ -14,57 +14,108 @@ import java.util.Scanner;
 import java.util.TreeMap;
 
 /**
- * Auxiliary data augmenting the basic travel-times. This data is common to all models and only need
- * be read once during the travel-time server initialization. Auxiliary data includes phase groups
- * (needed for association in the Locator) and travel-time statistics. The statistics are used in
- * the travel-time package for the arrival times of add-on phases (e.g., PKPpre) and in the Locator
- * for association and phase weighting.
+ * The AuxiliaryTTReference class contains auxiliary data augmenting the basic travel-times. This
+ * data is common to all models and only need be read once during the travel-time server
+ * initialization. Auxiliary data includes phase groups (needed for association in the Locator) and
+ * travel-time statistics. The statistics are used in the travel-time package for the arrival times
+ * of add-on phases (e.g., PKPpre) and in the Locator for association and phase weighting.
  *
  * @author Ray Buland
  */
 public class AuxiliaryTTReference {
-  // Phase group storage.
-  final PhaseGroup regional; // Regional phase group
-  final PhaseGroup depth; // Depth sensitive phase group
-  final PhaseGroup downWeight; // Phases to be down weighted
-  final PhaseGroup canUse; // Phases that can be used for location
-  final PhaseGroup chaff; // Useless phases according to NEIC analysts
-  final ArrayList<PhaseGroup> PhaseGroups; // List of primary phase groups
-  final ArrayList<PhaseGroup> auxGroups; // List of auxiliary phase groups
-  // Phase statistics storage.
-  final TreeMap<String, TravelTimeStatistics> TravelTimeStatisticss; // List of phase statistics
-  // Ellipticity storage.
-  final TreeMap<String, Ellipticity> Ellipticitys; // List of Ellipticity corrections
-  // Flag storage by phase
-  final TreeMap<String, TravelTimeFlags> phFlags; // Phase group information by phase
-  // Topography.
-  final Topography topoMap; // Topography for bounce points
-  TravelTimeStatistics TravelTimeStatistics; // Phase statistics
-  Ellipticity Ellipticity, upEllipticity; // Ellipticity correction(s)
-  // Set up serialization.
-  String serName = "ttaux.ser"; // Serialized file name
-  String[] fileNames = {
-    "groups.txt", "ttstats.txt", "ellip.txt", "topo.dat"
-  }; // Raw input file names
-  // Set up the reader.
-  Scanner scan;
-  boolean priGroup = false;
-  int nDepth;
-  String nextCode;
+  /** A PhaseGroup object holding the regional phase group */
+  private final PhaseGroup regionalPhases;
+
+  /** A PhaseGroup object holding the depth sensitive phase group */
+  private final PhaseGroup depthPhases;
+
+  /** A PhaseGroup object holding the to phasesbe down weighted */
+  private final PhaseGroup downWeightPhases;
+
+  /** A PhaseGroup object holding the phases that can be used for location */
+  private final PhaseGroup locationPhases;
+
+  /** A PhaseGroup object holding the phases that are useless phases according to NEIC analysts */
+  private final PhaseGroup uselessPhases;
+
+  /** An ArrayList of PhaseGroups containing the list of primary phase groups */
+  private final ArrayList<PhaseGroup> primaryPhaseGroups;
+
+  /** An ArrayList of PhaseGroups containing the list of auxiliary phase groups */
+  private final ArrayList<PhaseGroup> auxiliaryPhaseGroups;
+
+  /** A TreeMap holding the list of phase statistics */
+  private final TreeMap<String, TravelTimeStatistics> travelTimeStatistics;
+
+  /** A TreeMap holding the list of ellipticity corrections */
+  private final TreeMap<String, Ellipticity> ellipticityCorrections;
+
+  /** A TreeMap holding the list of phase flags */
+  private final TreeMap<String, TravelTimeFlags> phaseFlags;
+
+  /** A Topography object containing the topography for bounce points */
+  private final Topography bouncePointTopography;
+
+  /** A TravelTimeStatistics object containing the phase statistics */
+  private TravelTimeStatistics phaseStatistics;
+
+  /** An Ellipticity object containing the ellipticity correction */
+  private Ellipticity ellipticityCorrection;
+
+  /** An Ellipticity object containing the up-going ellipticity correction */
+  Ellipticity upEllipticityCorrection;
+
+  /** A String containing the name of the file to use during serialization */
+  private String serializedFileName = "ttaux.ser";
+
+  /** An array of Strings containing the auxiliary input data file names */
+  private String[] dataFileNames = {"groups.txt", "ttstats.txt", "ellip.txt", "topo.dat"};
+
+  /** A Scanner object used to read the auxiliary input data files */
+  private Scanner fileReader;
+
+  /** A boolean flag indicating whether the last phase group found was primary */
+  private boolean isPrimaryGroup = false;
+
+  /** An integer holding the number of ellipticity depths */
+  private int numEllipticityDepths;
+
+  /** A String used in reading auxiliary input data */
+  private String nextCode;
 
   /**
-   * Read and organize auxiliary data. Note that for convenience some processing is done on the
-   * travel-time statistics. This eliminates a stand alone program that processed the raw
-   * (maintainable) statistics into an intermediate form for the Locator. Only the phase groups are
-   * mandatory. If other information isn't read, the relevant processing will simply not be done.
+   * Get the topography for bounce points
    *
-   * @param readStats If true, read the phase statistics
-   * @param readEllipticity If true, read the Ellipticity corrections
-   * @param readTopo If true, read the topography file
-   * @param modelPath If not null, path to model files
-   * @param serializedPath If not null, path to serialized files
-   * @throws IOException If opens fail
-   * @throws ClassNotFoundException Serialization input fails
+   * @return An Topography object containing the topography for bounce points
+   */
+  public Topography getBouncePointTopography() {
+    return bouncePointTopography;
+  }
+
+  /**
+   * Get whether last phase group found was primary. The phase identification algorithm depends on
+   * knowing which set of phase groups was found.
+   *
+   * @return A boolean flag, true if the last phase group found was primary
+   */
+  public boolean getIsPrimaryGroup() {
+    return isPrimaryGroup;
+  }
+
+  /**
+   * AuxiliaryTTReference constructor, Reads and organizes the auxiliary data. Note that for
+   * convenience some processing is done on the travel-time statistics. This eliminates a stand
+   * alone program that processed the raw (maintainable) statistics into an intermediate form for
+   * the Locator. Only the phase groups are mandatory. If other information isn't read, the relevant
+   * processing will simply not be done.
+   *
+   * @param readStats A boolean flag, if true, read the phase statistics
+   * @param readEllipticity A boolean flag, if true, read the Ellipticity corrections
+   * @param readTopo A boolean flag, if true, read the topography file
+   * @param modelPath A String, if not null, contains the path to model files
+   * @param serializedPath A String, if not null, contains the path to serialized files
+   * @throws IOException If one of the file input data file reading operations fails
+   * @throws ClassNotFoundException If the reading of the serialization input file fails
    */
   @SuppressWarnings("unchecked")
   public AuxiliaryTTReference(
@@ -74,88 +125,97 @@ public class AuxiliaryTTReference {
       String modelPath,
       String serializedPath)
       throws IOException, ClassNotFoundException {
-    String[] absNames;
-    BufferedInputStream inGroup, inStats, inEllipticity;
-    FileInputStream serIn;
-    FileOutputStream serOut;
-    ObjectInputStream objIn;
-    ObjectOutputStream objOut;
-    FileLock lock;
-    EllipticityDepths eDepth;
-
+    // set the model path
     if (modelPath != null) {
       TauUtilities.modelPath = modelPath;
     }
+
+    // set the serialization path
     if (serializedPath != null) {
       TauUtilities.serializedPath = serializedPath;
     }
 
     // Create absolute path names.
-    absNames = new String[fileNames.length];
-    for (int j = 0; j < fileNames.length; j++) {
-      absNames[j] = TauUtilities.model(fileNames[j]);
+    String[] absolutePaths = new String[dataFileNames.length];
+    for (int j = 0; j < dataFileNames.length; j++) {
+      absolutePaths[j] = TauUtilities.model(dataFileNames[j]);
     }
 
     // If any of the raw input files have changed, regenerate the
     // serialized file.
-    if (FileChanged.isChanged(TauUtilities.serialize(serName), absNames)) {
+    if (FileChanged.isChanged(TauUtilities.serialize(serializedFileName), absolutePaths)) {
       // Open and read the phase groups file.
-      inGroup = new BufferedInputStream(new FileInputStream(absNames[0]));
-      scan = new Scanner(inGroup);
+      BufferedInputStream inGroup = new BufferedInputStream(new FileInputStream(absolutePaths[0]));
+      fileReader = new Scanner(inGroup);
+
       // Prime the pump.
-      nextCode = scan.next();
-      // Handle local-regional phases separately.
-      regional = read1Group();
-      // Handle depth phases separately.
-      depth = read1Group();
+      nextCode = fileReader.next();
+
+      // Handle local-regionalPhases phases separately.
+      regionalPhases = readOnePhaseGroup();
+
+      // Handle depthPhases phases separately.
+      depthPhases = readOnePhaseGroup();
+
       // Handle down weighted phases separately.
-      downWeight = read1Group();
+      downWeightPhases = readOnePhaseGroup();
+
       // Handle used phases separately.
-      canUse = read1Group();
+      locationPhases = readOnePhaseGroup();
+
       // Handle useless phases separately.
-      chaff = read1Group();
+      uselessPhases = readOnePhaseGroup();
+
       // Handle "normal" groups.
-      PhaseGroups = new ArrayList<PhaseGroup>();
-      auxGroups = new ArrayList<PhaseGroup>();
+      primaryPhaseGroups = new ArrayList<PhaseGroup>();
+      auxiliaryPhaseGroups = new ArrayList<PhaseGroup>();
       readGroups();
       inGroup.close();
 
       // Open and read the travel-time statistics file.
-      inStats = new BufferedInputStream(new FileInputStream(absNames[1]));
-      scan = new Scanner(inStats);
-      TravelTimeStatisticss = new TreeMap<String, TravelTimeStatistics>();
+      BufferedInputStream inStats = new BufferedInputStream(new FileInputStream(absolutePaths[1]));
+      fileReader = new Scanner(inStats);
+      travelTimeStatistics = new TreeMap<String, TravelTimeStatistics>();
+
       // Prime the pump.
-      nextCode = scan.next();
+      nextCode = fileReader.next();
+
       // Scan phase statistics until we run out.
       do {
-        TravelTimeStatistics = read1StatHead();
-        TravelTimeStatisticss.put(TravelTimeStatistics.phaseCode, TravelTimeStatistics);
-        read1StatData(new TravelTimeStatisticsLinearFit(TravelTimeStatistics));
-      } while (scan.hasNext());
+        phaseStatistics = readOneStatisticsHeader();
+        travelTimeStatistics.put(phaseStatistics.phaseCode, phaseStatistics);
+        readOneStatisticsData(new TravelTimeStatisticsLinearFit(phaseStatistics));
+      } while (fileReader.hasNext());
       inStats.close();
 
       // Open and read the Ellipticity correction file.
-      inEllipticity = new BufferedInputStream(new FileInputStream(absNames[2]));
-      scan = new Scanner(inEllipticity);
-      Ellipticitys = new TreeMap<String, Ellipticity>();
-      eDepth = new EllipticityDepths();
-      nDepth = eDepth.EllipticityDepths.length;
+      BufferedInputStream inEllipticity =
+          new BufferedInputStream(new FileInputStream(absolutePaths[2]));
+      fileReader = new Scanner(inEllipticity);
+      ellipticityCorrections = new TreeMap<String, Ellipticity>();
+      EllipticityDepths ellipticityDepths = new EllipticityDepths();
+      numEllipticityDepths = ellipticityDepths.EllipticityDepths.length;
+
       do {
-        Ellipticity = read1Ellipticity();
-        Ellipticitys.put(Ellipticity.phaseCode, Ellipticity);
-      } while (scan.hasNext());
+        ellipticityCorrection = readOneEllipticityData();
+        ellipticityCorrections.put(ellipticityCorrection.phaseCode, ellipticityCorrection);
+      } while (fileReader.hasNext());
       inEllipticity.close();
 
       // Set up the topography data.
-      topoMap = new Topography(absNames[3]);
+      bouncePointTopography = new Topography(absolutePaths[3]);
 
       // Write out the serialized file.
-      serOut = new FileOutputStream(TauUtilities.serialize(serName));
-      objOut = new ObjectOutputStream(serOut);
+      FileOutputStream serializeOutput =
+          new FileOutputStream(TauUtilities.serialize(serializedFileName));
+      ObjectOutputStream objectOutput = new ObjectOutputStream(serializeOutput);
+
       // Wait for an exclusive lock for writing.
-      lock = serOut.getChannel().lock();
+      FileLock lock = serializeOutput.getChannel().lock();
+
       //		System.out.println("AuxiliaryTTReference write lock: valid = "+lock.isValid()+
       //				" shared = "+lock.isShared());
+
       /*
        * The auxiliary data can be read and written very quickly, so for persistent
        * applications such as the travel time or location server, serialization is
@@ -163,34 +223,42 @@ public class AuxiliaryTTReference {
        * that start and stop frequently, the serialization should save some set up
        * time.
        */
-      objOut.writeObject(regional);
-      objOut.writeObject(depth);
-      objOut.writeObject(downWeight);
-      objOut.writeObject(canUse);
-      objOut.writeObject(chaff);
-      objOut.writeObject(PhaseGroups);
-      objOut.writeObject(auxGroups);
-      objOut.writeObject(TravelTimeStatisticss);
-      objOut.writeObject(Ellipticitys);
-      objOut.writeObject(topoMap);
-      if (lock.isValid()) lock.release();
-      objOut.close();
-      serOut.close();
+      objectOutput.writeObject(regionalPhases);
+      objectOutput.writeObject(depthPhases);
+      objectOutput.writeObject(downWeightPhases);
+      objectOutput.writeObject(locationPhases);
+      objectOutput.writeObject(uselessPhases);
+      objectOutput.writeObject(primaryPhaseGroups);
+      objectOutput.writeObject(auxiliaryPhaseGroups);
+      objectOutput.writeObject(travelTimeStatistics);
+      objectOutput.writeObject(ellipticityCorrections);
+      objectOutput.writeObject(bouncePointTopography);
+
+      if (lock.isValid()) {
+        lock.release();
+      }
+
+      objectOutput.close();
+      serializeOutput.close();
     } else {
       // Read in the serialized file.
-      serIn = new FileInputStream(TauUtilities.serialize(serName));
-      objIn = new ObjectInputStream(serIn);
+      FileInputStream serializeInput =
+          new FileInputStream(TauUtilities.serialize(serializedFileName));
+      ObjectInputStream objectInput = new ObjectInputStream(serializeInput);
+
       // Wait for a shared lock for reading.
-      lock = serIn.getChannel().lock(0, Long.MAX_VALUE, true);
+      FileLock lock = serializeInput.getChannel().lock(0, Long.MAX_VALUE, true);
+
       //		System.out.println("AuxiliaryTTReference read lock: valid = "+lock.isValid()+
       //				" shared = "+lock.isShared());
-      regional = (PhaseGroup) objIn.readObject();
-      depth = (PhaseGroup) objIn.readObject();
-      downWeight = (PhaseGroup) objIn.readObject();
-      canUse = (PhaseGroup) objIn.readObject();
-      chaff = (PhaseGroup) objIn.readObject();
-      PhaseGroups = (ArrayList<PhaseGroup>) objIn.readObject();
-      auxGroups = (ArrayList<PhaseGroup>) objIn.readObject();
+      regionalPhases = (PhaseGroup) objectInput.readObject();
+      depthPhases = (PhaseGroup) objectInput.readObject();
+      downWeightPhases = (PhaseGroup) objectInput.readObject();
+      locationPhases = (PhaseGroup) objectInput.readObject();
+      uselessPhases = (PhaseGroup) objectInput.readObject();
+      primaryPhaseGroups = (ArrayList<PhaseGroup>) objectInput.readObject();
+      auxiliaryPhaseGroups = (ArrayList<PhaseGroup>) objectInput.readObject();
+
       /*
        * Note that there is a theoretical inconsistency here.  If you ask for
        * Ellipticity, but not statistics, you have to read the statistics anyway.
@@ -200,349 +268,393 @@ public class AuxiliaryTTReference {
        * association).
        */
       if (readStats || readEllipticity || readTopo) {
-        TravelTimeStatisticss = (TreeMap<String, TravelTimeStatistics>) objIn.readObject();
+        travelTimeStatistics = (TreeMap<String, TravelTimeStatistics>) objectInput.readObject();
+
         if (readEllipticity || readTopo) {
-          Ellipticitys = (TreeMap<String, Ellipticity>) objIn.readObject();
+          ellipticityCorrections = (TreeMap<String, Ellipticity>) objectInput.readObject();
+
           if (readTopo) {
-            topoMap = (Topography) objIn.readObject();
+            bouncePointTopography = (Topography) objectInput.readObject();
           } else {
-            topoMap = null;
+            bouncePointTopography = null;
           }
         } else {
-          Ellipticitys = null;
-          topoMap = null;
+          ellipticityCorrections = null;
+          bouncePointTopography = null;
         }
       } else {
-        TravelTimeStatisticss = null;
-        Ellipticitys = null;
-        topoMap = null;
+        travelTimeStatistics = null;
+        ellipticityCorrections = null;
+        bouncePointTopography = null;
       }
-      if (lock.isValid()) lock.release();
-      objIn.close();
-      serIn.close();
+
+      if (lock.isValid()) {
+        lock.release();
+      }
+
+      objectInput.close();
+      serializeInput.close();
     }
 
     // Rearrange group flags, phase flags and statistics and the
     // Ellipticity correction by phase.
-    phFlags = new TreeMap<String, TravelTimeFlags>();
-    makePhFlags();
+    phaseFlags = new TreeMap<String, TravelTimeFlags>();
+    makePhaseFlags();
   }
 
   /**
-   * Read one phase group (i.e., one line in the phase group file).
+   * Function to read one phase group (i.e., one line in the phase group file).
    *
-   * @return Phase group just read
+   * @return A PhaseGroup object containing the phase group just read
    */
-  private PhaseGroup read1Group() {
+  private PhaseGroup readOnePhaseGroup() {
     if (nextCode.contains(":")) {
       PhaseGroup group = new PhaseGroup(nextCode.substring(0, nextCode.indexOf(':')));
-      nextCode = scan.next();
+      nextCode = fileReader.next();
+
       while (!nextCode.contains(":") & !nextCode.contains("-")) {
         group.addPhase(nextCode);
-        nextCode = scan.next();
+        nextCode = fileReader.next();
       }
+
       return group;
     } else {
-      if (scan.hasNext()) nextCode = scan.next();
+      if (fileReader.hasNext()) {
+        nextCode = fileReader.next();
+      }
       return null;
     }
   }
 
   /**
-   * Read in all the "normal" phase groups. Note that they are read in pairs, typically crust-mantle
-   * phase in the primary group and core phases in the auxiliary group. These pair- wise groups are
-   * used for phase identification in the Locator.
-   *
-   * @param print List the auxiliary data as it's read if true
+   * Function to read in all the "normal" phase groups. Note that they are read in pairs, typically
+   * crust-mantle phase in the primary group and core phases in the auxiliary group. These pair-
+   * wise groups are used for phase identification in the Locator.
    */
   private void readGroups() {
     do {
       // Groups are added to the ArrayLists as they are created.
-      PhaseGroups.add(read1Group());
-      auxGroups.add(read1Group());
-    } while (scan.hasNext());
+      primaryPhaseGroups.add(readOnePhaseGroup());
+      auxiliaryPhaseGroups.add(readOnePhaseGroup());
+    } while (fileReader.hasNext());
   }
 
   /**
-   * Find the group a phase belongs to.
+   * Function to find the group a given phase belongs to.
    *
-   * @param phase Phase code
-   * @return Phase group name
+   * @param phaseCode A String containing the phase code
+   * @return A String cotnaining the phase group name
    */
-  public String findGroup(String phase) {
-    PhaseGroup group;
+  public String findGroup(String phaseCode) {
     // Search the primary phase group.
-    for (int j = 0; j < PhaseGroups.size(); j++) {
-      group = PhaseGroups.get(j);
+    for (int j = 0; j < primaryPhaseGroups.size(); j++) {
+      PhaseGroup group = primaryPhaseGroups.get(j);
       for (int k = 0; k < group.phases.size(); k++) {
-        if (phase.equals(group.phases.get(k))) {
-          priGroup = true;
+        if (phaseCode.equals(group.phases.get(k))) {
+          isPrimaryGroup = true;
+
           return group.groupName;
         }
       }
+
       // Search the auxiliary phase group.
-      group = auxGroups.get(j);
+      group = auxiliaryPhaseGroups.get(j);
       if (group != null) {
         for (int k = 0; k < group.phases.size(); k++) {
-          if (phase.equals(group.phases.get(k))) {
-            priGroup = false;
+          if (phaseCode.equals(group.phases.get(k))) {
+            isPrimaryGroup = false;
+
             return group.groupName;
           }
         }
       }
     }
+
     // OK, that didn't work.  See if the phase is generic.
-    for (int j = 0; j < PhaseGroups.size(); j++) {
+    for (int j = 0; j < primaryPhaseGroups.size(); j++) {
       // Try the primary group name.
-      if (phase.equals(PhaseGroups.get(j).groupName)) {
-        priGroup = true;
-        return PhaseGroups.get(j).groupName;
+      if (phaseCode.equals(primaryPhaseGroups.get(j).groupName)) {
+        isPrimaryGroup = true;
+
+        return primaryPhaseGroups.get(j).groupName;
       }
+
       // Try the auxiliary group name.
-      if (auxGroups.get(j) != null) {
-        if (phase.equals(auxGroups.get(j).groupName)) {
-          priGroup = false;
-          return auxGroups.get(j).groupName;
+      if (auxiliaryPhaseGroups.get(j) != null) {
+        if (phaseCode.equals(auxiliaryPhaseGroups.get(j).groupName)) {
+          isPrimaryGroup = false;
+
+          return auxiliaryPhaseGroups.get(j).groupName;
         }
       }
     }
+
     // OK, that didn't work.  Let's just give up.
-    priGroup = true;
+    isPrimaryGroup = true;
     return "";
   }
 
   /**
-   * Special version of findGroup that deals with real world problems like a blank phase code and
-   * automatic picks that are all identified as P.
+   * Special version of findGroup function that deals with real world problems like a blank phase
+   * code and automatic picks that are all identified as P.
    *
-   * @param phase Phase code
-   * @param auto True if the pick was done automatically
-   * @return Phase group name
+   * @param phaseCode A String containing the phase code
+   * @param auto A boolean flag, true if the pick was done automatically
+   * @returnA String cotnaining the phase group name
    */
-  public String findGroup(String phase, boolean auto) {
-    priGroup = true;
-    if (phase.equals("")) return "Any";
-    else if (auto && phase.equals("P")) return "Reg";
-    else return findGroup(phase);
+  public String findGroup(String phaseCode, boolean auto) {
+    isPrimaryGroup = true;
+
+    if (phaseCode.equals("")) {
+      return "Any";
+    } else if (auto && phaseCode.equals("P")) {
+      return "Reg";
+    } else {
+      return findGroup(phaseCode);
+    }
   }
 
   /**
-   * The phase identification algorithm depends on knowing which set of phase groups was found.
+   * Function to find the complementary phase group. That is, if the phase group is primary, return
+   * the associated auxiliary phase group and vice versa.
    *
-   * @return True if the last phase group found was primary
+   * @param phaseGroupName A String containing the phase group name
+   * @return A String containing the complementary phase group name
    */
-  public boolean isPrimary() {
-    return priGroup;
-  }
-
-  /**
-   * Find the complementary phase group. That is, if the phase group is primary, return the
-   * associated auxiliary phase group and vice versa.
-   *
-   * @param groupName Phase group name
-   * @return Complementary phase group name
-   */
-  public String compGroup(String groupName) {
-    for (int j = 0; j < PhaseGroups.size(); j++) {
-      if (groupName.equals(PhaseGroups.get(j).groupName)) {
-        if (auxGroups.get(j) != null) return auxGroups.get(j).groupName;
-        else return null;
+  public String findCompGroup(String phaseGroupName) {
+    for (int j = 0; j < primaryPhaseGroups.size(); j++) {
+      if (phaseGroupName.equals(primaryPhaseGroups.get(j).groupName)) {
+        if (auxiliaryPhaseGroups.get(j) != null) {
+          return auxiliaryPhaseGroups.get(j).groupName;
+        } else {
+          return null;
+        }
       }
-      if (auxGroups.get(j) != null) {
-        if (groupName.equals(auxGroups.get(j).groupName)) {
-          return PhaseGroups.get(j).groupName;
+
+      if (auxiliaryPhaseGroups.get(j) != null) {
+        if (phaseGroupName.equals(auxiliaryPhaseGroups.get(j).groupName)) {
+          return primaryPhaseGroups.get(j).groupName;
         }
       }
     }
+
     return null;
   }
 
   /**
-   * See if this phase group can be used for earthquake location.
+   * Function to check if this phase group can be used for earthquake location.
    *
-   * @param phase Phase name
-   * @return True if this phase can be used for earthquake location
+   * @param phaseCode A String containing the phase code
+   * @return A boolean flag, true if this phase can be used for earthquake location
    */
-  public boolean canUse(String phase) {
-    for (int k = 0; k < canUse.phases.size(); k++) {
-      if (phase.equals(canUse.phases.get(k))) {
+  public boolean usePhaseForLocation(String phaseCode) {
+    for (int k = 0; k < locationPhases.phases.size(); k++) {
+      if (phaseCode.equals(locationPhases.phases.get(k))) {
         return true;
       }
     }
+
     return false;
   }
 
   /**
-   * See if this phase group is useless for earthquake location (according to the NEIC analysts).
-   * Most of these phases are crustal reverberations that end up in the coda of more useful phases.
+   * Function to check if this phase group is useless for earthquake location (according to the NEIC
+   * analysts). Most of these phases are crustal reverberations that end up in the coda of more
+   * useful phases.
    *
-   * @param phase Phase name
-   * @return True if this phase is useless
+   * @param phaseCode A String containing the phase code
+   * @return A boolean flag, true if this phase is useless
    */
-  public boolean isChaff(String phase) {
-    for (int k = 0; k < chaff.phases.size(); k++) {
-      if (phase.equals(chaff.phases.get(k))) {
+  public boolean isUselessPhase(String phaseCode) {
+    for (int k = 0; k < uselessPhases.phases.size(); k++) {
+      if (phaseCode.equals(uselessPhases.phases.get(k))) {
         return true;
       }
     }
+
     return false;
   }
 
   /**
-   * See if this is a local-regional phase.
+   * Function to check if this is a local-regional phase.
    *
-   * @param phase Phase code
-   * @return True if the phase is local-regional
+   * @param phaseCode A String containing the phase code
+   * @return A boolean flag, true if the phase is a local-regional phase
    */
-  public boolean isRegional(String phase) {
-    for (int k = 0; k < regional.phases.size(); k++) {
-      if (phase.equals(regional.phases.get(k))) {
+  public boolean isRegionalPhase(String phaseCode) {
+    for (int k = 0; k < regionalPhases.phases.size(); k++) {
+      if (phaseCode.equals(regionalPhases.phases.get(k))) {
         return true;
       }
     }
+
     return false;
   }
 
   /**
-   * See if this is a depth phase.
+   * Function to check if this is a phase is a depth sensitive phase.
    *
-   * @param phase Phase code
-   * @return True if the phase is depth sensitive
+   * @param phaseCode A String containing the phase code
+   * @return A boolean flag, true if the phase is depth sensitive
    */
-  public boolean isDepthPh(String phase) {
-    for (int k = 0; k < depth.phases.size(); k++) {
-      if (phase.equals(depth.phases.get(k))) {
+  public boolean isDepthPhase(String phaseCode) {
+    for (int k = 0; k < depthPhases.phases.size(); k++) {
+      if (phaseCode.equals(depthPhases.phases.get(k))) {
         return true;
       }
     }
+
     return false;
   }
 
   /**
    * See if this is a down weighted phase.
    *
-   * @param phase Phase code
+   * @param phaseCode A String containing the phase code
    * @return True if the phase is to be down weighted
    */
-  public boolean isDisPh(String phase) {
-    for (int k = 0; k < downWeight.phases.size(); k++) {
-      if (phase.equals(downWeight.phases.get(k))) {
+  public boolean isDownWeightedPhase(String phaseCode) {
+    for (int k = 0; k < downWeightPhases.phases.size(); k++) {
+      if (phaseCode.equals(downWeightPhases.phases.get(k))) {
         return true;
       }
     }
+
     return false;
   }
 
-  /** Print phase groups. */
+  /** Function to print phase groups. */
   public void printGroups() {
-    // Dump regional phases.
-    regional.dumpGroup();
+    // Dump regionalPhases phases.
+    regionalPhases.dumpGroup();
     System.out.println();
-    // Dump depth phases.
-    depth.dumpGroup();
+
+    // Dump depthPhases phases.
+    depthPhases.dumpGroup();
     System.out.println();
+
     // Dump down weighted phases.
-    downWeight.dumpGroup();
+    downWeightPhases.dumpGroup();
     System.out.println();
+
     // Dump phases that can be used for location.
-    canUse.dumpGroup();
+    locationPhases.dumpGroup();
     System.out.println();
+
     // Dump phases that are NEIC-useless.
-    chaff.dumpGroup();
+    uselessPhases.dumpGroup();
     System.out.println();
+
     // Dump normal groups.
-    for (int j = 0; j < PhaseGroups.size(); j++) {
-      PhaseGroups.get(j).dumpGroup();
-      if (auxGroups.get(j) != null) auxGroups.get(j).dumpGroup();
-      else System.out.println("    *null*");
+    for (int j = 0; j < primaryPhaseGroups.size(); j++) {
+      primaryPhaseGroups.get(j).dumpGroup();
+      if (auxiliaryPhaseGroups.get(j) != null) {
+        auxiliaryPhaseGroups.get(j).dumpGroup();
+      } else {
+        System.out.println("    *null*");
+      }
     }
   }
 
   /**
-   * Read in the statistics header for one phase.
+   * Function to read in the statistics header for one phase.
    *
-   * @return Statistics object
+   * @return TravelTimeStatistics object containing the statistics header
    */
-  private TravelTimeStatistics read1StatHead() {
-    String phaseCode;
-    int minDelta, maxDelta;
-    TravelTimeStatistics TravelTimeStatistics;
-
+  private TravelTimeStatistics readOneStatisticsHeader() {
     // Get the phase header.
-    phaseCode = nextCode;
-    minDelta = scan.nextInt();
-    maxDelta = scan.nextInt();
-    TravelTimeStatistics = new TravelTimeStatistics(phaseCode, minDelta, maxDelta);
-    return TravelTimeStatistics;
+    String phaseCode = nextCode;
+    int minimumDistance = fileReader.nextInt();
+    int maxiumumDistance = fileReader.nextInt();
+
+    return new TravelTimeStatistics(phaseCode, minimumDistance, maxiumumDistance);
   }
 
   /**
-   * Read in the statistics data for one phase. Rather than reading in the linear fits as in the
-   * FORTRAN version, the raw statistics file is read and the fits are done on the fly. This makes
-   * it easier to maintain the statistics as the utility program that did the fits becomes
-   * redundant.
+   * Function to read in the statistics data for one phase. Rather than reading in the linear fits
+   * as in the FORTRAN version, the raw statistics file is read and the fits are done on the fly.
+   * This makes it easier to maintain the statistics as the utility program that did the fits
+   * becomes redundant.
    *
    * @param fit LinearFit object
    */
-  private void read1StatData(TravelTimeStatisticsLinearFit fit) {
-    int delta;
-    double res, spd, obs;
-    boolean resBrk, spdBrk, obsBrk;
-    boolean done;
+  private void readOneStatisticsData(TravelTimeStatisticsLinearFit fit) {
 
-    done = false;
+    boolean linearFitBreak, spreadBreak, observabilityBreak;
+    boolean done = false;
 
-    // Scan for the phase bias, spread, and observability.
+    // Scan for the phase linear fit, spread, and observability.
     do {
-      delta = scan.nextInt();
-      res = scan.nextDouble();
+      int distance = fileReader.nextInt();
+      double linearFit = fileReader.nextDouble();
+
       // Check for a linear fit break flag.
-      if (scan.hasNextDouble()) resBrk = false;
-      else {
-        resBrk = true;
-        if (!scan.next().equals("*")) {
+      if (fileReader.hasNextDouble()) {
+        linearFitBreak = false;
+      } else {
+        linearFitBreak = true;
+
+        if (!fileReader.next().equals("*")) {
           System.out.println(
               "read1Stat: warning--the next field is " + "neither a number nor an astrisk?");
         }
       }
-      spd = scan.nextDouble();
+
+      double spread = fileReader.nextDouble();
+
       // Check for a linear fit break flag.
-      if (scan.hasNextDouble()) spdBrk = false;
-      else {
-        spdBrk = true;
-        if (!scan.next().equals("*")) {
+      if (fileReader.hasNextDouble()) {
+        spreadBreak = false;
+      } else {
+        spreadBreak = true;
+
+        if (!fileReader.next().equals("*")) {
           System.out.println(
               "read1Stat: warning--the next field is " + "neither a number nor an astrisk?");
         }
       }
-      obs = scan.nextDouble();
+
+      double observability = fileReader.nextDouble();
+
       // Check for a linear fit break flag.
-      if (scan.hasNextInt()) obsBrk = false;
-      else {
+      if (fileReader.hasNextInt()) {
+        observabilityBreak = false;
+      } else {
         // This is especially fraught at the EOF.
-        if (scan.hasNext()) {
+        if (fileReader.hasNext()) {
           // If it's not an EOF there are still several possibilities.
-          nextCode = scan.next();
+          nextCode = fileReader.next();
+
           if (nextCode.equals("*")) {
-            obsBrk = true;
-            if (!scan.hasNextInt()) {
+            observabilityBreak = true;
+
+            if (!fileReader.hasNextInt()) {
               done = true;
-              if (scan.hasNext()) {
-                nextCode = scan.next();
+
+              if (fileReader.hasNext()) {
+                nextCode = fileReader.next();
               } else {
                 nextCode = "~";
               }
             }
           } else {
-            obsBrk = false;
+            observabilityBreak = false;
             done = true;
           }
         } else {
-          obsBrk = false;
+          observabilityBreak = false;
           done = true;
         }
       }
-      fit.add(delta, res, resBrk, spd, spdBrk, obs, obsBrk);
+
+      fit.add(
+          distance,
+          linearFit,
+          linearFitBreak,
+          spread,
+          spreadBreak,
+          observability,
+          observabilityBreak);
     } while (!done);
 
     // Crunch the linear fits.
@@ -551,158 +663,181 @@ public class AuxiliaryTTReference {
   }
 
   /**
-   * Find the statistics associated with the desired phase.
+   * Function to retrieve the statistics associated with the desired phase.
    *
-   * @param phase Phase code
-   * @return A phase statistics object
+   * @param phaseCode A String containing the phase code
+   * @return A TravelTimeStatistics object containing the phase statistics
    */
-  public TravelTimeStatistics findStats(String phase) {
-    if (TravelTimeStatisticss == null) return null;
-    else return TravelTimeStatisticss.get(phase);
+  public TravelTimeStatistics findPhaseStatistics(String phaseCode) {
+    if (travelTimeStatistics == null) {
+      return null;
+    } else {
+      return travelTimeStatistics.get(phaseCode);
+    }
   }
 
   /**
-   * get the phase bias.
+   * Function to get the phase bias.
    *
-   * @param TravelTimeStatistics Pointer to the associated phase statistics
-   * @param delta Distance in degrees
-   * @return Bias in seconds at distance delta
+   * @param phaseStatistics A TravelTimeStatistics object holding the associated phase statistics
+   * @param distance A double containing the distance in degrees
+   * @return A double containing the phase bias in seconds at the given distance
    */
-  public double getBias(TravelTimeStatistics TravelTimeStatistics, double delta) {
-    if (TravelTimeStatistics == null) return TauUtilities.DEFBIAS;
-    else return TravelTimeStatistics.getBias(delta);
+  public double getPhaseBias(TravelTimeStatistics phaseStatistics, double distance) {
+    if (phaseStatistics == null) {
+      return TauUtilities.DEFBIAS;
+    } else {
+      return phaseStatistics.getPhaseBias(distance);
+    }
   }
 
   /**
    * Get the phase spread.
    *
-   * @param TravelTimeStatistics Pointer to the associated phase statistics
-   * @param delta Distance in degrees
-   * @param upGoing True if the phase is an up-going P or S
-   * @return Spread in seconds at distance delta
+   * @param phaseStatistics Pointer to the associated phase statistics
+   * @param distance A double containing the distance in degrees
+   * @param upGoing A boolean flag, true if the phase is an up-going P or S
+   * @return A double containing the phase spread in seconds at the given distance
    */
-  public double getSpread(
-      TravelTimeStatistics TravelTimeStatistics, double delta, boolean upGoing) {
-    if (TravelTimeStatistics == null) return TauUtilities.DEFSPREAD;
-    else return TravelTimeStatistics.getSpread(delta, upGoing);
+  public double getPhaseSpread(
+      TravelTimeStatistics phaseStatistics, double distance, boolean upGoing) {
+    if (phaseStatistics == null) {
+      return TauUtilities.DEFSPREAD;
+    } else {
+      return phaseStatistics.getPhaseSpread(distance, upGoing);
+    }
   }
 
   /**
    * Get the phase observability.
    *
-   * @param TravelTimeStatistics Pointer to the associated phase statistics
-   * @param delta Distance in degrees
-   * @param upGoing True if the phase is an up-going P or S
-   * @return Relative observability at distance delta
+   * @param phaseStatistics Pointer to the associated phase statistics
+   * @param distance A double containing the distance in degrees
+   * @param upGoing A boolean flag, true if the phase is an up-going P or S
+   * @return A double containing the relative phase observability at the given distance
    */
-  public double getObserv(
-      TravelTimeStatistics TravelTimeStatistics, double delta, boolean upGoing) {
-    if (TravelTimeStatistics == null) return TauUtilities.DEFOBSERV;
-    else return TravelTimeStatistics.getObserv(delta, upGoing);
+  public double getPhaseObservability(
+      TravelTimeStatistics phaseStatistics, double distance, boolean upGoing) {
+    if (phaseStatistics == null) {
+      return TauUtilities.DEFOBSERV;
+    } else {
+      return phaseStatistics.getPhaseObservability(distance, upGoing);
+    }
   }
 
   /** Print phase statistics. */
-  public void printStats() {
-    TravelTimeStatistics TravelTimeStatistics;
+  public void printPhaseStatistics() {
+    NavigableMap<String, TravelTimeStatistics> map = travelTimeStatistics.headMap("~", true);
 
-    NavigableMap<String, TravelTimeStatistics> map = TravelTimeStatisticss.headMap("~", true);
     System.out.println("\n     Phase Statistics:");
     for (@SuppressWarnings("rawtypes") Map.Entry entry : map.entrySet()) {
-      TravelTimeStatistics = (TravelTimeStatistics) entry.getValue();
-      TravelTimeStatistics.dumpStats();
+      TravelTimeStatistics stats = (TravelTimeStatistics) entry.getValue();
+      stats.dumpStats();
     }
   }
 
   /**
-   * Read in Ellipticity correction data for one phase.
+   * Function to read in ellipticity correction data for one phase.
    *
-   * @return Ellipticity object
+   * @return An Ellipticity object containing the ellipicity correction data
    */
-  private Ellipticity read1Ellipticity() {
-    String phaseCode;
-    int nDelta;
-    @SuppressWarnings("unused")
-    double delta;
-    double minDelta, maxDelta;
-    double[][] t0, t1, t2;
-    Ellipticity Ellipticity;
-
+  private Ellipticity readOneEllipticityData() {
     // Read the header.
-    phaseCode = scan.next();
-    nDelta = scan.nextInt();
-    minDelta = scan.nextDouble();
-    maxDelta = scan.nextDouble();
+    String phaseCode = fileReader.next();
+    int numDistances = fileReader.nextInt();
+    double minimumDistance = fileReader.nextDouble();
+    double maxiumumDistance = fileReader.nextDouble();
 
     // Allocate storage.
-    t0 = new double[nDelta][nDepth];
-    t1 = new double[nDelta][nDepth];
-    t2 = new double[nDelta][nDepth];
+    double[][] t0 = new double[numDistances][numEllipticityDepths];
+    double[][] t1 = new double[numDistances][numEllipticityDepths];
+    double[][] t2 = new double[numDistances][numEllipticityDepths];
+
     // Read in the tau profiles.
-    for (int j = 0; j < nDelta; j++) {
-      delta = scan.nextDouble(); // The distance is cosmetic
-      for (int i = 0; i < nDepth; i++) t0[j][i] = scan.nextDouble();
-      for (int i = 0; i < nDepth; i++) t1[j][i] = scan.nextDouble();
-      for (int i = 0; i < nDepth; i++) t2[j][i] = scan.nextDouble();
+    for (int j = 0; j < numDistances; j++) {
+      @SuppressWarnings("unused")
+      double distance = fileReader.nextDouble(); // The distance is cosmetic
+
+      for (int i = 0; i < numEllipticityDepths; i++) {
+        t0[j][i] = fileReader.nextDouble();
+      }
+
+      for (int i = 0; i < numEllipticityDepths; i++) {
+        t1[j][i] = fileReader.nextDouble();
+      }
+
+      for (int i = 0; i < numEllipticityDepths; i++) {
+        t2[j][i] = fileReader.nextDouble();
+      }
     }
+
     // Return the result.
-    Ellipticity = new Ellipticity(phaseCode, minDelta, maxDelta, t0, t1, t2);
-    return Ellipticity;
+    return new Ellipticity(phaseCode, minimumDistance, maxiumumDistance, t0, t1, t2);
   }
 
   /**
-   * Get the Ellipticity correction data for the desired phase.
+   * Function to get the Ellipticity correction data for the desired phase.
    *
-   * @param phaseCode Phase code
-   * @return Ellipticity data
+   * @param phaseCode A String containing the phase code
+   * @return An Ellipticity object holding the ellipicity correction data
    */
   public Ellipticity findEllipticity(String phaseCode) {
-    if (Ellipticitys == null) return null;
-    else return Ellipticitys.get(phaseCode);
+    if (ellipticityCorrections == null) {
+      return null;
+    } else {
+      return ellipticityCorrections.get(phaseCode);
+    }
   }
 
-  /** Reorganize the flags from ArrayLists of phases by group to a TreeMap of flags by phase. */
-  private void makePhFlags() {
-    String phaseCode, PhaseGroup;
-
+  /**
+   * FUnction to reorganize the phase flags from ArrayLists of phases by group into a TreeMap of
+   * flags by phase.
+   */
+  private void makePhaseFlags() {
     // Search the phase groups for phases.
-    for (int j = 0; j < PhaseGroups.size(); j++) {
-      PhaseGroup = PhaseGroups.get(j).groupName;
-      for (int i = 0; i < PhaseGroups.get(j).phases.size(); i++) {
-        phaseCode = PhaseGroups.get(j).phases.get(i);
+    for (int j = 0; j < primaryPhaseGroups.size(); j++) {
+      String PhaseGroup = primaryPhaseGroups.get(j).groupName;
+      for (int i = 0; i < primaryPhaseGroups.get(j).phases.size(); i++) {
+        String phaseCode = primaryPhaseGroups.get(j).phases.get(i);
+
         unTangle(phaseCode, PhaseGroup);
-        phFlags.put(
+
+        phaseFlags.put(
             phaseCode,
             new TravelTimeFlags(
                 PhaseGroup,
-                compGroup(PhaseGroup),
-                isRegional(phaseCode),
-                isDepthPh(phaseCode),
-                canUse(phaseCode),
-                isDisPh(phaseCode),
-                TravelTimeStatistics,
-                Ellipticity,
-                upEllipticity));
+                findCompGroup(PhaseGroup),
+                isRegionalPhase(phaseCode),
+                isDepthPhase(phaseCode),
+                usePhaseForLocation(phaseCode),
+                isDownWeightedPhase(phaseCode),
+                phaseStatistics,
+                ellipticityCorrection,
+                upEllipticityCorrection));
       }
     }
+
     // Search the auxiliary phase groups for phases.
-    for (int j = 0; j < auxGroups.size(); j++) {
-      if (auxGroups.get(j) != null) {
-        PhaseGroup = auxGroups.get(j).groupName;
-        for (int i = 0; i < auxGroups.get(j).phases.size(); i++) {
-          phaseCode = auxGroups.get(j).phases.get(i);
+    for (int j = 0; j < auxiliaryPhaseGroups.size(); j++) {
+      if (auxiliaryPhaseGroups.get(j) != null) {
+        String PhaseGroup = auxiliaryPhaseGroups.get(j).groupName;
+        for (int i = 0; i < auxiliaryPhaseGroups.get(j).phases.size(); i++) {
+          String phaseCode = auxiliaryPhaseGroups.get(j).phases.get(i);
+
           unTangle(phaseCode, PhaseGroup);
-          phFlags.put(
+
+          phaseFlags.put(
               phaseCode,
               new TravelTimeFlags(
                   PhaseGroup,
-                  compGroup(PhaseGroup),
-                  isRegional(phaseCode),
-                  isDepthPh(phaseCode),
-                  canUse(phaseCode),
-                  isDisPh(phaseCode),
-                  TravelTimeStatistics,
-                  Ellipticity,
-                  upEllipticity));
+                  findCompGroup(PhaseGroup),
+                  isRegionalPhase(phaseCode),
+                  isDepthPhase(phaseCode),
+                  usePhaseForLocation(phaseCode),
+                  isDownWeightedPhase(phaseCode),
+                  phaseStatistics,
+                  ellipticityCorrection,
+                  upEllipticityCorrection));
         }
       }
     }
@@ -711,61 +846,81 @@ public class AuxiliaryTTReference {
   /**
    * Do some fiddling to add the statistics and Ellipticity correction.
    *
-   * @param phaseCode Phase code
-   * @param PhaseGroup Group code
+   * @param phaseCode A String containing the phase code
+   * @param phaseGroup A String containing the phase group code
    */
-  private void unTangle(String phaseCode, String PhaseGroup) {
+  private void unTangle(String phaseCode, String phaseGroup) {
     // Get the travel-time statistics.
-    TravelTimeStatistics = findStats(phaseCode);
+    phaseStatistics = findPhaseStatistics(phaseCode);
+
     // The Ellipticity is a little messier.
-    Ellipticity = findEllipticity(phaseCode);
-    if (Ellipticity == null) Ellipticity = findEllipticity(PhaseGroup);
-    if (Ellipticity == null) {
-      if (phaseCode.equals("pwP")) Ellipticity = findEllipticity("pP");
-      else if (phaseCode.equals("PKPpre")) Ellipticity = findEllipticity("PKPdf");
-      else if (PhaseGroup.contains("PKP")) Ellipticity = findEllipticity(PhaseGroup + "bc");
+    ellipticityCorrection = findEllipticity(phaseCode);
+    if (ellipticityCorrection == null) {
+      ellipticityCorrection = findEllipticity(phaseGroup);
     }
+
+    if (ellipticityCorrection == null) {
+      if (phaseCode.equals("pwP")) {
+        ellipticityCorrection = findEllipticity("pP");
+      } else if (phaseCode.equals("PKPpre")) {
+        ellipticityCorrection = findEllipticity("PKPdf");
+      } else if (phaseGroup.contains("PKP")) {
+        ellipticityCorrection = findEllipticity(phaseGroup + "bc");
+      }
+    }
+
     // Add up-going Ellipticity corrections.
-    if ((PhaseGroup.equals("P") || PhaseGroup.equals("S")) && !phaseCode.contains("dif")) {
-      upEllipticity = findEllipticity(PhaseGroup + "up");
+    if ((phaseGroup.equals("P") || phaseGroup.equals("S")) && !phaseCode.contains("dif")) {
+      upEllipticityCorrection = findEllipticity(phaseGroup + "up");
     } else {
-      upEllipticity = null;
+      upEllipticityCorrection = null;
     }
   }
 
   /**
-   * Get flags, etc. by phase code.
+   * Function to get flags, etc. by phase code.
    *
-   * @param phaseCode Phase code
-   * @return Flags object
+   * @param phaseCode A String containing the phase code
+   * @return A TravelTimeFlags containing the travel time flags
    */
-  public TravelTimeFlags findFlags(String phaseCode) {
-    return phFlags.get(phaseCode);
+  public TravelTimeFlags findPhaseFlags(String phaseCode) {
+    return phaseFlags.get(phaseCode);
   }
 
-  /** Print phase flags. */
-  public void printFlags() {
-    TravelTimeFlags flags;
-
-    NavigableMap<String, TravelTimeFlags> map = phFlags.headMap("~", true);
+  /** Function to print phase flags. */
+  public void printPhaseFlags() {
+    NavigableMap<String, TravelTimeFlags> map = phaseFlags.headMap("~", true);
     System.out.println("\n     Phase Flags:");
+
     for (@SuppressWarnings("rawtypes") Map.Entry entry : map.entrySet()) {
-      flags = (TravelTimeFlags) entry.getValue();
+      TravelTimeFlags flags = (TravelTimeFlags) entry.getValue();
       System.out.format(
           "%8s: %8s %8s  flags = %5b %5b %5b %5b",
           entry.getKey(),
           flags.PhaseGroup,
           flags.auxGroup,
           flags.canUse,
-          flags.isRegional,
+          flags.isRegionalPhase,
           flags.isDepth,
           flags.dis);
-      if (flags.TravelTimeStatistics == null) System.out.print("   stats = null    ");
-      else System.out.format("   stats = %-8s", flags.TravelTimeStatistics.phaseCode);
-      if (flags.Ellipticity == null) System.out.print(" Ellipticity = null    ");
-      else System.out.format(" Ellipticity = %-8s", flags.Ellipticity.phaseCode);
-      if (flags.upEllipticity == null) System.out.println(" upEllipticity = null");
-      else System.out.format(" upEllipticity = %-8s\n", flags.upEllipticity.phaseCode);
+
+      if (flags.getPhaseStatistics() == null) {
+        System.out.print("   stats = null    ");
+      } else {
+        System.out.format("   stats = %-8s", flags.getPhaseStatistics().phaseCode);
+      }
+
+      if (flags.Ellipticity == null) {
+        System.out.print(" Ellipticity = null    ");
+      } else {
+        System.out.format(" Ellipticity = %-8s", flags.Ellipticity.phaseCode);
+      }
+
+      if (flags.upEllipticity == null) {
+        System.out.println(" upEllipticityCorrection = null");
+      } else {
+        System.out.format(" upEllipticityCorrection = %-8s\n", flags.upEllipticity.phaseCode);
+      }
     }
   }
 }

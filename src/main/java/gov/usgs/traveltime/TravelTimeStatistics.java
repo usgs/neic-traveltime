@@ -46,7 +46,7 @@ public class TravelTimeStatistics implements Serializable {
    * @param delta Distance in degrees
    * @return Bias in seconds at distance delta
    */
-  public double getBias(double delta) {
+  public double getPhaseBias(double delta) {
     TravelTimeStatisticsSegment seg;
 
     for (int k = 0; k < bias.size(); k++) {
@@ -65,7 +65,7 @@ public class TravelTimeStatistics implements Serializable {
    * @param upGoing True if the phase is an up-going P or S
    * @return Spread in seconds at distance delta
    */
-  public double getSpread(double delta, boolean upGoing) {
+  public double getPhaseSpread(double delta, boolean upGoing) {
     TravelTimeStatisticsSegment seg;
 
     for (int k = 0; k < spread.size(); k++) {
@@ -87,7 +87,7 @@ public class TravelTimeStatistics implements Serializable {
    * @param upGoing True if the phase is an up-going P or S
    * @return Relative observability at distance delta
    */
-  public double getObserv(double delta, boolean upGoing) {
+  public double getPhaseObservability(double delta, boolean upGoing) {
     TravelTimeStatisticsSegment seg;
 
     for (int k = 0; k < observ.size(); k++) {

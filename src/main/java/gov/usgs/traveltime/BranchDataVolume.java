@@ -72,7 +72,7 @@ public class BranchDataVolume {
     this.spline = spline;
 
     // Do branch summary information.
-    isUseless = auxtt.isChaff(ref.phaseCode);
+    isUseless = auxtt.isUselessPhase(ref.phaseCode);
     compute = true;
     exists = true;
     xDiff = new double[2];
@@ -110,7 +110,7 @@ public class BranchDataVolume {
           xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
           pCaustic = pRange[1];
           pEnd = Double.NaN;
-          flags = auxtt.findFlags(phaseCode);
+          flags = auxtt.findPhaseFlags(phaseCode);
 
           // Make a local copy of the reference p and tau.
           len = ref.pBrn.length;
@@ -144,7 +144,7 @@ public class BranchDataVolume {
         xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
         pCaustic = pRange[1];
         pEnd = Double.NaN;
-        flags = auxtt.findFlags(phaseCode);
+        flags = auxtt.findPhaseFlags(phaseCode);
 
         // Do phases that start as P.
         if (ref.typeSeg[0] == 'P') {
@@ -514,10 +514,10 @@ public class BranchDataVolume {
       // Now that we know what type of phase we have, select the right
       // statistics and Ellipticity correction.
       if (ref.isUpGoing) {
-        TravelTimeStatistics = auxtt.findStats(phaseCode);
+        TravelTimeStatistics = auxtt.findPhaseStatistics(phaseCode);
         Ellipticity = auxtt.findEllipticity(flags.PhaseGroup + "up");
       } else {
-        TravelTimeStatistics = flags.TravelTimeStatistics;
+        TravelTimeStatistics = flags.getPhaseStatistics();
         Ellipticity = flags.Ellipticity;
       }
 
@@ -881,11 +881,11 @@ public class BranchDataVolume {
 
       // See if we have an add-on phase.
       if (ref.hasAddOn && found) {
-        addFlags = auxtt.findFlags(ref.phAddOn);
-        if (addFlags.TravelTimeStatistics != null) {
+        addFlags = auxtt.findPhaseFlags(ref.phAddOn);
+        if (addFlags.getPhaseStatistics() != null) {
           del = Math.toDegrees(xs);
-          if (del >= addFlags.TravelTimeStatistics.minDelta
-              && del <= addFlags.TravelTimeStatistics.maxDelta) {
+          if (del >= addFlags.getPhaseStatistics().minDelta
+              && del <= addFlags.getPhaseStatistics().maxDelta) {
             // Fiddle the uniqueCode.
             if (uniqueCode == null) uniqueCode = new String[2];
             uniqueCode[0] = ref.phAddOn + 0;
@@ -1082,7 +1082,7 @@ public class BranchDataVolume {
 
           //	branchString += String.format("Flags: group = %s %s  flags = %b %b %b %b\n",
           // ref.PhaseGroup,
-          //			ref.auxGroup, ref.isRegional, ref.isDepth, ref.canUse, ref.dis);
+          //			ref.auxGroup, ref.isRegionalPhase, ref.isDepth, ref.canUse, ref.dis);
 
           if (full) {
             int n = pBrn.length;

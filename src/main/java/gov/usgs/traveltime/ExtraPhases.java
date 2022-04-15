@@ -81,13 +81,13 @@ public class ExtraPhases {
   public boolean hasAddOn(String phaseCode, double xMin) {
     TravelTimeFlags flags;
 
-    flags = auxtt.findFlags(phaseCode);
+    flags = auxtt.findPhaseFlags(phaseCode);
     // Check for phases missing from the groups file.
     if (flags == null) {
       System.out.println("Warning: " + phaseCode + " is not in the groups.txt file!");
       return false;
     }
-    if (flags.TravelTimeStatistics == null) return false;
+    if (flags.getPhaseStatistics() == null) return false;
     // Otherwise, see if an add on phase is listed.
     for (int j = 0; j < baseCode.length; j++) {
       if (phaseCode.equals(baseCode[j])) {

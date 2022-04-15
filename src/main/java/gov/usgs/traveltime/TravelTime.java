@@ -86,7 +86,7 @@ public class TravelTime {
    *
    * @param phaseGroup A String containing the base phase group
    * @param auxGroup A String containing the auxiliary phase group
-   * @param isRegional A boolean flag, set to true if this is a regional phase
+   * @param isRegionalPhase A boolean flag, set to true if this is a regional phase
    * @param isDepth A boolean flag, set to true if this is a depth phase
    * @param canUse A boolean flag, set to true if this phase can be used in an earthquake location
    * @param shouldDownWeight A boolean flag, set to true if this phase should be down weighted
@@ -95,13 +95,13 @@ public class TravelTime {
   public void addPhaseFlags(
       String phaseGroup,
       String auxGroup,
-      boolean isRegional,
+      boolean isRegionalPhase,
       boolean isDepth,
       boolean canUse,
       boolean shouldDownWeight) {
     phaseTravelTimes
         .get(phaseTravelTimes.size() - 1)
-        .addFlags(phaseGroup, auxGroup, isRegional, isDepth, canUse, shouldDownWeight);
+        .addFlags(phaseGroup, auxGroup, isRegionalPhase, isDepth, canUse, shouldDownWeight);
   }
 
   /**

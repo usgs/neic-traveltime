@@ -551,7 +551,7 @@ public class AllBranchVolume {
           for (int k = lastTT; k < ttList.getNumPhases(); k++) {
             double upGoingBounceDistance;
             TravelTimeData TravelTime = ttList.getPhase(k);
-            flags = allBranchReference.getAuxTTData().findFlags(TravelTime.phaseCode);
+            flags = allBranchReference.getAuxTTData().findPhaseFlags(TravelTime.phaseCode);
 
             if (TravelTime.phaseCode.equals("pwP")) {
               delTT = k;
@@ -600,7 +600,7 @@ public class AllBranchVolume {
                   if (branches[j].ref.phRefl != null) {
                     double reflectionCorrection = Double.NaN;
 
-                    if (allBranchReference.getAuxTTData().topoMap != null) {
+                    if (allBranchReference.getAuxTTData().getBouncePointTopography() != null) {
                       // If so, we may need to do some preliminary work.
                       String tmpCode;
                       if (branches[j].ref.phRefl.equals("SP")) {
@@ -823,7 +823,10 @@ public class AllBranchVolume {
 
     // Get the elevation at that point.
     double recieverElevation =
-        allBranchReference.getAuxTTData().topoMap.getElev(reflectionLatitude, reflectionLongitude);
+        allBranchReference
+            .getAuxTTData()
+            .getBouncePointTopography()
+            .getElev(reflectionLatitude, reflectionLongitude);
 
     // Do the correction.
     switch (branchReference.convRefl) {
@@ -908,7 +911,7 @@ public class AllBranchVolume {
     double spread;
     double observability;
     double spreadDerivative;
-    if (distance >= 360d || flags.TravelTimeStatistics == null) {
+    if (distance >= 360d || flags.getPhaseStatistics() == null) {
       spread = TauUtilities.DEFSPREAD;
       observability = TauUtilities.DEFOBSERV;
       spreadDerivative = 0d;
@@ -919,11 +922,11 @@ public class AllBranchVolume {
       }
       // Do the interpolation.
       if (TravelTime.corrTt) {
-        TravelTime.tt += flags.TravelTimeStatistics.getBias(distance);
+        TravelTime.tt += flags.getPhaseStatistics().getPhaseBias(distance);
       }
-      spread = flags.TravelTimeStatistics.getSpread(distance, upGoing);
-      observability = flags.TravelTimeStatistics.getObserv(distance, upGoing);
-      spreadDerivative = flags.TravelTimeStatistics.getSpreadDerivative(distance, upGoing);
+      spread = flags.getPhaseStatistics().getPhaseSpread(distance, upGoing);
+      observability = flags.getPhaseStatistics().getPhaseObservability(distance, upGoing);
+      spreadDerivative = flags.getPhaseStatistics().getSpreadDerivative(distance, upGoing);
     }
 
     // Add statistics.
@@ -931,7 +934,12 @@ public class AllBranchVolume {
 
     // Add flags.
     TravelTime.addFlags(
-        flags.PhaseGroup, flags.auxGroup, flags.isRegional, flags.isDepth, flags.canUse, flags.dis);
+        flags.PhaseGroup,
+        flags.auxGroup,
+        flags.isRegionalPhase,
+        flags.isDepth,
+        flags.canUse,
+        flags.dis);
   }
 
   /**
@@ -1051,8 +1059,8 @@ public class AllBranchVolume {
       if (phaseGroup.equals(phasesToUse[j])) {
         phaseList.add(phaseGroup);
 
-        if (allBranchReference.getAuxTTData().isPrimary()) {
-          String auxGroup = allBranchReference.getAuxTTData().compGroup(phaseGroup);
+        if (allBranchReference.getAuxTTData().getIsPrimaryGroup()) {
+          String auxGroup = allBranchReference.getAuxTTData().findCompGroup(phaseGroup);
 
           if (auxGroup != null) {
             phaseList.add(auxGroup);
@@ -1080,17 +1088,17 @@ public class AllBranchVolume {
 
       // Local phases.
       if (keyword.toLowerCase().equals("ploc")) {
-        if (allBranchReference.getAuxTTData().isRegional(phaseCode)) {
+        if (allBranchReference.getAuxTTData().isRegionalPhase(phaseCode)) {
           return true;
         }
         // Depth phases.
       } else if (keyword.toLowerCase().equals("pdep")) {
-        if (allBranchReference.getAuxTTData().isDepthPh(phaseCode)) {
+        if (allBranchReference.getAuxTTData().isDepthPhase(phaseCode)) {
           return true;
         }
         // Basic phases (everything that can be used in a location).
       } else if (keyword.toLowerCase().equals("basic")) {
-        if (allBranchReference.getAuxTTData().canUse(phaseCode)) {
+        if (allBranchReference.getAuxTTData().usePhaseForLocation(phaseCode)) {
           return true;
         }
         // Otherwise, see if we want this specific (or generic) phase.

@@ -302,13 +302,13 @@ public class TravelTimeLocalSession {
   }
 
   /** Print phase statistics. */
-  public void printStats() {
-    auxTT.printStats();
+  public void printPhaseStatistics() {
+    auxTT.printPhaseStatistics();
   }
 
   /** Print phase flags. */
   public void printFlags() {
-    auxTT.printFlags();
+    auxTT.printPhaseFlags();
   }
 
   /**

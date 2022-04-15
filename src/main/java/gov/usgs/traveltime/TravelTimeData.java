@@ -19,7 +19,7 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
   double window; // Association window in seconds
   String PhaseGroup; // Teleseismic phase group
   String auxGroup; // Auxiliary phase group
-  boolean isRegional; // If true, phase is regional
+  boolean isRegionalPhase; // If true, phase is regional
   boolean isDepth; // If true, phase is depth sensitive
   boolean canUse; // If true, can use the phase for location
   boolean dis; // Disrespect (down weight) this phase
@@ -72,7 +72,7 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
    *
    * @param PhaseGroup Base phase group
    * @param auxGroup Auxiliary phase group
-   * @param isRegional True if this is a regional phase
+   * @param isRegionalPhase True if this is a regional phase
    * @param isDepth True if this is a depth phase
    * @param canUse True if this phase can be used in an earthquake location
    * @param dis True if this phase should be down weighted during phase identification
@@ -80,13 +80,13 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
   public void addFlags(
       String PhaseGroup,
       String auxGroup,
-      boolean isRegional,
+      boolean isRegionalPhase,
       boolean isDepth,
       boolean canUse,
       boolean dis) {
     this.PhaseGroup = PhaseGroup;
     this.auxGroup = auxGroup;
-    this.isRegional = isRegional;
+    this.isRegionalPhase = isRegionalPhase;
     this.isDepth = isDepth;
     this.canUse = canUse;
     this.dis = dis;
@@ -154,7 +154,7 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
    *
    * @return Spread (scatter) of travel times in seconds
    */
-  public double getSpread() {
+  public double getPhaseSpread() {
     return spread;
   }
 
@@ -163,7 +163,7 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
    *
    * @return Relative number of observations
    */
-  public double getObserv() {
+  public double getPhaseObservability() {
     return observ;
   }
 
@@ -208,8 +208,8 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
    *
    * @return True if the phase is regional
    */
-  public boolean isRegional() {
-    return isRegional;
+  public boolean isRegionalPhase() {
+    return isRegionalPhase;
   }
 
   /**
@@ -270,7 +270,7 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
         PhaseGroup,
         auxGroup,
         canUse,
-        isRegional,
+        isRegionalPhase,
         isDepth,
         dis);
   }

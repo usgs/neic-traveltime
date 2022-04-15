@@ -84,15 +84,20 @@ public class TravelTimeRegressionTest {
         firstTravelTime.getDXdP(),
         0.0001,
         "TravelTime first ray parameter derivative time:");
-    Assertions.assertEquals(0.666, firstTravelTime.getSpread(), 0.001, "TravelTime first spread:");
     Assertions.assertEquals(
-        14873.999, firstTravelTime.getObserv(), 0.001, "TravelTime first observability:");
+        0.666, firstTravelTime.getPhaseSpread(), 0.001, "TravelTime first spread:");
+    Assertions.assertEquals(
+        14873.999,
+        firstTravelTime.getPhaseObservability(),
+        0.001,
+        "TravelTime first observability:");
     Assertions.assertEquals(
         5.0, firstTravelTime.getWindow(), 0.001, "TravelTime first association window:");
     Assertions.assertEquals("P", firstTravelTime.getPhaseGroup(), "TravelTime first phase group:");
     Assertions.assertEquals(
         "PKP", firstTravelTime.getAuxGroup(), "TravelTime first auxiliary phase group:");
-    Assertions.assertEquals(true, firstTravelTime.isRegional(), "TravelTime first regional flag:");
+    Assertions.assertEquals(
+        true, firstTravelTime.isRegionalPhase(), "TravelTime first regional flag:");
     Assertions.assertEquals(false, firstTravelTime.isDepth(), "TravelTime first depth flag:");
     Assertions.assertEquals(true, firstTravelTime.canUse(), "TravelTime first phase use flag:");
     Assertions.assertEquals(false, firstTravelTime.getDis(), "TravelTime first disrespect flag:");
@@ -117,15 +122,20 @@ public class TravelTimeRegressionTest {
         firstTravelTime.getDXdP(),
         0.0001,
         "TravelTime first ray parameter derivative time:");
-    Assertions.assertEquals(1.102, firstTravelTime.getSpread(), 0.001, "TravelTime first spread:");
     Assertions.assertEquals(
-        12898.048, firstTravelTime.getObserv(), 0.001, "TravelTime first observability:");
+        1.102, firstTravelTime.getPhaseSpread(), 0.001, "TravelTime first spread:");
+    Assertions.assertEquals(
+        12898.048,
+        firstTravelTime.getPhaseObservability(),
+        0.001,
+        "TravelTime first observability:");
     Assertions.assertEquals(
         7.715, firstTravelTime.getWindow(), 0.001, "TravelTime first association window:");
     Assertions.assertEquals("P", firstTravelTime.getPhaseGroup(), "TravelTime first phase group:");
     Assertions.assertEquals(
         "PKP", firstTravelTime.getAuxGroup(), "TravelTime first auxiliary phase group:");
-    Assertions.assertEquals(false, firstTravelTime.isRegional(), "TravelTime first regional flag:");
+    Assertions.assertEquals(
+        false, firstTravelTime.isRegionalPhase(), "TravelTime first regional flag:");
     Assertions.assertEquals(false, firstTravelTime.isDepth(), "TravelTime first depth flag:");
     Assertions.assertEquals(true, firstTravelTime.canUse(), "TravelTime first phase use flag:");
     Assertions.assertEquals(false, firstTravelTime.getDis(), "TravelTime first disrespect flag:");

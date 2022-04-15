@@ -3,19 +3,20 @@ package gov.usgs.traveltime;
 import java.util.Comparator;
 
 /**
- * Comparator to sort travel-time results into ascending arrival time order
+ * ArrivalTimeCompare is a comparator to sort travel-time results into ascending arrival time order
  *
  * @author Ray Buland
  */
 public class ArrivalTimeCompare implements Comparator<TravelTimeData> {
   @Override
   /**
-   * Compare the arrival time fields of two arrival results.
+   * Function to compare the arrival time fields of two arrival results.
    *
-   * @param arr1 Travel-time data for the first phase
-   * @param arr2 Travel-time data for the second phase
+   * @param arrival1 A TravelTimeData object containing the first phase
+   * @param arrival2 A TravelTimeData object containing the second phase
+   * @return an integer representing the comparison result
    */
-  public int compare(TravelTimeData arr1, TravelTimeData arr2) {
-    return (int) Math.signum(arr1.tt - arr2.tt);
+  public int compare(TravelTimeData arrival1, TravelTimeData arrival2) {
+    return (int) Math.signum(arrival1.tt - arrival2.tt);
   }
 }
