@@ -72,7 +72,7 @@ public class BranchDataVolume {
     this.spline = spline;
 
     // Do branch summary information.
-    isUseless = auxtt.isUselessPhase(ref.phaseCode);
+    isUseless = auxtt.isUselessPhase(ref.getBranchPhaseCode());
     compute = true;
     exists = true;
     xDiff = new double[2];
@@ -105,7 +105,7 @@ public class BranchDataVolume {
           exists = true;
 
           // Do things common to all branches.
-          phaseCode = ref.phaseCode;
+          phaseCode = ref.getBranchPhaseCode();
           pRange = Arrays.copyOf(ref.pRange, ref.pRange.length);
           xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
           pCaustic = pRange[1];
@@ -139,7 +139,7 @@ public class BranchDataVolume {
         exists = true;
 
         // Do things common to all branches.
-        phaseCode = ref.phaseCode;
+        phaseCode = ref.getBranchPhaseCode();
         pRange = Arrays.copyOf(ref.pRange, ref.pRange.length);
         xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
         pCaustic = pRange[1];
@@ -805,7 +805,7 @@ public class BranchDataVolume {
                   // Add it.
                   ttList.addPhase(
                       tmpCode,
-                      ref.uniqueCode,
+                      ref.getUniquePhaseCodes(),
                       cvt.tNorm
                           * (poly[0][j]
                               + dp * (poly[1][j] + dp * poly[2][j] + dps * poly[3][j])
@@ -836,7 +836,7 @@ public class BranchDataVolume {
               // add it.
               ttList.addPhase(
                   tmpCode,
-                  ref.uniqueCode,
+                  ref.getUniquePhaseCodes(),
                   cvt.tNorm * (poly[0][j] + dp * (poly[1][j] + dps * poly[3][j]) + ps * xs),
                   xSign * ps,
                   zSign * Math.sqrt(Math.abs(pSourceSq - Math.pow(ps, 2d))),
@@ -1221,13 +1221,16 @@ public class BranchDataVolume {
             }
           }
         } else {
-          branchString += String.format("\n          phase = %s is useless\n", ref.phaseCode);
+          branchString +=
+              String.format("\n          phase = %s is useless\n", ref.getBranchPhaseCode());
         }
       } else {
         if (ref.isUpGoing) {
-          branchString += String.format("\n          phase = %s up doesn't exist\n", ref.phaseCode);
+          branchString +=
+              String.format("\n          phase = %s up doesn't exist\n", ref.getBranchPhaseCode());
         } else {
-          branchString += String.format("\n          phase = %s doesn't exist\n", ref.phaseCode);
+          branchString +=
+              String.format("\n          phase = %s doesn't exist\n", ref.getBranchPhaseCode());
         }
       }
     }

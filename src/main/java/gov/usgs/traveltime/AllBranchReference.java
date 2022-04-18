@@ -392,7 +392,7 @@ public class AllBranchReference {
    */
   public void dumpBranchData(String phaseCode, boolean full) {
     for (int j = 0; j < surfaceBranches.length; j++) {
-      if (surfaceBranches[j].phaseCode.equals(phaseCode)) {
+      if (surfaceBranches[j].getBranchPhaseCode().equals(phaseCode)) {
         surfaceBranches[j].dumpBrn(full);
       }
     }

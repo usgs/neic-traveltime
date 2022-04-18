@@ -331,7 +331,7 @@ public class AllBranchVolume {
             // See if this phase is selected (unless it's NEIC-useless).
             if (returnAllPhases || !branches[j].isUseless) {
               branches[j].setCompute(
-                  isPhaseInList(allBranchReference.getSurfaceBranches()[j].phaseCode));
+                  isPhaseInList(allBranchReference.getSurfaceBranches()[j].getBranchPhaseCode()));
             } else {
               branches[j].setCompute(false);
             }

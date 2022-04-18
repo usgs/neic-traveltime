@@ -206,23 +206,26 @@ public class TauUtilities {
   }
 
   /**
-   * Make phase codes unique by appending a reference number. This is needed to keep branches
-   * straight in the plot data.
+   * Function to make phase codes unique by appending a reference number. This is needed to keep
+   * branches straight in the plot data.
    *
-   * @param phaseCode Phase code
-   * @return Unique phase code
+   * @param phaseCode A String containing the phase code
+   * @return A String containing the unique phase code
    */
-  public static String uniqueCode(String phaseCode) {
-    Integer no;
+  public static String makeUniquePhaseCode(String phaseCode) {
+    if (unique == null) {
+      unique = new TreeMap<String, Integer>();
+    }
 
-    if (unique == null) unique = new TreeMap<String, Integer>();
-    no = unique.get(phaseCode);
+    Integer no = unique.get(phaseCode);
+
     if (no != null) {
       unique.replace(phaseCode, ++no);
     } else {
       no = 0;
       unique.put(phaseCode, no);
     }
+
     return phaseCode + no;
   }
 

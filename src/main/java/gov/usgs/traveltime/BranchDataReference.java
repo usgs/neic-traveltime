@@ -5,15 +5,21 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 /**
- * Store all non-volatile information associated with one travel-time branch. Note that all data are
- * normalized and transformed for internal use.
+ * The BranchDataReference stores all non-volatile information associated with one travel-time
+ * branch. Note that all data are normalized and transformed for internal use.
  *
  * @author Ray Buland
  */
 public class BranchDataReference implements Serializable {
+  /** A long containing the version id used in serialization */
   private static final long serialVersionUID = 1L;
-  final String phaseCode; // Branch phase code
-  final String[] uniqueCode; // Unique phase codes (oxymoron?)
+
+  /** A String containing the branch phase code */
+  private final String branchPhaseCode;
+
+  /** An array of String containing the unique phase codes (oxymoron?) for this branch */
+  private final String[] uniquePhaseCodes;
+
   final String phSeg; // Generic phase code for all branches in this segment
   final String phDiff; // Phase code of an associated diffracted phase
   final String phAddOn; // Phase code of an associated add-on phase
@@ -24,6 +30,7 @@ public class BranchDataReference implements Serializable {
   final boolean hasDiff; // True if this branch is also diffracted
   final boolean hasAddOn; // True if this branch has an associated add-on phase
   final boolean isUseless; // True if this phase is always in the coda of another phase
+
   /*
    * Originally, the useless flag was hard coded and putting it in the reference section
    * made sense.  Now, the useless flag is set via the groups.txt file (chaff section)
@@ -41,6 +48,24 @@ public class BranchDataReference implements Serializable {
   final double[] pBrn; // Slowness grid for this branch
   final double[] tauBrn; // Tau for each grid point
   final double[][] basis; // Basis function coefficients for each grid point
+
+  /**
+   * Function to return the branch phase code
+   *
+   * @return A String containing the branch phase code
+   */
+  public String getBranchPhaseCode() {
+    return branchPhaseCode;
+  }
+
+  /**
+   * Function to return the unique phase codes (oxymoron?) for this branch
+   *
+   * @return An array of String containing the unique phase codes for this branch
+   */
+  public String[] getUniquePhaseCodes() {
+    return uniquePhaseCodes;
+  }
 
   /**
    * Load data from the FORTRAN file reader for one branch. The file data should have already been
@@ -62,7 +87,7 @@ public class BranchDataReference implements Serializable {
       AuxiliaryTTReference auxtt) {
 
     // Do phase code.
-    phaseCode = in.phaseCode[indexBrn];
+    branchPhaseCode = in.phaseCode[indexBrn];
 
     // Do segment summary information.
     phSeg = segCode;
@@ -121,19 +146,19 @@ public class BranchDataReference implements Serializable {
      */
 
     // Set up the unique code (for plotting).
-    uniqueCode = new String[2];
-    uniqueCode[0] = TauUtilities.uniqueCode(phaseCode);
-    if (phaseCode.contains("ab")) {
-      uniqueCode[1] = uniqueCode[0].replace("ab", "bc");
+    uniquePhaseCodes = new String[2];
+    uniquePhaseCodes[0] = TauUtilities.makeUniquePhaseCode(branchPhaseCode);
+    if (branchPhaseCode.contains("ab")) {
+      uniquePhaseCodes[1] = uniquePhaseCodes[0].replace("ab", "bc");
     } else {
-      uniqueCode[1] = null;
+      uniquePhaseCodes[1] = null;
     }
 
     // Set the useless phase flag.
-    isUseless = auxtt.isUselessPhase(phaseCode);
+    isUseless = auxtt.isUselessPhase(branchPhaseCode);
 
-    if (phaseCode != null) {
-      if (phaseCode.equals("PnPn")) {
+    if (branchPhaseCode != null) {
+      if (branchPhaseCode.equals("PnPn")) {
         System.out.println("Got PnPn (BranchDataReference 1)!");
         System.out.println();
       }
@@ -141,8 +166,8 @@ public class BranchDataReference implements Serializable {
 
     // Set up diffracted and add-on phases.
     if (!isUpGoing) {
-      hasDiff = extra.hasDiff(phaseCode);
-      hasAddOn = extra.hasAddOn(phaseCode, xRange[1]);
+      hasDiff = extra.hasDiff(branchPhaseCode);
+      hasAddOn = extra.hasAddOn(branchPhaseCode, xRange[1]);
     } else {
       hasDiff = false;
       hasAddOn = false;
@@ -207,7 +232,7 @@ public class BranchDataReference implements Serializable {
       BranchData brnData, int indexBrn, ExtraPhases extra, AuxiliaryTTReference auxtt) {
 
     // Do phase code.
-    phaseCode = brnData.getPhaseCode();
+    branchPhaseCode = brnData.getPhaseCode();
 
     // Do segment summary information.
     phSeg = brnData.getPhaseSegmentCode();
@@ -245,19 +270,19 @@ public class BranchDataReference implements Serializable {
      */
 
     // Set up the unique code (for plotting).
-    uniqueCode = new String[2];
-    uniqueCode[0] = TauUtilities.uniqueCode(phaseCode);
-    if (phaseCode.contains("ab")) {
-      uniqueCode[1] = uniqueCode[0].replace("ab", "bc");
+    uniquePhaseCodes = new String[2];
+    uniquePhaseCodes[0] = TauUtilities.makeUniquePhaseCode(branchPhaseCode);
+    if (branchPhaseCode.contains("ab")) {
+      uniquePhaseCodes[1] = uniquePhaseCodes[0].replace("ab", "bc");
     } else {
-      uniqueCode[1] = null;
+      uniquePhaseCodes[1] = null;
     }
 
     // Set the useless phase flag.
-    isUseless = auxtt.isUselessPhase(phaseCode);
+    isUseless = auxtt.isUselessPhase(branchPhaseCode);
 
-    if (phaseCode != null) {
-      if (phaseCode.equals("PnPn")) {
+    if (branchPhaseCode != null) {
+      if (branchPhaseCode.equals("PnPn")) {
         System.out.println("Got PnPn (BranchDataReference 2)!");
         System.out.println();
       }
@@ -265,8 +290,8 @@ public class BranchDataReference implements Serializable {
 
     // Set up diffracted and add-on phases.
     if (!isUpGoing) {
-      hasDiff = extra.hasDiff(phaseCode);
-      hasAddOn = extra.hasAddOn(phaseCode, xRange[1]);
+      hasDiff = extra.hasDiff(branchPhaseCode);
+      hasAddOn = extra.hasAddOn(branchPhaseCode, xRange[1]);
     } else {
       hasDiff = false;
       hasAddOn = false;
@@ -351,7 +376,7 @@ public class BranchDataReference implements Serializable {
    */
   public void dumpBrn(boolean full) {
     if (isUpGoing) {
-      System.out.format("\n          phase = %s up  %s  ", phaseCode, uniqueCode[0]);
+      System.out.format("\n          phase = %s up  %s  ", branchPhaseCode, uniquePhaseCodes[0]);
       if (hasDiff) System.out.format("diff = %s  ", phDiff);
       if (hasAddOn) System.out.format("add-on = %s  ", phAddOn);
       System.out.format("isUseless = %b\n", isUseless);
@@ -359,7 +384,7 @@ public class BranchDataReference implements Serializable {
           "Segment: code = %s  type = %c        sign = %2d" + "  count = %d\n",
           phSeg, typeSeg[0], signSeg, countSeg);
     } else {
-      System.out.format("\n          phase = %s  %s  ", phaseCode, uniqueCode[0]);
+      System.out.format("\n          phase = %s  %s  ", branchPhaseCode, uniquePhaseCodes[0]);
       if (hasDiff) System.out.format("diff = %s  ", phDiff);
       if (hasAddOn) System.out.format("add-on = %s  ", phAddOn);
       System.out.format("isUseless = %b\n", isUseless);
