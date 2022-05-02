@@ -419,7 +419,7 @@ public class AllBranchReference {
    */
   public void dumpSegment(String segmentPhaseCode, boolean full) {
     for (int j = 0; j < surfaceBranches.length; j++) {
-      if (surfaceBranches[j].getPhSeg().equals(segmentPhaseCode)) {
+      if (surfaceBranches[j].getGenericPhaseCode().equals(segmentPhaseCode)) {
         surfaceBranches[j].dumpBrn(full);
       }
     }

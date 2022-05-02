@@ -597,15 +597,15 @@ public class AllBranchVolume {
                           upGoing);
 
                   // The bounce point correction is not.  See if there is a bounce.
-                  if (branches[j].ref.phRefl != null) {
+                  if (branches[j].ref.getReflectionPhaseCode() != null) {
                     double reflectionCorrection = Double.NaN;
 
                     if (allBranchReference.getAuxTTData().getBouncePointTopography() != null) {
                       // If so, we may need to do some preliminary work.
                       String tmpCode;
-                      if (branches[j].ref.phRefl.equals("SP")) {
+                      if (branches[j].ref.getReflectionPhaseCode().equals("SP")) {
                         tmpCode = "S";
-                      } else if (branches[j].ref.phRefl.equals("PS")) {
+                      } else if (branches[j].ref.getReflectionPhaseCode().equals("PS")) {
                         tmpCode =
                             TravelTime.phaseCode.substring(0, TravelTime.phaseCode.indexOf('S'));
                       } else {
@@ -790,7 +790,7 @@ public class AllBranchVolume {
 
     // Get the distance to the bounce point by type.
     double reflectionDistance;
-    switch (branchReference.phRefl) {
+    switch (branchReference.getReflectionPhaseCode()) {
         // For pP etc., we just need to trace the initial up-going ray.
       case "pP":
       case "sP":
@@ -829,7 +829,7 @@ public class AllBranchVolume {
             .getElev(reflectionLatitude, reflectionLongitude);
 
     // Do the correction.
-    switch (branchReference.convRefl) {
+    switch (branchReference.getConvertedPhaseCode()) {
         // Handle all reflecting P phases.
       case "PP":
         // pwP is a very special case.
@@ -874,7 +874,8 @@ public class AllBranchVolume {
                 recieverElevation, TauUtilities.DEFVS, rayParameter / modelConversions.deg2km);
         // Again, this should never happen.
       default:
-        System.out.println("Impossible phase conversion: " + branchReference.convRefl);
+        System.out.println(
+            "Impossible phase conversion: " + branchReference.getConvertedPhaseCode());
         return Double.NaN;
     }
   }
@@ -1022,7 +1023,9 @@ public class AllBranchVolume {
 
     // Find the up-going P type branch.
     for (int j = 0; j < branches.length; j++) {
-      if (branches[j].exists && branches[j].ref.isUpGoing && branches[j].ref.typeSeg[0] == 'P') {
+      if (branches[j].exists
+          && branches[j].ref.getIsBranchUpGoing()
+          && branches[j].ref.getCorrectionPhaseType()[0] == 'P') {
         lastUpgoingPBranchIndex = j;
         break;
       }
@@ -1030,7 +1033,9 @@ public class AllBranchVolume {
 
     // Find the up-going S type branch.
     for (int j = 0; j < branches.length; j++) {
-      if (branches[j].exists && branches[j].ref.isUpGoing && branches[j].ref.typeSeg[0] == 'S') {
+      if (branches[j].exists
+          && branches[j].ref.getIsBranchUpGoing()
+          && branches[j].ref.getCorrectionPhaseType()[0] == 'S') {
         lastUpgoingSBranchIndex = j;
         break;
       }
@@ -1255,7 +1260,7 @@ public class AllBranchVolume {
   /**
    * Function to print data for one travel-time segment for debugging purposes.
    *
-   * @param segmentPhase A string containing the segment phase code
+   * @param segmentPhase A string containing the generic segment phase code
    * @param full A boolean flag, if true, print the detailed branch specification as well
    * @param all A boolean flag, If true print even more specifications
    * @param scientificNotation A boolean flag, if true, print in scientific notation
@@ -1268,7 +1273,7 @@ public class AllBranchVolume {
       boolean scientificNotation,
       boolean returnAllPhases) {
     for (int j = 0; j < branches.length; j++) {
-      if (branches[j].getPhSeg().equals(segmentPhase))
+      if (branches[j].getGenericPhaseCode().equals(segmentPhase))
         branches[j].dumpBrn(full, all, scientificNotation, returnAllPhases, false);
     }
   }

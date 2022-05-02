@@ -37,7 +37,7 @@ public class ExtraPhases {
    * @param phaseCode Phase code
    * @return True if there is a diffracted branch
    */
-  public boolean hasDiff(String phaseCode) {
+  public boolean branchHasDiffraction(String phaseCode) {
     for (int j = 0; j < diffCode.length; j++) {
       if (phaseCode.equals(diffCode[j])) {
         if (!diffUsed[j]) {
@@ -78,7 +78,7 @@ public class ExtraPhases {
    * @param xMin Minimum distance for this phase in radians
    * @return True if this phase code has an add-on associated with it
    */
-  public boolean hasAddOn(String phaseCode, double xMin) {
+  public boolean branchHasAddOn(String phaseCode, double xMin) {
     TravelTimeFlags flags;
 
     flags = auxtt.findPhaseFlags(phaseCode);

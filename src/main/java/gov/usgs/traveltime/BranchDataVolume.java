@@ -100,33 +100,33 @@ public class BranchDataVolume {
     if (compute) {
       // A surface source is a special case (i.e., no up-going phases).
       if (-zSource <= TauUtilities.DTOL) {
-        if (ref.signSeg < 0) {
+        if (ref.getUpGoingCorrectionSign() < 0) {
           // This branch starts with a down-going ray.
           exists = true;
 
           // Do things common to all branches.
           phaseCode = ref.getBranchPhaseCode();
-          pRange = Arrays.copyOf(ref.pRange, ref.pRange.length);
-          xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
+          pRange = Arrays.copyOf(ref.getSlownessRange(), ref.getSlownessRange().length);
+          xRange = Arrays.copyOf(ref.getDistanceRange(), ref.getDistanceRange().length);
           pCaustic = pRange[1];
           pEnd = Double.NaN;
           flags = auxtt.findPhaseFlags(phaseCode);
 
           // Make a local copy of the reference p and tau.
-          len = ref.pBrn.length;
-          pBrn = Arrays.copyOf(ref.pBrn, len);
-          tauBrn = Arrays.copyOf(ref.tauBrn, len);
+          len = ref.getSlownessGrid().length;
+          pBrn = Arrays.copyOf(ref.getSlownessGrid(), len);
+          tauBrn = Arrays.copyOf(ref.getTauGrid(), len);
 
           // Set up the diffracted range.
-          if (ref.hasDiff) {
+          if (ref.getBranchHasDiffraction()) {
             xDiff[0] = Math.max(xRange[0], xRange[1]);
-            xDiff[1] = ref.xDiff;
+            xDiff[1] = ref.getMaxDiffractedDistance();
           }
 
           // Spline it.
           poly = new double[4][len];
           xBrn = new double[len];
-          spline.tauSpline(tauBrn, xRange, ref.basis, poly, xBrn);
+          spline.tauSpline(tauBrn, xRange, ref.getBasisCoefficients(), poly, xBrn);
         } else {
           // This branch starts with an up-going ray.
           exists = false;
@@ -140,14 +140,14 @@ public class BranchDataVolume {
 
         // Do things common to all branches.
         phaseCode = ref.getBranchPhaseCode();
-        pRange = Arrays.copyOf(ref.pRange, ref.pRange.length);
-        xRange = Arrays.copyOf(ref.xRange, ref.xRange.length);
+        pRange = Arrays.copyOf(ref.getSlownessRange(), ref.getSlownessRange().length);
+        xRange = Arrays.copyOf(ref.getDistanceRange(), ref.getDistanceRange().length);
         pCaustic = pRange[1];
         pEnd = Double.NaN;
         flags = auxtt.findPhaseFlags(phaseCode);
 
         // Do phases that start as P.
-        if (ref.typeSeg[0] == 'P') {
+        if (ref.getCorrectionPhaseType()[0] == 'P') {
           // Correct ray parameter range.
           pMax = Math.min(pRange[1], pUp.pMax);
 
@@ -161,13 +161,13 @@ public class BranchDataVolume {
           /* See how long we need the corrected arrays to be.  This is
            * awkward and not very Java-like, but the gain in performance
            * seemed worthwhile in this case.*/
-          for (int j = 0; j < ref.pBrn.length; j++) {
+          for (int j = 0; j < ref.getSlownessGrid().length; j++) {
             // See if we need this point.
-            if (ref.pBrn[j] < pMax + TauUtilities.DTOL) {
+            if (ref.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) {
               len++;
 
               // If this point is equal to pMax, we're done.
-              if (Math.abs(ref.pBrn[j] - pMax) <= TauUtilities.DTOL) {
+              if (Math.abs(ref.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
                 break;
               }
               // Otherwise, add one more point and quit.
@@ -190,38 +190,38 @@ public class BranchDataVolume {
           tauBrn = new double[len];
 
           // Correct an up-going branch separately.
-          if (ref.isUpGoing) {
+          if (ref.getIsBranchUpGoing()) {
             // Correct the distance.
             xRange[1] = pUp.xEndUp;
 
             // Correct tau for the up-going branch.
-            // We assume that ref.pBrn is a subset of pUp.pUp
+            // We assume that ref.getSlownessGrid() is a subset of pUp.pUp
             // We assume that TauUtilities.DTOL is being used as a
             // float epsilon for floating point comparisions
             // We assume pUp.pUp is the same lenght as pUp.tauUp
-            // We assume that ref.pBrn and pUp.pUp are sorted in
+            // We assume that ref.getSlownessGrid() and pUp.pUp are sorted in
             // increasing order JMP 1/13/2022
             i = 0;
-            for (int j = 0; j < ref.pBrn.length; j++) {
+            for (int j = 0; j < ref.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
               // Make sure we do not loop past the end of pUp.pUp
-              if ((ref.pBrn[j] < pMax + TauUtilities.DTOL) && (i < pUp.pUp.length)) {
+              if ((ref.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) && (i < pUp.pUp.length)) {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 // advance through the pUp.pUp array until we find the index
-                // of pUp.pUp that matches the value in ref.pBrn[j].
+                // of pUp.pUp that matches the value in ref.getSlownessGrid()[j].
                 // To make sure don't loop past the end of pUp.pUp, we check
                 // length-1 because of how the while loop is structured
-                while ((Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtilities.DTOL)
+                while ((Math.abs(ref.getSlownessGrid()[j] - pUp.pUp[i]) > TauUtilities.DTOL)
                     && (i < pUp.pUp.length - 1)) {
                   i++;
                 }
 
                 // Correct the tau and x values.
-                pBrn[j] = ref.pBrn[j];
+                pBrn[j] = ref.getSlownessGrid()[j];
                 tauBrn[j] = pUp.tauUp[i];
 
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtilities.DTOL) {
+                if (Math.abs(ref.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
                   break;
                 }
               } else {
@@ -259,7 +259,7 @@ public class BranchDataVolume {
                     return;
                   }
 
-                  xRange[i] += ref.signSeg * pUp.xUp[m];
+                  xRange[i] += ref.getUpGoingCorrectionSign() * pUp.xUp[m];
                   break;
                 }
               }
@@ -270,39 +270,39 @@ public class BranchDataVolume {
             }
 
             // Set up the diffracted branch distance range.
-            if (ref.hasDiff) {
+            if (ref.getBranchHasDiffraction()) {
               xDiff[0] = xRange[0];
-              xDiff[1] = ref.xDiff;
+              xDiff[1] = ref.getMaxDiffractedDistance();
             }
 
             // Correct tau for down-going branches.
-            // We assume that ref.pBrn is a subset of pUp.pUp
+            // We assume that ref.getSlownessGrid() is a subset of pUp.pUp
             // We assume that TauUtilities.DTOL is being used as a
             // float epsilon for floating point comparisions
             // We assume pUp.pUp is the same lenght as pUp.tauUp
-            // We assume that ref.pBrn and pUp.pUp are sorted in
+            // We assume that ref.getSlownessGrid() and pUp.pUp are sorted in
             // increasing order JMP 1/13/2022
             i = 0;
-            for (int j = 0; j < ref.pBrn.length; j++) {
+            for (int j = 0; j < ref.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
               // Make sure we do not loop past the end of pUp.pUp
-              if ((ref.pBrn[j] < pMax + TauUtilities.DTOL) && (i < pUp.pUp.length)) {
+              if ((ref.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) && (i < pUp.pUp.length)) {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 // advance through the pUp.pUp array until we find the index
-                // of pUp.pUp that matches the value in ref.pBrn[j].
+                // of pUp.pUp that matches the value in ref.getSlownessGrid()[j].
                 // To make sure don't loop past the end of pUp.pUp, we check
                 // length-1 because of how the while loop is structured
-                while ((Math.abs(ref.pBrn[j] - pUp.pUp[i]) > TauUtilities.DTOL)
+                while ((Math.abs(ref.getSlownessGrid()[j] - pUp.pUp[i]) > TauUtilities.DTOL)
                     && (i < pUp.pUp.length - 1)) {
                   i++;
                 }
 
                 // Correct the tau and x values.
-                pBrn[j] = ref.pBrn[j];
-                tauBrn[j] = ref.tauBrn[j] + ref.signSeg * pUp.tauUp[i];
+                pBrn[j] = ref.getSlownessGrid()[j];
+                tauBrn[j] = ref.getTauGrid()[j] + ref.getUpGoingCorrectionSign() * pUp.tauUp[i];
 
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtilities.DTOL) {
+                if (Math.abs(ref.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
                   break;
                 }
               } else {
@@ -319,8 +319,8 @@ public class BranchDataVolume {
             // Spline it.
             poly = new double[4][len];
             xBrn = new double[len];
-            if (Math.abs(pRange[1] - ref.pRange[1]) <= TauUtilities.DTOL) {
-              spline.tauSpline(tauBrn, xRange, ref.basis, poly, xBrn);
+            if (Math.abs(pRange[1] - ref.getSlownessRange()[1]) <= TauUtilities.DTOL) {
+              spline.tauSpline(tauBrn, xRange, ref.getBasisCoefficients(), poly, xBrn);
             } else {
               basisTmp = new double[5][len];
               spline.basisSet(pBrn, basisTmp);
@@ -342,13 +342,13 @@ public class BranchDataVolume {
           /* See how long we need the corrected arrays to be.  This is
            * awkward and not very Java-like, but the gain in performance
            * seemed worthwhile in this case.*/
-          for (int j = 0; j < ref.pBrn.length; j++) {
+          for (int j = 0; j < ref.getSlownessGrid().length; j++) {
             // See if we need this point.
-            if (ref.pBrn[j] < pMax + TauUtilities.DTOL) {
+            if (ref.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) {
               len++;
 
               // If this point is equal to pMax, we're done.
-              if (Math.abs(ref.pBrn[j] - pMax) <= TauUtilities.DTOL) {
+              if (Math.abs(ref.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
                 break;
               }
               // Otherwise, add one more point and quit.
@@ -368,38 +368,38 @@ public class BranchDataVolume {
           tauBrn = new double[len];
 
           // Correct an up-going branch separately.
-          if (ref.isUpGoing) {
+          if (ref.getIsBranchUpGoing()) {
             // Correct the distance.
             xRange[1] = sUp.xEndUp;
 
             // Correct tau for the up-going branch.
-            // We assume that ref.pBrn is a subset of sUp.pUp
+            // We assume that ref.getSlownessGrid() is a subset of sUp.pUp
             // We assume that TauUtilities.DTOL is being used as a
             // float epsilon for floating point comparisions
             // We assume sUp.pUp is the same lenght as sUp.tauUp
-            // We assume that ref.pBrn and sUp.pUp are sorted in
+            // We assume that ref.getSlownessGrid() and sUp.pUp are sorted in
             // increasing order JMP 1/13/2022
             i = 0;
-            for (int j = 0; j < ref.pBrn.length; j++) {
+            for (int j = 0; j < ref.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
               // Make sure we do not loop past the end of sUp.pUp
-              if ((ref.pBrn[j] < pMax + TauUtilities.DTOL) && (i < sUp.pUp.length)) {
+              if ((ref.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) && (i < sUp.pUp.length)) {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 // advance through the sUp.pUp array until we find the index
-                // of sUp.pUp that matches the value in ref.pBrn[j].
+                // of sUp.pUp that matches the value in ref.getSlownessGrid()[j].
                 // To make sure don't loop past the end of sUp.pUp, we check
                 // length-1 because of how the while loop is structured
-                while ((Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtilities.DTOL)
+                while ((Math.abs(ref.getSlownessGrid()[j] - sUp.pUp[i]) > TauUtilities.DTOL)
                     && (i < sUp.pUp.length - 1)) {
                   i++;
                 }
 
                 // Correct the tau and x values.
-                pBrn[j] = ref.pBrn[j];
+                pBrn[j] = ref.getSlownessGrid()[j];
                 tauBrn[j] = sUp.tauUp[i];
 
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtilities.DTOL) {
+                if (Math.abs(ref.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
                   break;
                 }
               } else {
@@ -437,7 +437,7 @@ public class BranchDataVolume {
                     return;
                   }
 
-                  xRange[i] += ref.signSeg * sUp.xUp[m];
+                  xRange[i] += ref.getUpGoingCorrectionSign() * sUp.xUp[m];
                   break;
                 }
               }
@@ -446,39 +446,39 @@ public class BranchDataVolume {
               }
             }
             // Set up the diffracted branch distance range.
-            if (ref.hasDiff) {
+            if (ref.getBranchHasDiffraction()) {
               xDiff[0] = xRange[0];
-              xDiff[1] = ref.xDiff;
+              xDiff[1] = ref.getMaxDiffractedDistance();
             }
 
             // Correct tau for down-going branches.
-            // We assume that ref.pBrn is a subset of sUp.pUp
+            // We assume that ref.getSlownessGrid() is a subset of sUp.pUp
             // We assume that TauUtilities.DTOL is being used as a
             // float epsilon for floating point comparisions
             // We assume sUp.pUp is the same lenght as sUp.tauUp
-            // We assume that ref.pBrn and sUp.pUp are sorted in
+            // We assume that ref.getSlownessGrid() and sUp.pUp are sorted in
             // increasing order JMP 1/13/2022
             i = 0;
-            for (int j = 0; j < ref.pBrn.length; j++) {
+            for (int j = 0; j < ref.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
               // Make sure we do not loop past the end of sUp.pUp
-              if ((ref.pBrn[j] < pMax + TauUtilities.DTOL) && (i < sUp.pUp.length)) {
+              if ((ref.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) && (i < sUp.pUp.length)) {
                 // pTauUp is a superset of pBrn so we need to sync them.
                 // advance through the sUp.pUp array until we find the index
-                // of sUp.pUp that matches the value in ref.pBrn[j].
+                // of sUp.pUp that matches the value in ref.getSlownessGrid()[j].
                 // To make sure don't loop past the end of sUp.pUp, we check
                 // length-1 because of how the while loop is structured
-                while ((Math.abs(ref.pBrn[j] - sUp.pUp[i]) > TauUtilities.DTOL)
+                while ((Math.abs(ref.getSlownessGrid()[j] - sUp.pUp[i]) > TauUtilities.DTOL)
                     && (i < sUp.pUp.length - 1)) {
                   i++;
                 }
 
                 // Correct the tau and x values.
-                pBrn[j] = ref.pBrn[j];
-                tauBrn[j] = ref.tauBrn[j] + ref.signSeg * sUp.tauUp[i];
+                pBrn[j] = ref.getSlownessGrid()[j];
+                tauBrn[j] = ref.getTauGrid()[j] + ref.getUpGoingCorrectionSign() * sUp.tauUp[i];
 
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(ref.pBrn[j] - pMax) <= TauUtilities.DTOL) {
+                if (Math.abs(ref.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
                   break;
                 }
               } else {
@@ -495,8 +495,8 @@ public class BranchDataVolume {
             // Spline it.
             poly = new double[4][len];
             xBrn = new double[len];
-            if (Math.abs(pRange[1] - ref.pRange[1]) <= TauUtilities.DTOL) {
-              spline.tauSpline(tauBrn, xRange, ref.basis, poly, xBrn);
+            if (Math.abs(pRange[1] - ref.getSlownessRange()[1]) <= TauUtilities.DTOL) {
+              spline.tauSpline(tauBrn, xRange, ref.getBasisCoefficients(), poly, xBrn);
             } else {
               basisTmp = new double[5][len];
               spline.basisSet(pBrn, basisTmp);
@@ -513,7 +513,7 @@ public class BranchDataVolume {
 
       // Now that we know what type of phase we have, select the right
       // statistics and Ellipticity correction.
-      if (ref.isUpGoing) {
+      if (ref.getIsBranchUpGoing()) {
         TravelTimeStatistics = auxtt.findPhaseStatistics(phaseCode);
         Ellipticity = auxtt.findEllipticity(flags.PhaseGroup + "up");
       } else {
@@ -536,45 +536,45 @@ public class BranchDataVolume {
   private double lastTau() {
     double tau;
 
-    if (ref.typeSeg[0] == 'P') {
+    if (ref.getCorrectionPhaseType()[0] == 'P') {
       // Add or subtract the up-going piece.  For a surface reflection
       // it would be added.  For a down-going branch it would be
       // subtracted (because that part of the branch is cut off by the
       // source depth).
-      tau = ref.signSeg * pUp.tauEndUp;
+      tau = ref.getUpGoingCorrectionSign() * pUp.tauEndUp;
       // Add the down-going part, which may not be the same as the
       // up-going piece (e.g., sP).
-      if (ref.typeSeg[1] == 'P') {
-        tau += ref.countSeg * (pUp.tauEndUp + pUp.tauEndLvz);
+      if (ref.getCorrectionPhaseType()[1] == 'P') {
+        tau += ref.getNumMantleTraversals() * (pUp.tauEndUp + pUp.tauEndLvz);
       } else {
-        tau += ref.countSeg * (pUp.tauEndCnv);
+        tau += ref.getNumMantleTraversals() * (pUp.tauEndCnv);
       }
       // Add the coming-back-up part, which may not be the same as the
       // down-going piece (e.g., ScP).
-      if (ref.typeSeg[2] == 'P') {
-        tau += ref.countSeg * (pUp.tauEndUp + pUp.tauEndLvz);
+      if (ref.getCorrectionPhaseType()[2] == 'P') {
+        tau += ref.getNumMantleTraversals() * (pUp.tauEndUp + pUp.tauEndLvz);
       } else {
-        tau += ref.countSeg * (pUp.tauEndCnv);
+        tau += ref.getNumMantleTraversals() * (pUp.tauEndCnv);
       }
     } else {
       // Add or subtract the up-going piece.  For a surface reflection
       // it would be added.  For a down-going branch it would be
       // subtracted (because that part of the branch is cut off by the
       // source depth).
-      tau = ref.signSeg * sUp.tauEndUp;
+      tau = ref.getUpGoingCorrectionSign() * sUp.tauEndUp;
       // Add the down-going part, which may not be the same as the
       // up-going piece (e.g., sP).
-      if (ref.typeSeg[1] == 'S') {
-        tau += ref.countSeg * (sUp.tauEndUp + sUp.tauEndLvz);
+      if (ref.getCorrectionPhaseType()[1] == 'S') {
+        tau += ref.getNumMantleTraversals() * (sUp.tauEndUp + sUp.tauEndLvz);
       } else {
-        tau += ref.countSeg * (sUp.tauEndCnv);
+        tau += ref.getNumMantleTraversals() * (sUp.tauEndCnv);
       }
       // Add the coming-back-up part, which may not be the same as the
       // down-going piece (e.g., ScP).
-      if (ref.typeSeg[2] == 'S') {
-        tau += ref.countSeg * (sUp.tauEndUp + sUp.tauEndLvz);
+      if (ref.getCorrectionPhaseType()[2] == 'S') {
+        tau += ref.getNumMantleTraversals() * (sUp.tauEndUp + sUp.tauEndLvz);
       } else {
-        tau += ref.countSeg * (sUp.tauEndCnv);
+        tau += ref.getNumMantleTraversals() * (sUp.tauEndCnv);
       }
     }
     return tau;
@@ -589,45 +589,45 @@ public class BranchDataVolume {
   private double lastX() {
     double x;
 
-    if (ref.typeSeg[0] == 'P') {
+    if (ref.getCorrectionPhaseType()[0] == 'P') {
       // Add or subtract the up-going piece.  For a surface reflection
       // it would be added.  For a down-going branch it would be
       // subtracted (because that part of the branch is cut off by the
       // source depth).
-      x = ref.signSeg * pUp.xEndUp;
+      x = ref.getUpGoingCorrectionSign() * pUp.xEndUp;
       // Add the down-going part, which may not be the same as the
       // up-going piece (e.g., sP).
-      if (ref.typeSeg[1] == 'P') {
-        x += ref.countSeg * (pUp.xEndUp + pUp.xEndLvz);
+      if (ref.getCorrectionPhaseType()[1] == 'P') {
+        x += ref.getNumMantleTraversals() * (pUp.xEndUp + pUp.xEndLvz);
       } else {
-        x += ref.countSeg * (pUp.xEndCnv);
+        x += ref.getNumMantleTraversals() * (pUp.xEndCnv);
       }
       // Add the coming-back-up part, which may not be the same as the
       // down-going piece (e.g., ScP).
-      if (ref.typeSeg[2] == 'P') {
-        x += ref.countSeg * (pUp.xEndUp + pUp.xEndLvz);
+      if (ref.getCorrectionPhaseType()[2] == 'P') {
+        x += ref.getNumMantleTraversals() * (pUp.xEndUp + pUp.xEndLvz);
       } else {
-        x += ref.countSeg * (pUp.xEndCnv);
+        x += ref.getNumMantleTraversals() * (pUp.xEndCnv);
       }
     } else {
       // Add or subtract the up-going piece.  For a surface reflection
       // it would be added.  For a down-going branch it would be
       // subtracted (because that part of the branch is cut off by the
       // source depth).
-      x = ref.signSeg * sUp.xEndUp;
+      x = ref.getUpGoingCorrectionSign() * sUp.xEndUp;
       // Add the down-going part, which may not be the same as the
       // up-going piece (e.g., sP).
-      if (ref.typeSeg[1] == 'S') {
-        x += ref.countSeg * (sUp.xEndUp + sUp.xEndLvz);
+      if (ref.getCorrectionPhaseType()[1] == 'S') {
+        x += ref.getNumMantleTraversals() * (sUp.xEndUp + sUp.xEndLvz);
       } else {
-        x += ref.countSeg * (sUp.xEndCnv);
+        x += ref.getNumMantleTraversals() * (sUp.xEndCnv);
       }
       // Add the coming-back-up part, which may not be the same as the
       // down-going piece (e.g., ScP).
-      if (ref.typeSeg[2] == 'S') {
-        x += ref.countSeg * (sUp.xEndUp + sUp.xEndLvz);
+      if (ref.getCorrectionPhaseType()[2] == 'S') {
+        x += ref.getNumMantleTraversals() * (sUp.xEndUp + sUp.xEndLvz);
       } else {
-        x += ref.countSeg * (sUp.xEndCnv);
+        x += ref.getNumMantleTraversals() * (sUp.xEndCnv);
       }
     }
     return x;
@@ -654,6 +654,7 @@ public class BranchDataVolume {
     dpe[1] = pEnd - pBrn[0];
     sqrtDp[1] = Math.sqrt(dpe[1]);
     sqrt3Dp[1] = dpe[1] * sqrtDp[1];
+
     // Set up variables for tracking caustics.
     iMin = 0;
     iMax = 0;
@@ -694,22 +695,29 @@ public class BranchDataVolume {
       xLim[1][j] = Math.max(xBrn[j], xBrn[j + 1]);
       if (xLim[0][j] < xMin) {
         xMin = xLim[0][j];
-        if (xBrn[j] <= xBrn[j + 1]) pCaustic = pBrn[j];
-        else pCaustic = pBrn[j + 1];
+        if (xBrn[j] <= xBrn[j + 1]) {
+          pCaustic = pBrn[j];
+        } else {
+          pCaustic = pBrn[j + 1];
+        }
       }
+
       // See if there's a caustic in this interval.
       flag[j] = "";
       if (Math.abs(poly[2][j]) > TauUtilities.DMIN) {
         sqrtPext = -0.375d * poly[3][j] / poly[2][j];
         pExt = Math.pow(sqrtPext, 2d);
+
         if (sqrtPext > 0d && pExt > dpe[1] && pExt < dpe[0]) {
           xCaustic = poly[1][j] + sqrtPext * (2d * sqrtPext * poly[2][j] + 1.5d * poly[3][j]);
           xLim[0][j] = Math.min(xLim[0][j], xCaustic);
           xLim[1][j] = Math.max(xLim[1][j], xCaustic);
+
           if (xCaustic < xMin) {
             xMin = xCaustic;
             pCaustic = pEnd - pExt;
           }
+
           if (poly[3][j] < 0d) {
             flag[j] = "min";
             iMin++;
@@ -719,21 +727,30 @@ public class BranchDataVolume {
           }
         }
       }
+
       xMax = Math.max(xMax, xLim[1][j]);
     }
 
     // Fix ranges.
     xRange[0] = xMin;
     xRange[1] = xMax;
+
     // Set the distances to try (see findTt for details).
     xTries = new int[2];
     for (int j = 0; j < 2; j++) {
-      if (xRange[j] <= Math.PI) xTries[j] = 0;
-      else if (xRange[j] <= 2d * Math.PI) xTries[j] = 1;
-      else xTries[j] = 2;
+      if (xRange[j] <= Math.PI) {
+        xTries[j] = 0;
+      } else if (xRange[j] <= 2d * Math.PI) {
+        xTries[j] = 1;
+      } else {
+        xTries[j] = 2;
+      }
     }
+
     // Fix the phase code for the up-going branch.
-    if (ref.isUpGoing && tagBrn != ' ') phaseCode = "" + phaseCode.charAt(0) + tagBrn;
+    if (ref.getIsBranchUpGoing() && tagBrn != ' ') {
+      phaseCode = "" + phaseCode.charAt(0) + tagBrn;
+    }
   }
 
   /**
@@ -768,8 +785,8 @@ public class BranchDataVolume {
         // Set up some useful variables.
         if (Double.isNaN(pEnd)) {
           pEnd = pBrn[pBrn.length - 1];
-          zSign = dTdDepth * ref.signSeg;
-          if (ref.typeSeg[0] == 'P') pSourceSq = Math.pow(pUp.pSource, 2d);
+          zSign = dTdDepth * ref.getUpGoingCorrectionSign();
+          if (ref.getCorrectionPhaseType()[0] == 'P') pSourceSq = Math.pow(pUp.pSource, 2d);
           else pSourceSq = Math.pow(sUp.pSource, 2d);
         }
         // Loop over ray parameter intervals looking for arrivals.
@@ -848,24 +865,24 @@ public class BranchDataVolume {
       }
 
       // See if we have a diffracted arrival.
-      if (ref.hasDiff) {
+      if (ref.getBranchHasDiffraction()) {
         if (xs > xDiff[0] && xs <= xDiff[1]) {
           // This would have gotten missed as it's off the end of the branch.
           if (Double.isNaN(pEnd)) {
             pEnd = pBrn[pBrn.length - 1];
-            zSign = dTdDepth * ref.signSeg;
-            if (ref.typeSeg[0] == 'P') pSourceSq = Math.pow(pUp.pSource, 2d);
+            zSign = dTdDepth * ref.getUpGoingCorrectionSign();
+            if (ref.getCorrectionPhaseType()[0] == 'P') pSourceSq = Math.pow(pUp.pSource, 2d);
             else pSourceSq = Math.pow(sUp.pSource, 2d);
           }
           dp = pRange[1] - pRange[0];
           dps = Math.sqrt(Math.abs(dp));
           // Fiddle the uniqueCode.
           if (uniqueCode == null) uniqueCode = new String[2];
-          uniqueCode[0] = ref.phDiff + 0;
+          uniqueCode[0] = ref.getDiffractedPhaseCode() + 0;
           uniqueCode[1] = null;
           // Add it.
           ttList.addPhase(
-              ref.phDiff,
+              ref.getDiffractedPhaseCode(),
               uniqueCode,
               cvt.tNorm
                   * (poly[0][0]
@@ -880,31 +897,32 @@ public class BranchDataVolume {
       }
 
       // See if we have an add-on phase.
-      if (ref.hasAddOn && found) {
-        addFlags = auxtt.findPhaseFlags(ref.phAddOn);
+      if (ref.getBranchHasAddOn() && found) {
+        addFlags = auxtt.findPhaseFlags(ref.getAddOnPhaseCode());
         if (addFlags.getPhaseStatistics() != null) {
           del = Math.toDegrees(xs);
           if (del >= addFlags.getPhaseStatistics().minDelta
               && del <= addFlags.getPhaseStatistics().maxDelta) {
             // Fiddle the uniqueCode.
             if (uniqueCode == null) uniqueCode = new String[2];
-            uniqueCode[0] = ref.phAddOn + 0;
+            uniqueCode[0] = ref.getAddOnPhaseCode() + 0;
             uniqueCode[1] = null;
             // See what we've got.
-            if (ref.phAddOn.equals("Lg")) {
+            if (ref.getAddOnPhaseCode().equals("Lg")) {
               // Make sure we have a valid depth.
               if (dSource <= TauUtilities.LGDEPMAX) {
-                ttList.addPhase(ref.phAddOn, uniqueCode, 0d, cvt.dTdDLg, 0d, 0d, true);
+                ttList.addPhase(ref.getAddOnPhaseCode(), uniqueCode, 0d, cvt.dTdDLg, 0d, 0d, true);
               }
-            } else if (ref.phAddOn.equals("LR")) {
+            } else if (ref.getAddOnPhaseCode().equals("LR")) {
               // Make sure we have a valid depth and distance.
               if (dSource <= TauUtilities.LRDEPMAX && xs <= TauUtilities.LRDELMAX) {
-                ttList.addPhase(ref.phAddOn, uniqueCode, 0d, cvt.dTdDLR, 0d, 0d, true);
+                ttList.addPhase(ref.getAddOnPhaseCode(), uniqueCode, 0d, cvt.dTdDLR, 0d, 0d, true);
               }
-            } else if (ref.phAddOn.equals("pwP") || ref.phAddOn.equals("PKPpre")) {
+            } else if (ref.getAddOnPhaseCode().equals("pwP")
+                || ref.getAddOnPhaseCode().equals("PKPpre")) {
               TravelTime = ttList.getPhase(ttList.getNumPhases() - 1);
               ttList.addPhase(
-                  ref.phAddOn,
+                  ref.getAddOnPhaseCode(),
                   uniqueCode,
                   TravelTime.tt,
                   TravelTime.dTdD,
@@ -976,8 +994,8 @@ public class BranchDataVolume {
    *
    * @return Branch segment code
    */
-  public String getPhSeg() {
-    return ref.phSeg;
+  public String getGenericPhaseCode() {
+    return ref.getGenericPhaseCode();
   }
 
   /**
@@ -997,41 +1015,44 @@ public class BranchDataVolume {
     if (!caustics || iMin + iMax > 0) {
       if (exists) {
         if (returnAllPhases || !isUseless) {
-          if (ref.isUpGoing) {
+          if (ref.getIsBranchUpGoing()) {
             branchString += String.format("\n         phase = %2s up  ", phaseCode);
 
-            if (ref.hasDiff) {
-              branchString += String.format("diff = %s  ", ref.phDiff);
+            if (ref.getBranchHasDiffraction()) {
+              branchString += String.format("diff = %s  ", ref.getDiffractedPhaseCode());
             }
 
-            if (ref.hasAddOn) {
-              branchString += String.format("add-on = %s  ", ref.phAddOn);
+            if (ref.getBranchHasAddOn()) {
+              branchString += String.format("add-on = %s  ", ref.getAddOnPhaseCode());
             }
 
             branchString +=
                 String.format(
                     "\nSegment: code = %s  type = %c        sign = %2d" + "  count = %d\n",
-                    ref.phSeg, ref.typeSeg[0], ref.signSeg, ref.countSeg);
+                    ref.getGenericPhaseCode(),
+                    ref.getCorrectionPhaseType()[0],
+                    ref.getUpGoingCorrectionSign(),
+                    ref.getNumMantleTraversals());
           } else {
             branchString += String.format("\n         phase = %s  ", phaseCode);
 
-            if (ref.hasDiff) {
-              branchString += String.format("diff = %s  ", ref.phDiff);
+            if (ref.getBranchHasDiffraction()) {
+              branchString += String.format("diff = %s  ", ref.getDiffractedPhaseCode());
             }
 
-            if (ref.hasAddOn) {
-              branchString += String.format("add-on = %s  ", ref.phAddOn);
+            if (ref.getBranchHasAddOn()) {
+              branchString += String.format("add-on = %s  ", ref.getAddOnPhaseCode());
             }
 
             branchString +=
                 String.format(
                     "\nSegment: code = %s  type = %c, %c, %c  " + "sign = %2d  count = %d\n",
-                    ref.phSeg,
-                    ref.typeSeg[0],
-                    ref.typeSeg[1],
-                    ref.typeSeg[2],
-                    ref.signSeg,
-                    ref.countSeg);
+                    ref.getGenericPhaseCode(),
+                    ref.getCorrectionPhaseType()[0],
+                    ref.getCorrectionPhaseType()[1],
+                    ref.getCorrectionPhaseType()[2],
+                    ref.getUpGoingCorrectionSign(),
+                    ref.getNumMantleTraversals());
           }
 
           branchString +=
@@ -1039,7 +1060,7 @@ public class BranchDataVolume {
                   "Branch:  pRange = %8.6f - %8.6f  xRange = %6.2f - " + "%6.2f ",
                   pRange[0], pRange[1], Math.toDegrees(xRange[0]), Math.toDegrees(xRange[1]));
 
-          if (ref.hasDiff) {
+          if (ref.getBranchHasDiffraction()) {
             branchString +=
                 String.format(
                     "pCaustic = %8.6f  xDiff = " + "%6.2f - %6.2f\n",
@@ -1048,35 +1069,35 @@ public class BranchDataVolume {
             branchString += String.format("pCaustic = %8.6f\n", pCaustic);
           }
 
-          if (ref.turnShell != null) {
+          if (ref.getTurningModelShellName() != null) {
             if (iMin + iMax == 1) {
               branchString +=
                   String.format(
                       "Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s (1 caustic)\n",
-                      ref.rRange[0],
-                      ref.rRange[1],
-                      cvt.rSurface - ref.rRange[1],
-                      cvt.rSurface - ref.rRange[0],
-                      ref.turnShell);
+                      ref.getTurningRadiusRange()[0],
+                      ref.getTurningRadiusRange()[1],
+                      cvt.rSurface - ref.getTurningRadiusRange()[1],
+                      cvt.rSurface - ref.getTurningRadiusRange()[0],
+                      ref.getTurningModelShellName());
             } else if (iMin + iMax > 1) {
               branchString +=
                   String.format(
                       "Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s (%d caustics)\n",
-                      ref.rRange[0],
-                      ref.rRange[1],
-                      cvt.rSurface - ref.rRange[1],
-                      cvt.rSurface - ref.rRange[0],
-                      ref.turnShell,
+                      ref.getTurningRadiusRange()[0],
+                      ref.getTurningRadiusRange()[1],
+                      cvt.rSurface - ref.getTurningRadiusRange()[1],
+                      cvt.rSurface - ref.getTurningRadiusRange()[0],
+                      ref.getTurningModelShellName(),
                       iMin + iMax);
             } else {
               branchString +=
                   String.format(
                       "Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s\n",
-                      ref.rRange[0],
-                      ref.rRange[1],
-                      cvt.rSurface - ref.rRange[1],
-                      cvt.rSurface - ref.rRange[0],
-                      ref.turnShell);
+                      ref.getTurningRadiusRange()[0],
+                      ref.getTurningRadiusRange()[1],
+                      cvt.rSurface - ref.getTurningRadiusRange()[1],
+                      cvt.rSurface - ref.getTurningRadiusRange()[0],
+                      ref.getTurningModelShellName());
             }
           }
 
@@ -1225,7 +1246,7 @@ public class BranchDataVolume {
               String.format("\n          phase = %s is useless\n", ref.getBranchPhaseCode());
         }
       } else {
-        if (ref.isUpGoing) {
+        if (ref.getIsBranchUpGoing()) {
           branchString +=
               String.format("\n          phase = %s up doesn't exist\n", ref.getBranchPhaseCode());
         } else {
@@ -1252,7 +1273,7 @@ public class BranchDataVolume {
     if (!exists || (!returnAllPhases && isUseless)) {
       return "";
     }
-    if (ref.isUpGoing) {
+    if (ref.getIsBranchUpGoing()) {
       return String.format(
           "%-2s up    %7.4f %7.4f %7.2f %7.2f %7.4f" + "          %c %c %c %2d %d\n",
           phaseCode,
@@ -1261,12 +1282,12 @@ public class BranchDataVolume {
           Math.toDegrees(xRange[0]),
           Math.toDegrees(xRange[1]),
           pCaustic,
-          ref.typeSeg[0],
-          ref.typeSeg[1],
-          ref.typeSeg[2],
-          ref.signSeg,
-          ref.countSeg);
-    } else if (ref.hasDiff) {
+          ref.getCorrectionPhaseType()[0],
+          ref.getCorrectionPhaseType()[1],
+          ref.getCorrectionPhaseType()[2],
+          ref.getUpGoingCorrectionSign(),
+          ref.getNumMantleTraversals());
+    } else if (ref.getBranchHasDiffraction()) {
       return String.format(
           "%-8s %7.4f %7.4f %7.2f %7.2f %7.4f %7.2f" + "  %c %c %c %2d %d\n",
           phaseCode,
@@ -1275,12 +1296,12 @@ public class BranchDataVolume {
           Math.toDegrees(xRange[0]),
           Math.toDegrees(xRange[1]),
           pCaustic,
-          Math.toDegrees(ref.xDiff),
-          ref.typeSeg[0],
-          ref.typeSeg[1],
-          ref.typeSeg[2],
-          ref.signSeg,
-          ref.countSeg);
+          Math.toDegrees(ref.getMaxDiffractedDistance()),
+          ref.getCorrectionPhaseType()[0],
+          ref.getCorrectionPhaseType()[1],
+          ref.getCorrectionPhaseType()[2],
+          ref.getUpGoingCorrectionSign(),
+          ref.getNumMantleTraversals());
     } else {
       return String.format(
           "%-8s %7.4f %7.4f %7.2f %7.2f %7.4f" + "          %c %c %c %2d %d\n",
@@ -1290,11 +1311,11 @@ public class BranchDataVolume {
           Math.toDegrees(xRange[0]),
           Math.toDegrees(xRange[1]),
           pCaustic,
-          ref.typeSeg[0],
-          ref.typeSeg[1],
-          ref.typeSeg[2],
-          ref.signSeg,
-          ref.countSeg);
+          ref.getCorrectionPhaseType()[0],
+          ref.getCorrectionPhaseType()[1],
+          ref.getCorrectionPhaseType()[2],
+          ref.getUpGoingCorrectionSign(),
+          ref.getNumMantleTraversals());
     }
   }
 }

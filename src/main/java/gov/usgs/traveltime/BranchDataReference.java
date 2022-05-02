@@ -5,8 +5,8 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 /**
- * The BranchDataReference stores all non-volatile information associated with one travel-time
- * branch. Note that all data are normalized and transformed for internal use.
+ * The BranchDataReference stores all reference (non-volatile) information associated with one
+ * travel-time branch. Note that all data are normalized and transformed for internal use.
  *
  * @author Ray Buland
  */
@@ -17,37 +17,83 @@ public class BranchDataReference implements Serializable {
   /** A String containing the branch phase code */
   private final String branchPhaseCode;
 
-  /** An array of String containing the unique phase codes (oxymoron?) for this branch */
+  /** An array of Strings containing the unique phase codes (oxymoron?) for this branch */
   private final String[] uniquePhaseCodes;
 
-  final String phSeg; // Generic phase code for all branches in this segment
-  final String phDiff; // Phase code of an associated diffracted phase
-  final String phAddOn; // Phase code of an associated add-on phase
-  final String phRefl; // Type of bounce point
-  final String convRefl; // Reflection or conversion on reflection
-  final String turnShell; // Name of the model shell where the rays turn
-  final boolean isUpGoing; // True if this is an up-going branch
-  final boolean hasDiff; // True if this branch is also diffracted
-  final boolean hasAddOn; // True if this branch has an associated add-on phase
-  final boolean isUseless; // True if this phase is always in the coda of another phase
+  /** A String containing the generic phase code for all branches in this segment */
+  private final String genericPhaseCode;
 
-  /*
-   * Originally, the useless flag was hard coded and putting it in the reference section
-   * made sense.  Now, the useless flag is set via the groups.txt file (chaff section)
-   * in the auxiliary data.  The reference useless flag has been retained to avoid
-   * messing with the Earth model files.  However, only the volatile useless flag is still
-   * used.
+  /** A String containing the phase code of an associated diffracted phase */
+  private final String diffractedPhaseCode;
+
+  /** A String containing the phase code of an associated add-on phase */
+  private final String addOnPhaseCode;
+
+  /** A String containing the bounce point phase code (type) */
+  private final String reflectionPhaseCode;
+
+  /** A String containing the Reflection or conversion on reflection phase code (type) */
+  private final String convertedPhaseCode;
+
+  /** A String containing the name of the model shell where the rays turn */
+  private final String turningModelShellName;
+
+  /** A boolean flag indicating whether this is an up-going branch */
+  private final boolean isBranchUpGoing;
+
+  /** A boolean flag indicating whether this branch is diffracted */
+  private final boolean branchHasDiffraction;
+
+  /** A boolean flag indicating whether this branch has an associated add-on phase */
+  private final boolean branchHasAddOn;
+
+  /**
+   * A boolean flag indicating whether this phase is useless (phase is always in the coda of another
+   * phase)
+   *
+   * <p>Originally, the useless flag was hard coded and putting it in the reference section made
+   * sense. Now, the useless flag is set via the groups.txt file (chaff section) in the auxiliary
+   * data. The reference useless flag has been retained to avoid messing with the Earth model files.
+   * However, only the volatile (in BranchDataVolume) useless flag is still used, and this one is
+   * not exposed
    */
-  final char[] typeSeg; // Phase type for correction, descending, ascending
-  final int signSeg; // Sign of the up-going correction
-  final int countSeg; // Number of mantle traversals
-  final double[] pRange; // Slowness range for this branch
-  final double[] xRange; // Distance range for this branch
-  final double[] rRange; // Radius range where the rays turn
-  final double xDiff; // Maximum distance of an associated diffracted phase
-  final double[] pBrn; // Slowness grid for this branch
-  final double[] tauBrn; // Tau for each grid point
-  final double[][] basis; // Basis function coefficients for each grid point
+  private final boolean isPhaseUseless;
+
+  /**
+   * An array of chars indicating the phase type for the initial correction, descending
+   * (down-going), and ascending (up-coming)
+   */
+  private final char[] correctionPhaseType;
+
+  /** An integer containing the sign of the ascending (up-coming) correction */
+  private final int upGoingCorrectionSign;
+
+  /** An integer containing the number of mantle traversals */
+  private final int numMantleTraversals;
+
+  /** An array of doubles containing the slowness range for this branch */
+  private final double[] slownessRange;
+
+  /** An array of doubles containing the distance range for this branch */
+  private final double[] distanceRange;
+
+  /** An array of doubles containing the radius range where the rays turn */
+  private final double[] turningRadiusRange;
+
+  /** A double containing the maximum distance in radians of an associated diffracted phase */
+  private final double maxDiffractedDistance;
+
+  /** An array of doubles containing the slowness grid for this branc */
+  private final double[] slownessGrid;
+
+  /** An array of doubles containing the tau for each point in the slowness grid */
+  private final double[] tauGrid;
+
+  /**
+   * A two-dimensional array of doubles containing the basis function coefficients for each point in
+   * the slowness grid
+   */
+  final double[][] basisCoefficients;
 
   /**
    * Function to return the branch phase code
@@ -68,74 +114,267 @@ public class BranchDataReference implements Serializable {
   }
 
   /**
-   * Load data from the FORTRAN file reader for one branch. The file data should have already been
-   * loaded from the *.hed and *.tbl files.
+   * Function to return the generic phase code for all branches in this segment
    *
-   * @param in Branch input data source.
-   * @param indexBrn FORTRAN branch index
-   * @param indexSeg FORTRAN segment index
-   * @param segCode Segment code for this branch
-   * @param extra List of extra phases
-   * @param auxtt Auxiliary data source
+   * @return A String containing the generic phase code for all branches in this segment
+   */
+  public String getGenericPhaseCode() {
+    return genericPhaseCode;
+  }
+
+  /**
+   * Function to return the phase code of an associated diffracted phase
+   *
+   * @return A String containing the phase code of an associated diffracted phase
+   */
+  public String getDiffractedPhaseCode() {
+    return diffractedPhaseCode;
+  }
+
+  /**
+   * Function to return the phase code of an associated add-on phase
+   *
+   * @return A String containing the phase code of an associated add-on phase
+   */
+  public String getAddOnPhaseCode() {
+    return addOnPhaseCode;
+  }
+
+  /**
+   * Function to return the bounce point phase code (type)
+   *
+   * @return A String containing the bounce point phase code (type)
+   */
+  public String getReflectionPhaseCode() {
+    return reflectionPhaseCode;
+  }
+
+  /**
+   * Function to return the reflection or conversion on reflection phase code (type)
+   *
+   * @return A String containing the reflection or conversion on reflection phase code (type)
+   */
+  public String getConvertedPhaseCode() {
+    return convertedPhaseCode;
+  }
+
+  /**
+   * Function to return the name of the model shell where the rays turn
+   *
+   * @return A String containing the name of the model shell where the rays turn
+   */
+  public String getTurningModelShellName() {
+    return turningModelShellName;
+  }
+
+  /**
+   * Function to return whether this is an up-going branch
+   *
+   * @return A boolean flag indicating whether this is an up-going branc
+   */
+  public boolean getIsBranchUpGoing() {
+    return isBranchUpGoing;
+  }
+
+  /**
+   * Function to return whether this branch is diffracted
+   *
+   * @return A boolean flag indicating whether this branch is diffracted
+   */
+  public boolean getBranchHasDiffraction() {
+    return branchHasDiffraction;
+  }
+
+  /**
+   * Function to return whether this branch has an associated add-on phase
+   *
+   * @return A boolean flag indicating whether this branch has an associated add-on phase
+   */
+  public boolean getBranchHasAddOn() {
+    return branchHasAddOn;
+  }
+
+  /**
+   * Function to return the phase type for the initial correction, descending (down-going), and
+   * ascending (up-coming)
+   *
+   * @return An array of chars indicating the phase type for the initial correction, descending
+   *     (down-going), and ascending (up-coming)
+   */
+  public char[] getCorrectionPhaseType() {
+    return correctionPhaseType;
+  }
+
+  /**
+   * Function to return the sign of the ascending (up-coming) correction
+   *
+   * @return An integer containing the sign of the ascending (up-coming) correction
+   */
+  public int getUpGoingCorrectionSign() {
+    return upGoingCorrectionSign;
+  }
+
+  /**
+   * Function to return the number of mantle traversals
+   *
+   * @return An integer containing the number of mantle traversals
+   */
+  public int getNumMantleTraversals() {
+    return numMantleTraversals;
+  }
+
+  /**
+   * Function to return the slowness range for this branch
+   *
+   * @return An array of doubles containing the slowness range for this branch
+   */
+  public double[] getSlownessRange() {
+    return slownessRange;
+  }
+
+  /**
+   * Function to return the distance range for this branch
+   *
+   * @return An array of doubles containing the distance range for this branch
+   */
+  public double[] getDistanceRange() {
+    return distanceRange;
+  }
+
+  /**
+   * Function to return the radius range where the rays turn
+   *
+   * @return An array of doubles containing the radius range where the rays turn
+   */
+  public double[] getTurningRadiusRange() {
+    return turningRadiusRange;
+  }
+
+  /**
+   * Function to return the maximum distance of an associated diffracted phase
+   *
+   * @return A double containing the maximum distance in radians of an associated diffracted phase
+   */
+  public double getMaxDiffractedDistance() {
+    return maxDiffractedDistance;
+  }
+
+  /**
+   * Function to return the slowness grid for this branch
+   *
+   * @return An array of doubles containing the slowness grid for this branch
+   */
+  public double[] getSlownessGrid() {
+    return slownessGrid;
+  }
+
+  /**
+   * Function to return the tau for each point in the slowness grid
+   *
+   * @return An array of doubles containing the tau for each point in the slowness grid
+   */
+  public double[] getTauGrid() {
+    return tauGrid;
+  }
+
+  /**
+   * Function to return the basis function coefficients for each point in the slowness grid
+   *
+   * @return A two-dimensional array of doubles containing the basis function coefficients for each
+   *     point in the slowness grid
+   */
+  public double[][] getBasisCoefficients() {
+    return basisCoefficients;
+  }
+
+  /**
+   * BranchDataReference constructor, loads data from the FORTRAN file reader for one branch. The
+   * file data should have already been loaded from the *.hed and *.tbl files.
+   *
+   * @param inputBranchData A ReadTau object holding the FORTRAN branch input data source.
+   * @param branchIndex An integer containing the FORTRAN branch index
+   * @param segmentIndex An integer containing the FORTRAN segment index
+   * @param segmentPhaseCode A String containing the segment phase code for this branch
+   * @param extraPhaseList An ExtraPhases object holding the list of extra phases
+   * @param auxTTReference An AuxiliaryTTReference object containing auxiliary data augmenting the
+   *     basic travel-times.
    */
   public BranchDataReference(
-      ReadTau in,
-      int indexBrn,
-      int indexSeg,
-      String segCode,
-      ExtraPhases extra,
-      AuxiliaryTTReference auxtt) {
+      ReadTau inputBranchData,
+      int branchIndex,
+      int segmentIndex,
+      String segmentPhaseCode,
+      ExtraPhases extraPhaseList,
+      AuxiliaryTTReference auxTTReference) {
 
     // Do phase code.
-    branchPhaseCode = in.phaseCode[indexBrn];
+    branchPhaseCode = inputBranchData.phaseCode[branchIndex];
 
     // Do segment summary information.
-    phSeg = segCode;
-    if (in.typeSeg[indexSeg][1] <= 0) isUpGoing = true;
-    else isUpGoing = false;
+    genericPhaseCode = segmentPhaseCode;
+    if (inputBranchData.typeSeg[segmentIndex][1] <= 0) {
+      isBranchUpGoing = true;
+    } else {
+      isBranchUpGoing = false;
+    }
+
     // The three types are: 1) initial, 2) down-going, and 3) up-coming.
     // For example, sP would be S, P, P, while ScP would be S, S, P.
-    typeSeg = new char[3];
-    if (!isUpGoing) {
+    correctionPhaseType = new char[3];
+    if (!isBranchUpGoing) {
       // For the normal case, set all three flags.
       for (int j = 0; j < 3; j++) {
-        if (Math.abs(in.typeSeg[indexSeg][j]) == 1) typeSeg[j] = 'P';
-        else if (Math.abs(in.typeSeg[indexSeg][j]) == 2) typeSeg[j] = 'S';
-        else typeSeg[j] = ' ';
+        if (Math.abs(inputBranchData.typeSeg[segmentIndex][j]) == 1) {
+          correctionPhaseType[j] = 'P';
+        } else if (Math.abs(inputBranchData.typeSeg[segmentIndex][j]) == 2) {
+          correctionPhaseType[j] = 'S';
+        } else {
+          correctionPhaseType[j] = ' ';
+        }
       }
     } else {
       // For up-going phases, it's convenient to make all three flags
       // the same.
-      if (Math.abs(in.typeSeg[indexSeg][0]) == 1) typeSeg[0] = 'P';
-      else typeSeg[0] = 'S';
-      typeSeg[1] = typeSeg[0];
-      typeSeg[2] = typeSeg[0];
+      if (Math.abs(inputBranchData.typeSeg[segmentIndex][0]) == 1) {
+        correctionPhaseType[0] = 'P';
+      } else {
+        correctionPhaseType[0] = 'S';
+      }
+
+      correctionPhaseType[1] = correctionPhaseType[0];
+      correctionPhaseType[2] = correctionPhaseType[0];
     }
+
     // We need to know whether to add or subtract the up-going correction.
     // For example, the up-going correction would be subtracted for P, but
     // added for pP.
-    if (in.typeSeg[indexSeg][0] > 0) signSeg = 1;
-    else signSeg = -1;
+    if (inputBranchData.typeSeg[segmentIndex][0] > 0) {
+      upGoingCorrectionSign = 1;
+    } else {
+      upGoingCorrectionSign = -1;
+    }
+
     // We might need to add or subtract the up-going correction more than
     // once.
-    countSeg = (int) Math.round(in.countSeg[indexSeg][0]);
+    numMantleTraversals = (int) Math.round(inputBranchData.countSeg[segmentIndex][0]);
 
     // Do branch summary information.
-    pRange = new double[2];
-    xRange = new double[2];
+    slownessRange = new double[2];
+    distanceRange = new double[2];
     for (int j = 0; j < 2; j++) {
-      pRange[j] = in.pBrn[indexBrn][j];
-      xRange[j] = in.xBrn[indexBrn][j];
+      slownessRange[j] = inputBranchData.pBrn[branchIndex][j];
+      distanceRange[j] = inputBranchData.xBrn[branchIndex][j];
     }
 
     // Set up the branch specification.
-    int start = in.indexBrn[indexBrn][0] - 1;
-    int end = in.indexBrn[indexBrn][1];
-    pBrn = Arrays.copyOfRange(in.pSpec, start, end);
-    tauBrn = Arrays.copyOfRange(in.tauSpec, start, end);
-    basis = new double[5][];
+    int start = inputBranchData.indexBrn[branchIndex][0] - 1;
+    int end = inputBranchData.indexBrn[branchIndex][1];
+    slownessGrid = Arrays.copyOfRange(inputBranchData.pSpec, start, end);
+    tauGrid = Arrays.copyOfRange(inputBranchData.tauSpec, start, end);
+    basisCoefficients = new double[5][];
+
     for (int k = 0; k < 5; k++) {
-      basis[k] = Arrays.copyOfRange(in.basisSpec[k], start, end);
+      basisCoefficients[k] = Arrays.copyOfRange(inputBranchData.basisSpec[k], start, end);
     }
 
     /*
@@ -155,7 +394,7 @@ public class BranchDataReference implements Serializable {
     }
 
     // Set the useless phase flag.
-    isUseless = auxtt.isUselessPhase(branchPhaseCode);
+    isPhaseUseless = auxTTReference.isUselessPhase(branchPhaseCode);
 
     if (branchPhaseCode != null) {
       if (branchPhaseCode.equals("PnPn")) {
@@ -165,101 +404,125 @@ public class BranchDataReference implements Serializable {
     }
 
     // Set up diffracted and add-on phases.
-    if (!isUpGoing) {
-      hasDiff = extra.hasDiff(branchPhaseCode);
-      hasAddOn = extra.hasAddOn(branchPhaseCode, xRange[1]);
+    if (!isBranchUpGoing) {
+      branchHasDiffraction = extraPhaseList.branchHasDiffraction(branchPhaseCode);
+      branchHasAddOn = extraPhaseList.branchHasAddOn(branchPhaseCode, distanceRange[1]);
     } else {
-      hasDiff = false;
-      hasAddOn = false;
+      branchHasDiffraction = false;
+      branchHasAddOn = false;
     }
 
     // Handle a diffracted branch.
-    if (hasDiff) {
-      phDiff = extra.getPhDiff();
-      xDiff = extra.getPhLim();
+    if (branchHasDiffraction) {
+      diffractedPhaseCode = extraPhaseList.getPhDiff();
+      maxDiffractedDistance = extraPhaseList.getPhLim();
     } else {
-      phDiff = "";
-      xDiff = 0d;
+      diffractedPhaseCode = "";
+      maxDiffractedDistance = 0d;
     }
 
     // Handle an add-on phase.
-    if (hasAddOn) {
-      phAddOn = extra.getPhAddOn();
+    if (branchHasAddOn) {
+      addOnPhaseCode = extraPhaseList.getPhAddOn();
       // Add-on flags can be different than the base phase.
     } else {
-      phAddOn = "";
+      addOnPhaseCode = "";
     }
 
     // Set up the type of surface reflection, if any.
-    if (signSeg > 0 && !isUpGoing) {
-      if (typeSeg[0] == 'P') {
-        if (typeSeg[1] == 'P') phRefl = "pP";
-        else phRefl = "pS";
+    if (upGoingCorrectionSign > 0 && !isBranchUpGoing) {
+      if (correctionPhaseType[0] == 'P') {
+        if (correctionPhaseType[1] == 'P') {
+          reflectionPhaseCode = "pP";
+        } else {
+          reflectionPhaseCode = "pS";
+        }
       } else {
-        if (typeSeg[1] == 'P') phRefl = "sP";
-        else phRefl = "sS";
+        if (correctionPhaseType[1] == 'P') {
+          reflectionPhaseCode = "sP";
+        } else {
+          reflectionPhaseCode = "sS";
+        }
       }
-      convRefl = phRefl.toUpperCase();
-    } else if (countSeg > 1) {
-      if (typeSeg[1] == 'P') {
-        if (typeSeg[2] == 'P') phRefl = "PP";
-        else phRefl = "PS";
+
+      convertedPhaseCode = reflectionPhaseCode.toUpperCase();
+    } else if (numMantleTraversals > 1) {
+      if (correctionPhaseType[1] == 'P') {
+        if (correctionPhaseType[2] == 'P') {
+          reflectionPhaseCode = "PP";
+        } else {
+          reflectionPhaseCode = "PS";
+        }
       } else {
-        if (typeSeg[2] == 'P') phRefl = "SP";
-        else phRefl = "SS";
+        if (correctionPhaseType[2] == 'P') {
+          reflectionPhaseCode = "SP";
+        } else {
+          reflectionPhaseCode = "SS";
+        }
       }
-      convRefl = phRefl.toUpperCase();
+
+      convertedPhaseCode = reflectionPhaseCode.toUpperCase();
     } else {
-      phRefl = null;
-      convRefl = null;
+      reflectionPhaseCode = null;
+      convertedPhaseCode = null;
     }
 
     // We don't get shell information from the Fortran files.
-    turnShell = null;
-    rRange = null;
+    turningModelShellName = null;
+    turningRadiusRange = null;
   }
 
   /**
-   * Load data from the tau-p table generation branch data into this class supporting the actual
-   * travel-time generation.
+   * BranchDataReference constructor, load data from the tau-p table generation branch data into
+   * this class supporting the actual travel-time generation.
    *
-   * @param brnData Travel-time table generation branch data
-   * @param indexBrn FORTRAN branch index
-   * @param extra List of extra phases
-   * @param auxtt Auxiliary data source
+   * @param inputBranchData A BranchData object containing travel-time table generation branch data
+   * @param branchIndex An integer containing the FORTRAN branch index
+   * @param extraPhaseListAn An ExtraPhases object holding the list of extra phases
+   * @param auxTTReference An AuxiliaryTTReference object containing auxiliary data augmenting the
+   *     basic travel-times.
    */
   public BranchDataReference(
-      BranchData brnData, int indexBrn, ExtraPhases extra, AuxiliaryTTReference auxtt) {
+      BranchData inputBranchData,
+      int branchIndex,
+      ExtraPhases extraPhaseList,
+      AuxiliaryTTReference auxTTReference) {
 
     // Do phase code.
-    branchPhaseCode = brnData.getPhaseCode();
+    branchPhaseCode = inputBranchData.getPhaseCode();
 
     // Do segment summary information.
-    phSeg = brnData.getPhaseSegmentCode();
-    isUpGoing = brnData.getIsBranchUpGoing();
+    genericPhaseCode = inputBranchData.getPhaseSegmentCode();
+    isBranchUpGoing = inputBranchData.getIsBranchUpGoing();
+
     // The three types are: 1) initial, 2) down-going, and 3) up-coming.
     // For example, sP would be S, P, P, while ScP would be S, S, P.
-    typeSeg = Arrays.copyOf(brnData.getRaySegmentPhaseTypes(), 3);
+    correctionPhaseType = Arrays.copyOf(inputBranchData.getRaySegmentPhaseTypes(), 3);
+
     // We need to know whether to add or subtract the up-going correction.
     // For example, the up-going correction would be subtracted for P, but
     // added for pP.
-    signSeg = brnData.getUpGoingDepthCorrectionSign();
+    upGoingCorrectionSign = inputBranchData.getUpGoingDepthCorrectionSign();
+
     // We might need to add or subtract the up-going correction more than
     // once.
-    countSeg = brnData.getNumMantleTraversals();
+    numMantleTraversals = inputBranchData.getNumMantleTraversals();
 
     // Do branch summary information.
-    pRange = Arrays.copyOf(brnData.getSlownessRange(), 2);
-    xRange = Arrays.copyOf(brnData.getDistanceRange(), 2);
+    slownessRange = Arrays.copyOf(inputBranchData.getSlownessRange(), 2);
+    distanceRange = Arrays.copyOf(inputBranchData.getDistanceRange(), 2);
 
     // Set up the branch specification.
-    pBrn = Arrays.copyOf(brnData.getRayParameters(), brnData.getRayParameters().length);
-    tauBrn = Arrays.copyOf(brnData.getTauValues(), brnData.getTauValues().length);
-    basis = new double[5][];
+    slownessGrid =
+        Arrays.copyOf(
+            inputBranchData.getRayParameters(), inputBranchData.getRayParameters().length);
+    tauGrid = Arrays.copyOf(inputBranchData.getTauValues(), inputBranchData.getTauValues().length);
+    basisCoefficients = new double[5][];
     for (int k = 0; k < 5; k++) {
-      basis[k] =
+      basisCoefficients[k] =
           Arrays.copyOf(
-              brnData.getBasisCoefficientRow(k), brnData.getBasisCoefficientRow(k).length);
+              inputBranchData.getBasisCoefficientRow(k),
+              inputBranchData.getBasisCoefficientRow(k).length);
     }
 
     /*
@@ -279,7 +542,7 @@ public class BranchDataReference implements Serializable {
     }
 
     // Set the useless phase flag.
-    isUseless = auxtt.isUselessPhase(branchPhaseCode);
+    isPhaseUseless = auxTTReference.isUselessPhase(branchPhaseCode);
 
     if (branchPhaseCode != null) {
       if (branchPhaseCode.equals("PnPn")) {
@@ -289,126 +552,174 @@ public class BranchDataReference implements Serializable {
     }
 
     // Set up diffracted and add-on phases.
-    if (!isUpGoing) {
-      hasDiff = extra.hasDiff(branchPhaseCode);
-      hasAddOn = extra.hasAddOn(branchPhaseCode, xRange[1]);
+    if (!isBranchUpGoing) {
+      branchHasDiffraction = extraPhaseList.branchHasDiffraction(branchPhaseCode);
+      branchHasAddOn = extraPhaseList.branchHasAddOn(branchPhaseCode, distanceRange[1]);
     } else {
-      hasDiff = false;
-      hasAddOn = false;
+      branchHasDiffraction = false;
+      branchHasAddOn = false;
     }
 
     // Handle a diffracted branch.
-    if (hasDiff) {
-      phDiff = extra.getPhDiff();
-      xDiff = extra.getPhLim();
+    if (branchHasDiffraction) {
+      diffractedPhaseCode = extraPhaseList.getPhDiff();
+      maxDiffractedDistance = extraPhaseList.getPhLim();
     } else {
-      phDiff = "";
-      xDiff = 0d;
+      diffractedPhaseCode = "";
+      maxDiffractedDistance = 0d;
     }
 
     // Handle an add-on phase.
-    if (hasAddOn) {
-      phAddOn = extra.getPhAddOn();
+    if (branchHasAddOn) {
+      addOnPhaseCode = extraPhaseList.getPhAddOn();
       // Add-on flags can be different than the base phase.
     } else {
-      phAddOn = "";
+      addOnPhaseCode = "";
     }
 
     // Set up the type of surface reflection, if any.
-    if (signSeg > 0 && !isUpGoing) {
-      if (typeSeg[0] == 'P') {
-        if (typeSeg[1] == 'P') phRefl = "pP";
-        else phRefl = "pS";
+    if (upGoingCorrectionSign > 0 && !isBranchUpGoing) {
+      if (correctionPhaseType[0] == 'P') {
+        if (correctionPhaseType[1] == 'P') {
+          reflectionPhaseCode = "pP";
+        } else {
+          reflectionPhaseCode = "pS";
+        }
       } else {
-        if (typeSeg[1] == 'P') phRefl = "sP";
-        else phRefl = "sS";
+        if (correctionPhaseType[1] == 'P') {
+          reflectionPhaseCode = "sP";
+        } else {
+          reflectionPhaseCode = "sS";
+        }
       }
-      convRefl = phRefl.toUpperCase();
-    } else if (countSeg > 1) {
-      if (typeSeg[1] == 'P') {
-        if (typeSeg[2] == 'P') phRefl = "PP";
-        else phRefl = "PS";
+
+      convertedPhaseCode = reflectionPhaseCode.toUpperCase();
+    } else if (numMantleTraversals > 1) {
+      if (correctionPhaseType[1] == 'P') {
+        if (correctionPhaseType[2] == 'P') {
+          reflectionPhaseCode = "PP";
+        } else {
+          reflectionPhaseCode = "PS";
+        }
       } else {
-        if (typeSeg[2] == 'P') phRefl = "SP";
-        else phRefl = "SS";
+        if (correctionPhaseType[2] == 'P') {
+          reflectionPhaseCode = "SP";
+        } else {
+          reflectionPhaseCode = "SS";
+        }
       }
-      convRefl = phRefl.toUpperCase();
+
+      convertedPhaseCode = reflectionPhaseCode.toUpperCase();
     } else {
-      phRefl = null;
-      convRefl = null;
+      reflectionPhaseCode = null;
+      convertedPhaseCode = null;
     }
 
     // Set up the shell information.  Note that this the shell
     // information can be handy for debugging new Earth models.
-    turnShell = brnData.getTurnShellName();
-    double[] temp;
-    temp = brnData.getRadiusTurningRange();
+    turningModelShellName = inputBranchData.getTurnShellName();
+    double[] temp = inputBranchData.getRadiusTurningRange();
     if (temp != null) {
-      rRange = Arrays.copyOf(temp, 2);
+      turningRadiusRange = Arrays.copyOf(temp, 2);
     } else {
-      rRange = null;
+      turningRadiusRange = null;
     }
   }
 
   /**
-   * get the branch segment code.
-   *
-   * @return Branch segment code
-   */
-  public String getPhSeg() {
-    return phSeg;
-  }
-
-  /**
-   * Get the type of the phase arriving at the station.
+   * Function to get the type of the phase arriving at the station.
    *
    * @return 'P' or 'S' depending on the type of the phase when it arrives at the station.
    */
   public char getArrivalType() {
-    if (isUpGoing) return typeSeg[0];
-    else return typeSeg[2];
+    if (isBranchUpGoing) {
+      return correctionPhaseType[0];
+    } else {
+      return correctionPhaseType[2];
+    }
   }
 
   /**
-   * Print out branch information for debugging purposes.
+   * Function to [rint out branch information for debugging purposes.
    *
-   * @param full If true print the detailed branch specification as well
+   * @param full A boolean flag, if true print the detailed branch specification as well
    */
   public void dumpBrn(boolean full) {
-    if (isUpGoing) {
+    if (isBranchUpGoing) {
       System.out.format("\n          phase = %s up  %s  ", branchPhaseCode, uniquePhaseCodes[0]);
-      if (hasDiff) System.out.format("diff = %s  ", phDiff);
-      if (hasAddOn) System.out.format("add-on = %s  ", phAddOn);
-      System.out.format("isUseless = %b\n", isUseless);
+
+      if (branchHasDiffraction) {
+        System.out.format("diff = %s  ", diffractedPhaseCode);
+      }
+
+      if (branchHasAddOn) {
+        System.out.format("add-on = %s  ", addOnPhaseCode);
+      }
+
+      System.out.format("isPhaseUseless = %b\n", isPhaseUseless);
       System.out.format(
           "Segment: code = %s  type = %c        sign = %2d" + "  count = %d\n",
-          phSeg, typeSeg[0], signSeg, countSeg);
+          genericPhaseCode, correctionPhaseType[0], upGoingCorrectionSign, numMantleTraversals);
     } else {
       System.out.format("\n          phase = %s  %s  ", branchPhaseCode, uniquePhaseCodes[0]);
-      if (hasDiff) System.out.format("diff = %s  ", phDiff);
-      if (hasAddOn) System.out.format("add-on = %s  ", phAddOn);
-      System.out.format("isUseless = %b\n", isUseless);
+
+      if (branchHasDiffraction) {
+        System.out.format("diff = %s  ", diffractedPhaseCode);
+      }
+
+      if (branchHasAddOn) {
+        System.out.format("add-on = %s  ", addOnPhaseCode);
+      }
+
+      System.out.format("isPhaseUseless = %b\n", isPhaseUseless);
       System.out.format(
           "Segment: code = %s  type = %c, %c, %c  " + "sign = %2d  count = %d",
-          phSeg, typeSeg[0], typeSeg[1], typeSeg[2], signSeg, countSeg);
-      if (phRefl == null) System.out.println();
-      else System.out.println("  refl = " + phRefl + " " + convRefl);
+          genericPhaseCode,
+          correctionPhaseType[0],
+          correctionPhaseType[1],
+          correctionPhaseType[2],
+          upGoingCorrectionSign,
+          numMantleTraversals);
+
+      if (reflectionPhaseCode == null) {
+        System.out.println();
+      } else {
+        System.out.println("  refl = " + reflectionPhaseCode + " " + convertedPhaseCode);
+      }
     }
+
     System.out.format(
-        "Branch: pRange = %8.6f - %8.6f  xRange = %6.2f - %6.2f\n",
-        pRange[0], pRange[1], Math.toDegrees(xRange[0]), Math.toDegrees(xRange[1]));
-    if (hasDiff) System.out.format("        xDiff = %6.2f\n", Math.toDegrees(xDiff));
-    if (turnShell != null) {
-      System.out.format("Shell: %7.2f-%7.2f %s\n", rRange[0], rRange[1], turnShell);
+        "Branch: slownessRange = %8.6f - %8.6f  distanceRange = %6.2f - %6.2f\n",
+        slownessRange[0],
+        slownessRange[1],
+        Math.toDegrees(distanceRange[0]),
+        Math.toDegrees(distanceRange[1]));
+
+    if (branchHasDiffraction)
+      System.out.format(
+          "        maxDiffractedDistance = %6.2f\n", Math.toDegrees(maxDiffractedDistance));
+
+    if (turningModelShellName != null) {
+      System.out.format(
+          "Shell: %7.2f-%7.2f %s\n",
+          turningRadiusRange[0], turningRadiusRange[1], turningModelShellName);
     }
 
     if (full) {
       System.out.println(
           "\n         p        tau                 " + "basis function coefficients");
-      for (int j = 0; j < pBrn.length; j++) {
+
+      for (int j = 0; j < slownessGrid.length; j++) {
         System.out.format(
             "%3d: %8.6f  %8.6f  %9.2e  %9.2e  %9.2e  %9.2e  " + "%9.2e\n",
-            j, pBrn[j], tauBrn[j], basis[0][j], basis[1][j], basis[2][j], basis[3][j], basis[4][j]);
+            j,
+            slownessGrid[j],
+            tauGrid[j],
+            basisCoefficients[0][j],
+            basisCoefficients[1][j],
+            basisCoefficients[2][j],
+            basisCoefficients[3][j],
+            basisCoefficients[4][j]);
       }
     }
   }
