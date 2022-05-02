@@ -10,164 +10,343 @@ import java.util.logging.Logger;
  * @author Ray Buland
  */
 public class BranchDataVolume {
-  boolean compute; // True if travel times should be computed
-  boolean exists; // True if the corrected branch still exists
-  boolean isUseless; // True if the phase just gets in the way
-  String phaseCode; // Corrected phase code
-  String[] uniqueCode; // Local storage for diffracted and add on phases
-  double[] pRange; // Corrected slowness range for this branch
-  double[] xRange; // Corrected distance range for this branch
-  double[] xDiff; // Corrected distance range for a diffracted branch
-  double pCaustic; // Corrected slowness of a caustic, if any
-  double[] pBrn; // Updated ray parameter grid
-  double[] tauBrn; // Corrected tau values
-  double[] xBrn; // Interpolated distance values
-  double[][] poly = null; // Interpolation polynomial for tau(p)
-  double[][] xLim; // Distance limits for each ray parameter interval
-  int iMin; // Count of caustic minimums in this branch
-  int iMax; // Count of caustic maximums in this branch
-  String[] flag; // Min/max flag highlighting caustics for printing
-  int[] xTries; // Number of valid distance ranges for travel times
-  double dTdDepth; // Normalization for the depth derivative
-  BranchDataReference ref; // Link to non-volatile branch data
-  UpGoingDataVolume pUp, sUp; // Up-going P and S data for correcting the depth
-  ModelConversions cvt; // Model specific conversions
-  AuxiliaryTTReference auxtt; // Auxiliary travel-time data
-  TravelTimeFlags flags; // Flags, etc. by phase code
-  TravelTimeStatistics TravelTimeStatistics; // Local copy of the phase statistics
-  Ellipticity Ellipticity; // Local copy of the Ellipticity correction
-  Spline spline; // Spline code
-  double tCorr,
-      xSign = Double.NaN,
-      zSign = Double.NaN,
-      pSourceSq = Double.NaN,
-      pEnd = Double.NaN; // Some variables need to be remembered between calls
-  // to the travel-time routine.
+  /** A boolean causticFlags indicating whether travel times should be computed */
+  private boolean shouldComputeTT;
+
+  /** A boolean causticFlags indicating if the corrected branch still exists */
+  private boolean correctedBranchExists;
+
+  /**
+   * A boolean causticFlags indicating whether this phase is useless (phase is always in the coda of
+   * another phase)
+   */
+  boolean isPhaseUseless;
+
+  /** A String containing the corrected phase code */
+  private String correctedPhaseCode;
+
+  /** A string containing the unique phase code, used to store diffracted and add on phases */
+  private String[] uniquePhaseCode;
+
+  /** An array of doubles containing the corrected slowness range for this branch */
+  private double[] correctedSlownessRange;
+
+  /** An array of doubles containing the corrected distance range for this branch */
+  private double[] correctedDistanceRange;
+
+  /** An array of doubles containing the corrected distance range for a diffracted branch */
+  private double[] diffractedDistanceRange;
+
+  /** A double containing the corrected slowness of a caustic, if any */
+  private double correctedCausticSlowness;
+
+  /** An array of doubles containing the updated ray parameter grid */
+  private double[] updatedRayParameters;
+
+  /** An array of doubles containing the corrected tau values */
+  private double[] correctedTauValues;
+
+  /** An array of doubles containing the interpolated distance values */
+  private double[] interpolatedDistanceValues;
+
+  /**
+   * A two dimensional array of doubles containing the interpolation polynomials for tau(p) for each
+   * ray parameter interval
+   */
+  private double[][] interpolationPolynomials = null;
+
+  /**
+   * A two dimensional array of doubles containing the distance limits for each ray parameter
+   * interval
+   */
+  private double[][] distanceLimits;
+
+  /** An integer containing the count of caustic minimums in this branch */
+  private int minimumCausticCount;
+
+  /** An integer containing the count of caustic maximums in this branch */
+  private int maximumCausticCount;
+
+  /** An array of Strings containing the min/max causticFlags highlighting caustics for printing */
+  private String[] causticFlags;
+
+  /** An array of integers containing the number of valid distance ranges for travel times */
+  private int[] numTTDistanceRanges;
+
+  /** A double containing the normalization for the depth derivative */
+  private double depthDerivativeNorm;
+
+  /** A BranchDataReference object containing the non-volatile branch data reference object */
+  private BranchDataReference branchReference;
+
+  /** An UpGoingDataVolume containing the P data for correcting the depth */
+  private UpGoingDataVolume upgoingPBranch;
+
+  /** An UpGoingDataVolume containing the S data for correcting the depth */
+  UpGoingDataVolume upgoingSBranch;
+
+  /** A ModelConversions object containing model dependent constants and conversions */
+  private final ModelConversions modelConversions;
+
+  /** A AuxiliaryTTReference object holding the travel time auxiliary data */
+  private AuxiliaryTTReference auxTTReference;
+
+  /**
+   * A TravelTimeFlags object containing a local copy of the auxiliary travel-time flags,
+   * statistics, and corrections by phase (loaded from AuxiliaryTTReference)
+   */
+  private TravelTimeFlags ttFlags;
+
+  /**
+   * A TravelTimeStatistics object containing a local copy of the phase statistics (loaded from
+   * AuxiliaryTTReference)
+   */
+  private TravelTimeStatistics ttStatistics;
+
+  /**
+   * An Ellipticity object containing a local copy of the ellipticity correction (loaded from
+   * AuxiliaryTTReference)
+   */
+  private Ellipticity ellipticityCorrections;
+
+  /**
+   * A Spline object holding the spline interpolation routines needed for the computation of travel
+   * times.
+   */
+  private Spline splineRoutines;
+
+  /**
+   * A double containing the current travel time correction computed by the last call to
+   * computeOneRay
+   */
+  private double correctedTravelTime;
+
+  /**
+   * A double containing the current computed distance sign that needs to be remembered between
+   * calls
+   */
+  private double distanceSign = Double.NaN;
+
+  /**
+   * A double containing the current computed depth sign that needs to be remembered between calls
+   */
+  private double depthSign = Double.NaN;
+
+  /** A double containing the squared up going P/S slowness used for the corecting the depth */
+  private double slownessUpSquared = Double.NaN;
+
+  /**
+   * A double containing the ending ray parameter value that needs to be remembered between calls
+   */
+  private double rayParameterEndValue = Double.NaN;
 
   /** Private logging object. */
   private static final Logger LOGGER = Logger.getLogger(AllBranchVolume.class.getName());
 
   /**
-   * Set up volatile copies of data that changes with depth
+   * Function to return whether the corrected branch still exists
    *
-   * @param ref The branch reference data source
-   * @param pUp The corrected P up-going branch source
-   * @param sUp The corrected S up-going branch source
-   * @param cvt The conversion factor object
-   * @param auxtt Auxiliary travel-time data
-   * @param spline The spline object
+   * @return A boolean causticFlags indicating if the corrected branch still exists
    */
-  public BranchDataVolume(
-      BranchDataReference ref,
-      UpGoingDataVolume pUp,
-      UpGoingDataVolume sUp,
-      ModelConversions cvt,
-      AuxiliaryTTReference auxtt,
-      Spline spline) {
-    this.ref = ref;
-    this.pUp = pUp;
-    this.sUp = sUp;
-    this.cvt = cvt;
-    this.auxtt = auxtt;
-    this.spline = spline;
-
-    // Do branch summary information.
-    isUseless = auxtt.isUselessPhase(ref.getBranchPhaseCode());
-    compute = true;
-    exists = true;
-    xDiff = new double[2];
+  public boolean getCorrectedBranchExists() {
+    return correctedBranchExists;
   }
 
   /**
-   * Correct this branch for source depth using the corrected up-going branch ray parameters and tau
-   * values.
+   * Function to return whether this phase is useless
    *
-   * @param zSource Earth flattened, normalized source depth
-   * @param dTdDepth Correction factor for dT/dDepth
-   * @param xMin The minimum source-receiver distance desired between ray parameter samples
-   * @param tagBrn The P or S up-going branch suffix
+   * @return A boolean causticFlags indicating whether this phase is useless (phase is always in the
+   *     coda of another phase)
+   */
+  public boolean getIsPhaseUseless() {
+    return (isPhaseUseless);
+  }
+
+  /**
+   * Function to return the branch segment code.
+   *
+   * @return A String containing the branch segment phase code
+   */
+  public String getGenericPhaseCode() {
+    return branchReference.getGenericPhaseCode();
+  }
+
+  /**
+   * Function to return the corrected phase code
+   *
+   * @return A String containing the corrected phase code
+   */
+  public String getCorrectedPhaseCode() {
+    return correctedPhaseCode;
+  }
+
+  /**
+   * Get the non-volatile branch data reference object
+   *
+   * @return A BranchDataReference object containing the non-volatile branch data reference object
+   */
+  public BranchDataReference getBranchReference() {
+    return branchReference;
+  }
+
+  /**
+   * Get the corrected travel time computed by the last call to computeOneRay.
+   *
+   * @return A double containing the corrected travel-time in seconds
+   */
+  public double getCorrectedTravelTime() {
+    return correctedTravelTime;
+  }
+
+  /**
+   * Function to set the branch compute causticFlags. Branches can be requested through the desired
+   * phase list. The branch flags will need to be reset for each new session.
+   *
+   * @param shouldComputeTT A boolean causticFlags, if true compute travel times from this branch
+   */
+  public void setChouldComputeTT(boolean shouldComputeTT) {
+    this.shouldComputeTT = shouldComputeTT;
+  }
+
+  /**
+   * Set up volatile copies of data that changes with depth
+   *
+   * @param A BranchDataReference object containing the branch data reference object
+   * @param upgoingPBranch The corrected P up-going branch source
+   * @param upgoingSBranch The corrected S up-going branch source
+   * @param modelConversions The conversion factor object
+   * @param auxTTReference Auxiliary travel-time data
+   * @param splineRoutines The splineRoutines object
+   */
+  public BranchDataVolume(
+      BranchDataReference branchReference,
+      UpGoingDataVolume upgoingPBranch,
+      UpGoingDataVolume upgoingSBranch,
+      ModelConversions modelConversions,
+      AuxiliaryTTReference auxTTReference,
+      Spline splineRoutines) {
+    this.branchReference = branchReference;
+    this.upgoingPBranch = upgoingPBranch;
+    this.upgoingSBranch = upgoingSBranch;
+    this.modelConversions = modelConversions;
+    this.auxTTReference = auxTTReference;
+    this.splineRoutines = splineRoutines;
+
+    // Do branch summary information.
+    isPhaseUseless = auxTTReference.isUselessPhase(branchReference.getBranchPhaseCode());
+    shouldComputeTT = true;
+    correctedBranchExists = true;
+    diffractedDistanceRange = new double[2];
+  }
+
+  /**
+   * Function to correct this branch for source depth using the corrected up-going branch ray
+   * parameters and tau values.
+   *
+   * @param sourceDepth A double containing the earth flattened, normalized source depth in
+   *     kilometers
+   * @param depthDerivativeNorm A double containing the correction factor for dT/dDepth
+   * @param minimumDistance A double containing minimum source-receiver distance desired between ray
+   *     parameter samples
+   * @param branchSuffix A char holding the P or S up-going branch suffix
    * @throws TauIntegralException If the tau integral fails
    */
-  public void depthCorr(double zSource, double dTdDepth, double xMin, char tagBrn)
+  public void correctDepth(
+      double sourceDepth, double depthDerivativeNorm, double minimumDistance, char branchSuffix)
       throws TauIntegralException {
-    int i, len = 0;
-    double pMax;
-    double[][] basisTmp;
+    int i;
+    int len = 0;
 
-    this.dTdDepth = dTdDepth;
+    this.depthDerivativeNorm = depthDerivativeNorm;
 
     // Skip branches we aren't computing.
-    if (compute) {
+    if (shouldComputeTT) {
       // A surface source is a special case (i.e., no up-going phases).
-      if (-zSource <= TauUtilities.DTOL) {
-        if (ref.getUpGoingCorrectionSign() < 0) {
+      if (-sourceDepth <= TauUtilities.DTOL) {
+        if (branchReference.getUpGoingCorrectionSign() < 0) {
           // This branch starts with a down-going ray.
-          exists = true;
+          correctedBranchExists = true;
 
           // Do things common to all branches.
-          phaseCode = ref.getBranchPhaseCode();
-          pRange = Arrays.copyOf(ref.getSlownessRange(), ref.getSlownessRange().length);
-          xRange = Arrays.copyOf(ref.getDistanceRange(), ref.getDistanceRange().length);
-          pCaustic = pRange[1];
-          pEnd = Double.NaN;
-          flags = auxtt.findPhaseFlags(phaseCode);
+          correctedPhaseCode = branchReference.getBranchPhaseCode();
+          correctedSlownessRange =
+              Arrays.copyOf(
+                  branchReference.getSlownessRange(), branchReference.getSlownessRange().length);
+          correctedDistanceRange =
+              Arrays.copyOf(
+                  branchReference.getDistanceRange(), branchReference.getDistanceRange().length);
+          correctedCausticSlowness = correctedSlownessRange[1];
+          rayParameterEndValue = Double.NaN;
+          ttFlags = auxTTReference.findPhaseFlags(correctedPhaseCode);
 
           // Make a local copy of the reference p and tau.
-          len = ref.getSlownessGrid().length;
-          pBrn = Arrays.copyOf(ref.getSlownessGrid(), len);
-          tauBrn = Arrays.copyOf(ref.getTauGrid(), len);
+          len = branchReference.getSlownessGrid().length;
+          updatedRayParameters = Arrays.copyOf(branchReference.getSlownessGrid(), len);
+          correctedTauValues = Arrays.copyOf(branchReference.getTauGrid(), len);
 
           // Set up the diffracted range.
-          if (ref.getBranchHasDiffraction()) {
-            xDiff[0] = Math.max(xRange[0], xRange[1]);
-            xDiff[1] = ref.getMaxDiffractedDistance();
+          if (branchReference.getBranchHasDiffraction()) {
+            diffractedDistanceRange[0] =
+                Math.max(correctedDistanceRange[0], correctedDistanceRange[1]);
+            diffractedDistanceRange[1] = branchReference.getMaxDiffractedDistance();
           }
 
           // Spline it.
-          poly = new double[4][len];
-          xBrn = new double[len];
-          spline.tauSpline(tauBrn, xRange, ref.getBasisCoefficients(), poly, xBrn);
+          interpolationPolynomials = new double[4][len];
+          interpolatedDistanceValues = new double[len];
+
+          splineRoutines.tauSpline(
+              correctedTauValues,
+              correctedDistanceRange,
+              branchReference.getBasisCoefficients(),
+              interpolationPolynomials,
+              interpolatedDistanceValues);
         } else {
           // This branch starts with an up-going ray.
-          exists = false;
+          correctedBranchExists = false;
           return;
         }
 
         // Otherwise, we need to correct the surface focus data for depth.
       } else {
         // Assume the branch exists until proven otherwise.
-        exists = true;
+        correctedBranchExists = true;
 
         // Do things common to all branches.
-        phaseCode = ref.getBranchPhaseCode();
-        pRange = Arrays.copyOf(ref.getSlownessRange(), ref.getSlownessRange().length);
-        xRange = Arrays.copyOf(ref.getDistanceRange(), ref.getDistanceRange().length);
-        pCaustic = pRange[1];
-        pEnd = Double.NaN;
-        flags = auxtt.findPhaseFlags(phaseCode);
+        correctedPhaseCode = branchReference.getBranchPhaseCode();
+        correctedSlownessRange =
+            Arrays.copyOf(
+                branchReference.getSlownessRange(), branchReference.getSlownessRange().length);
+        correctedDistanceRange =
+            Arrays.copyOf(
+                branchReference.getDistanceRange(), branchReference.getDistanceRange().length);
+        correctedCausticSlowness = correctedSlownessRange[1];
+        rayParameterEndValue = Double.NaN;
+        ttFlags = auxTTReference.findPhaseFlags(correctedPhaseCode);
 
         // Do phases that start as P.
-        if (ref.getCorrectionPhaseType()[0] == 'P') {
+        if (branchReference.getCorrectionPhaseType()[0] == 'P') {
           // Correct ray parameter range.
-          pMax = Math.min(pRange[1], pUp.pMax);
+          double pMax = Math.min(correctedSlownessRange[1], upgoingPBranch.pMax);
 
           // Screen phases that don't exist.
-          if (pRange[0] >= pMax) {
-            exists = false;
+          if (correctedSlownessRange[0] >= pMax) {
+            correctedBranchExists = false;
             return;
           }
-          pRange[1] = pMax;
+
+          correctedSlownessRange[1] = pMax;
 
           /* See how long we need the corrected arrays to be.  This is
            * awkward and not very Java-like, but the gain in performance
            * seemed worthwhile in this case.*/
-          for (int j = 0; j < ref.getSlownessGrid().length; j++) {
+          for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
             // See if we need this point.
-            if (ref.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) {
+            if (branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) {
               len++;
 
               // If this point is equal to pMax, we're done.
-              if (Math.abs(ref.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
+              if (Math.abs(branchReference.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
                 break;
               }
               // Otherwise, add one more point and quit.
@@ -181,174 +360,208 @@ public class BranchDataVolume {
           // If the branch is empty, it doesn't exist for this source
           // depth.
           if (len == 0) {
-            exists = false;
+            correctedBranchExists = false;
             return;
           }
 
           // Otherwise, allocate the arrays.
-          pBrn = new double[len];
-          tauBrn = new double[len];
+          updatedRayParameters = new double[len];
+          correctedTauValues = new double[len];
 
           // Correct an up-going branch separately.
-          if (ref.getIsBranchUpGoing()) {
+          if (branchReference.getIsBranchUpGoing()) {
             // Correct the distance.
-            xRange[1] = pUp.xEndUp;
+            correctedDistanceRange[1] = upgoingPBranch.xEndUp;
 
             // Correct tau for the up-going branch.
-            // We assume that ref.getSlownessGrid() is a subset of pUp.pUp
+            // We assume that branchReference.getSlownessGrid() is a subset of upgoingPBranch.pUp
             // We assume that TauUtilities.DTOL is being used as a
             // float epsilon for floating point comparisions
-            // We assume pUp.pUp is the same lenght as pUp.tauUp
-            // We assume that ref.getSlownessGrid() and pUp.pUp are sorted in
+            // We assume upgoingPBranch.pUp is the same lenght as upgoingPBranch.tauUp
+            // We assume that branchReference.getSlownessGrid() and upgoingPBranch.pUp are sorted in
             // increasing order JMP 1/13/2022
             i = 0;
-            for (int j = 0; j < ref.getSlownessGrid().length; j++) {
+            for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
-              // Make sure we do not loop past the end of pUp.pUp
-              if ((ref.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) && (i < pUp.pUp.length)) {
-                // pTauUp is a superset of pBrn so we need to sync them.
-                // advance through the pUp.pUp array until we find the index
-                // of pUp.pUp that matches the value in ref.getSlownessGrid()[j].
-                // To make sure don't loop past the end of pUp.pUp, we check
+              // Make sure we do not loop past the end of upgoingPBranch.pUp
+              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DTOL)
+                  && (i < upgoingPBranch.pUp.length)) {
+                // pTauUp is a superset of updatedRayParameters so we need to sync them.
+                // advance through the upgoingPBranch.pUp array until we find the index
+                // of upgoingPBranch.pUp that matches the value in
+                // branchReference.getSlownessGrid()[j].
+                // To make sure don't loop past the end of upgoingPBranch.pUp, we check
                 // length-1 because of how the while loop is structured
-                while ((Math.abs(ref.getSlownessGrid()[j] - pUp.pUp[i]) > TauUtilities.DTOL)
-                    && (i < pUp.pUp.length - 1)) {
+                while ((Math.abs(branchReference.getSlownessGrid()[j] - upgoingPBranch.pUp[i])
+                        > TauUtilities.DTOL)
+                    && (i < upgoingPBranch.pUp.length - 1)) {
                   i++;
                 }
 
                 // Correct the tau and x values.
-                pBrn[j] = ref.getSlownessGrid()[j];
-                tauBrn[j] = pUp.tauUp[i];
+                updatedRayParameters[j] = branchReference.getSlownessGrid()[j];
+                correctedTauValues[j] = upgoingPBranch.tauUp[i];
 
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(ref.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
+                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
                   break;
                 }
               } else {
                 // Otherwise, (we've hit the max, or run out of
                 // elements in pTauUp)
                 // we add one more point and quit.
-                pBrn[j] = pMax;
-                tauBrn[j] = pUp.tauEndUp;
+                updatedRayParameters[j] = pMax;
+                correctedTauValues[j] = upgoingPBranch.tauEndUp;
 
                 break;
               }
             }
 
             // Decimate the up-going branch.
-            pBrn = pUp.realUp(pBrn, tauBrn, xRange, xMin);
-            tauBrn = pUp.getDecTau();
+            updatedRayParameters =
+                upgoingPBranch.realUp(
+                    updatedRayParameters,
+                    correctedTauValues,
+                    correctedDistanceRange,
+                    minimumDistance);
+            correctedTauValues = upgoingPBranch.getDecTau();
 
             // Spline it.
-            len = pBrn.length;
-            basisTmp = new double[5][len];
-            spline.basisSet(pBrn, basisTmp);
-            poly = new double[4][len];
-            xBrn = new double[len];
-            spline.tauSpline(tauBrn, xRange, basisTmp, poly, xBrn);
+            len = updatedRayParameters.length;
+            double[][] basisTmp = new double[5][len];
+            splineRoutines.basisSet(updatedRayParameters, basisTmp);
+            interpolationPolynomials = new double[4][len];
+            interpolatedDistanceValues = new double[len];
+
+            splineRoutines.tauSpline(
+                correctedTauValues,
+                correctedDistanceRange,
+                basisTmp,
+                interpolationPolynomials,
+                interpolatedDistanceValues);
 
             // Otherwise, correct a down-going branch.
           } else {
             // Correct distance.
             int m = 0;
-            for (i = 0; i < xRange.length; i++) {
-              for (; m < pUp.ref.pXUp.length; m++) {
-                if (Math.abs(pRange[i] - pUp.ref.pXUp[m]) <= TauUtilities.DTOL) {
-                  if (m >= pUp.xUp.length) {
-                    exists = false;
+            for (i = 0; i < correctedDistanceRange.length; i++) {
+              for (; m < upgoingPBranch.ref.pXUp.length; m++) {
+                if (Math.abs(correctedSlownessRange[i] - upgoingPBranch.ref.pXUp[m])
+                    <= TauUtilities.DTOL) {
+                  if (m >= upgoingPBranch.xUp.length) {
+                    correctedBranchExists = false;
                     return;
                   }
 
-                  xRange[i] += ref.getUpGoingCorrectionSign() * pUp.xUp[m];
+                  correctedDistanceRange[i] +=
+                      branchReference.getUpGoingCorrectionSign() * upgoingPBranch.xUp[m];
                   break;
                 }
               }
 
-              if (m >= pUp.ref.pXUp.length) {
-                xRange[i] = lastX();
+              if (m >= upgoingPBranch.ref.pXUp.length) {
+                correctedDistanceRange[i] = computeLastDistance();
               }
             }
 
             // Set up the diffracted branch distance range.
-            if (ref.getBranchHasDiffraction()) {
-              xDiff[0] = xRange[0];
-              xDiff[1] = ref.getMaxDiffractedDistance();
+            if (branchReference.getBranchHasDiffraction()) {
+              diffractedDistanceRange[0] = correctedDistanceRange[0];
+              diffractedDistanceRange[1] = branchReference.getMaxDiffractedDistance();
             }
 
             // Correct tau for down-going branches.
-            // We assume that ref.getSlownessGrid() is a subset of pUp.pUp
+            // We assume that branchReference.getSlownessGrid() is a subset of upgoingPBranch.pUp
             // We assume that TauUtilities.DTOL is being used as a
             // float epsilon for floating point comparisions
-            // We assume pUp.pUp is the same lenght as pUp.tauUp
-            // We assume that ref.getSlownessGrid() and pUp.pUp are sorted in
+            // We assume upgoingPBranch.pUp is the same lenght as upgoingPBranch.tauUp
+            // We assume that branchReference.getSlownessGrid() and upgoingPBranch.pUp are sorted in
             // increasing order JMP 1/13/2022
             i = 0;
-            for (int j = 0; j < ref.getSlownessGrid().length; j++) {
+            for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
-              // Make sure we do not loop past the end of pUp.pUp
-              if ((ref.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) && (i < pUp.pUp.length)) {
-                // pTauUp is a superset of pBrn so we need to sync them.
-                // advance through the pUp.pUp array until we find the index
-                // of pUp.pUp that matches the value in ref.getSlownessGrid()[j].
-                // To make sure don't loop past the end of pUp.pUp, we check
+              // Make sure we do not loop past the end of upgoingPBranch.pUp
+              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DTOL)
+                  && (i < upgoingPBranch.pUp.length)) {
+                // pTauUp is a superset of updatedRayParameters so we need to sync them.
+                // advance through the upgoingPBranch.pUp array until we find the index
+                // of upgoingPBranch.pUp that matches the value in
+                // branchReference.getSlownessGrid()[j].
+                // To make sure don't loop past the end of upgoingPBranch.pUp, we check
                 // length-1 because of how the while loop is structured
-                while ((Math.abs(ref.getSlownessGrid()[j] - pUp.pUp[i]) > TauUtilities.DTOL)
-                    && (i < pUp.pUp.length - 1)) {
+                while ((Math.abs(branchReference.getSlownessGrid()[j] - upgoingPBranch.pUp[i])
+                        > TauUtilities.DTOL)
+                    && (i < upgoingPBranch.pUp.length - 1)) {
                   i++;
                 }
 
                 // Correct the tau and x values.
-                pBrn[j] = ref.getSlownessGrid()[j];
-                tauBrn[j] = ref.getTauGrid()[j] + ref.getUpGoingCorrectionSign() * pUp.tauUp[i];
+                updatedRayParameters[j] = branchReference.getSlownessGrid()[j];
+                correctedTauValues[j] =
+                    branchReference.getTauGrid()[j]
+                        + branchReference.getUpGoingCorrectionSign() * upgoingPBranch.tauUp[i];
 
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(ref.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
+                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
                   break;
                 }
               } else {
                 // Otherwise, (we've hit the max, or run out of
                 // elements in pTauUp)
                 // we add one more point and quit.
-                pBrn[j] = pMax;
-                tauBrn[j] = lastTau();
+                updatedRayParameters[j] = pMax;
+                correctedTauValues[j] = computeLastTau();
 
                 break;
               }
             }
 
             // Spline it.
-            poly = new double[4][len];
-            xBrn = new double[len];
-            if (Math.abs(pRange[1] - ref.getSlownessRange()[1]) <= TauUtilities.DTOL) {
-              spline.tauSpline(tauBrn, xRange, ref.getBasisCoefficients(), poly, xBrn);
+            interpolationPolynomials = new double[4][len];
+            interpolatedDistanceValues = new double[len];
+
+            if (Math.abs(correctedSlownessRange[1] - branchReference.getSlownessRange()[1])
+                <= TauUtilities.DTOL) {
+              splineRoutines.tauSpline(
+                  correctedTauValues,
+                  correctedDistanceRange,
+                  branchReference.getBasisCoefficients(),
+                  interpolationPolynomials,
+                  interpolatedDistanceValues);
             } else {
-              basisTmp = new double[5][len];
-              spline.basisSet(pBrn, basisTmp);
-              spline.tauSpline(tauBrn, xRange, basisTmp, poly, xBrn);
+              double[][] basisTmp = new double[5][len];
+              splineRoutines.basisSet(updatedRayParameters, basisTmp);
+              splineRoutines.tauSpline(
+                  correctedTauValues,
+                  correctedDistanceRange,
+                  basisTmp,
+                  interpolationPolynomials,
+                  interpolatedDistanceValues);
             }
           }
           // Do phases that start as S.
         } else {
           // Correct ray parameter range.
-          pMax = Math.min(pRange[1], sUp.pMax);
+          double pMax = Math.min(correctedSlownessRange[1], upgoingSBranch.pMax);
 
           // Screen phases that don't exist.
-          if (pRange[0] >= pMax) {
-            exists = false;
+          if (correctedSlownessRange[0] >= pMax) {
+            correctedBranchExists = false;
             return;
           }
-          pRange[1] = pMax;
+
+          correctedSlownessRange[1] = pMax;
 
           /* See how long we need the corrected arrays to be.  This is
            * awkward and not very Java-like, but the gain in performance
            * seemed worthwhile in this case.*/
-          for (int j = 0; j < ref.getSlownessGrid().length; j++) {
+          for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
             // See if we need this point.
-            if (ref.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) {
+            if (branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) {
               len++;
 
               // If this point is equal to pMax, we're done.
-              if (Math.abs(ref.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
+              if (Math.abs(branchReference.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
                 break;
               }
               // Otherwise, add one more point and quit.
@@ -357,310 +570,371 @@ public class BranchDataVolume {
               break;
             }
           }
+
           // If the branch is empty, it doesn't exist for this source
           // depth.
           if (len == 0) {
-            exists = false;
+            correctedBranchExists = false;
             return;
           }
+
           // Otherwise, allocate the arrays.
-          pBrn = new double[len];
-          tauBrn = new double[len];
+          updatedRayParameters = new double[len];
+          correctedTauValues = new double[len];
 
           // Correct an up-going branch separately.
-          if (ref.getIsBranchUpGoing()) {
+          if (branchReference.getIsBranchUpGoing()) {
             // Correct the distance.
-            xRange[1] = sUp.xEndUp;
+            correctedDistanceRange[1] = upgoingSBranch.xEndUp;
 
             // Correct tau for the up-going branch.
-            // We assume that ref.getSlownessGrid() is a subset of sUp.pUp
+            // We assume that branchReference.getSlownessGrid() is a subset of upgoingSBranch.pUp
             // We assume that TauUtilities.DTOL is being used as a
             // float epsilon for floating point comparisions
-            // We assume sUp.pUp is the same lenght as sUp.tauUp
-            // We assume that ref.getSlownessGrid() and sUp.pUp are sorted in
+            // We assume upgoingSBranch.pUp is the same lenght as upgoingSBranch.tauUp
+            // We assume that branchReference.getSlownessGrid() and upgoingSBranch.pUp are sorted in
             // increasing order JMP 1/13/2022
             i = 0;
-            for (int j = 0; j < ref.getSlownessGrid().length; j++) {
+            for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
-              // Make sure we do not loop past the end of sUp.pUp
-              if ((ref.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) && (i < sUp.pUp.length)) {
-                // pTauUp is a superset of pBrn so we need to sync them.
-                // advance through the sUp.pUp array until we find the index
-                // of sUp.pUp that matches the value in ref.getSlownessGrid()[j].
-                // To make sure don't loop past the end of sUp.pUp, we check
+              // Make sure we do not loop past the end of upgoingSBranch.pUp
+              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DTOL)
+                  && (i < upgoingSBranch.pUp.length)) {
+                // pTauUp is a superset of updatedRayParameters so we need to sync them.
+                // advance through the upgoingSBranch.pUp array until we find the index
+                // of upgoingSBranch.pUp that matches the value in
+                // branchReference.getSlownessGrid()[j].
+                // To make sure don't loop past the end of upgoingSBranch.pUp, we check
                 // length-1 because of how the while loop is structured
-                while ((Math.abs(ref.getSlownessGrid()[j] - sUp.pUp[i]) > TauUtilities.DTOL)
-                    && (i < sUp.pUp.length - 1)) {
+                while ((Math.abs(branchReference.getSlownessGrid()[j] - upgoingSBranch.pUp[i])
+                        > TauUtilities.DTOL)
+                    && (i < upgoingSBranch.pUp.length - 1)) {
                   i++;
                 }
 
                 // Correct the tau and x values.
-                pBrn[j] = ref.getSlownessGrid()[j];
-                tauBrn[j] = sUp.tauUp[i];
+                updatedRayParameters[j] = branchReference.getSlownessGrid()[j];
+                correctedTauValues[j] = upgoingSBranch.tauUp[i];
 
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(ref.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
+                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
                   break;
                 }
               } else {
                 // Otherwise, (we've hit the max, or run out of
                 // elements in pTauUp)
                 // we add one more point and quit.
-                pBrn[j] = pMax;
-                tauBrn[j] = sUp.tauEndUp;
+                updatedRayParameters[j] = pMax;
+                correctedTauValues[j] = upgoingSBranch.tauEndUp;
 
                 break;
               }
             }
 
             // Decimate the up-going branch.
-            pBrn = sUp.realUp(pBrn, tauBrn, xRange, xMin);
-            tauBrn = sUp.getDecTau();
+            updatedRayParameters =
+                upgoingSBranch.realUp(
+                    updatedRayParameters,
+                    correctedTauValues,
+                    correctedDistanceRange,
+                    minimumDistance);
+            correctedTauValues = upgoingSBranch.getDecTau();
 
             // Spline it.
-            len = pBrn.length;
-            basisTmp = new double[5][len];
-            spline.basisSet(pBrn, basisTmp);
-            poly = new double[4][len];
-            xBrn = new double[len];
-            spline.tauSpline(tauBrn, xRange, basisTmp, poly, xBrn);
+            len = updatedRayParameters.length;
+            double[][] basisTmp = new double[5][len];
+            splineRoutines.basisSet(updatedRayParameters, basisTmp);
+            interpolationPolynomials = new double[4][len];
+            interpolatedDistanceValues = new double[len];
+
+            splineRoutines.tauSpline(
+                correctedTauValues,
+                correctedDistanceRange,
+                basisTmp,
+                interpolationPolynomials,
+                interpolatedDistanceValues);
 
             // Otherwise, correct a down-going branch.
           } else {
             // Correct distance.
             int m = 0;
-            for (i = 0; i < xRange.length; i++) {
-              for (; m < sUp.ref.pXUp.length; m++) {
-                if (Math.abs(pRange[i] - sUp.ref.pXUp[m]) <= TauUtilities.DTOL) {
-                  if (m >= sUp.xUp.length) {
-                    exists = false;
+            for (i = 0; i < correctedDistanceRange.length; i++) {
+              for (; m < upgoingSBranch.ref.pXUp.length; m++) {
+                if (Math.abs(correctedSlownessRange[i] - upgoingSBranch.ref.pXUp[m])
+                    <= TauUtilities.DTOL) {
+                  if (m >= upgoingSBranch.xUp.length) {
+                    correctedBranchExists = false;
                     return;
                   }
 
-                  xRange[i] += ref.getUpGoingCorrectionSign() * sUp.xUp[m];
+                  correctedDistanceRange[i] +=
+                      branchReference.getUpGoingCorrectionSign() * upgoingSBranch.xUp[m];
                   break;
                 }
               }
-              if (m >= sUp.ref.pXUp.length) {
-                xRange[i] = lastX();
+              if (m >= upgoingSBranch.ref.pXUp.length) {
+                correctedDistanceRange[i] = computeLastDistance();
               }
             }
+
             // Set up the diffracted branch distance range.
-            if (ref.getBranchHasDiffraction()) {
-              xDiff[0] = xRange[0];
-              xDiff[1] = ref.getMaxDiffractedDistance();
+            if (branchReference.getBranchHasDiffraction()) {
+              diffractedDistanceRange[0] = correctedDistanceRange[0];
+              diffractedDistanceRange[1] = branchReference.getMaxDiffractedDistance();
             }
 
             // Correct tau for down-going branches.
-            // We assume that ref.getSlownessGrid() is a subset of sUp.pUp
+            // We assume that branchReference.getSlownessGrid() is a subset of upgoingSBranch.pUp
             // We assume that TauUtilities.DTOL is being used as a
             // float epsilon for floating point comparisions
-            // We assume sUp.pUp is the same lenght as sUp.tauUp
-            // We assume that ref.getSlownessGrid() and sUp.pUp are sorted in
+            // We assume upgoingSBranch.pUp is the same lenght as upgoingSBranch.tauUp
+            // We assume that branchReference.getSlownessGrid() and upgoingSBranch.pUp are sorted in
             // increasing order JMP 1/13/2022
             i = 0;
-            for (int j = 0; j < ref.getSlownessGrid().length; j++) {
+            for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
-              // Make sure we do not loop past the end of sUp.pUp
-              if ((ref.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) && (i < sUp.pUp.length)) {
-                // pTauUp is a superset of pBrn so we need to sync them.
-                // advance through the sUp.pUp array until we find the index
-                // of sUp.pUp that matches the value in ref.getSlownessGrid()[j].
-                // To make sure don't loop past the end of sUp.pUp, we check
+              // Make sure we do not loop past the end of upgoingSBranch.pUp
+              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DTOL)
+                  && (i < upgoingSBranch.pUp.length)) {
+                // pTauUp is a superset of updatedRayParameters so we need to sync them.
+                // advance through the upgoingSBranch.pUp array until we find the index
+                // of upgoingSBranch.pUp that matches the value in
+                // branchReference.getSlownessGrid()[j].
+                // To make sure don't loop past the end of upgoingSBranch.pUp, we check
                 // length-1 because of how the while loop is structured
-                while ((Math.abs(ref.getSlownessGrid()[j] - sUp.pUp[i]) > TauUtilities.DTOL)
-                    && (i < sUp.pUp.length - 1)) {
+                while ((Math.abs(branchReference.getSlownessGrid()[j] - upgoingSBranch.pUp[i])
+                        > TauUtilities.DTOL)
+                    && (i < upgoingSBranch.pUp.length - 1)) {
                   i++;
                 }
 
                 // Correct the tau and x values.
-                pBrn[j] = ref.getSlownessGrid()[j];
-                tauBrn[j] = ref.getTauGrid()[j] + ref.getUpGoingCorrectionSign() * sUp.tauUp[i];
+                updatedRayParameters[j] = branchReference.getSlownessGrid()[j];
+                correctedTauValues[j] =
+                    branchReference.getTauGrid()[j]
+                        + branchReference.getUpGoingCorrectionSign() * upgoingSBranch.tauUp[i];
 
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(ref.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
+                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
                   break;
                 }
               } else {
                 // Otherwise, (we've hit the max, or run out of
                 // elements in pTauUp)
                 // we add one more point and quit.
-                pBrn[j] = pMax;
-                tauBrn[j] = lastTau();
+                updatedRayParameters[j] = pMax;
+                correctedTauValues[j] = computeLastTau();
 
                 break;
               }
             }
 
             // Spline it.
-            poly = new double[4][len];
-            xBrn = new double[len];
-            if (Math.abs(pRange[1] - ref.getSlownessRange()[1]) <= TauUtilities.DTOL) {
-              spline.tauSpline(tauBrn, xRange, ref.getBasisCoefficients(), poly, xBrn);
+            interpolationPolynomials = new double[4][len];
+            interpolatedDistanceValues = new double[len];
+
+            if (Math.abs(correctedSlownessRange[1] - branchReference.getSlownessRange()[1])
+                <= TauUtilities.DTOL) {
+              splineRoutines.tauSpline(
+                  correctedTauValues,
+                  correctedDistanceRange,
+                  branchReference.getBasisCoefficients(),
+                  interpolationPolynomials,
+                  interpolatedDistanceValues);
             } else {
-              basisTmp = new double[5][len];
-              spline.basisSet(pBrn, basisTmp);
-              spline.tauSpline(tauBrn, xRange, basisTmp, poly, xBrn);
+              double[][] basisTmp = new double[5][len];
+              splineRoutines.basisSet(updatedRayParameters, basisTmp);
+              splineRoutines.tauSpline(
+                  correctedTauValues,
+                  correctedDistanceRange,
+                  basisTmp,
+                  interpolationPolynomials,
+                  interpolatedDistanceValues);
             }
           }
         }
       }
 
       // Complete everything we'll need to compute a travel time.
-      xLim = new double[2][len - 1];
-      flag = new String[len - 1];
-      tauPoly(tagBrn);
+      distanceLimits = new double[2][len - 1];
+      causticFlags = new String[len - 1];
+      computeTauPolynomial(branchSuffix);
 
       // Now that we know what type of phase we have, select the right
-      // statistics and Ellipticity correction.
-      if (ref.getIsBranchUpGoing()) {
-        TravelTimeStatistics = auxtt.findPhaseStatistics(phaseCode);
-        Ellipticity = auxtt.findEllipticity(flags.PhaseGroup + "up");
+      // statistics and ellipticity correction.
+      if (branchReference.getIsBranchUpGoing()) {
+        ttStatistics = auxTTReference.findPhaseStatistics(correctedPhaseCode);
+        ellipticityCorrections = auxTTReference.findEllipticity(ttFlags.PhaseGroup + "up");
       } else {
-        TravelTimeStatistics = flags.getPhaseStatistics();
-        Ellipticity = flags.Ellipticity;
+        ttStatistics = ttFlags.getPhaseStatistics();
+        ellipticityCorrections = ttFlags.getEllipticityCorrections();
       }
 
       // Un-computed phases might as well not exist.
     } else {
-      exists = false;
+      correctedBranchExists = false;
     }
   }
 
   /**
-   * The tau value corresponding to the largest ray parameter (usually the slowness at the source)
-   * is computed from the end integrals computed as part of the up-going branch corrections.
+   * Function to compute tau value corresponding to the largest ray parameter (usually the slowness
+   * at the source) it is computed from the end integrals computed as part of the up-going branch
+   * corrections.
    *
    * @return Normalized tau for the maximum ray parameter for this branch
    */
-  private double lastTau() {
+  private double computeLastTau() {
     double tau;
 
-    if (ref.getCorrectionPhaseType()[0] == 'P') {
+    if (branchReference.getCorrectionPhaseType()[0] == 'P') {
       // Add or subtract the up-going piece.  For a surface reflection
       // it would be added.  For a down-going branch it would be
       // subtracted (because that part of the branch is cut off by the
       // source depth).
-      tau = ref.getUpGoingCorrectionSign() * pUp.tauEndUp;
+      tau = branchReference.getUpGoingCorrectionSign() * upgoingPBranch.tauEndUp;
+
       // Add the down-going part, which may not be the same as the
       // up-going piece (e.g., sP).
-      if (ref.getCorrectionPhaseType()[1] == 'P') {
-        tau += ref.getNumMantleTraversals() * (pUp.tauEndUp + pUp.tauEndLvz);
+      if (branchReference.getCorrectionPhaseType()[1] == 'P') {
+        tau +=
+            branchReference.getNumMantleTraversals()
+                * (upgoingPBranch.tauEndUp + upgoingPBranch.tauEndLvz);
       } else {
-        tau += ref.getNumMantleTraversals() * (pUp.tauEndCnv);
+        tau += branchReference.getNumMantleTraversals() * (upgoingPBranch.tauEndCnv);
       }
+
       // Add the coming-back-up part, which may not be the same as the
       // down-going piece (e.g., ScP).
-      if (ref.getCorrectionPhaseType()[2] == 'P') {
-        tau += ref.getNumMantleTraversals() * (pUp.tauEndUp + pUp.tauEndLvz);
+      if (branchReference.getCorrectionPhaseType()[2] == 'P') {
+        tau +=
+            branchReference.getNumMantleTraversals()
+                * (upgoingPBranch.tauEndUp + upgoingPBranch.tauEndLvz);
       } else {
-        tau += ref.getNumMantleTraversals() * (pUp.tauEndCnv);
+        tau += branchReference.getNumMantleTraversals() * (upgoingPBranch.tauEndCnv);
       }
     } else {
       // Add or subtract the up-going piece.  For a surface reflection
       // it would be added.  For a down-going branch it would be
       // subtracted (because that part of the branch is cut off by the
       // source depth).
-      tau = ref.getUpGoingCorrectionSign() * sUp.tauEndUp;
+      tau = branchReference.getUpGoingCorrectionSign() * upgoingSBranch.tauEndUp;
+
       // Add the down-going part, which may not be the same as the
       // up-going piece (e.g., sP).
-      if (ref.getCorrectionPhaseType()[1] == 'S') {
-        tau += ref.getNumMantleTraversals() * (sUp.tauEndUp + sUp.tauEndLvz);
+      if (branchReference.getCorrectionPhaseType()[1] == 'S') {
+        tau +=
+            branchReference.getNumMantleTraversals()
+                * (upgoingSBranch.tauEndUp + upgoingSBranch.tauEndLvz);
       } else {
-        tau += ref.getNumMantleTraversals() * (sUp.tauEndCnv);
+        tau += branchReference.getNumMantleTraversals() * (upgoingSBranch.tauEndCnv);
       }
+
       // Add the coming-back-up part, which may not be the same as the
       // down-going piece (e.g., ScP).
-      if (ref.getCorrectionPhaseType()[2] == 'S') {
-        tau += ref.getNumMantleTraversals() * (sUp.tauEndUp + sUp.tauEndLvz);
+      if (branchReference.getCorrectionPhaseType()[2] == 'S') {
+        tau +=
+            branchReference.getNumMantleTraversals()
+                * (upgoingSBranch.tauEndUp + upgoingSBranch.tauEndLvz);
       } else {
-        tau += ref.getNumMantleTraversals() * (sUp.tauEndCnv);
+        tau += branchReference.getNumMantleTraversals() * (upgoingSBranch.tauEndCnv);
       }
     }
+
     return tau;
   }
 
   /**
-   * The distance value corresponding to the largest ray parameter (usually the slowness at the
-   * source) is computed from the end integrals computed as part of the up-going branch corrections.
+   * Function to compute the distance value corresponding to the largest ray parameter (usually the
+   * slowness at the source) it is computed from the end integrals computed as part of the up-going
+   * branch corrections.
    *
    * @return Normalized distance for the maximum ray parameter for this branch
    */
-  private double lastX() {
-    double x;
+  private double computeLastDistance() {
+    double distance;
 
-    if (ref.getCorrectionPhaseType()[0] == 'P') {
+    if (branchReference.getCorrectionPhaseType()[0] == 'P') {
       // Add or subtract the up-going piece.  For a surface reflection
       // it would be added.  For a down-going branch it would be
       // subtracted (because that part of the branch is cut off by the
       // source depth).
-      x = ref.getUpGoingCorrectionSign() * pUp.xEndUp;
+      distance = branchReference.getUpGoingCorrectionSign() * upgoingPBranch.xEndUp;
+
       // Add the down-going part, which may not be the same as the
       // up-going piece (e.g., sP).
-      if (ref.getCorrectionPhaseType()[1] == 'P') {
-        x += ref.getNumMantleTraversals() * (pUp.xEndUp + pUp.xEndLvz);
+      if (branchReference.getCorrectionPhaseType()[1] == 'P') {
+        distance +=
+            branchReference.getNumMantleTraversals()
+                * (upgoingPBranch.xEndUp + upgoingPBranch.xEndLvz);
       } else {
-        x += ref.getNumMantleTraversals() * (pUp.xEndCnv);
+        distance += branchReference.getNumMantleTraversals() * (upgoingPBranch.xEndCnv);
       }
+
       // Add the coming-back-up part, which may not be the same as the
       // down-going piece (e.g., ScP).
-      if (ref.getCorrectionPhaseType()[2] == 'P') {
-        x += ref.getNumMantleTraversals() * (pUp.xEndUp + pUp.xEndLvz);
+      if (branchReference.getCorrectionPhaseType()[2] == 'P') {
+        distance +=
+            branchReference.getNumMantleTraversals()
+                * (upgoingPBranch.xEndUp + upgoingPBranch.xEndLvz);
       } else {
-        x += ref.getNumMantleTraversals() * (pUp.xEndCnv);
+        distance += branchReference.getNumMantleTraversals() * (upgoingPBranch.xEndCnv);
       }
     } else {
       // Add or subtract the up-going piece.  For a surface reflection
       // it would be added.  For a down-going branch it would be
       // subtracted (because that part of the branch is cut off by the
       // source depth).
-      x = ref.getUpGoingCorrectionSign() * sUp.xEndUp;
+      distance = branchReference.getUpGoingCorrectionSign() * upgoingSBranch.xEndUp;
+
       // Add the down-going part, which may not be the same as the
       // up-going piece (e.g., sP).
-      if (ref.getCorrectionPhaseType()[1] == 'S') {
-        x += ref.getNumMantleTraversals() * (sUp.xEndUp + sUp.xEndLvz);
+      if (branchReference.getCorrectionPhaseType()[1] == 'S') {
+        distance +=
+            branchReference.getNumMantleTraversals()
+                * (upgoingSBranch.xEndUp + upgoingSBranch.xEndLvz);
       } else {
-        x += ref.getNumMantleTraversals() * (sUp.xEndCnv);
+        distance += branchReference.getNumMantleTraversals() * (upgoingSBranch.xEndCnv);
       }
+
       // Add the coming-back-up part, which may not be the same as the
       // down-going piece (e.g., ScP).
-      if (ref.getCorrectionPhaseType()[2] == 'S') {
-        x += ref.getNumMantleTraversals() * (sUp.xEndUp + sUp.xEndLvz);
+      if (branchReference.getCorrectionPhaseType()[2] == 'S') {
+        distance +=
+            branchReference.getNumMantleTraversals()
+                * (upgoingSBranch.xEndUp + upgoingSBranch.xEndLvz);
       } else {
-        x += ref.getNumMantleTraversals() * (sUp.xEndCnv);
+        distance += branchReference.getNumMantleTraversals() * (upgoingSBranch.xEndCnv);
       }
     }
-    return x;
+
+    return distance;
   }
 
   /**
-   * Using tau and distance (from tauSpline), compute the final spline interpolation polynomial.
+   * Function that computes the final spline interpolation polynomial using tau and distance (from
+   * tauSpline),
    *
-   * @param tagBrn Up-going P and S branch suffix
+   * @param branchSuffix A char indicating the up-going P and S branch suffix
    */
-  private void tauPoly(char tagBrn) {
-    int n;
-    double pEnd, dp, dtau, xMin, xMax, pExt, sqrtPext, xCaustic;
-    double[] dpe, sqrtDp, sqrt3Dp;
-
+  private void computeTauPolynomial(char branchSuffix) {
     // Fill in the rest of the interpolation polynomial.  Note that
     // distance will be overwritten with the linear polynomial
     // coefficient.
-    n = pBrn.length;
-    pEnd = pBrn[n - 1];
-    dpe = new double[2];
-    sqrtDp = new double[2];
-    sqrt3Dp = new double[2];
-    dpe[1] = pEnd - pBrn[0];
+    int n = updatedRayParameters.length;
+    double rayParameterEndValue = updatedRayParameters[n - 1];
+    double[] dpe = new double[2];
+    double[] sqrtDp = new double[2];
+    double[] sqrt3Dp = new double[2];
+    dpe[1] = rayParameterEndValue - updatedRayParameters[0];
     sqrtDp[1] = Math.sqrt(dpe[1]);
     sqrt3Dp[1] = dpe[1] * sqrtDp[1];
 
     // Set up variables for tracking caustics.
-    iMin = 0;
-    iMax = 0;
-    pCaustic = pBrn[n - 1];
-    xMin = xRange[0];
-    xMax = xMin;
+    minimumCausticCount = 0;
+    maximumCausticCount = 0;
+    correctedCausticSlowness = updatedRayParameters[n - 1];
+    double minimumDistance = correctedDistanceRange[0];
+    double maximumDistance = minimumDistance;
 
     // Loop over ray parameter intervals.
     for (int j = 0; j < n - 1; j++) {
@@ -668,196 +942,258 @@ public class BranchDataVolume {
       dpe[0] = dpe[1];
       sqrtDp[0] = sqrtDp[1];
       sqrt3Dp[0] = sqrt3Dp[1];
-      dpe[1] = pEnd - pBrn[j + 1];
+      dpe[1] = rayParameterEndValue - updatedRayParameters[j + 1];
       sqrtDp[1] = Math.sqrt(dpe[1]);
       sqrt3Dp[1] = dpe[1] * sqrtDp[1];
-      dp = pBrn[j] - pBrn[j + 1];
-      dtau = tauBrn[j + 1] - tauBrn[j];
-      poly[3][j] =
-          (2d * dtau - dp * (xBrn[j + 1] + xBrn[j]))
+      double dp = updatedRayParameters[j] - updatedRayParameters[j + 1];
+      double dtau = correctedTauValues[j + 1] - correctedTauValues[j];
+      interpolationPolynomials[3][j] =
+          (2d * dtau - dp * (interpolatedDistanceValues[j + 1] + interpolatedDistanceValues[j]))
               / (0.5d * (sqrt3Dp[1] - sqrt3Dp[0])
                   - 1.5d * sqrtDp[1] * sqrtDp[0] * (sqrtDp[1] - sqrtDp[0]));
-      poly[2][j] =
+      interpolationPolynomials[2][j] =
           (dtau
-                  - dp * xBrn[j]
-                  - (sqrt3Dp[1] + 0.5d * sqrt3Dp[0] - 1.5d * dpe[1] * sqrtDp[0]) * poly[3][j])
+                  - dp * interpolatedDistanceValues[j]
+                  - (sqrt3Dp[1] + 0.5d * sqrt3Dp[0] - 1.5d * dpe[1] * sqrtDp[0])
+                      * interpolationPolynomials[3][j])
               / Math.pow(dp, 2d);
-      poly[1][j] =
+      interpolationPolynomials[1][j] =
           (dtau
-                  - (Math.pow(dpe[1], 2d) - Math.pow(dpe[0], 2d)) * poly[2][j]
-                  - (sqrt3Dp[1] - sqrt3Dp[0]) * poly[3][j])
+                  - (Math.pow(dpe[1], 2d) - Math.pow(dpe[0], 2d)) * interpolationPolynomials[2][j]
+                  - (sqrt3Dp[1] - sqrt3Dp[0]) * interpolationPolynomials[3][j])
               / dp;
-      poly[0][j] =
-          tauBrn[j] - sqrt3Dp[0] * poly[3][j] - dpe[0] * (dpe[0] * poly[2][j] + poly[1][j]);
+      interpolationPolynomials[0][j] =
+          correctedTauValues[j]
+              - sqrt3Dp[0] * interpolationPolynomials[3][j]
+              - dpe[0] * (dpe[0] * interpolationPolynomials[2][j] + interpolationPolynomials[1][j]);
 
       // Set up the distance limits.
-      xLim[0][j] = Math.min(xBrn[j], xBrn[j + 1]);
-      xLim[1][j] = Math.max(xBrn[j], xBrn[j + 1]);
-      if (xLim[0][j] < xMin) {
-        xMin = xLim[0][j];
-        if (xBrn[j] <= xBrn[j + 1]) {
-          pCaustic = pBrn[j];
+      distanceLimits[0][j] =
+          Math.min(interpolatedDistanceValues[j], interpolatedDistanceValues[j + 1]);
+      distanceLimits[1][j] =
+          Math.max(interpolatedDistanceValues[j], interpolatedDistanceValues[j + 1]);
+      if (distanceLimits[0][j] < minimumDistance) {
+        minimumDistance = distanceLimits[0][j];
+        if (interpolatedDistanceValues[j] <= interpolatedDistanceValues[j + 1]) {
+          correctedCausticSlowness = updatedRayParameters[j];
         } else {
-          pCaustic = pBrn[j + 1];
+          correctedCausticSlowness = updatedRayParameters[j + 1];
         }
       }
 
       // See if there's a caustic in this interval.
-      flag[j] = "";
-      if (Math.abs(poly[2][j]) > TauUtilities.DMIN) {
-        sqrtPext = -0.375d * poly[3][j] / poly[2][j];
-        pExt = Math.pow(sqrtPext, 2d);
+      causticFlags[j] = "";
+      if (Math.abs(interpolationPolynomials[2][j]) > TauUtilities.DMIN) {
+        double sqrtPext = -0.375d * interpolationPolynomials[3][j] / interpolationPolynomials[2][j];
+        double pExt = Math.pow(sqrtPext, 2d);
 
         if (sqrtPext > 0d && pExt > dpe[1] && pExt < dpe[0]) {
-          xCaustic = poly[1][j] + sqrtPext * (2d * sqrtPext * poly[2][j] + 1.5d * poly[3][j]);
-          xLim[0][j] = Math.min(xLim[0][j], xCaustic);
-          xLim[1][j] = Math.max(xLim[1][j], xCaustic);
+          double xCaustic =
+              interpolationPolynomials[1][j]
+                  + sqrtPext
+                      * (2d * sqrtPext * interpolationPolynomials[2][j]
+                          + 1.5d * interpolationPolynomials[3][j]);
+          distanceLimits[0][j] = Math.min(distanceLimits[0][j], xCaustic);
+          distanceLimits[1][j] = Math.max(distanceLimits[1][j], xCaustic);
 
-          if (xCaustic < xMin) {
-            xMin = xCaustic;
-            pCaustic = pEnd - pExt;
+          if (xCaustic < minimumDistance) {
+            minimumDistance = xCaustic;
+            correctedCausticSlowness = rayParameterEndValue - pExt;
           }
 
-          if (poly[3][j] < 0d) {
-            flag[j] = "min";
-            iMin++;
+          if (interpolationPolynomials[3][j] < 0d) {
+            causticFlags[j] = "min";
+            minimumCausticCount++;
           } else {
-            flag[j] = "max";
-            iMax++;
+            causticFlags[j] = "max";
+            maximumCausticCount++;
           }
         }
       }
 
-      xMax = Math.max(xMax, xLim[1][j]);
+      maximumDistance = Math.max(maximumDistance, distanceLimits[1][j]);
     }
 
     // Fix ranges.
-    xRange[0] = xMin;
-    xRange[1] = xMax;
+    correctedDistanceRange[0] = minimumDistance;
+    correctedDistanceRange[1] = maximumDistance;
 
     // Set the distances to try (see findTt for details).
-    xTries = new int[2];
+    numTTDistanceRanges = new int[2];
     for (int j = 0; j < 2; j++) {
-      if (xRange[j] <= Math.PI) {
-        xTries[j] = 0;
-      } else if (xRange[j] <= 2d * Math.PI) {
-        xTries[j] = 1;
+      if (correctedDistanceRange[j] <= Math.PI) {
+        numTTDistanceRanges[j] = 0;
+      } else if (correctedDistanceRange[j] <= 2d * Math.PI) {
+        numTTDistanceRanges[j] = 1;
       } else {
-        xTries[j] = 2;
+        numTTDistanceRanges[j] = 2;
       }
     }
 
     // Fix the phase code for the up-going branch.
-    if (ref.getIsBranchUpGoing() && tagBrn != ' ') {
-      phaseCode = "" + phaseCode.charAt(0) + tagBrn;
+    if (branchReference.getIsBranchUpGoing() && branchSuffix != ' ') {
+      correctedPhaseCode = "" + correctedPhaseCode.charAt(0) + branchSuffix;
     }
   }
 
   /**
-   * Get the travel times for this branch. Three different distances must to be processed, but this
-   * needs to be driven from AllBranchVolume so that the surface focus distance correction can be
-   * applied for the auxiliary data, hence the need for depIndex.
+   * Function to get the travel times for this branch. Three different distances must to be
+   * processed, but this needs to be driven from AllBranchVolume so that the surface focus distance
+   * correction can be applied for the auxiliary data, hence the need for depthIndex.
    *
-   * @param depIndex Depth index (there are three possible depths)
-   * @param xs Desired distance in radians
-   * @param dSource Source depth in kilometers
-   * @param returnAllPhases If false only return potentially useful phases
-   * @param ttList A list of travel times to be filled in
+   * @param depthIndex A double containing the depth index (there are three possible depths)
+   * @param desiredDistance A double containing the desired distance in radians
+   * @param sourceDepth A double containing the source depth in kilometers
+   * @param returnAllPhases A boolean flag, if false only return potentially useful phases
+   * @param travelTimeList A TravelTime object containing the list of travel times to be filled in
    */
-  public void getTT(
-      int depIndex, double xs, double dSource, boolean returnAllPhases, TravelTime ttList) {
-    String tmpCode;
+  public void getTravelTimes(
+      int depthIndex,
+      double desiredDistance,
+      double sourceDepth,
+      boolean returnAllPhases,
+      TravelTime travelTimeList) {
     boolean found = false;
-    double pTol, dps, dp, ps, del;
-    TravelTimeData TravelTime;
-    TravelTimeFlags addFlags;
 
     // Skip non-existent and useless phases (if requested).
-    if (!exists || (!returnAllPhases && isUseless)) return;
+    if (!correctedBranchExists || (!returnAllPhases && isPhaseUseless)) {
+      return;
+    }
+
     // On the first index, set up the conversion for dT/dDelta.
-    if (depIndex == 0) xSign = cvt.dTdDelta * Math.pow(-1d, xTries[0] + 1);
+    if (depthIndex == 0)
+      distanceSign = modelConversions.dTdDelta * Math.pow(-1d, numTTDistanceRanges[0] + 1);
 
     // Loop over possible distances.
-    if (depIndex >= xTries[0] && depIndex <= xTries[1]) {
-      xSign = -xSign;
+    if (depthIndex >= numTTDistanceRanges[0] && depthIndex <= numTTDistanceRanges[1]) {
+      distanceSign = -distanceSign;
+
       // See if we have an arrival at this distance.
-      if (xs >= xRange[0] && xs <= xRange[1]) {
+      if (desiredDistance >= correctedDistanceRange[0]
+          && desiredDistance <= correctedDistanceRange[1]) {
         // Set up some useful variables.
-        if (Double.isNaN(pEnd)) {
-          pEnd = pBrn[pBrn.length - 1];
-          zSign = dTdDepth * ref.getUpGoingCorrectionSign();
-          if (ref.getCorrectionPhaseType()[0] == 'P') pSourceSq = Math.pow(pUp.pSource, 2d);
-          else pSourceSq = Math.pow(sUp.pSource, 2d);
+        if (Double.isNaN(rayParameterEndValue)) {
+          rayParameterEndValue = updatedRayParameters[updatedRayParameters.length - 1];
+          depthSign = depthDerivativeNorm * branchReference.getUpGoingCorrectionSign();
+
+          if (branchReference.getCorrectionPhaseType()[0] == 'P') {
+            slownessUpSquared = Math.pow(upgoingPBranch.pSource, 2d);
+          } else {
+            slownessUpSquared = Math.pow(upgoingSBranch.pSource, 2d);
+          }
         }
+
         // Loop over ray parameter intervals looking for arrivals.
-        for (int j = 0; j < xLim[0].length; j++) {
-          if (xs > xLim[0][j] && xs <= xLim[1][j]) {
+        for (int j = 0; j < distanceLimits[0].length; j++) {
+          if (desiredDistance > distanceLimits[0][j] && desiredDistance <= distanceLimits[1][j]) {
             // pTol is a totally empirically tolerance.
-            pTol = Math.max(3e-6d * (pBrn[j + 1] - pBrn[j]), 1e-4d);
+            double pTol =
+                Math.max(3e-6d * (updatedRayParameters[j + 1] - updatedRayParameters[j]), 1e-4d);
 
             // This is the general case.
-            if (Math.abs(poly[2][j]) > TauUtilities.DMIN) {
+            if (Math.abs(interpolationPolynomials[2][j]) > TauUtilities.DMIN) {
               // There should be two solutions.
-              dps =
-                  -(3d * poly[3][j]
+              double dps =
+                  -(3d * interpolationPolynomials[3][j]
                           + Math.copySign(
                               Math.sqrt(
                                   Math.abs(
-                                      9d * Math.pow(poly[3][j], 2d)
-                                          + 32d * poly[2][j] * (xs - poly[1][j]))),
-                              poly[3][j]))
-                      / (8d * poly[2][j]);
+                                      9d * Math.pow(interpolationPolynomials[3][j], 2d)
+                                          + 32d
+                                              * interpolationPolynomials[2][j]
+                                              * (desiredDistance
+                                                  - interpolationPolynomials[1][j]))),
+                              interpolationPolynomials[3][j]))
+                      / (8d * interpolationPolynomials[2][j]);
+
               for (int k = 0; k < 2; k++) {
-                if (k > 0) dps = (poly[1][j] - xs) / (2d * poly[2][j] * dps);
-                dp = Math.copySign(Math.pow(dps, 2d), dps);
+                if (k > 0) {
+                  dps =
+                      (interpolationPolynomials[1][j] - desiredDistance)
+                          / (2d * interpolationPolynomials[2][j] * dps);
+                }
+
+                double dp = Math.copySign(Math.pow(dps, 2d), dps);
+
                 // Arrivals outside the interval aren't real.
-                if (dp >= Math.max(pEnd - pBrn[j + 1] - pTol, 0d) && dp <= pEnd - pBrn[j] + pTol) {
+                if (dp >= Math.max(rayParameterEndValue - updatedRayParameters[j + 1] - pTol, 0d)
+                    && dp <= rayParameterEndValue - updatedRayParameters[j] + pTol) {
                   // Add the arrival.
                   found = true;
-                  ps = pEnd - dp;
+                  double ps = rayParameterEndValue - dp;
+
                   // Fiddle the phase code for bc branches.
-                  if (phaseCode.contains("ab") && ps <= pCaustic)
-                    tmpCode = TauUtilities.phSeg(phaseCode) + "bc";
-                  else tmpCode = phaseCode;
+                  String tmpCode;
+                  if (correctedPhaseCode.contains("ab") && ps <= correctedCausticSlowness) {
+                    tmpCode = TauUtilities.phSeg(correctedPhaseCode) + "bc";
+                  } else {
+                    tmpCode = correctedPhaseCode;
+                  }
+
                   // Add it.
-                  ttList.addPhase(
+                  travelTimeList.addPhase(
                       tmpCode,
-                      ref.getUniquePhaseCodes(),
-                      cvt.tNorm
-                          * (poly[0][j]
-                              + dp * (poly[1][j] + dp * poly[2][j] + dps * poly[3][j])
-                              + ps * xs),
-                      xSign * ps,
-                      zSign * Math.sqrt(Math.abs(pSourceSq - Math.pow(ps, 2d))),
-                      -(2d * poly[2][j]
-                              + 0.75d * poly[3][j] / Math.max(Math.abs(dps), TauUtilities.DTOL))
-                          / cvt.tNorm,
+                      branchReference.getUniquePhaseCodes(),
+                      modelConversions.tNorm
+                          * (interpolationPolynomials[0][j]
+                              + dp
+                                  * (interpolationPolynomials[1][j]
+                                      + dp * interpolationPolynomials[2][j]
+                                      + dps * interpolationPolynomials[3][j])
+                              + ps * desiredDistance),
+                      distanceSign * ps,
+                      depthSign * Math.sqrt(Math.abs(slownessUpSquared - Math.pow(ps, 2d))),
+                      -(2d * interpolationPolynomials[2][j]
+                              + 0.75d
+                                  * interpolationPolynomials[3][j]
+                                  / Math.max(Math.abs(dps), TauUtilities.DTOL))
+                          / modelConversions.tNorm,
                       false);
                 }
               }
               // We have to be careful if the quadratic term is zero.
             } else {
               // On the plus side, there's only one solution.
-              dps = (xs - poly[1][j]) / (1.5d * poly[3][j]);
-              dp = Math.copySign(Math.pow(dps, 2d), dps);
+              double dps =
+                  (desiredDistance - interpolationPolynomials[1][j])
+                      / (1.5d * interpolationPolynomials[3][j]);
+              double dp = Math.copySign(Math.pow(dps, 2d), dps);
+
               //	System.out.println("Sol spec: "+(float)dp);
               // Arrivals outside the interval aren't real.
-              if (dp < pEnd - pBrn[j + 1] - pTol || dp > pEnd - pBrn[j] + pTol) break;
+              if (dp < rayParameterEndValue - updatedRayParameters[j + 1] - pTol
+                  || dp > rayParameterEndValue - updatedRayParameters[j] + pTol) {
+                break;
+              }
+
               // Add the arrival.
               found = true;
-              ps = pEnd - dp;
+              double ps = rayParameterEndValue - dp;
+
               // Fiddle the phase code for bc branches.
-              if (phaseCode.contains("ab") && ps <= pCaustic)
-                tmpCode = TauUtilities.phSeg(phaseCode) + "bc";
-              else tmpCode = phaseCode;
+              String tmpCode;
+              if (correctedPhaseCode.contains("ab") && ps <= correctedCausticSlowness) {
+                tmpCode = TauUtilities.phSeg(correctedPhaseCode) + "bc";
+              } else {
+                tmpCode = correctedPhaseCode;
+              }
+
               // add it.
-              ttList.addPhase(
+              travelTimeList.addPhase(
                   tmpCode,
-                  ref.getUniquePhaseCodes(),
-                  cvt.tNorm * (poly[0][j] + dp * (poly[1][j] + dps * poly[3][j]) + ps * xs),
-                  xSign * ps,
-                  zSign * Math.sqrt(Math.abs(pSourceSq - Math.pow(ps, 2d))),
-                  -(0.75d * poly[3][j] / Math.max(Math.abs(dps), TauUtilities.DTOL)) / cvt.tNorm,
+                  branchReference.getUniquePhaseCodes(),
+                  modelConversions.tNorm
+                      * (interpolationPolynomials[0][j]
+                          + dp
+                              * (interpolationPolynomials[1][j]
+                                  + dps * interpolationPolynomials[3][j])
+                          + ps * desiredDistance),
+                  distanceSign * ps,
+                  depthSign * Math.sqrt(Math.abs(slownessUpSquared - Math.pow(ps, 2d))),
+                  -(0.75d
+                          * interpolationPolynomials[3][j]
+                          / Math.max(Math.abs(dps), TauUtilities.DTOL))
+                      / modelConversions.tNorm,
                   false);
             }
           }
@@ -865,69 +1201,110 @@ public class BranchDataVolume {
       }
 
       // See if we have a diffracted arrival.
-      if (ref.getBranchHasDiffraction()) {
-        if (xs > xDiff[0] && xs <= xDiff[1]) {
+      if (branchReference.getBranchHasDiffraction()) {
+        if (desiredDistance > diffractedDistanceRange[0]
+            && desiredDistance <= diffractedDistanceRange[1]) {
           // This would have gotten missed as it's off the end of the branch.
-          if (Double.isNaN(pEnd)) {
-            pEnd = pBrn[pBrn.length - 1];
-            zSign = dTdDepth * ref.getUpGoingCorrectionSign();
-            if (ref.getCorrectionPhaseType()[0] == 'P') pSourceSq = Math.pow(pUp.pSource, 2d);
-            else pSourceSq = Math.pow(sUp.pSource, 2d);
+          if (Double.isNaN(rayParameterEndValue)) {
+            rayParameterEndValue = updatedRayParameters[updatedRayParameters.length - 1];
+            depthSign = depthDerivativeNorm * branchReference.getUpGoingCorrectionSign();
+            if (branchReference.getCorrectionPhaseType()[0] == 'P') {
+              slownessUpSquared = Math.pow(upgoingPBranch.pSource, 2d);
+            } else {
+              slownessUpSquared = Math.pow(upgoingSBranch.pSource, 2d);
+            }
           }
-          dp = pRange[1] - pRange[0];
-          dps = Math.sqrt(Math.abs(dp));
-          // Fiddle the uniqueCode.
-          if (uniqueCode == null) uniqueCode = new String[2];
-          uniqueCode[0] = ref.getDiffractedPhaseCode() + 0;
-          uniqueCode[1] = null;
+
+          double dp = correctedSlownessRange[1] - correctedSlownessRange[0];
+          double dps = Math.sqrt(Math.abs(dp));
+
+          // Fiddle the unique code.
+          if (uniquePhaseCode == null) {
+            uniquePhaseCode = new String[2];
+          }
+
+          uniquePhaseCode[0] = branchReference.getDiffractedPhaseCode() + 0;
+          uniquePhaseCode[1] = null;
+
           // Add it.
-          ttList.addPhase(
-              ref.getDiffractedPhaseCode(),
-              uniqueCode,
-              cvt.tNorm
-                  * (poly[0][0]
-                      + dp * (poly[1][0] + dp * poly[2][0] + dps * poly[3][0])
-                      + pRange[0] * xs),
-              xSign * pRange[0],
-              zSign * Math.sqrt(Math.abs(pSourceSq - Math.pow(pRange[0], 2d))),
-              -(2d * poly[2][0] + 0.75d * poly[3][0] / Math.max(Math.abs(dps), TauUtilities.DTOL))
-                  / cvt.tNorm,
+          travelTimeList.addPhase(
+              branchReference.getDiffractedPhaseCode(),
+              uniquePhaseCode,
+              modelConversions.tNorm
+                  * (interpolationPolynomials[0][0]
+                      + dp
+                          * (interpolationPolynomials[1][0]
+                              + dp * interpolationPolynomials[2][0]
+                              + dps * interpolationPolynomials[3][0])
+                      + correctedSlownessRange[0] * desiredDistance),
+              distanceSign * correctedSlownessRange[0],
+              depthSign
+                  * Math.sqrt(
+                      Math.abs(slownessUpSquared - Math.pow(correctedSlownessRange[0], 2d))),
+              -(2d * interpolationPolynomials[2][0]
+                      + 0.75d
+                          * interpolationPolynomials[3][0]
+                          / Math.max(Math.abs(dps), TauUtilities.DTOL))
+                  / modelConversions.tNorm,
               false);
         }
       }
 
       // See if we have an add-on phase.
-      if (ref.getBranchHasAddOn() && found) {
-        addFlags = auxtt.findPhaseFlags(ref.getAddOnPhaseCode());
+      if (branchReference.getBranchHasAddOn() && found) {
+        TravelTimeFlags addFlags =
+            auxTTReference.findPhaseFlags(branchReference.getAddOnPhaseCode());
+
         if (addFlags.getPhaseStatistics() != null) {
-          del = Math.toDegrees(xs);
-          if (del >= addFlags.getPhaseStatistics().minDelta
-              && del <= addFlags.getPhaseStatistics().maxDelta) {
-            // Fiddle the uniqueCode.
-            if (uniqueCode == null) uniqueCode = new String[2];
-            uniqueCode[0] = ref.getAddOnPhaseCode() + 0;
-            uniqueCode[1] = null;
+          double distance = Math.toDegrees(desiredDistance);
+
+          if (distance >= addFlags.getPhaseStatistics().minDelta
+              && distance <= addFlags.getPhaseStatistics().maxDelta) {
+            // Fiddle the unique code.
+            if (uniquePhaseCode == null) {
+              uniquePhaseCode = new String[2];
+            }
+
+            uniquePhaseCode[0] = branchReference.getAddOnPhaseCode() + 0;
+            uniquePhaseCode[1] = null;
+
             // See what we've got.
-            if (ref.getAddOnPhaseCode().equals("Lg")) {
+            if (branchReference.getAddOnPhaseCode().equals("Lg")) {
               // Make sure we have a valid depth.
-              if (dSource <= TauUtilities.LGDEPMAX) {
-                ttList.addPhase(ref.getAddOnPhaseCode(), uniqueCode, 0d, cvt.dTdDLg, 0d, 0d, true);
+              if (sourceDepth <= TauUtilities.LGDEPMAX) {
+                travelTimeList.addPhase(
+                    branchReference.getAddOnPhaseCode(),
+                    uniquePhaseCode,
+                    0d,
+                    modelConversions.dTdDLg,
+                    0d,
+                    0d,
+                    true);
               }
-            } else if (ref.getAddOnPhaseCode().equals("LR")) {
+            } else if (branchReference.getAddOnPhaseCode().equals("LR")) {
               // Make sure we have a valid depth and distance.
-              if (dSource <= TauUtilities.LRDEPMAX && xs <= TauUtilities.LRDELMAX) {
-                ttList.addPhase(ref.getAddOnPhaseCode(), uniqueCode, 0d, cvt.dTdDLR, 0d, 0d, true);
+              if (sourceDepth <= TauUtilities.LRDEPMAX
+                  && desiredDistance <= TauUtilities.LRDELMAX) {
+                travelTimeList.addPhase(
+                    branchReference.getAddOnPhaseCode(),
+                    uniquePhaseCode,
+                    0d,
+                    modelConversions.dTdDLR,
+                    0d,
+                    0d,
+                    true);
               }
-            } else if (ref.getAddOnPhaseCode().equals("pwP")
-                || ref.getAddOnPhaseCode().equals("PKPpre")) {
-              TravelTime = ttList.getPhase(ttList.getNumPhases() - 1);
-              ttList.addPhase(
-                  ref.getAddOnPhaseCode(),
-                  uniqueCode,
-                  TravelTime.tt,
-                  TravelTime.dTdD,
-                  TravelTime.dTdZ,
-                  TravelTime.dXdP,
+            } else if (branchReference.getAddOnPhaseCode().equals("pwP")
+                || branchReference.getAddOnPhaseCode().equals("PKPpre")) {
+              TravelTimeData travelTime =
+                  travelTimeList.getPhase(travelTimeList.getNumPhases() - 1);
+              travelTimeList.addPhase(
+                  branchReference.getAddOnPhaseCode(),
+                  uniquePhaseCode,
+                  travelTime.tt,
+                  travelTime.dTdD,
+                  travelTime.dTdZ,
+                  travelTime.dXdP,
                   true);
             }
           }
@@ -937,182 +1314,181 @@ public class BranchDataVolume {
   }
 
   /**
-   * Compute the surface focus source-receiver distance and travel time. Note that for up-going
-   * branches the calculation is from the source depth.
+   * Function to compute the surface focus source-receiver distance and travel time. Note that for
+   * up-going branches the calculation is from the source depth.
    *
-   * @param dTdD Desired ray parameter in seconds/degree
-   * @return Source-receiver distance in degrees
+   * @param desiredRayParam A double containing the desired ray parameter in seconds/degree
+   * @return A double containing the source-receiver distance in degrees
    */
-  public double oneRay(double dTdD) {
+  public double computeOneRay(double desiredRayParam) {
     double xCorr;
-    double ps = Math.abs(dTdD) / cvt.dTdDelta;
+    double ps = Math.abs(desiredRayParam) / modelConversions.dTdDelta;
 
     // Check validity.
-    if (!exists || ps < pRange[0] || ps > pRange[1]) {
+    if (!correctedBranchExists
+        || ps < correctedSlownessRange[0]
+        || ps > correctedSlownessRange[1]) {
       return Double.NaN;
     }
 
-    for (int j = 1; j < pBrn.length; j++) {
-      if (ps <= pBrn[j]) {
-        double dp = pBrn[pBrn.length - 1] - ps;
+    for (int j = 1; j < updatedRayParameters.length; j++) {
+      if (ps <= updatedRayParameters[j]) {
+        double dp = updatedRayParameters[updatedRayParameters.length - 1] - ps;
         double dps = Math.sqrt(Math.abs(dp));
-        xCorr = poly[1][j - 1] + 2d * dp * poly[2][j - 1] + 1.5d * dps * poly[3][j - 1];
-        tCorr =
-            cvt.tNorm
-                * (poly[0][j - 1]
-                    + dp * (poly[1][j - 1] + dp * poly[2][j - 1] + dps * poly[3][j - 1])
+        xCorr =
+            interpolationPolynomials[1][j - 1]
+                + 2d * dp * interpolationPolynomials[2][j - 1]
+                + 1.5d * dps * interpolationPolynomials[3][j - 1];
+        correctedTravelTime =
+            modelConversions.tNorm
+                * (interpolationPolynomials[0][j - 1]
+                    + dp
+                        * (interpolationPolynomials[1][j - 1]
+                            + dp * interpolationPolynomials[2][j - 1]
+                            + dps * interpolationPolynomials[3][j - 1])
                     + ps * xCorr);
         return Math.toDegrees(xCorr);
       }
     }
-    xCorr = poly[1][pBrn.length - 1];
-    tCorr = cvt.tNorm * (poly[0][pBrn.length - 1] + ps * xCorr);
+
+    xCorr = interpolationPolynomials[1][updatedRayParameters.length - 1];
+    correctedTravelTime =
+        modelConversions.tNorm
+            * (interpolationPolynomials[0][updatedRayParameters.length - 1] + ps * xCorr);
+
     return Math.toDegrees(xCorr);
   }
 
   /**
-   * Getter for the travel time computed by the last call to oneRay.
+   * Function to print out branch information for debugging purposes. Note that this partly
+   * duplicates the print function in AllBrnRef, but includes volatile data as well.
    *
-   * @return Travel-time in seconds
+   * @param full A boolean flag, if true, print the branch specification as well
+   * @param all A boolean flag, if true, print even more specifications
+   * @param scientificNotation A boolean flag, if true, print using scientific notation
+   * @param returnAllPhases A boolean flag, if false, omit "useless" crustal phases
+   * @param caustics A boolean flag, if true only print branches with caustics
    */
-  public double getTravelTimeCorrection() {
-    return tCorr;
-  }
-
-  /**
-   * Setter for the branch compute flag. Branches can be requested through the desired phase list.
-   * The branch flags will need to be reset for each new session.
-   *
-   * @param compute If true compute travel times from this branch
-   */
-  public void setCompute(boolean compute) {
-    this.compute = compute;
-  }
-
-  /**
-   * Get the branch segment code.
-   *
-   * @return Branch segment code
-   */
-  public String getGenericPhaseCode() {
-    return ref.getGenericPhaseCode();
-  }
-
-  /**
-   * Print out branch information for debugging purposes. Note that this partly duplicates the print
-   * function in AllBrnRef, but includes volatile data as well.
-   *
-   * @param full If true, print the branch specification as well
-   * @param all If true, print even more specifications
-   * @param sci If true, print using scientific notation
-   * @param returnAllPhases If false, omit "useless" crustal phases
-   * @param caustics If true only print branches with caustics
-   */
-  public void dumpBrn(
-      boolean full, boolean all, boolean sci, boolean returnAllPhases, boolean caustics) {
+  public void dumpBranchInformation(
+      boolean full,
+      boolean all,
+      boolean scientificNotation,
+      boolean returnAllPhases,
+      boolean caustics) {
     String branchString = "";
 
-    if (!caustics || iMin + iMax > 0) {
-      if (exists) {
-        if (returnAllPhases || !isUseless) {
-          if (ref.getIsBranchUpGoing()) {
-            branchString += String.format("\n         phase = %2s up  ", phaseCode);
+    if (!caustics || minimumCausticCount + maximumCausticCount > 0) {
+      if (correctedBranchExists) {
+        if (returnAllPhases || !isPhaseUseless) {
+          if (branchReference.getIsBranchUpGoing()) {
+            branchString += String.format("\n         phase = %2s up  ", correctedPhaseCode);
 
-            if (ref.getBranchHasDiffraction()) {
-              branchString += String.format("diff = %s  ", ref.getDiffractedPhaseCode());
+            if (branchReference.getBranchHasDiffraction()) {
+              branchString +=
+                  String.format("diff = %s  ", branchReference.getDiffractedPhaseCode());
             }
 
-            if (ref.getBranchHasAddOn()) {
-              branchString += String.format("add-on = %s  ", ref.getAddOnPhaseCode());
+            if (branchReference.getBranchHasAddOn()) {
+              branchString += String.format("add-on = %s  ", branchReference.getAddOnPhaseCode());
             }
 
             branchString +=
                 String.format(
                     "\nSegment: code = %s  type = %c        sign = %2d" + "  count = %d\n",
-                    ref.getGenericPhaseCode(),
-                    ref.getCorrectionPhaseType()[0],
-                    ref.getUpGoingCorrectionSign(),
-                    ref.getNumMantleTraversals());
+                    branchReference.getGenericPhaseCode(),
+                    branchReference.getCorrectionPhaseType()[0],
+                    branchReference.getUpGoingCorrectionSign(),
+                    branchReference.getNumMantleTraversals());
           } else {
-            branchString += String.format("\n         phase = %s  ", phaseCode);
+            branchString += String.format("\n         phase = %s  ", correctedPhaseCode);
 
-            if (ref.getBranchHasDiffraction()) {
-              branchString += String.format("diff = %s  ", ref.getDiffractedPhaseCode());
+            if (branchReference.getBranchHasDiffraction()) {
+              branchString +=
+                  String.format("diff = %s  ", branchReference.getDiffractedPhaseCode());
             }
 
-            if (ref.getBranchHasAddOn()) {
-              branchString += String.format("add-on = %s  ", ref.getAddOnPhaseCode());
+            if (branchReference.getBranchHasAddOn()) {
+              branchString += String.format("add-on = %s  ", branchReference.getAddOnPhaseCode());
             }
 
             branchString +=
                 String.format(
                     "\nSegment: code = %s  type = %c, %c, %c  " + "sign = %2d  count = %d\n",
-                    ref.getGenericPhaseCode(),
-                    ref.getCorrectionPhaseType()[0],
-                    ref.getCorrectionPhaseType()[1],
-                    ref.getCorrectionPhaseType()[2],
-                    ref.getUpGoingCorrectionSign(),
-                    ref.getNumMantleTraversals());
+                    branchReference.getGenericPhaseCode(),
+                    branchReference.getCorrectionPhaseType()[0],
+                    branchReference.getCorrectionPhaseType()[1],
+                    branchReference.getCorrectionPhaseType()[2],
+                    branchReference.getUpGoingCorrectionSign(),
+                    branchReference.getNumMantleTraversals());
           }
 
           branchString +=
               String.format(
-                  "Branch:  pRange = %8.6f - %8.6f  xRange = %6.2f - " + "%6.2f ",
-                  pRange[0], pRange[1], Math.toDegrees(xRange[0]), Math.toDegrees(xRange[1]));
+                  "Branch:  correctedSlownessRange = %8.6f - %8.6f  correctedDistanceRange = %6.2f - "
+                      + "%6.2f ",
+                  correctedSlownessRange[0],
+                  correctedSlownessRange[1],
+                  Math.toDegrees(correctedDistanceRange[0]),
+                  Math.toDegrees(correctedDistanceRange[1]));
 
-          if (ref.getBranchHasDiffraction()) {
+          if (branchReference.getBranchHasDiffraction()) {
             branchString +=
                 String.format(
-                    "pCaustic = %8.6f  xDiff = " + "%6.2f - %6.2f\n",
-                    pCaustic, Math.toDegrees(xDiff[0]), Math.toDegrees(xDiff[1]));
+                    "correctedCausticSlowness = %8.6f  diffractedDistanceRange = "
+                        + "%6.2f - %6.2f\n",
+                    correctedCausticSlowness,
+                    Math.toDegrees(diffractedDistanceRange[0]),
+                    Math.toDegrees(diffractedDistanceRange[1]));
           } else {
-            branchString += String.format("pCaustic = %8.6f\n", pCaustic);
+            branchString +=
+                String.format("correctedCausticSlowness = %8.6f\n", correctedCausticSlowness);
           }
 
-          if (ref.getTurningModelShellName() != null) {
-            if (iMin + iMax == 1) {
+          if (branchReference.getTurningModelShellName() != null) {
+            if (minimumCausticCount + maximumCausticCount == 1) {
               branchString +=
                   String.format(
                       "Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s (1 caustic)\n",
-                      ref.getTurningRadiusRange()[0],
-                      ref.getTurningRadiusRange()[1],
-                      cvt.rSurface - ref.getTurningRadiusRange()[1],
-                      cvt.rSurface - ref.getTurningRadiusRange()[0],
-                      ref.getTurningModelShellName());
-            } else if (iMin + iMax > 1) {
+                      branchReference.getTurningRadiusRange()[0],
+                      branchReference.getTurningRadiusRange()[1],
+                      modelConversions.rSurface - branchReference.getTurningRadiusRange()[1],
+                      modelConversions.rSurface - branchReference.getTurningRadiusRange()[0],
+                      branchReference.getTurningModelShellName());
+            } else if (minimumCausticCount + maximumCausticCount > 1) {
               branchString +=
                   String.format(
                       "Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s (%d caustics)\n",
-                      ref.getTurningRadiusRange()[0],
-                      ref.getTurningRadiusRange()[1],
-                      cvt.rSurface - ref.getTurningRadiusRange()[1],
-                      cvt.rSurface - ref.getTurningRadiusRange()[0],
-                      ref.getTurningModelShellName(),
-                      iMin + iMax);
+                      branchReference.getTurningRadiusRange()[0],
+                      branchReference.getTurningRadiusRange()[1],
+                      modelConversions.rSurface - branchReference.getTurningRadiusRange()[1],
+                      modelConversions.rSurface - branchReference.getTurningRadiusRange()[0],
+                      branchReference.getTurningModelShellName(),
+                      minimumCausticCount + maximumCausticCount);
             } else {
               branchString +=
                   String.format(
                       "Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s\n",
-                      ref.getTurningRadiusRange()[0],
-                      ref.getTurningRadiusRange()[1],
-                      cvt.rSurface - ref.getTurningRadiusRange()[1],
-                      cvt.rSurface - ref.getTurningRadiusRange()[0],
-                      ref.getTurningModelShellName());
+                      branchReference.getTurningRadiusRange()[0],
+                      branchReference.getTurningRadiusRange()[1],
+                      modelConversions.rSurface - branchReference.getTurningRadiusRange()[1],
+                      modelConversions.rSurface - branchReference.getTurningRadiusRange()[0],
+                      branchReference.getTurningModelShellName());
             }
           }
 
           //	branchString += String.format("Flags: group = %s %s  flags = %b %b %b %b\n",
-          // ref.PhaseGroup,
-          //			ref.auxGroup, ref.isRegionalPhase, ref.isDepth, ref.canUse, ref.dis);
+          // branchReference.PhaseGroup,
+          //			branchReference.auxGroup, branchReference.isRegionalPhase, branchReference.isDepth,
+          // branchReference.canUse, branchReference.dis);
 
           if (full) {
-            int n = pBrn.length;
+            int n = updatedRayParameters.length;
 
-            if (all && poly != null) {
-              if (sci) {
+            if (all && interpolationPolynomials != null) {
+              if (scientificNotation) {
                 System.out.println(
                     "\n               p            tau         x"
-                        + "                 basis function coefficients                    xLim");
+                        + "                 basis function coefficients                    distanceLimits");
 
                 for (int j = 0; j < n - 1; j++) {
                   branchString +=
@@ -1120,26 +1496,29 @@ public class BranchDataVolume {
                           "%3d: %3s %13.6e %13.6e %6.2f %13.6e %13.6e "
                               + "%13.6e %13.6e %6.2f %6.2f\n",
                           j,
-                          flag[j],
-                          pBrn[j],
-                          tauBrn[j],
-                          Math.toDegrees(xBrn[j]),
-                          poly[0][j],
-                          poly[1][j],
-                          poly[2][j],
-                          poly[3][j],
-                          Math.toDegrees(xLim[0][j]),
-                          Math.toDegrees(xLim[1][j]));
+                          causticFlags[j],
+                          updatedRayParameters[j],
+                          correctedTauValues[j],
+                          Math.toDegrees(interpolatedDistanceValues[j]),
+                          interpolationPolynomials[0][j],
+                          interpolationPolynomials[1][j],
+                          interpolationPolynomials[2][j],
+                          interpolationPolynomials[3][j],
+                          Math.toDegrees(distanceLimits[0][j]),
+                          Math.toDegrees(distanceLimits[1][j]));
                 }
 
                 branchString +=
                     String.format(
                         "%3d:     %13.6e %13.6e %6.2f\n",
-                        n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xBrn[n - 1]));
+                        n - 1,
+                        updatedRayParameters[n - 1],
+                        correctedTauValues[n - 1],
+                        Math.toDegrees(interpolatedDistanceValues[n - 1]));
               } else {
                 System.out.println(
                     "\n             p      tau       x            "
-                        + "basis function coefficients             xLim");
+                        + "basis function coefficients             distanceLimits");
 
                 for (int j = 0; j < n - 1; j++) {
                   branchString +=
@@ -1147,111 +1526,142 @@ public class BranchDataVolume {
                           "%3d: %3s %8.6f %8.6f %6.2f  %9.2e  %9.2e  "
                               + "%9.2e  %9.2e %6.2f %6.2f\n",
                           j,
-                          flag[j],
-                          pBrn[j],
-                          tauBrn[j],
-                          Math.toDegrees(xBrn[j]),
-                          poly[0][j],
-                          poly[1][j],
-                          poly[2][j],
-                          poly[3][j],
-                          Math.toDegrees(xLim[0][j]),
-                          Math.toDegrees(xLim[1][j]));
+                          causticFlags[j],
+                          updatedRayParameters[j],
+                          correctedTauValues[j],
+                          Math.toDegrees(interpolatedDistanceValues[j]),
+                          interpolationPolynomials[0][j],
+                          interpolationPolynomials[1][j],
+                          interpolationPolynomials[2][j],
+                          interpolationPolynomials[3][j],
+                          Math.toDegrees(distanceLimits[0][j]),
+                          Math.toDegrees(distanceLimits[1][j]));
                 }
 
                 branchString +=
                     String.format(
                         "%3d:     %8.6f %8.6f %6.2f\n",
-                        n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xBrn[n - 1]));
+                        n - 1,
+                        updatedRayParameters[n - 1],
+                        correctedTauValues[n - 1],
+                        Math.toDegrees(interpolatedDistanceValues[n - 1]));
               }
             } else {
-              if (sci) {
-                System.out.println("\n               p            tau         x        " + "xLim");
+              if (scientificNotation) {
+                System.out.println(
+                    "\n               p            tau         x        " + "distanceLimits");
 
-                if (poly != null) {
+                if (interpolationPolynomials != null) {
                   for (int j = 0; j < n - 1; j++) {
                     branchString +=
                         String.format(
                             "%3d: %3s %13.6e %13.6e %6.2f %6.2f %6.2f\n",
                             j,
-                            flag[j],
-                            pBrn[j],
-                            tauBrn[j],
-                            Math.toDegrees(xBrn[j]),
-                            Math.toDegrees(xLim[0][j]),
-                            Math.toDegrees(xLim[1][j]));
+                            causticFlags[j],
+                            updatedRayParameters[j],
+                            correctedTauValues[j],
+                            Math.toDegrees(interpolatedDistanceValues[j]),
+                            Math.toDegrees(distanceLimits[0][j]),
+                            Math.toDegrees(distanceLimits[1][j]));
                   }
 
                   branchString +=
                       String.format(
                           "%3d:     %13.6e %13.6e %6.2f\n",
-                          n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xBrn[n - 1]));
+                          n - 1,
+                          updatedRayParameters[n - 1],
+                          correctedTauValues[n - 1],
+                          Math.toDegrees(interpolatedDistanceValues[n - 1]));
                 } else {
                   branchString +=
                       String.format(
                           "%3d:     %13.6e %13.6e %6.2f\n",
-                          0, pBrn[0], tauBrn[0], Math.toDegrees(xRange[0]));
+                          0,
+                          updatedRayParameters[0],
+                          correctedTauValues[0],
+                          Math.toDegrees(correctedDistanceRange[0]));
 
                   for (int j = 1; j < n - 1; j++) {
                     branchString +=
-                        String.format("%3d:     %13.6e %13.6e\n", j, pBrn[j], tauBrn[j]);
+                        String.format(
+                            "%3d:     %13.6e %13.6e\n",
+                            j, updatedRayParameters[j], correctedTauValues[j]);
                   }
 
                   branchString +=
                       String.format(
                           "%3d:     %13.6e %13.6e %6.2f\n",
-                          n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xRange[1]));
+                          n - 1,
+                          updatedRayParameters[n - 1],
+                          correctedTauValues[n - 1],
+                          Math.toDegrees(correctedDistanceRange[1]));
                 }
               } else {
-                System.out.println("\n             p      tau       x        " + "xLim");
+                System.out.println("\n             p      tau       x        " + "distanceLimits");
 
-                if (poly != null) {
+                if (interpolationPolynomials != null) {
                   for (int j = 0; j < n - 1; j++) {
                     branchString +=
                         String.format(
                             "%3d: %3s %8.6f %8.6f %6.2f %6.2f %6.2f\n",
                             j,
-                            flag[j],
-                            pBrn[j],
-                            tauBrn[j],
-                            Math.toDegrees(xBrn[j]),
-                            Math.toDegrees(xLim[0][j]),
-                            Math.toDegrees(xLim[1][j]));
+                            causticFlags[j],
+                            updatedRayParameters[j],
+                            correctedTauValues[j],
+                            Math.toDegrees(interpolatedDistanceValues[j]),
+                            Math.toDegrees(distanceLimits[0][j]),
+                            Math.toDegrees(distanceLimits[1][j]));
                   }
 
                   branchString +=
                       String.format(
                           "%3d:     %8.6f %8.6f %6.2f\n",
-                          n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xBrn[n - 1]));
+                          n - 1,
+                          updatedRayParameters[n - 1],
+                          correctedTauValues[n - 1],
+                          Math.toDegrees(interpolatedDistanceValues[n - 1]));
                 } else {
                   branchString +=
                       String.format(
                           "%3d:     %8.6f  %8.6f  %6.2f\n",
-                          0, pBrn[0], tauBrn[0], Math.toDegrees(xRange[0]));
+                          0,
+                          updatedRayParameters[0],
+                          correctedTauValues[0],
+                          Math.toDegrees(correctedDistanceRange[0]));
 
                   for (int j = 1; j < n - 1; j++) {
-                    branchString += String.format("%3d:     %8.6f  %8.6f\n", j, pBrn[j], tauBrn[j]);
+                    branchString +=
+                        String.format(
+                            "%3d:     %8.6f  %8.6f\n",
+                            j, updatedRayParameters[j], correctedTauValues[j]);
                   }
 
                   branchString +=
                       String.format(
                           "%3d:     %8.6f  %8.6f  %6.2f\n",
-                          n - 1, pBrn[n - 1], tauBrn[n - 1], Math.toDegrees(xRange[1]));
+                          n - 1,
+                          updatedRayParameters[n - 1],
+                          correctedTauValues[n - 1],
+                          Math.toDegrees(correctedDistanceRange[1]));
                 }
               }
             }
           }
         } else {
           branchString +=
-              String.format("\n          phase = %s is useless\n", ref.getBranchPhaseCode());
+              String.format(
+                  "\n          phase = %s is useless\n", branchReference.getBranchPhaseCode());
         }
       } else {
-        if (ref.getIsBranchUpGoing()) {
+        if (branchReference.getIsBranchUpGoing()) {
           branchString +=
-              String.format("\n          phase = %s up doesn't exist\n", ref.getBranchPhaseCode());
+              String.format(
+                  "\n          phase = %s up doesn't exist\n",
+                  branchReference.getBranchPhaseCode());
         } else {
           branchString +=
-              String.format("\n          phase = %s doesn't exist\n", ref.getBranchPhaseCode());
+              String.format(
+                  "\n          phase = %s doesn't exist\n", branchReference.getBranchPhaseCode());
         }
       }
     }
@@ -1259,63 +1669,60 @@ public class BranchDataVolume {
     LOGGER.fine(branchString);
   }
 
-  public boolean getIsUseless() {
-    return (isUseless);
-  }
-
   /**
-   * Generate one line of a branch summary table.
+   * Function to generate one line of a branch summary table.
    *
-   * @param returnAllPhases If true, omit "useless" crustal phases
-   * @return a String containing one line of a branch summary table
+   * @param returnAllPhases A boolean flag, if true, omit "useless" crustal phases
+   * @return aA String containing one line of a branch summary table
    */
   public String forTable(boolean returnAllPhases) {
-    if (!exists || (!returnAllPhases && isUseless)) {
+    if (!correctedBranchExists || (!returnAllPhases && isPhaseUseless)) {
       return "";
     }
-    if (ref.getIsBranchUpGoing()) {
+
+    if (branchReference.getIsBranchUpGoing()) {
       return String.format(
           "%-2s up    %7.4f %7.4f %7.2f %7.2f %7.4f" + "          %c %c %c %2d %d\n",
-          phaseCode,
-          pRange[0],
-          pRange[1],
-          Math.toDegrees(xRange[0]),
-          Math.toDegrees(xRange[1]),
-          pCaustic,
-          ref.getCorrectionPhaseType()[0],
-          ref.getCorrectionPhaseType()[1],
-          ref.getCorrectionPhaseType()[2],
-          ref.getUpGoingCorrectionSign(),
-          ref.getNumMantleTraversals());
-    } else if (ref.getBranchHasDiffraction()) {
+          correctedPhaseCode,
+          correctedSlownessRange[0],
+          correctedSlownessRange[1],
+          Math.toDegrees(correctedDistanceRange[0]),
+          Math.toDegrees(correctedDistanceRange[1]),
+          correctedCausticSlowness,
+          branchReference.getCorrectionPhaseType()[0],
+          branchReference.getCorrectionPhaseType()[1],
+          branchReference.getCorrectionPhaseType()[2],
+          branchReference.getUpGoingCorrectionSign(),
+          branchReference.getNumMantleTraversals());
+    } else if (branchReference.getBranchHasDiffraction()) {
       return String.format(
           "%-8s %7.4f %7.4f %7.2f %7.2f %7.4f %7.2f" + "  %c %c %c %2d %d\n",
-          phaseCode,
-          pRange[0],
-          pRange[1],
-          Math.toDegrees(xRange[0]),
-          Math.toDegrees(xRange[1]),
-          pCaustic,
-          Math.toDegrees(ref.getMaxDiffractedDistance()),
-          ref.getCorrectionPhaseType()[0],
-          ref.getCorrectionPhaseType()[1],
-          ref.getCorrectionPhaseType()[2],
-          ref.getUpGoingCorrectionSign(),
-          ref.getNumMantleTraversals());
+          correctedPhaseCode,
+          correctedSlownessRange[0],
+          correctedSlownessRange[1],
+          Math.toDegrees(correctedDistanceRange[0]),
+          Math.toDegrees(correctedDistanceRange[1]),
+          correctedCausticSlowness,
+          Math.toDegrees(branchReference.getMaxDiffractedDistance()),
+          branchReference.getCorrectionPhaseType()[0],
+          branchReference.getCorrectionPhaseType()[1],
+          branchReference.getCorrectionPhaseType()[2],
+          branchReference.getUpGoingCorrectionSign(),
+          branchReference.getNumMantleTraversals());
     } else {
       return String.format(
           "%-8s %7.4f %7.4f %7.2f %7.2f %7.4f" + "          %c %c %c %2d %d\n",
-          phaseCode,
-          pRange[0],
-          pRange[1],
-          Math.toDegrees(xRange[0]),
-          Math.toDegrees(xRange[1]),
-          pCaustic,
-          ref.getCorrectionPhaseType()[0],
-          ref.getCorrectionPhaseType()[1],
-          ref.getCorrectionPhaseType()[2],
-          ref.getUpGoingCorrectionSign(),
-          ref.getNumMantleTraversals());
+          correctedPhaseCode,
+          correctedSlownessRange[0],
+          correctedSlownessRange[1],
+          Math.toDegrees(correctedDistanceRange[0]),
+          Math.toDegrees(correctedDistanceRange[1]),
+          correctedCausticSlowness,
+          branchReference.getCorrectionPhaseType()[0],
+          branchReference.getCorrectionPhaseType()[1],
+          branchReference.getCorrectionPhaseType()[2],
+          branchReference.getUpGoingCorrectionSign(),
+          branchReference.getNumMantleTraversals());
     }
   }
 }

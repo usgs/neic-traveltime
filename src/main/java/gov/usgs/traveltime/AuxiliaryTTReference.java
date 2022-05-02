@@ -910,10 +910,10 @@ public class AuxiliaryTTReference {
         System.out.format("   stats = %-8s", flags.getPhaseStatistics().phaseCode);
       }
 
-      if (flags.Ellipticity == null) {
+      if (flags.getEllipticityCorrections() == null) {
         System.out.print(" Ellipticity = null    ");
       } else {
-        System.out.format(" Ellipticity = %-8s", flags.Ellipticity.phaseCode);
+        System.out.format(" Ellipticity = %-8s", flags.getEllipticityCorrections().phaseCode);
       }
 
       if (flags.upEllipticity == null) {

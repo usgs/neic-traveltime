@@ -24,7 +24,7 @@ public class ModelTest {
     double sysTime;
     String earthModel = "ak135";
     MakeTables make;
-    AuxiliaryTTReference auxTT = null;
+    AuxiliaryTTReference auxTTReference = null;
     AllBranchReference allRef;
     TravelTimeStatus status;
 
@@ -39,8 +39,8 @@ public class ModelTest {
       // Build the branch reference classes.
       // NOTE assumes default model path for now, need to figure out
       // where to get this path. Cmd line arg?
-      auxTT = new AuxiliaryTTReference(true, false, false, null, null);
-      allRef = make.fillInBranchReferenceData(null, auxTT);
+      auxTTReference = new AuxiliaryTTReference(true, false, false, null, null);
+      allRef = make.fillInBranchReferenceData(null, auxTTReference);
 
       System.out.format(
           "\n***** Table generation time: %5.3f *****\n",

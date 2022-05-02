@@ -316,11 +316,11 @@ public class AllBranchVolume {
           for (int j = 0; j < branches.length; j++) {
             // If we only want useful phases and this one is useless, just
             // turn it off.
-            if (!returnAllPhases && branches[j].isUseless) {
-              branches[j].setCompute(false);
+            if (!returnAllPhases && branches[j].getIsPhaseUseless()) {
+              branches[j].setChouldComputeTT(false);
             } else {
               // Otherwise, we're good to go.
-              branches[j].setCompute(true);
+              branches[j].setChouldComputeTT(true);
             }
           }
         } else {
@@ -329,11 +329,11 @@ public class AllBranchVolume {
 
           for (int j = 0; j < branches.length; j++) {
             // See if this phase is selected (unless it's NEIC-useless).
-            if (returnAllPhases || !branches[j].isUseless) {
-              branches[j].setCompute(
+            if (returnAllPhases || !branches[j].getIsPhaseUseless()) {
+              branches[j].setChouldComputeTT(
                   isPhaseInList(allBranchReference.getSurfaceBranches()[j].getBranchPhaseCode()));
             } else {
-              branches[j].setCompute(false);
+              branches[j].setChouldComputeTT(false);
             }
           }
         }
@@ -343,22 +343,22 @@ public class AllBranchVolume {
         upgoingSBranch.newDepth(sourceFlatDepth);
 
         // To correct each branch we need a few depth dependent pieces.
-        char tagBrn;
+        char branchSuffix;
         double xMin =
             modelConversions.xNorm * Math.min(Math.max(2d * sourceDimensionalDepth, 2d), 25d);
         if (sourceDimensionalDepth <= modelConversions.zConrad) {
-          tagBrn = 'g';
+          branchSuffix = 'g';
         } else if (sourceDimensionalDepth <= modelConversions.zMoho) {
-          tagBrn = 'b';
+          branchSuffix = 'b';
         } else if (sourceDimensionalDepth <= modelConversions.zUpperMantle) {
-          tagBrn = 'n';
+          branchSuffix = 'n';
         } else {
-          tagBrn = ' ';
+          branchSuffix = ' ';
         }
 
         // Now correct each branch.
         for (int j = 0; j < branches.length; j++) {
-          branches[j].depthCorr(sourceFlatDepth, ttDepthDerivative, xMin, tagBrn);
+          branches[j].correctDepth(sourceFlatDepth, ttDepthDerivative, xMin, branchSuffix);
         }
 
         lastComputedDepth = depth;
@@ -540,7 +540,7 @@ public class AllBranchVolume {
     for (int j = 0; j < branches.length; j++) {
       // Loop over possible distances.
       for (int i = 0; i < 3; i++) {
-        branches[j].getTT(
+        branches[j].getTravelTimes(
             i, sourceRecieverDistances[i], sourceDimensionalDepth, returnAllPhases, ttList);
 
         // We have to add the phase statistics and other corrections at this level.
@@ -597,15 +597,18 @@ public class AllBranchVolume {
                           upGoing);
 
                   // The bounce point correction is not.  See if there is a bounce.
-                  if (branches[j].ref.getReflectionPhaseCode() != null) {
+                  if (branches[j].getBranchReference().getReflectionPhaseCode() != null) {
                     double reflectionCorrection = Double.NaN;
 
                     if (allBranchReference.getAuxTTData().getBouncePointTopography() != null) {
                       // If so, we may need to do some preliminary work.
                       String tmpCode;
-                      if (branches[j].ref.getReflectionPhaseCode().equals("SP")) {
+                      if (branches[j].getBranchReference().getReflectionPhaseCode().equals("SP")) {
                         tmpCode = "S";
-                      } else if (branches[j].ref.getReflectionPhaseCode().equals("PS")) {
+                      } else if (branches[j]
+                          .getBranchReference()
+                          .getReflectionPhaseCode()
+                          .equals("PS")) {
                         tmpCode =
                             TravelTime.phaseCode.substring(0, TravelTime.phaseCode.indexOf('S'));
                       } else {
@@ -635,7 +638,7 @@ public class AllBranchVolume {
                         reflectionCorrection =
                             reflectionCorrection(
                                 TravelTime.phaseCode,
-                                branches[j].ref,
+                                branches[j].getBranchReference(),
                                 sourceLatitude,
                                 sourceLongitude,
                                 receiverDistance,
@@ -647,7 +650,7 @@ public class AllBranchVolume {
                         reflectionCorrection =
                             reflectionCorrection(
                                 TravelTime.phaseCode,
-                                branches[j].ref,
+                                branches[j].getBranchReference(),
                                 sourceLatitude,
                                 sourceLongitude,
                                 retrogradeDistance,
@@ -742,7 +745,7 @@ public class AllBranchVolume {
       double recieverAzimuth,
       boolean isUpGoing) {
     // Do the interpolation.
-    if (flags.Ellipticity == null) {
+    if (flags.getEllipticityCorrections() == null) {
       return 0d;
     } else {
       // There's a special case for the Ellipticity of up-going P
@@ -752,8 +755,9 @@ public class AllBranchVolume {
             sourceLatitude, sourceDepth, recieverDistance, recieverAzimuth);
         // Otherwise, it's business as usual.
       } else {
-        return flags.Ellipticity.getEllipticityCorr(
-            sourceLatitude, sourceDepth, recieverDistance, recieverAzimuth);
+        return flags
+            .getEllipticityCorrections()
+            .getEllipticityCorr(sourceLatitude, sourceDepth, recieverDistance, recieverAzimuth);
       }
     }
   }
@@ -946,7 +950,7 @@ public class AllBranchVolume {
   /**
    * Function to compute the distance and travel-time for one surface focus ray.
    *
-   * <p>Note that the travel time is retrieved by the getTravelTimeCorrection() function
+   * <p>Note that the travel time is retrieved by the getCorrectedTravelTime() function
    *
    * @param phaseCode A string containing the phase code
    * @param rayParameter A double containing the desired ray parameter in seconds per degree
@@ -963,8 +967,8 @@ public class AllBranchVolume {
     }
 
     for (lastBranchIndex = 0; lastBranchIndex < branches.length; lastBranchIndex++) {
-      if (tmpCode.equals(branches[lastBranchIndex].phaseCode)) {
-        double tcorr = branches[lastBranchIndex].oneRay(rayParameter);
+      if (tmpCode.equals(branches[lastBranchIndex].getCorrectedPhaseCode())) {
+        double tcorr = branches[lastBranchIndex].computeOneRay(rayParameter);
 
         if (!Double.isNaN(tcorr)) {
           return tcorr;
@@ -980,7 +984,7 @@ public class AllBranchVolume {
    * by the source depth. This provides the distance needed to correct a down-going ray to surface
    * focus.
    *
-   * <p>Note that the travel time is retrieved by the getTravelTimeCorrection() function
+   * <p>Note that the travel time is retrieved by the getCorrectedTravelTime() function
    *
    * @param phaseCode A string containing the phase code
    * @param rayParameter A double containing the desired ray parameter in seconds per degree
@@ -1001,18 +1005,18 @@ public class AllBranchVolume {
     if (lastBranchIndex < 0) {
       return 0d;
     } else {
-      return branches[lastBranchIndex].oneRay(rayParameter);
+      return branches[lastBranchIndex].computeOneRay(rayParameter);
     }
   }
 
   /**
-   * Function to get the time correction computed by the last call to computeSurfaceRayDistance or
-   * computeUpRayCutoff.
+   * Function to get the corrected travel-time computed by the last call to
+   * computeSurfaceRayDistance or computeUpRayCutoff.
    *
-   * @return A double containing the travel-time correction in seconds
+   * @return A double containing the corrected travel-time in seconds
    */
-  public double getTravelTimeCorrection() {
-    return branches[lastBranchIndex].getTravelTimeCorrection();
+  public double getCorrectedTravelTime() {
+    return branches[lastBranchIndex].getCorrectedTravelTime();
   }
 
   /** Function to find the indices of the up-going P and S phases. */
@@ -1023,9 +1027,9 @@ public class AllBranchVolume {
 
     // Find the up-going P type branch.
     for (int j = 0; j < branches.length; j++) {
-      if (branches[j].exists
-          && branches[j].ref.getIsBranchUpGoing()
-          && branches[j].ref.getCorrectionPhaseType()[0] == 'P') {
+      if (branches[j].getCorrectedBranchExists()
+          && branches[j].getBranchReference().getIsBranchUpGoing()
+          && branches[j].getBranchReference().getCorrectionPhaseType()[0] == 'P') {
         lastUpgoingPBranchIndex = j;
         break;
       }
@@ -1033,9 +1037,9 @@ public class AllBranchVolume {
 
     // Find the up-going S type branch.
     for (int j = 0; j < branches.length; j++) {
-      if (branches[j].exists
-          && branches[j].ref.getIsBranchUpGoing()
-          && branches[j].ref.getCorrectionPhaseType()[0] == 'S') {
+      if (branches[j].getCorrectedBranchExists()
+          && branches[j].getBranchReference().getIsBranchUpGoing()
+          && branches[j].getBranchReference().getCorrectionPhaseType()[0] == 'S') {
         lastUpgoingSBranchIndex = j;
         break;
       }
@@ -1175,7 +1179,7 @@ public class AllBranchVolume {
       int count = 0;
 
       for (int j = 0; j < branches.length; j++) {
-        if (branches[j].getIsUseless() == false) {
+        if (branches[j].getIsPhaseUseless() == false) {
           count++;
         }
       }
@@ -1206,8 +1210,9 @@ public class AllBranchVolume {
    * @param all A boolean flag, If true print even more specifications
    * @param scientificNotation A boolean flag, if true, print in scientific notation
    */
-  public void dumpBrn(int branchIndex, boolean full, boolean all, boolean scientificNotation) {
-    branches[branchIndex].dumpBrn(full, all, scientificNotation, true, false);
+  public void dumpBranchInformation(
+      int branchIndex, boolean full, boolean all, boolean scientificNotation) {
+    branches[branchIndex].dumpBranchInformation(full, all, scientificNotation, true, false);
   }
 
   /**
@@ -1218,10 +1223,11 @@ public class AllBranchVolume {
    * @param all A boolean flag, If true print even more specifications
    * @param scientificNotation A boolean flag, if true, print in scientific notation
    */
-  public void dumpBrn(String phaseCode, boolean full, boolean all, boolean scientificNotation) {
+  public void dumpBranchInformation(
+      String phaseCode, boolean full, boolean all, boolean scientificNotation) {
     for (int j = 0; j < branches.length; j++) {
-      if (branches[j].phaseCode.equals(phaseCode)) {
-        branches[j].dumpBrn(full, all, scientificNotation, true, false);
+      if (branches[j].getCorrectedPhaseCode().equals(phaseCode)) {
+        branches[j].dumpBranchInformation(full, all, scientificNotation, true, false);
       }
     }
   }
@@ -1234,10 +1240,10 @@ public class AllBranchVolume {
    * @param scientificNotation A boolean flag, if true, print in scientific notation
    * @param returnAllPhases If false, only print "useful" crustal phases
    */
-  public void dumpBrn(
+  public void dumpBranchInformation(
       boolean full, boolean all, boolean scientificNotation, boolean returnAllPhases) {
     for (int j = 0; j < branches.length; j++) {
-      branches[j].dumpBrn(full, all, scientificNotation, returnAllPhases, false);
+      branches[j].dumpBranchInformation(full, all, scientificNotation, returnAllPhases, false);
     }
   }
 
@@ -1253,7 +1259,7 @@ public class AllBranchVolume {
   public void dumpCaustics(
       boolean full, boolean all, boolean scientificNotation, boolean returnAllPhases) {
     for (int j = 0; j < branches.length; j++) {
-      branches[j].dumpBrn(full, all, scientificNotation, returnAllPhases, true);
+      branches[j].dumpBranchInformation(full, all, scientificNotation, returnAllPhases, true);
     }
   }
 
@@ -1266,7 +1272,7 @@ public class AllBranchVolume {
    * @param scientificNotation A boolean flag, if true, print in scientific notation
    * @param returnAllPhases A boolean flag, if false, only print "useful" crustal phases
    */
-  public void dumpSeg(
+  public void dumpSegmentInformation(
       String segmentPhase,
       boolean full,
       boolean all,
@@ -1274,7 +1280,7 @@ public class AllBranchVolume {
       boolean returnAllPhases) {
     for (int j = 0; j < branches.length; j++) {
       if (branches[j].getGenericPhaseCode().equals(segmentPhase))
-        branches[j].dumpBrn(full, all, scientificNotation, returnAllPhases, false);
+        branches[j].dumpBranchInformation(full, all, scientificNotation, returnAllPhases, false);
     }
   }
 

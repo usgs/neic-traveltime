@@ -329,11 +329,12 @@ public class TravelTimeLocalSession {
    *
    * @param full If true, print the detailed branch specification as well
    * @param all If true print even more specifications
-   * @param sci if true, print in scientific notation
+   * @param scientificNotation if true, print in scientific notation
    * @param returnAllPhases If false, only print "useful" crustal phases
    */
-  public void printBranches(boolean full, boolean all, boolean sci, boolean returnAllPhases) {
-    allBrn.dumpBrn(full, all, sci, returnAllPhases);
+  public void printBranches(
+      boolean full, boolean all, boolean scientificNotation, boolean returnAllPhases) {
+    allBrn.dumpBranchInformation(full, all, scientificNotation, returnAllPhases);
   }
 
   /**
@@ -341,11 +342,12 @@ public class TravelTimeLocalSession {
    *
    * @param full If true, print the detailed branch specification as well
    * @param all If true print even more specifications
-   * @param sci if true, print in scientific notation
+   * @param scientificNotation if true, print in scientific notation
    * @param returnAllPhases If false, only print "useful" crustal phases
    */
-  public void printCaustics(boolean full, boolean all, boolean sci, boolean returnAllPhases) {
-    allBrn.dumpCaustics(full, all, sci, returnAllPhases);
+  public void printCaustics(
+      boolean full, boolean all, boolean scientificNotation, boolean returnAllPhases) {
+    allBrn.dumpCaustics(full, all, scientificNotation, returnAllPhases);
   }
 
   /**

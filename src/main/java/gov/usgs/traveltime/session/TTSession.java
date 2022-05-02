@@ -23,7 +23,7 @@ import java.util.TreeMap;
 
 /** @author U.S. Geological Survey &lt;ketchum at usgs.gov&gt; */
 public class TTSession {
-  private static AuxiliaryTTReference auxtt;
+  private static AuxiliaryTTReference auxTTReference;
   private static final TreeMap<String, AllBranchReference> modelData =
       new TreeMap<String, AllBranchReference>();
   // private static final TreeMap<String, ArrayList<AllBranchVolume>> modelAllBranchVolumeFree = new
@@ -212,11 +212,11 @@ public class TTSession {
 
     try {
       // Read in data common to all models.
-      if (auxtt == null) {
+      if (auxTTReference == null) {
         // prta(ttag + " create AuxiliaryTTReference ");
         // NOTE assumes default model path for now, need to figure out
         // where to get this path. Cmd line arg?
-        auxtt = new AuxiliaryTTReference(true, true, true, null, null);
+        auxTTReference = new AuxiliaryTTReference(true, true, true, null, null);
       }
 
       // See if we know this model.
@@ -236,7 +236,7 @@ public class TTSession {
               //	readTau.dumpBranches();
               readTau.readTable(TauUtilities.model(fileNames[1]));
               //	readTau.dumpUp(15);
-              allRef = new AllBranchReference(serName, readTau, auxtt);
+              allRef = new AllBranchReference(serName, readTau, auxTTReference);
             } catch (IOException e) {
               e.printStackTrace(getPrintStream());
               throw e;
@@ -247,7 +247,7 @@ public class TTSession {
               // prta(ttag + " Need to generate model=" + earthModel);
               MakeTables make = new MakeTables(earthModel);
               make.buildModel(fileNames[0], fileNames[1]);
-              allRef = make.fillInBranchReferenceData(serName, auxtt);
+              allRef = make.fillInBranchReferenceData(serName, auxTTReference);
             } catch (Exception e) {
               e.printStackTrace(getPrintStream());
               throw e;
@@ -257,7 +257,7 @@ public class TTSession {
           // We can just read the model from the serialized files.
           try {
             // prta(ttag + " Serialize model in =" + earthModel);
-            allRef = new AllBranchReference(serName, earthModel, auxtt);
+            allRef = new AllBranchReference(serName, earthModel, auxTTReference);
           } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace(getPrintStream());
             throw e;
@@ -490,7 +490,7 @@ public class TTSession {
    * @return Travel-time auxiliary information
    */
   public AuxiliaryTTReference getAuxTT() {
-    return auxtt;
+    return auxTTReference;
   }
 
   /** close this session which also frees the AllBranchVolume in use */

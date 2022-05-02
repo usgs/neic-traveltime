@@ -41,8 +41,8 @@ public class AllBranchReference {
   /** A ModelConversions object containing model dependent constants and conversions */
   private final ModelConversions modelConversions;
 
-  /** A AuxiliaryTTReference object holding the model independent auxiliary data */
-  private final AuxiliaryTTReference auxTTData;
+  /** A AuxiliaryTTReference object holding the model independent travel time auxiliary data */
+  private final AuxiliaryTTReference auxTTReference;
 
   /**
    * Function to return the model name
@@ -81,7 +81,7 @@ public class AllBranchReference {
   }
 
   /**
-   * Get tthe surface focus branch data
+   * Get the surface focus branch data
    *
    * @return An array of BranchDataReference objects containing the surface focus branch data
    */
@@ -113,7 +113,7 @@ public class AllBranchReference {
    * @return A AuxiliaryTTReference object holding the model independent auxiliary data
    */
   public AuxiliaryTTReference getAuxTTData() {
-    return auxTTData;
+    return auxTTReference;
   }
 
   /**
@@ -124,15 +124,18 @@ public class AllBranchReference {
    *     file
    * @param travelTimeInformation A ReadTau object containing the travel-time header and table
    *     information read from the legacy FORTRAN generated format
-   * @param auxTTData An AuxiliaryTTReference object holding the model independent auxiliary data
+   * @param auxTTReference An AuxiliaryTTReference object holding the model independent auxiliary
+   *     data
    * @throws IOException If serialization file write fails
    */
   public AllBranchReference(
-      String serializationFileName, ReadTau travelTimeInformation, AuxiliaryTTReference auxTTData)
+      String serializationFileName,
+      ReadTau travelTimeInformation,
+      AuxiliaryTTReference auxTTReference)
       throws IOException {
     // Remember the input data.
     this.earthModelName = travelTimeInformation.modelName;
-    this.auxTTData = auxTTData;
+    this.auxTTReference = auxTTReference;
 
     // Set up the conversion constants, etc.
     modelConversions = new ModelConversions(travelTimeInformation);
@@ -159,7 +162,7 @@ public class AllBranchReference {
 
     // Load the branch data.
     surfaceBranches = new BranchDataReference[travelTimeInformation.numBrn];
-    ExtraPhases extra = new ExtraPhases(auxTTData);
+    ExtraPhases extra = new ExtraPhases(auxTTReference);
     i = -1;
     endSegmentIndex = 0;
 
@@ -172,7 +175,8 @@ public class AllBranchReference {
 
       // Load the branch data.
       surfaceBranches[j] =
-          new BranchDataReference(travelTimeInformation, j, i, segmentCodes[i], extra, auxTTData);
+          new BranchDataReference(
+              travelTimeInformation, j, i, segmentCodes[i], extra, auxTTReference);
     }
 
     // Set up the up-going branch data.
@@ -197,19 +201,20 @@ public class AllBranchReference {
    *     model
    * @param branchData An ArrayList of BranchData objects holding the travel-time table generation
    *     branch data
-   * @param auxTTData An AuxiliaryTTReference object holding the model independent auxiliary data
+   * @param auxTTReference An AuxiliaryTTReference object holding the model independent auxiliary
+   *     data
    * @throws IOException If serialization file write fails
    */
   public AllBranchReference(
       String serializationFileName,
       TauModel finalTauModel,
       ArrayList<BranchData> branchData,
-      AuxiliaryTTReference auxTTData)
+      AuxiliaryTTReference auxTTReference)
       throws IOException {
 
     // Remember the input data.
     this.earthModelName = finalTauModel.getReferenceEarthModelName();
-    this.auxTTData = auxTTData;
+    this.auxTTReference = auxTTReference;
 
     // Set up the conversion constants, etc.
     modelConversions = finalTauModel.getModelConversions();
@@ -220,11 +225,11 @@ public class AllBranchReference {
 
     // Load the branch data.
     surfaceBranches = new BranchDataReference[branchData.size()];
-    ExtraPhases extra = new ExtraPhases(auxTTData);
+    ExtraPhases extra = new ExtraPhases(auxTTReference);
 
     // Loop over surfaceBranches setting them up.
     for (int j = 0; j < surfaceBranches.length; j++) {
-      surfaceBranches[j] = new BranchDataReference(branchData.get(j), j, extra, auxTTData);
+      surfaceBranches[j] = new BranchDataReference(branchData.get(j), j, extra, auxTTReference);
     }
 
     // Set up the up-going branch data.
@@ -248,11 +253,11 @@ public class AllBranchReference {
    * @throws ClassNotFoundException Serialization object mismatch
    */
   public AllBranchReference(
-      String serializationFileName, String earthModelName, AuxiliaryTTReference auxTTData)
+      String serializationFileName, String earthModelName, AuxiliaryTTReference auxTTReference)
       throws IOException, ClassNotFoundException {
     // Remember the input data.
     this.earthModelName = earthModelName;
-    this.auxTTData = auxTTData;
+    this.auxTTReference = auxTTReference;
 
     // Read the model.
     FileInputStream serIn = new FileInputStream(serializationFileName);

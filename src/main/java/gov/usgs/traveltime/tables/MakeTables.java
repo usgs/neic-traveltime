@@ -197,14 +197,13 @@ public class MakeTables {
    * generation.
    *
    * @param modelSerializationFile A string containing the name of the model serialization file
-   * @param AuxTravelTimeData An AuxiliaryTTReference object containing the auxiliary travel-time
-   *     data
+   * @param auxTTReference An AuxiliaryTTReference object containing the auxiliary travel-time data
    * @return An AllBrnRef object containing the the reference data for all branches
    * @throws IOException If the writing of the serialization fails
    */
   public AllBranchReference fillInBranchReferenceData(
-      String modelSerializationFile, AuxiliaryTTReference AuxTravelTimeData) throws IOException {
+      String modelSerializationFile, AuxiliaryTTReference auxTTReference) throws IOException {
     return new AllBranchReference(
-        modelSerializationFile, finalTTModel, branchDataTables, AuxTravelTimeData);
+        modelSerializationFile, finalTTModel, branchDataTables, auxTTReference);
   }
 }
