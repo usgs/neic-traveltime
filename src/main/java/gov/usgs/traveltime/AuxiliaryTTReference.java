@@ -194,7 +194,7 @@ public class AuxiliaryTTReference {
       fileReader = new Scanner(inEllipticity);
       ellipticityCorrections = new TreeMap<String, Ellipticity>();
       EllipticityDepths ellipticityDepths = new EllipticityDepths();
-      numEllipticityDepths = ellipticityDepths.EllipticityDepths.length;
+      numEllipticityDepths = ellipticityDepths.getEllipticityDepths().length;
 
       do {
         ellipticityCorrection = readOneEllipticityData();
