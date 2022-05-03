@@ -3,8 +3,8 @@ package gov.usgs.traveltime;
 import java.io.Serializable;
 
 /**
- * The EllipticityDepths containis a virtual array of ellipticity correction sample depths. In this
- * case the virtual array maps to a physical array.
+ * The EllipticityDepths class contains a virtual array of ellipticity correction sample depths. In
+ * this case the virtual array maps to a physical array.
  *
  * @author Ray Buland
  */
@@ -28,6 +28,7 @@ public class EllipticityDepths implements GeneralizedIndex, Serializable {
    * Function to return a depth index given a depth. Note this function overrides the getIndex()
    * function from GeneralizedIndex
    *
+   * @param depth A double containing the desired depth in kilometers
    * @return An integer containing the depth index
    */
   @Override
@@ -48,6 +49,7 @@ public class EllipticityDepths implements GeneralizedIndex, Serializable {
    * Function to return the depth given a depth index. Note this function overrides the getValue()
    * function from GeneralizedIndex
    *
+   * @param index An integer containing the depth index
    * @return A double ccontaining the depth in kilometers
    */
   @Override
