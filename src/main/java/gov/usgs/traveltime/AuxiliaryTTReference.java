@@ -198,7 +198,7 @@ public class AuxiliaryTTReference {
 
       do {
         ellipticityCorrection = readOneEllipticityData();
-        ellipticityCorrections.put(ellipticityCorrection.phaseCode, ellipticityCorrection);
+        ellipticityCorrections.put(ellipticityCorrection.getPhaseCode(), ellipticityCorrection);
       } while (fileReader.hasNext());
       inEllipticity.close();
 
@@ -913,13 +913,13 @@ public class AuxiliaryTTReference {
       if (flags.getEllipticityCorrections() == null) {
         System.out.print(" Ellipticity = null    ");
       } else {
-        System.out.format(" Ellipticity = %-8s", flags.getEllipticityCorrections().phaseCode);
+        System.out.format(" Ellipticity = %-8s", flags.getEllipticityCorrections().getPhaseCode());
       }
 
       if (flags.upEllipticity == null) {
         System.out.println(" upEllipticityCorrection = null");
       } else {
-        System.out.format(" upEllipticityCorrection = %-8s\n", flags.upEllipticity.phaseCode);
+        System.out.format(" upEllipticityCorrection = %-8s\n", flags.upEllipticity.getPhaseCode());
       }
     }
   }

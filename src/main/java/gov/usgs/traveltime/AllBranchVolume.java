@@ -751,13 +751,14 @@ public class AllBranchVolume {
       // There's a special case for the Ellipticity of up-going P
       // and S waves.
       if (isUpGoing) {
-        return flags.upEllipticity.getEllipticityCorr(
+        return flags.upEllipticity.getEllipticityCorrection(
             sourceLatitude, sourceDepth, recieverDistance, recieverAzimuth);
         // Otherwise, it's business as usual.
       } else {
         return flags
             .getEllipticityCorrections()
-            .getEllipticityCorr(sourceLatitude, sourceDepth, recieverDistance, recieverAzimuth);
+            .getEllipticityCorrection(
+                sourceLatitude, sourceDepth, recieverDistance, recieverAzimuth);
       }
     }
   }
