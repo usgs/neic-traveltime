@@ -406,7 +406,7 @@ public class BranchDataReference implements Serializable {
     // Set up diffracted and add-on phases.
     if (!isBranchUpGoing) {
       branchHasDiffraction = extraPhaseList.branchHasDiffraction(branchPhaseCode);
-      branchHasAddOn = extraPhaseList.branchHasAddOn(branchPhaseCode, distanceRange[1]);
+      branchHasAddOn = extraPhaseList.createAddOnPhase(branchPhaseCode, distanceRange[1]);
     } else {
       branchHasDiffraction = false;
       branchHasAddOn = false;
@@ -414,8 +414,8 @@ public class BranchDataReference implements Serializable {
 
     // Handle a diffracted branch.
     if (branchHasDiffraction) {
-      diffractedPhaseCode = extraPhaseList.getPhDiff();
-      maxDiffractedDistance = extraPhaseList.getPhLim();
+      diffractedPhaseCode = extraPhaseList.getDiffractedPhaseCode();
+      maxDiffractedDistance = extraPhaseList.getDiffractedPhaseLimit();
     } else {
       diffractedPhaseCode = "";
       maxDiffractedDistance = 0d;
@@ -423,7 +423,7 @@ public class BranchDataReference implements Serializable {
 
     // Handle an add-on phase.
     if (branchHasAddOn) {
-      addOnPhaseCode = extraPhaseList.getPhAddOn();
+      addOnPhaseCode = extraPhaseList.getAddOnPhaseCode();
       // Add-on flags can be different than the base phase.
     } else {
       addOnPhaseCode = "";
@@ -554,7 +554,7 @@ public class BranchDataReference implements Serializable {
     // Set up diffracted and add-on phases.
     if (!isBranchUpGoing) {
       branchHasDiffraction = extraPhaseList.branchHasDiffraction(branchPhaseCode);
-      branchHasAddOn = extraPhaseList.branchHasAddOn(branchPhaseCode, distanceRange[1]);
+      branchHasAddOn = extraPhaseList.createAddOnPhase(branchPhaseCode, distanceRange[1]);
     } else {
       branchHasDiffraction = false;
       branchHasAddOn = false;
@@ -562,8 +562,8 @@ public class BranchDataReference implements Serializable {
 
     // Handle a diffracted branch.
     if (branchHasDiffraction) {
-      diffractedPhaseCode = extraPhaseList.getPhDiff();
-      maxDiffractedDistance = extraPhaseList.getPhLim();
+      diffractedPhaseCode = extraPhaseList.getDiffractedPhaseCode();
+      maxDiffractedDistance = extraPhaseList.getDiffractedPhaseLimit();
     } else {
       diffractedPhaseCode = "";
       maxDiffractedDistance = 0d;
@@ -571,7 +571,7 @@ public class BranchDataReference implements Serializable {
 
     // Handle an add-on phase.
     if (branchHasAddOn) {
-      addOnPhaseCode = extraPhaseList.getPhAddOn();
+      addOnPhaseCode = extraPhaseList.getAddOnPhaseCode();
       // Add-on flags can be different than the base phase.
     } else {
       addOnPhaseCode = "";
