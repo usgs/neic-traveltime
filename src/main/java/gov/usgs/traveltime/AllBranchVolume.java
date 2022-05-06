@@ -1216,9 +1216,9 @@ public class AllBranchVolume {
    */
   public void dumpMod(char waveType, boolean nice) {
     if (waveType == 'P') {
-      allBranchReference.getEarthModelP().dumpMod(nice);
+      allBranchReference.getEarthModelP().dumpModel(nice);
     } else if (waveType == 'S') {
-      allBranchReference.getEarthModelS().dumpMod(nice);
+      allBranchReference.getEarthModelS().dumpModel(nice);
     }
   }
 

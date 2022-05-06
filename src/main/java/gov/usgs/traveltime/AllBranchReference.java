@@ -377,9 +377,9 @@ public class AllBranchReference {
    */
   public void dumpModelParams(char waveType, boolean nice) {
     if (waveType == 'P') {
-      earthModelP.dumpMod(nice);
+      earthModelP.dumpModel(nice);
     } else if (waveType == 'S') {
-      earthModels.dumpMod(nice);
+      earthModels.dumpModel(nice);
     }
   }
 

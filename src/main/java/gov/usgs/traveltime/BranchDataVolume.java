@@ -212,11 +212,14 @@ public class BranchDataVolume {
    * Set up volatile copies of data that changes with depth
    *
    * @param A BranchDataReference object containing the branch data reference object
-   * @param upgoingPBranch The corrected P up-going branch source
-   * @param upgoingSBranch The corrected S up-going branch source
-   * @param modelConversions The conversion factor object
-   * @param auxTTReference Auxiliary travel-time data
-   * @param splineRoutines The splineRoutines object
+   * @param upgoingPBranch An UpGoingDataVolume object holding the corrected P up-going branch
+   *     source
+   * @param upgoingSBranch An UpGoingDataVolume object holding the corrected S up-going branch
+   *     source
+   * @param modelConversions A ModelConversions object holding the model conversion factors and
+   *     functions
+   * @param auxTTReference An AuxiliaryTTReference containing the auxiliary travel-time data
+   * @param splineRoutines A Spline object containing the spline routines
    */
   public BranchDataVolume(
       BranchDataReference branchReference,

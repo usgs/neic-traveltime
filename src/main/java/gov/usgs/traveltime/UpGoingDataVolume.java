@@ -96,7 +96,7 @@ public class UpGoingDataVolume {
     // If the source is at the surface, we're already done.
     if (-zSource <= TauUtilities.DTOL) return;
     // Otherwise, copy the desired data into temporary storage.
-    iUp = modPri.ref.indexUp[iSrc];
+    iUp = modPri.ref.getUpGoingIndexes()[iSrc];
     //	System.out.println("\t\t\tiUp = "+iUp);
     pUp = Arrays.copyOf(ref.pTauUp, ref.tauUp[iUp].length);
     tauUp = Arrays.copyOf(ref.tauUp[iUp], pUp.length);
@@ -109,8 +109,8 @@ public class UpGoingDataVolume {
     pMax = Math.min(pMax, pSource);
     // Correct the up-going tau values to the exact source depth.
     /*	System.out.println("Partial integrals: "+(float)pSource+" - "+
-    (float)modPri.ref.pMod[iSrc]+"  "+(float)zSource+" - "+
-    (float)modPri.ref.zMod[iSrc]); */
+    (float)modPri.ref.getModelSlownesses()[iSrc]+"  "+(float)zSource+" - "+
+    (float)modPri.ref.getModelDepths()[iSrc]); */
     i = 0;
     for (int j = 0; j < tauUp.length; j++) {
       if (ref.pTauUp[j] <= pMax) {
@@ -119,7 +119,11 @@ public class UpGoingDataVolume {
           //				(float)ref.pTauUp[j]+" "+(float)tauUp[j]);
           tauUp[j] -=
               intPri.integrateLayer(
-                  ref.pTauUp[j], pSource, modPri.ref.pMod[iSrc], zSource, modPri.ref.zMod[iSrc]);
+                  ref.pTauUp[j],
+                  pSource,
+                  modPri.ref.getModelSlownesses()[iSrc],
+                  zSource,
+                  modPri.ref.getModelDepths()[iSrc]);
           //		System.out.println("     tau (after): "+(float)tauUp[j]+" "+
           //				(float)ref.pXUp[i]);
 

@@ -40,28 +40,29 @@ public class ModelDataVolume {
    */
   public double findP(double z) throws BadDepthException {
     // Search the model to bracket the source depth.
-    for (iSource = 0; iSource < ref.indexUp.length; iSource++) {
-      if (ref.zMod[iSource] <= z) break;
+    for (iSource = 0; iSource < ref.getUpGoingIndexes().length; iSource++) {
+      if (ref.getModelDepths()[iSource] <= z) break;
     }
     // If we went off the end of the model, throw and exception.
-    if (iSource >= ref.indexUp.length) {
+    if (iSource >= ref.getUpGoingIndexes().length) {
       System.out.println("findP: source depth is too deep");
       throw new BadDepthException(String.format("%3.1f km", cvt.computeDimensionalDepth(z)));
     }
     zFound = z;
     pMax = Double.NaN;
     // If we're on a grid point, return that.
-    if (Math.abs(z - ref.zMod[iSource]) <= TauUtilities.DTOL) {
+    if (Math.abs(z - ref.getModelDepths()[iSource]) <= TauUtilities.DTOL) {
       onModelGrid = true;
-      pFound = ref.pMod[iSource];
+      pFound = ref.getModelSlownesses()[iSource];
     }
     // Otherwise interpolate to find the correct slowness.
     else {
       pFound =
-          ref.pMod[iSource - 1]
-              + (ref.pMod[iSource] - ref.pMod[iSource - 1])
-                  * (Math.exp(z - ref.zMod[iSource - 1]) - 1d)
-                  / (Math.exp(ref.zMod[iSource] - ref.zMod[iSource - 1]) - 1d);
+          ref.getModelSlownesses()[iSource - 1]
+              + (ref.getModelSlownesses()[iSource] - ref.getModelSlownesses()[iSource - 1])
+                  * (Math.exp(z - ref.getModelDepths()[iSource - 1]) - 1d)
+                  / (Math.exp(ref.getModelDepths()[iSource] - ref.getModelDepths()[iSource - 1])
+                      - 1d);
       onModelGrid = false;
     }
     return pFound;
@@ -78,43 +79,49 @@ public class ModelDataVolume {
   public double findZ(double p, boolean first) throws BadDepthException {
     // Search the model to bracket the source depth.
     if (first) {
-      if (p > ref.pMod[0]) {
+      if (p > ref.getModelSlownesses()[0]) {
         throw new BadDepthException(
-            String.format("< %3.1f km", cvt.computeDimensionalDepth(ref.zMod[0])));
+            String.format("< %3.1f km", cvt.computeDimensionalDepth(ref.getModelDepths()[0])));
       }
-      for (iSource = 0; iSource < ref.indexUp.length; iSource++) {
-        if (ref.pMod[iSource] <= p) break;
+      for (iSource = 0; iSource < ref.getUpGoingIndexes().length; iSource++) {
+        if (ref.getModelSlownesses()[iSource] <= p) break;
       }
     } else {
-      for (iSource = ref.indexUp.length - 1; iSource >= 0; iSource--) {
-        if (ref.pMod[iSource] >= p) {
-          if (Math.abs(ref.pMod[iSource] - p) <= TauUtilities.DTOL) iSource++;
+      for (iSource = ref.getUpGoingIndexes().length - 1; iSource >= 0; iSource--) {
+        if (ref.getModelSlownesses()[iSource] >= p) {
+          if (Math.abs(ref.getModelSlownesses()[iSource] - p) <= TauUtilities.DTOL) iSource++;
           break;
         }
       }
     }
     // If we went off the end of the model, throw and exception.
-    if (iSource >= ref.indexUp.length || iSource < 0) {
+    if (iSource >= ref.getUpGoingIndexes().length || iSource < 0) {
       System.out.println("findZ: source depth not found.");
       throw new BadDepthException(
           String.format(
-              "> %f3.1f km", cvt.computeDimensionalDepth(ref.zMod[ref.indexUp.length - 1])));
+              "> %f3.1f km",
+              cvt.computeDimensionalDepth(
+                  ref.getModelDepths()[ref.getUpGoingIndexes().length - 1])));
     }
     pFound = p;
     // If we're on a grid point, return that.
-    if (Math.abs(p - ref.pMod[iSource]) <= TauUtilities.DTOL) {
-      zFound = ref.zMod[iSource];
+    if (Math.abs(p - ref.getModelSlownesses()[iSource]) <= TauUtilities.DTOL) {
+      zFound = ref.getModelDepths()[iSource];
       onModelGrid = true;
     }
     // Otherwise interpolate to find the correct slowness.
     else {
       zFound =
-          ref.zMod[iSource - 1]
+          ref.getModelDepths()[iSource - 1]
               + Math.log(
                   Math.max(
-                      (p - ref.pMod[iSource - 1])
-                              * (Math.exp(ref.zMod[iSource] - ref.zMod[iSource - 1]) - 1d)
-                              / (ref.pMod[iSource] - ref.pMod[iSource - 1])
+                      (p - ref.getModelSlownesses()[iSource - 1])
+                              * (Math.exp(
+                                      ref.getModelDepths()[iSource]
+                                          - ref.getModelDepths()[iSource - 1])
+                                  - 1d)
+                              / (ref.getModelSlownesses()[iSource]
+                                  - ref.getModelSlownesses()[iSource - 1])
                           + 1d,
                       TauUtilities.DMIN));
       onModelGrid = false;
@@ -132,7 +139,7 @@ public class ModelDataVolume {
   public double findMaxP() {
     pMax = pFound;
     for (int j = 0; j < iSource; j++) {
-      pMax = Math.min(pMax, ref.pMod[j]);
+      pMax = Math.min(pMax, ref.getModelSlownesses()[j]);
     }
     return pMax;
   }
@@ -153,7 +160,7 @@ public class ModelDataVolume {
    * @return Non-dimensional Earth flattened depth
    */
   public double getDepth(int j) {
-    return ref.zMod[j];
+    return ref.getModelDepths()[j];
   }
 
   /**
@@ -163,7 +170,7 @@ public class ModelDataVolume {
    * @return Non-dimensional model slowness
    */
   public double getP(int j) {
-    return ref.pMod[j];
+    return ref.getModelSlownesses()[j];
   }
 
   /**
@@ -176,7 +183,7 @@ public class ModelDataVolume {
       if (Double.isNaN(pMax)) {
         System.out.format(
             "\nFind: type = %c  isource = %d  z = %5.1f  " + "v = %4.1f  onGrid = %b\n",
-            ref.typeMod,
+            ref.getWaveType(),
             iSource,
             cvt.computeDimensionalDepth(zFound),
             cvt.computeDimensionalVelocity(pFound, zFound),
@@ -185,7 +192,7 @@ public class ModelDataVolume {
         System.out.format(
             "\nFind: type = %c  isource = %d  z = %5.1f  "
                 + "v = %4.1f  vMax = %4.1f  onGrid = %b\n",
-            ref.typeMod,
+            ref.getWaveType(),
             iSource,
             cvt.computeDimensionalDepth(zFound),
             cvt.computeDimensionalVelocity(pFound, zFound),
@@ -196,12 +203,12 @@ public class ModelDataVolume {
       if (Double.isNaN(pMax)) {
         System.out.format(
             "\nFind: type = %c  isource = %d  z = %9.6f  " + "p = %8.6f  onGrid = %b\n",
-            ref.typeMod, iSource, zFound, pFound, onModelGrid);
+            ref.getWaveType(), iSource, zFound, pFound, onModelGrid);
       } else {
         System.out.format(
             "\nFind: type = %c  isource = %d  z = %9.6f  "
                 + "p = %8.6f  pMax = %8.6f  onGrid = %b\n",
-            ref.typeMod, iSource, zFound, pFound, pMax, onModelGrid);
+            ref.getWaveType(), iSource, zFound, pFound, pMax, onModelGrid);
       }
     }
   }
