@@ -67,7 +67,9 @@ public class Integrate {
     tauFinalModel.putSlowness(slowness);
     tauFinalModel.putShells('P', tauDepthModel.getShellModelP());
     tauFinalModel.putShells('S', tauDepthModel.getShellModelS());
-    maximumDepth = modelConversions.flatZ(modelConversions.rSurface - TauUtilities.MAXDEPTH);
+    maximumDepth =
+        modelConversions.computeFlatDepth(
+            modelConversions.getSurfaceRadius() - TauUtilities.MAXDEPTH);
     outerCoreDepth = referenceModel.getOuterCoreModel().getDepth();
     innerCoreDepth = referenceModel.getInnerCoreModel().getDepth();
 

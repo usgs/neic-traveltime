@@ -112,19 +112,26 @@ public class ModelDataReference implements Serializable {
         modelString +=
             String.format(
                 "%3d: %6.1f  %5.2f  %3d\n",
-                j, cvt.realZ(zMod[j]), cvt.realV(pMod[j], zMod[j]), indexUp[j]);
+                j,
+                cvt.computeDimensionalDepth(zMod[j]),
+                cvt.computeDimensionalVelocity(pMod[j], zMod[j]),
+                indexUp[j]);
       }
 
       for (int j = indexUp.length; j < pMod.length - 1; j++) {
         modelString +=
             String.format(
-                "%3d: %6.1f  %5.2f\n", j, cvt.realZ(zMod[j]), cvt.realV(pMod[j], zMod[j]));
+                "%3d: %6.1f  %5.2f\n",
+                j,
+                cvt.computeDimensionalDepth(zMod[j]),
+                cvt.computeDimensionalVelocity(pMod[j], zMod[j]));
       }
 
       modelString +=
           String.format(
               "%3d: center  %5.2f\n",
-              pMod.length - 1, cvt.realV(pMod[pMod.length - 1], zMod[zMod.length - 1]));
+              pMod.length - 1,
+              cvt.computeDimensionalVelocity(pMod[pMod.length - 1], zMod[zMod.length - 1]));
     } else {
       modelString += "\n          Z         p     index";
 

@@ -279,15 +279,16 @@ public class BranchIntegrals {
     System.out.format("\n\tProxy Ranges for %c\n", modelType);
     System.out.println("    slowness      X       delX");
     System.out.format(
-        "%3d %8.6f %8.2f\n", 0, proxyRayParameters[0], modelConversions.dimR(proxyRanges[0]));
+        "%3d %8.6f %8.2f\n",
+        0, proxyRayParameters[0], modelConversions.convertDimensionalRadius(proxyRanges[0]));
 
     for (int j = 1; j < proxyRanges.length; j++) {
       System.out.format(
           "%3d %8.6f %8.2f %8.2f\n",
           j,
           proxyRayParameters[j],
-          modelConversions.dimR(proxyRanges[j]),
-          modelConversions.dimR(proxyRanges[j] - proxyRanges[j - 1]));
+          modelConversions.convertDimensionalRadius(proxyRanges[j]),
+          modelConversions.convertDimensionalRadius(proxyRanges[j] - proxyRanges[j - 1]));
     }
   }
 

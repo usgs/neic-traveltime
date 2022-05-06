@@ -127,7 +127,7 @@ public class UpGoingDataReference implements Serializable {
     for (int rec = 0; rec < tauUp.length; rec++) {
       System.out.format(
           "\n     Up-going %c record %2d at depth %6.2f\n",
-          typeUp, rec, convert.realZ(model.getDepth(rec)));
+          typeUp, rec, convert.computeDimensionalDepth(model.getDepth(rec)));
       System.out.println("          p        tau        p           X");
       for (int k = 0; k < xUp[rec].length; k++) {
         System.out.format(

@@ -46,7 +46,7 @@ public class ModelDataVolume {
     // If we went off the end of the model, throw and exception.
     if (iSource >= ref.indexUp.length) {
       System.out.println("findP: source depth is too deep");
-      throw new BadDepthException(String.format("%3.1f km", cvt.realZ(z)));
+      throw new BadDepthException(String.format("%3.1f km", cvt.computeDimensionalDepth(z)));
     }
     zFound = z;
     pMax = Double.NaN;
@@ -79,7 +79,8 @@ public class ModelDataVolume {
     // Search the model to bracket the source depth.
     if (first) {
       if (p > ref.pMod[0]) {
-        throw new BadDepthException(String.format("< %3.1f km", cvt.realZ(ref.zMod[0])));
+        throw new BadDepthException(
+            String.format("< %3.1f km", cvt.computeDimensionalDepth(ref.zMod[0])));
       }
       for (iSource = 0; iSource < ref.indexUp.length; iSource++) {
         if (ref.pMod[iSource] <= p) break;
@@ -96,7 +97,8 @@ public class ModelDataVolume {
     if (iSource >= ref.indexUp.length || iSource < 0) {
       System.out.println("findZ: source depth not found.");
       throw new BadDepthException(
-          String.format("> %f3.1f km", cvt.realZ(ref.zMod[ref.indexUp.length - 1])));
+          String.format(
+              "> %f3.1f km", cvt.computeDimensionalDepth(ref.zMod[ref.indexUp.length - 1])));
     }
     pFound = p;
     // If we're on a grid point, return that.
@@ -174,16 +176,20 @@ public class ModelDataVolume {
       if (Double.isNaN(pMax)) {
         System.out.format(
             "\nFind: type = %c  isource = %d  z = %5.1f  " + "v = %4.1f  onGrid = %b\n",
-            ref.typeMod, iSource, cvt.realZ(zFound), cvt.realV(pFound, zFound), onModelGrid);
+            ref.typeMod,
+            iSource,
+            cvt.computeDimensionalDepth(zFound),
+            cvt.computeDimensionalVelocity(pFound, zFound),
+            onModelGrid);
       } else {
         System.out.format(
             "\nFind: type = %c  isource = %d  z = %5.1f  "
                 + "v = %4.1f  vMax = %4.1f  onGrid = %b\n",
             ref.typeMod,
             iSource,
-            cvt.realZ(zFound),
-            cvt.realV(pFound, zFound),
-            cvt.realV(pMax, zFound),
+            cvt.computeDimensionalDepth(zFound),
+            cvt.computeDimensionalVelocity(pFound, zFound),
+            cvt.computeDimensionalVelocity(pMax, zFound),
             onModelGrid);
       }
     } else {

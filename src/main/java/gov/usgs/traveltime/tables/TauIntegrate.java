@@ -290,7 +290,7 @@ public class TauIntegrate {
               earthModel.getRadius(j) * (rayParameter / earthModel.getSlowness(phaseType, j));
         }
 
-        double lastDepth = Math.log(modelConversions.xNorm * bottomingRadius);
+        double lastDepth = Math.log(modelConversions.getDistanceNormalization() * bottomingRadius);
 
         tauSum +=
             integrateLayer(
@@ -367,7 +367,7 @@ public class TauIntegrate {
                           earthModel.getSlowness(phaseType, j - 1)
                               / earthModel.getSlowness(phaseType, j)));
 
-      double lastDepth = Math.log(modelConversions.xNorm * bottomingRadius);
+      double lastDepth = Math.log(modelConversions.getDistanceNormalization() * bottomingRadius);
 
       x =
           integrateDerivative(

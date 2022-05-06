@@ -153,7 +153,7 @@ public class SampleSlowness {
         // Set up limits for this shell.
         shellIndex = crit.getShellIndex(waveType);
         shell = shells.get(shellIndex);
-        rangeStepLength = modelConversions.normR(shell.getRangeIncrementTarget());
+        rangeStepLength = modelConversions.normalizeRadius(shell.getRangeIncrementTarget());
         deepestSampleIndex = shell.getBottomSampleIndex();
 
         if (TablesUtil.deBugLevel > 0) {

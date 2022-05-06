@@ -202,8 +202,8 @@ public class UpGoingDataVolume {
     double depth, dp;
     boolean[] keep;
 
-    depth = cvt.realZ(zSource);
-    if (depth <= cvt.zNewUp) {
+    depth = cvt.computeDimensionalDepth(zSource);
+    if (depth <= cvt.getUpGoingReplacementDepth()) {
       // For shallow sources, recompute tau on a more stable ray
       // parameter grid.  The parameters are depth dependent.
       if (depth < 1.5) {

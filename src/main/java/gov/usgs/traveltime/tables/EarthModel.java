@@ -783,12 +783,12 @@ public class EarthModel {
             "\n%s %d %7.2f %7.2f %7.2f %7.2f %7.2f %7.2f\n",
             referenceModel.getEarthModelName(),
             model.size(),
-            modelConversions.realZ(referenceModel.surfaceModel.getDepth()),
-            modelConversions.realZ(referenceModel.conradModel.getDepth()),
-            modelConversions.realZ(referenceModel.mohoModel.getDepth()),
-            modelConversions.realZ(referenceModel.upperMantleModel.getDepth()),
-            modelConversions.realZ(referenceModel.outerCoreModel.getDepth()),
-            modelConversions.realZ(referenceModel.innerCoreModel.getDepth()));
+            modelConversions.computeDimensionalDepth(referenceModel.surfaceModel.getDepth()),
+            modelConversions.computeDimensionalDepth(referenceModel.conradModel.getDepth()),
+            modelConversions.computeDimensionalDepth(referenceModel.mohoModel.getDepth()),
+            modelConversions.computeDimensionalDepth(referenceModel.upperMantleModel.getDepth()),
+            modelConversions.computeDimensionalDepth(referenceModel.outerCoreModel.getDepth()),
+            modelConversions.computeDimensionalDepth(referenceModel.innerCoreModel.getDepth()));
         System.out.println("\t        R         Z    slowP    slowS");
       } else {
         System.out.format(

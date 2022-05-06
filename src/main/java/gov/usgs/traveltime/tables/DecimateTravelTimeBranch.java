@@ -51,7 +51,8 @@ public class DecimateTravelTimeBranch {
     boolean[] keep = piece.getDecimationKeep();
     double[] pOld = piece.getProxyRayParameters();
     double[] xOld = piece.getProxyRanges();
-    boolean[] upKeep = dec.slowDecimation(xOld, modelConversions.normR(TablesUtil.DELXUP));
+    boolean[] upKeep =
+        dec.slowDecimation(xOld, modelConversions.normalizeRadius(TablesUtil.DELXUP));
 
     // Do some setup.
     double pLim = TablesUtil.PLIM * pOld[pOld.length - 1];

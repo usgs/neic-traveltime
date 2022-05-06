@@ -278,18 +278,20 @@ public class AllBranchVolume {
           // Note that a source depth of zero is intrinsically different
           // from any positive depth (i.e., no up-going phases).
           sourceFlatDepth = 0d;
-          ttDepthDerivative = 1d / modelConversions.vNorm;
+          ttDepthDerivative = 1d / modelConversions.getVelocityNormalization();
         } else {
           sourceFlatDepth =
               Math.min(
                   Math.log(
                       Math.max(
-                          1d - sourceDimensionalDepth * modelConversions.xNorm, TauUtilities.DMIN)),
+                          1d - sourceDimensionalDepth * modelConversions.getDistanceNormalization(),
+                          TauUtilities.DMIN)),
                   0d);
           ttDepthDerivative =
               1d
-                  / (modelConversions.vNorm
-                      * (1d - sourceDimensionalDepth * modelConversions.xNorm));
+                  / (modelConversions.getVelocityNormalization()
+                      * (1d
+                          - sourceDimensionalDepth * modelConversions.getDistanceNormalization()));
         }
 
         // See if we want all phases.
@@ -345,12 +347,13 @@ public class AllBranchVolume {
         // To correct each branch we need a few depth dependent pieces.
         char branchSuffix;
         double xMin =
-            modelConversions.xNorm * Math.min(Math.max(2d * sourceDimensionalDepth, 2d), 25d);
-        if (sourceDimensionalDepth <= modelConversions.zConrad) {
+            modelConversions.getDistanceNormalization()
+                * Math.min(Math.max(2d * sourceDimensionalDepth, 2d), 25d);
+        if (sourceDimensionalDepth <= modelConversions.getConradDepth()) {
           branchSuffix = 'g';
-        } else if (sourceDimensionalDepth <= modelConversions.zMoho) {
+        } else if (sourceDimensionalDepth <= modelConversions.getMohoDepth()) {
           branchSuffix = 'b';
-        } else if (sourceDimensionalDepth <= modelConversions.zUpperMantle) {
+        } else if (sourceDimensionalDepth <= modelConversions.getUpperMantleDepth()) {
           branchSuffix = 'n';
         } else {
           branchSuffix = ' ';
@@ -718,10 +721,14 @@ public class AllBranchVolume {
     char type = TauUtilities.arrivalType(phaseCode);
     if (type == 'P') {
       return TauUtilities.elevationCorrection(
-          recieverElevation, TauUtilities.DEFVP, rayParameter / modelConversions.deg2km);
+          recieverElevation,
+          TauUtilities.DEFVP,
+          rayParameter / modelConversions.getDegreesToKilometers());
     } else if (type == 'S') {
       return TauUtilities.elevationCorrection(
-          recieverElevation, TauUtilities.DEFVS, rayParameter / modelConversions.deg2km);
+          recieverElevation,
+          TauUtilities.DEFVS,
+          rayParameter / modelConversions.getDegreesToKilometers());
     } else {
       return 0d; // This should never happen
     }
@@ -849,11 +856,11 @@ public class AllBranchVolume {
                     * (TauUtilities.elevationCorrection(
                             recieverElevation,
                             TauUtilities.DEFVP,
-                            rayParameter / modelConversions.deg2km)
+                            rayParameter / modelConversions.getDegreesToKilometers())
                         - TauUtilities.elevationCorrection(
                             recieverElevation,
                             TauUtilities.DEFVW,
-                            rayParameter / modelConversions.deg2km))
+                            rayParameter / modelConversions.getDegreesToKilometers()))
                 - 4.67d;
           } else {
             // If we're not under water, there is no pwP.
@@ -863,20 +870,28 @@ public class AllBranchVolume {
         } else {
           return 2d
               * TauUtilities.elevationCorrection(
-                  recieverElevation, TauUtilities.DEFVP, rayParameter / modelConversions.deg2km);
+                  recieverElevation,
+                  TauUtilities.DEFVP,
+                  rayParameter / modelConversions.getDegreesToKilometers());
         }
         // Handle all converted phases.
       case "PS":
       case "SP":
         return TauUtilities.elevationCorrection(
-                recieverElevation, TauUtilities.DEFVP, rayParameter / modelConversions.deg2km)
+                recieverElevation,
+                TauUtilities.DEFVP,
+                rayParameter / modelConversions.getDegreesToKilometers())
             + TauUtilities.elevationCorrection(
-                recieverElevation, TauUtilities.DEFVS, rayParameter / modelConversions.deg2km);
+                recieverElevation,
+                TauUtilities.DEFVS,
+                rayParameter / modelConversions.getDegreesToKilometers());
         // Handle all reflecting S phases.
       case "SS":
         return 2d
             * TauUtilities.elevationCorrection(
-                recieverElevation, TauUtilities.DEFVS, rayParameter / modelConversions.deg2km);
+                recieverElevation,
+                TauUtilities.DEFVS,
+                rayParameter / modelConversions.getDegreesToKilometers());
         // Again, this should never happen.
       default:
         System.out.println(
@@ -1130,20 +1145,24 @@ public class AllBranchVolume {
     headerString +=
         String.format(
             "Normalization: xNorm =%11.4e  vNorm =%11.4e  " + "tNorm =%11.4e\n",
-            modelConversions.xNorm, modelConversions.vNorm, modelConversions.tNorm);
+            modelConversions.getDistanceNormalization(),
+            modelConversions.getVelocityNormalization(),
+            modelConversions.getTauTTNormalization());
 
     headerString +=
         String.format(
             "Boundaries: zUpperMantle =%7.1f  zMoho =%7.1f  " + "zConrad =%7.1f\n",
-            modelConversions.zUpperMantle, modelConversions.zMoho, modelConversions.zConrad);
+            modelConversions.getUpperMantleDepth(),
+            modelConversions.getMohoDepth(),
+            modelConversions.getConradDepth());
 
     headerString +=
         String.format(
             "Derived: rSurface =%8.1f  zNewUp = %7.1f  "
                 + "dTdDel2P =%11.4e  ttDepthDerivative = %11.4e\n",
-            modelConversions.rSurface,
-            modelConversions.zNewUp,
-            modelConversions.dTdDelta,
+            modelConversions.getSurfaceRadius(),
+            modelConversions.getUpGoingReplacementDepth(),
+            modelConversions.get_dTdDelta(),
             ttDepthDerivative);
 
     LOGGER.fine(headerString);

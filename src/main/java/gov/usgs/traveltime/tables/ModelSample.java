@@ -207,9 +207,9 @@ public class ModelSample {
    * @param convert A ModelConversions object containing the model sensitive conversion constants
    */
   public void flatten(ModelConversions convert) {
-    depth = convert.flatZ(radius);
-    compressionalWaveSlowness = convert.flatP(isotropicPVelocity, radius);
-    shearWaveSlowness = convert.flatP(isotropicSVelocity, radius);
+    depth = convert.computeFlatDepth(radius);
+    compressionalWaveSlowness = convert.computeFlatSlowness(isotropicPVelocity, radius);
+    shearWaveSlowness = convert.computeFlatSlowness(isotropicSVelocity, radius);
   }
 
   /**
@@ -243,7 +243,10 @@ public class ModelSample {
       } else {
         return String.format(
             "%8.2f %7.2f %8.6f %8.6f",
-            radius, convert.realZ(depth), compressionalWaveSlowness, shearWaveSlowness);
+            radius,
+            convert.computeDimensionalDepth(depth),
+            compressionalWaveSlowness,
+            shearWaveSlowness);
       }
     } else {
       return String.format("%9.2f %7.4f %7.4f", radius, isotropicPVelocity, isotropicSVelocity);

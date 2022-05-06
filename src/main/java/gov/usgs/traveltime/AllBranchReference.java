@@ -353,13 +353,19 @@ public class AllBranchReference {
     System.out.println("\n     " + earthModelName);
     System.out.format(
         "Normalization: xNorm =%11.4e  vNorm =%11.4e  " + "tNorm =%11.4e\n",
-        modelConversions.xNorm, modelConversions.vNorm, modelConversions.tNorm);
+        modelConversions.getDistanceNormalization(),
+        modelConversions.getVelocityNormalization(),
+        modelConversions.getTauTTNormalization());
     System.out.format(
         "Boundaries: zUpperMantle =%7.1f  zMoho =%7.1f  " + "zConrad =%7.1f\n",
-        modelConversions.zUpperMantle, modelConversions.zMoho, modelConversions.zConrad);
+        modelConversions.getUpperMantleDepth(),
+        modelConversions.getMohoDepth(),
+        modelConversions.getConradDepth());
     System.out.format(
         "Derived: rSurface =%8.1f  zNewUp = %7.1f  " + "dTdDel2P =%11.4e\n",
-        modelConversions.rSurface, modelConversions.zNewUp, modelConversions.dTdDelta);
+        modelConversions.getSurfaceRadius(),
+        modelConversions.getUpGoingReplacementDepth(),
+        modelConversions.get_dTdDelta());
   }
 
   /**

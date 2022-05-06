@@ -98,7 +98,7 @@ public class TauSample {
     this.slowness = slowness;
     this.index = index;
     rayTravelDistance = Double.NaN;
-    depth = convert.flatZ(radius);
+    depth = convert.computeFlatDepth(radius);
   }
 
   /**

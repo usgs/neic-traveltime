@@ -60,7 +60,8 @@ public class FindRadius implements UnivariateFunction {
    */
   @Override
   public double value(double radius) {
-    return modelConversions.flatP(referenceModel.getVelocity(waveType, shellIndex, radius), radius)
+    return modelConversions.computeFlatSlowness(
+            referenceModel.getVelocity(waveType, shellIndex, radius), radius)
         - rayTarget;
   }
 }

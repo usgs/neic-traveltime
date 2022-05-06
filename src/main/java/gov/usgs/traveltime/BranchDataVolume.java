@@ -1062,7 +1062,7 @@ public class BranchDataVolume {
 
     // On the first index, set up the conversion for dT/dDelta.
     if (depthIndex == 0)
-      distanceSign = modelConversions.dTdDelta * Math.pow(-1d, numTTDistanceRanges[0] + 1);
+      distanceSign = modelConversions.get_dTdDelta() * Math.pow(-1d, numTTDistanceRanges[0] + 1);
 
     // Loop over possible distances.
     if (depthIndex >= numTTDistanceRanges[0] && depthIndex <= numTTDistanceRanges[1]) {
@@ -1134,7 +1134,7 @@ public class BranchDataVolume {
                   travelTimeList.addPhase(
                       tmpCode,
                       branchReference.getUniquePhaseCodes(),
-                      modelConversions.tNorm
+                      modelConversions.getTauTTNormalization()
                           * (interpolationPolynomials[0][j]
                               + dp
                                   * (interpolationPolynomials[1][j]
@@ -1147,7 +1147,7 @@ public class BranchDataVolume {
                               + 0.75d
                                   * interpolationPolynomials[3][j]
                                   / Math.max(Math.abs(dps), TauUtilities.DTOL))
-                          / modelConversions.tNorm,
+                          / modelConversions.getTauTTNormalization(),
                       false);
                 }
               }
@@ -1182,7 +1182,7 @@ public class BranchDataVolume {
               travelTimeList.addPhase(
                   tmpCode,
                   branchReference.getUniquePhaseCodes(),
-                  modelConversions.tNorm
+                  modelConversions.getTauTTNormalization()
                       * (interpolationPolynomials[0][j]
                           + dp
                               * (interpolationPolynomials[1][j]
@@ -1193,7 +1193,7 @@ public class BranchDataVolume {
                   -(0.75d
                           * interpolationPolynomials[3][j]
                           / Math.max(Math.abs(dps), TauUtilities.DTOL))
-                      / modelConversions.tNorm,
+                      / modelConversions.getTauTTNormalization(),
                   false);
             }
           }
@@ -1230,7 +1230,7 @@ public class BranchDataVolume {
           travelTimeList.addPhase(
               branchReference.getDiffractedPhaseCode(),
               uniquePhaseCode,
-              modelConversions.tNorm
+              modelConversions.getTauTTNormalization()
                   * (interpolationPolynomials[0][0]
                       + dp
                           * (interpolationPolynomials[1][0]
@@ -1245,7 +1245,7 @@ public class BranchDataVolume {
                       + 0.75d
                           * interpolationPolynomials[3][0]
                           / Math.max(Math.abs(dps), TauUtilities.DTOL))
-                  / modelConversions.tNorm,
+                  / modelConversions.getTauTTNormalization(),
               false);
         }
       }
@@ -1276,7 +1276,7 @@ public class BranchDataVolume {
                     branchReference.getAddOnPhaseCode(),
                     uniquePhaseCode,
                     0d,
-                    modelConversions.dTdDLg,
+                    modelConversions.get_dTdDelta_Lg(),
                     0d,
                     0d,
                     true);
@@ -1289,7 +1289,7 @@ public class BranchDataVolume {
                     branchReference.getAddOnPhaseCode(),
                     uniquePhaseCode,
                     0d,
-                    modelConversions.dTdDLR,
+                    modelConversions.get_dTdDelta_LR(),
                     0d,
                     0d,
                     true);
@@ -1322,7 +1322,7 @@ public class BranchDataVolume {
    */
   public double computeOneRay(double desiredRayParam) {
     double xCorr;
-    double ps = Math.abs(desiredRayParam) / modelConversions.dTdDelta;
+    double ps = Math.abs(desiredRayParam) / modelConversions.get_dTdDelta();
 
     // Check validity.
     if (!correctedBranchExists
@@ -1340,7 +1340,7 @@ public class BranchDataVolume {
                 + 2d * dp * interpolationPolynomials[2][j - 1]
                 + 1.5d * dps * interpolationPolynomials[3][j - 1];
         correctedTravelTime =
-            modelConversions.tNorm
+            modelConversions.getTauTTNormalization()
                 * (interpolationPolynomials[0][j - 1]
                     + dp
                         * (interpolationPolynomials[1][j - 1]
@@ -1353,7 +1353,7 @@ public class BranchDataVolume {
 
     xCorr = interpolationPolynomials[1][updatedRayParameters.length - 1];
     correctedTravelTime =
-        modelConversions.tNorm
+        modelConversions.getTauTTNormalization()
             * (interpolationPolynomials[0][updatedRayParameters.length - 1] + ps * xCorr);
 
     return Math.toDegrees(xCorr);
@@ -1451,8 +1451,10 @@ public class BranchDataVolume {
                       "Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s (1 caustic)\n",
                       branchReference.getTurningRadiusRange()[0],
                       branchReference.getTurningRadiusRange()[1],
-                      modelConversions.rSurface - branchReference.getTurningRadiusRange()[1],
-                      modelConversions.rSurface - branchReference.getTurningRadiusRange()[0],
+                      modelConversions.getSurfaceRadius()
+                          - branchReference.getTurningRadiusRange()[1],
+                      modelConversions.getSurfaceRadius()
+                          - branchReference.getTurningRadiusRange()[0],
                       branchReference.getTurningModelShellName());
             } else if (minimumCausticCount + maximumCausticCount > 1) {
               branchString +=
@@ -1460,8 +1462,10 @@ public class BranchDataVolume {
                       "Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s (%d caustics)\n",
                       branchReference.getTurningRadiusRange()[0],
                       branchReference.getTurningRadiusRange()[1],
-                      modelConversions.rSurface - branchReference.getTurningRadiusRange()[1],
-                      modelConversions.rSurface - branchReference.getTurningRadiusRange()[0],
+                      modelConversions.getSurfaceRadius()
+                          - branchReference.getTurningRadiusRange()[1],
+                      modelConversions.getSurfaceRadius()
+                          - branchReference.getTurningRadiusRange()[0],
                       branchReference.getTurningModelShellName(),
                       minimumCausticCount + maximumCausticCount);
             } else {
@@ -1470,8 +1474,10 @@ public class BranchDataVolume {
                       "Shell: %7.2f-%7.2f (%7.2f-%7.2f) %s\n",
                       branchReference.getTurningRadiusRange()[0],
                       branchReference.getTurningRadiusRange()[1],
-                      modelConversions.rSurface - branchReference.getTurningRadiusRange()[1],
-                      modelConversions.rSurface - branchReference.getTurningRadiusRange()[0],
+                      modelConversions.getSurfaceRadius()
+                          - branchReference.getTurningRadiusRange()[1],
+                      modelConversions.getSurfaceRadius()
+                          - branchReference.getTurningRadiusRange()[0],
                       branchReference.getTurningModelShellName());
             }
           }

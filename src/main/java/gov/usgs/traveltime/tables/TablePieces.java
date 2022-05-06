@@ -156,9 +156,11 @@ public class TablePieces {
    */
   public double getRadialSampling(char phaseType, int shellIndex) {
     if (phaseType == 'P') {
-      return modelConversions.normR(shellModelP.get(shellIndex).getRangeIncrementTarget());
+      return modelConversions.normalizeRadius(
+          shellModelP.get(shellIndex).getRangeIncrementTarget());
     } else {
-      return modelConversions.normR(shellModelS.get(shellIndex).getRangeIncrementTarget());
+      return modelConversions.normalizeRadius(
+          shellModelS.get(shellIndex).getRangeIncrementTarget());
     }
   }
 
@@ -174,13 +176,13 @@ public class TablePieces {
     if (phaseType == 'P') {
       for (int j = shellIndex + 1; j < shellModelP.size(); j++) {
         if (!shellModelP.get(j).getIsDiscontinuity()) {
-          return modelConversions.normR(shellModelP.get(j).getRangeIncrementTarget());
+          return modelConversions.normalizeRadius(shellModelP.get(j).getRangeIncrementTarget());
         }
       }
     } else {
       for (int j = shellIndex + 1; j < shellModelS.size(); j++) {
         if (!shellModelS.get(j).getIsDiscontinuity()) {
-          return modelConversions.normR(shellModelS.get(j).getRangeIncrementTarget());
+          return modelConversions.normalizeRadius(shellModelS.get(j).getRangeIncrementTarget());
         }
       }
     }
@@ -214,21 +216,21 @@ public class TablePieces {
         "%3d %8.6f %8.2f            %8.6f %8.2f\n",
         0,
         modelPiecesP.getProxyRayParameters()[0],
-        modelConversions.dimR(modelPiecesP.getProxyRanges()[0]),
+        modelConversions.convertDimensionalRadius(modelPiecesP.getProxyRanges()[0]),
         modelPiecesS.getProxyRayParameters()[0],
-        modelConversions.dimR(modelPiecesS.getProxyRanges()[0]));
+        modelConversions.convertDimensionalRadius(modelPiecesS.getProxyRanges()[0]));
 
     for (int j = 1; j < nP; j++) {
       System.out.format(
           "%3d %8.6f %8.2f %8.2f   %8.6f %8.2f %8.2f\n",
           j,
           modelPiecesP.getProxyRayParameters()[j],
-          modelConversions.dimR(modelPiecesP.getProxyRanges()[j]),
-          modelConversions.dimR(
+          modelConversions.convertDimensionalRadius(modelPiecesP.getProxyRanges()[j]),
+          modelConversions.convertDimensionalRadius(
               modelPiecesP.getProxyRanges()[j] - modelPiecesP.getProxyRanges()[j - 1]),
           modelPiecesS.getProxyRayParameters()[j],
-          modelConversions.dimR(modelPiecesS.getProxyRanges()[j]),
-          modelConversions.dimR(
+          modelConversions.convertDimensionalRadius(modelPiecesS.getProxyRanges()[j]),
+          modelConversions.convertDimensionalRadius(
               modelPiecesS.getProxyRanges()[j + 1] - modelPiecesS.getProxyRanges()[j]));
     }
 
@@ -237,8 +239,8 @@ public class TablePieces {
           "%3d                              " + "%8.6f %8.2f %8.2f\n",
           j,
           modelPiecesS.getProxyRayParameters()[j],
-          modelConversions.dimR(modelPiecesS.getProxyRanges()[j]),
-          modelConversions.dimR(
+          modelConversions.convertDimensionalRadius(modelPiecesS.getProxyRanges()[j]),
+          modelConversions.convertDimensionalRadius(
               modelPiecesS.getProxyRanges()[j] - modelPiecesS.getProxyRanges()[j - 1]));
     }
   }

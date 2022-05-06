@@ -1003,9 +1003,9 @@ public class TauModel {
    */
   public double getRangeIncrementTarget(char modelType, int index) {
     if (modelType == 'P') {
-      return modelConversions.normR(shellModelP.get(index).getRangeIncrementTarget());
+      return modelConversions.normalizeRadius(shellModelP.get(index).getRangeIncrementTarget());
     } else {
-      return modelConversions.normR(shellModelS.get(index).getRangeIncrementTarget());
+      return modelConversions.normalizeRadius(shellModelS.get(index).getRangeIncrementTarget());
     }
   }
 
@@ -1021,13 +1021,13 @@ public class TauModel {
     if (modelType == 'P') {
       for (int j = index + 1; j < shellModelP.size(); j++) {
         if (!shellModelP.get(j).getIsDiscontinuity()) {
-          return modelConversions.normR(shellModelP.get(j).getRangeIncrementTarget());
+          return modelConversions.normalizeRadius(shellModelP.get(j).getRangeIncrementTarget());
         }
       }
     } else {
       for (int j = index + 1; j < shellModelS.size(); j++) {
         if (!shellModelS.get(j).getIsDiscontinuity()) {
-          return modelConversions.normR(shellModelS.get(j).getRangeIncrementTarget());
+          return modelConversions.normalizeRadius(shellModelS.get(j).getRangeIncrementTarget());
         }
       }
     }
@@ -1468,9 +1468,9 @@ public class TauModel {
         "%3d %8.6f %8.2f            %8.6f %8.2f\n",
         0,
         intPiecesP.getProxyRayParameters()[0],
-        modelConversions.dimR(intPiecesP.getProxyRanges()[0]),
+        modelConversions.convertDimensionalRadius(intPiecesP.getProxyRanges()[0]),
         intPiecesS.getProxyRayParameters()[0],
-        modelConversions.dimR(intPiecesS.getProxyRanges()[0]));
+        modelConversions.convertDimensionalRadius(intPiecesS.getProxyRanges()[0]));
 
     if (nS >= nP) {
       for (int j = 1; j < nP; j++) {
@@ -1478,12 +1478,12 @@ public class TauModel {
             "%3d %8.6f %8.2f %8.2f   %8.6f %8.2f %8.2f\n",
             j,
             intPiecesP.getProxyRayParameters()[j],
-            modelConversions.dimR(intPiecesP.getProxyRanges()[j]),
-            modelConversions.dimR(
+            modelConversions.convertDimensionalRadius(intPiecesP.getProxyRanges()[j]),
+            modelConversions.convertDimensionalRadius(
                 intPiecesP.getProxyRanges()[j] - intPiecesP.getProxyRanges()[j - 1]),
             intPiecesS.getProxyRayParameters()[j],
-            modelConversions.dimR(intPiecesS.getProxyRanges()[j]),
-            modelConversions.dimR(
+            modelConversions.convertDimensionalRadius(intPiecesS.getProxyRanges()[j]),
+            modelConversions.convertDimensionalRadius(
                 intPiecesS.getProxyRanges()[j] - intPiecesS.getProxyRanges()[j - 1]));
       }
 
@@ -1492,8 +1492,8 @@ public class TauModel {
             "%3d                              " + "%8.6f %8.2f %8.2f\n",
             j,
             intPiecesS.getProxyRayParameters()[j],
-            modelConversions.dimR(intPiecesS.getProxyRanges()[j]),
-            modelConversions.dimR(
+            modelConversions.convertDimensionalRadius(intPiecesS.getProxyRanges()[j]),
+            modelConversions.convertDimensionalRadius(
                 intPiecesS.getProxyRanges()[j] - intPiecesS.getProxyRanges()[j - 1]));
       }
     } else {
@@ -1502,12 +1502,12 @@ public class TauModel {
             "%3d %8.6f %8.2f %8.2f   %8.6f %8.2f %8.2f\n",
             j,
             intPiecesP.getProxyRayParameters()[j],
-            modelConversions.dimR(intPiecesP.getProxyRanges()[j]),
-            modelConversions.dimR(
+            modelConversions.convertDimensionalRadius(intPiecesP.getProxyRanges()[j]),
+            modelConversions.convertDimensionalRadius(
                 intPiecesP.getProxyRanges()[j] - intPiecesP.getProxyRanges()[j - 1]),
             intPiecesS.getProxyRayParameters()[j],
-            modelConversions.dimR(intPiecesS.getProxyRanges()[j]),
-            modelConversions.dimR(
+            modelConversions.convertDimensionalRadius(intPiecesS.getProxyRanges()[j]),
+            modelConversions.convertDimensionalRadius(
                 intPiecesS.getProxyRanges()[j] - intPiecesS.getProxyRanges()[j - 1]));
       }
 
@@ -1516,8 +1516,8 @@ public class TauModel {
             "%3d %8.6f %8.2f %8.2f\n",
             j,
             intPiecesP.getProxyRayParameters()[j],
-            modelConversions.dimR(intPiecesP.getProxyRanges()[j]),
-            modelConversions.dimR(
+            modelConversions.convertDimensionalRadius(intPiecesP.getProxyRanges()[j]),
+            modelConversions.convertDimensionalRadius(
                 intPiecesP.getProxyRanges()[j] - intPiecesP.getProxyRanges()[j - 1]));
       }
     }

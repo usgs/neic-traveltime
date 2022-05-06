@@ -482,7 +482,7 @@ public class MakeBranches {
               branch.getPhaseCode(),
               minRayParamIndex,
               maxRayParamIndex,
-              modelConversions.dimR(xTarget));
+              modelConversions.convertDimensionalRadius(xTarget));
         }
 
         // OK.  Add it to the branches list.
@@ -534,7 +534,7 @@ public class MakeBranches {
           branch.getPhaseCode(),
           0,
           endSlownessIndex,
-          modelConversions.dimR(xTarget));
+          modelConversions.convertDimensionalRadius(xTarget));
     }
 
     // Add it to the branch list.
@@ -672,7 +672,7 @@ public class MakeBranches {
                   branch.getPhaseCode(),
                   minRayParamIndex,
                   maxRayParamIndex,
-                  modelConversions.dimR(xTarget),
+                  modelConversions.convertDimensionalRadius(xTarget),
                   useShell2);
             }
 
