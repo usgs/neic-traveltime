@@ -88,15 +88,15 @@ public class UpGoingDataVolume {
     xEndCnv = 0d;
 
     // Get the source slowness.
-    pSource = modPri.findP(zSource);
-    iSrc = modPri.iSource;
-    pMax = modPri.findMaxP();
+    pSource = modPri.findSlowness(zSource);
+    iSrc = modPri.getCurrentSourceDepthIndex();
+    pMax = modPri.findMaximumSlowness();
     //	modPri.printFind(false);
 
     // If the source is at the surface, we're already done.
     if (-zSource <= TauUtilities.DTOL) return;
     // Otherwise, copy the desired data into temporary storage.
-    iUp = modPri.ref.getUpGoingIndexes()[iSrc];
+    iUp = modPri.getModelReference().getUpGoingIndexes()[iSrc];
     //	System.out.println("\t\t\tiUp = "+iUp);
     pUp = Arrays.copyOf(ref.pTauUp, ref.tauUp[iUp].length);
     tauUp = Arrays.copyOf(ref.tauUp[iUp], pUp.length);
@@ -109,8 +109,8 @@ public class UpGoingDataVolume {
     pMax = Math.min(pMax, pSource);
     // Correct the up-going tau values to the exact source depth.
     /*	System.out.println("Partial integrals: "+(float)pSource+" - "+
-    (float)modPri.ref.getModelSlownesses()[iSrc]+"  "+(float)zSource+" - "+
-    (float)modPri.ref.getModelDepths()[iSrc]); */
+    (float)modPri.getModelReference().getModelSlownesses()[iSrc]+"  "+(float)zSource+" - "+
+    (float)modPri.getModelReference().getModelDepths()[iSrc]); */
     i = 0;
     for (int j = 0; j < tauUp.length; j++) {
       if (ref.pTauUp[j] <= pMax) {
@@ -121,9 +121,9 @@ public class UpGoingDataVolume {
               intPri.integrateLayer(
                   ref.pTauUp[j],
                   pSource,
-                  modPri.ref.getModelSlownesses()[iSrc],
+                  modPri.getModelReference().getModelSlownesses()[iSrc],
                   zSource,
-                  modPri.ref.getModelDepths()[iSrc]);
+                  modPri.getModelReference().getModelDepths()[iSrc]);
           //		System.out.println("     tau (after): "+(float)tauUp[j]+" "+
           //				(float)ref.pXUp[i]);
 
@@ -153,8 +153,8 @@ public class UpGoingDataVolume {
      * the shallowest turning ray (the horizontal ray is trapped).
      */
     if (pMax > pSource) {
-      zMax = modPri.findZ(pMax, false);
-      iBot = modPri.iSource;
+      zMax = modPri.findDepth(pMax, false);
+      iBot = modPri.getCurrentSourceDepthIndex();
       //	System.out.println("\nLVZ integral: "+(float)pMax+" "+iSrc+" "+
       //			iBot+" "+(float)pSource+" "+(float)zSource+" "+(float)pMax+
       //			" "+(float)zMax);
@@ -171,8 +171,8 @@ public class UpGoingDataVolume {
      * slowness.
      */
     try {
-      zMax = modSec.findZ(pMax, true);
-      iBot = modSec.iSource;
+      zMax = modSec.findDepth(pMax, true);
+      iBot = modSec.getCurrentSourceDepthIndex();
       //	System.out.println("\nCnv integral: "+(float)pMax+" "+iBot+" "+
       //			(float)pMax+" "+(float)zMax);
       tauEndCnv = intSec.integrateRange(pMax, 0, iBot - 1, pMax, zMax);
