@@ -349,22 +349,22 @@ public class AuxiliaryTTReference {
     // Search the primary phase group.
     for (int j = 0; j < primaryPhaseGroups.size(); j++) {
       PhaseGroup group = primaryPhaseGroups.get(j);
-      for (int k = 0; k < group.phases.size(); k++) {
-        if (phaseCode.equals(group.phases.get(k))) {
+      for (int k = 0; k < group.getPhaseList().size(); k++) {
+        if (phaseCode.equals(group.getPhaseList().get(k))) {
           isPrimaryGroup = true;
 
-          return group.groupName;
+          return group.getGroupName();
         }
       }
 
       // Search the auxiliary phase group.
       group = auxiliaryPhaseGroups.get(j);
       if (group != null) {
-        for (int k = 0; k < group.phases.size(); k++) {
-          if (phaseCode.equals(group.phases.get(k))) {
+        for (int k = 0; k < group.getPhaseList().size(); k++) {
+          if (phaseCode.equals(group.getPhaseList().get(k))) {
             isPrimaryGroup = false;
 
-            return group.groupName;
+            return group.getGroupName();
           }
         }
       }
@@ -373,18 +373,18 @@ public class AuxiliaryTTReference {
     // OK, that didn't work.  See if the phase is generic.
     for (int j = 0; j < primaryPhaseGroups.size(); j++) {
       // Try the primary group name.
-      if (phaseCode.equals(primaryPhaseGroups.get(j).groupName)) {
+      if (phaseCode.equals(primaryPhaseGroups.get(j).getGroupName())) {
         isPrimaryGroup = true;
 
-        return primaryPhaseGroups.get(j).groupName;
+        return primaryPhaseGroups.get(j).getGroupName();
       }
 
       // Try the auxiliary group name.
       if (auxiliaryPhaseGroups.get(j) != null) {
-        if (phaseCode.equals(auxiliaryPhaseGroups.get(j).groupName)) {
+        if (phaseCode.equals(auxiliaryPhaseGroups.get(j).getGroupName())) {
           isPrimaryGroup = false;
 
-          return auxiliaryPhaseGroups.get(j).groupName;
+          return auxiliaryPhaseGroups.get(j).getGroupName();
         }
       }
     }
@@ -423,17 +423,17 @@ public class AuxiliaryTTReference {
    */
   public String findCompGroup(String phaseGroupName) {
     for (int j = 0; j < primaryPhaseGroups.size(); j++) {
-      if (phaseGroupName.equals(primaryPhaseGroups.get(j).groupName)) {
+      if (phaseGroupName.equals(primaryPhaseGroups.get(j).getGroupName())) {
         if (auxiliaryPhaseGroups.get(j) != null) {
-          return auxiliaryPhaseGroups.get(j).groupName;
+          return auxiliaryPhaseGroups.get(j).getGroupName();
         } else {
           return null;
         }
       }
 
       if (auxiliaryPhaseGroups.get(j) != null) {
-        if (phaseGroupName.equals(auxiliaryPhaseGroups.get(j).groupName)) {
-          return primaryPhaseGroups.get(j).groupName;
+        if (phaseGroupName.equals(auxiliaryPhaseGroups.get(j).getGroupName())) {
+          return primaryPhaseGroups.get(j).getGroupName();
         }
       }
     }
@@ -448,8 +448,8 @@ public class AuxiliaryTTReference {
    * @return A boolean flag, true if this phase can be used for earthquake location
    */
   public boolean usePhaseForLocation(String phaseCode) {
-    for (int k = 0; k < locationPhases.phases.size(); k++) {
-      if (phaseCode.equals(locationPhases.phases.get(k))) {
+    for (int k = 0; k < locationPhases.getPhaseList().size(); k++) {
+      if (phaseCode.equals(locationPhases.getPhaseList().get(k))) {
         return true;
       }
     }
@@ -466,8 +466,8 @@ public class AuxiliaryTTReference {
    * @return A boolean flag, true if this phase is useless
    */
   public boolean isUselessPhase(String phaseCode) {
-    for (int k = 0; k < uselessPhases.phases.size(); k++) {
-      if (phaseCode.equals(uselessPhases.phases.get(k))) {
+    for (int k = 0; k < uselessPhases.getPhaseList().size(); k++) {
+      if (phaseCode.equals(uselessPhases.getPhaseList().get(k))) {
         return true;
       }
     }
@@ -482,8 +482,8 @@ public class AuxiliaryTTReference {
    * @return A boolean flag, true if the phase is a local-regional phase
    */
   public boolean isRegionalPhase(String phaseCode) {
-    for (int k = 0; k < regionalPhases.phases.size(); k++) {
-      if (phaseCode.equals(regionalPhases.phases.get(k))) {
+    for (int k = 0; k < regionalPhases.getPhaseList().size(); k++) {
+      if (phaseCode.equals(regionalPhases.getPhaseList().get(k))) {
         return true;
       }
     }
@@ -498,8 +498,8 @@ public class AuxiliaryTTReference {
    * @return A boolean flag, true if the phase is depth sensitive
    */
   public boolean isDepthPhase(String phaseCode) {
-    for (int k = 0; k < depthPhases.phases.size(); k++) {
-      if (phaseCode.equals(depthPhases.phases.get(k))) {
+    for (int k = 0; k < depthPhases.getPhaseList().size(); k++) {
+      if (phaseCode.equals(depthPhases.getPhaseList().get(k))) {
         return true;
       }
     }
@@ -514,8 +514,8 @@ public class AuxiliaryTTReference {
    * @return True if the phase is to be down weighted
    */
   public boolean isDownWeightedPhase(String phaseCode) {
-    for (int k = 0; k < downWeightPhases.phases.size(); k++) {
-      if (phaseCode.equals(downWeightPhases.phases.get(k))) {
+    for (int k = 0; k < downWeightPhases.getPhaseList().size(); k++) {
+      if (phaseCode.equals(downWeightPhases.getPhaseList().get(k))) {
         return true;
       }
     }
@@ -796,9 +796,9 @@ public class AuxiliaryTTReference {
   private void makePhaseFlags() {
     // Search the phase groups for phases.
     for (int j = 0; j < primaryPhaseGroups.size(); j++) {
-      String PhaseGroup = primaryPhaseGroups.get(j).groupName;
-      for (int i = 0; i < primaryPhaseGroups.get(j).phases.size(); i++) {
-        String phaseCode = primaryPhaseGroups.get(j).phases.get(i);
+      String PhaseGroup = primaryPhaseGroups.get(j).getGroupName();
+      for (int i = 0; i < primaryPhaseGroups.get(j).getPhaseList().size(); i++) {
+        String phaseCode = primaryPhaseGroups.get(j).getPhaseList().get(i);
 
         unTangle(phaseCode, PhaseGroup);
 
@@ -820,9 +820,9 @@ public class AuxiliaryTTReference {
     // Search the auxiliary phase groups for phases.
     for (int j = 0; j < auxiliaryPhaseGroups.size(); j++) {
       if (auxiliaryPhaseGroups.get(j) != null) {
-        String PhaseGroup = auxiliaryPhaseGroups.get(j).groupName;
-        for (int i = 0; i < auxiliaryPhaseGroups.get(j).phases.size(); i++) {
-          String phaseCode = auxiliaryPhaseGroups.get(j).phases.get(i);
+        String PhaseGroup = auxiliaryPhaseGroups.get(j).getGroupName();
+        for (int i = 0; i < auxiliaryPhaseGroups.get(j).getPhaseList().size(); i++) {
+          String phaseCode = auxiliaryPhaseGroups.get(j).getPhaseList().get(i);
 
           unTangle(phaseCode, PhaseGroup);
 
