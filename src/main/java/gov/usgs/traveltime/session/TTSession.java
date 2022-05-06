@@ -480,8 +480,8 @@ public class TTSession {
    *
    * @return Travel-time plot data
    */
-  public synchronized TravelTimePlot getPlot() {
-    return plotData.getPlot();
+  public synchronized TravelTimePlot getPlotData() {
+    return plotData.getPlotData();
   }
 
   /**

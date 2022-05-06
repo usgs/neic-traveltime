@@ -167,7 +167,7 @@ public class TravelTimeLocalSession {
         maxDelta,
         maxTime,
         deltaStep);
-    return plotData.getPlot();
+    return plotData.getPlotData();
   }
 
   /**
