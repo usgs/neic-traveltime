@@ -465,7 +465,7 @@ public class MakeBranches {
         branchDecimator.downGoingDecimation(branch, xTarget, minRayParamIndex);
 
         // Create the interpolation basis functions.
-        spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());
+        spline.constuctBasisFunctions(branch.getRayParameters(), branch.getBasisCoefficients());
 
         // We need to name each sub-branch.
         branch.setPhaseCode(
@@ -526,7 +526,7 @@ public class MakeBranches {
     branchDecimator.downGoingDecimation(branch, xTarget, 0);
 
     // Create the interpolation basis functions.
-    spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());
+    spline.constuctBasisFunctions(branch.getRayParameters(), branch.getBasisCoefficients());
     if (TablesUtil.deBugLevel > 0) {
       System.out.format(
           "     %2d %-8s %3d %3d %3.0f\n",
@@ -652,7 +652,7 @@ public class MakeBranches {
             branchDecimator.downGoingDecimation(branch, xTarget, minRayParamIndex);
 
             // Create the interpolation basis functions.
-            spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());
+            spline.constuctBasisFunctions(branch.getRayParameters(), branch.getBasisCoefficients());
 
             // We need to name each sub-branch.
             branch.setPhaseCode(
@@ -756,7 +756,7 @@ public class MakeBranches {
     }
 
     branch.setBasisCoefficients(new double[5][branch.getRayParameters().length]);
-    spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());
+    spline.constuctBasisFunctions(branch.getRayParameters(), branch.getBasisCoefficients());
     branch.update();
 
     if (TablesUtil.deBugLevel > 0) {

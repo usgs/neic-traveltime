@@ -298,7 +298,7 @@ public class BranchDataVolume {
           interpolationPolynomials = new double[4][len];
           interpolatedDistanceValues = new double[len];
 
-          splineRoutines.tauSpline(
+          splineRoutines.computeTauSpline(
               correctedTauValues,
               correctedDistanceRange,
               branchReference.getBasisCoefficients(),
@@ -432,11 +432,11 @@ public class BranchDataVolume {
             // Spline it.
             len = updatedRayParameters.length;
             double[][] basisTmp = new double[5][len];
-            splineRoutines.basisSet(updatedRayParameters, basisTmp);
+            splineRoutines.constuctBasisFunctions(updatedRayParameters, basisTmp);
             interpolationPolynomials = new double[4][len];
             interpolatedDistanceValues = new double[len];
 
-            splineRoutines.tauSpline(
+            splineRoutines.computeTauSpline(
                 correctedTauValues,
                 correctedDistanceRange,
                 basisTmp,
@@ -525,7 +525,7 @@ public class BranchDataVolume {
 
             if (Math.abs(correctedSlownessRange[1] - branchReference.getSlownessRange()[1])
                 <= TauUtilities.DTOL) {
-              splineRoutines.tauSpline(
+              splineRoutines.computeTauSpline(
                   correctedTauValues,
                   correctedDistanceRange,
                   branchReference.getBasisCoefficients(),
@@ -533,8 +533,8 @@ public class BranchDataVolume {
                   interpolatedDistanceValues);
             } else {
               double[][] basisTmp = new double[5][len];
-              splineRoutines.basisSet(updatedRayParameters, basisTmp);
-              splineRoutines.tauSpline(
+              splineRoutines.constuctBasisFunctions(updatedRayParameters, basisTmp);
+              splineRoutines.computeTauSpline(
                   correctedTauValues,
                   correctedDistanceRange,
                   basisTmp,
@@ -646,11 +646,11 @@ public class BranchDataVolume {
             // Spline it.
             len = updatedRayParameters.length;
             double[][] basisTmp = new double[5][len];
-            splineRoutines.basisSet(updatedRayParameters, basisTmp);
+            splineRoutines.constuctBasisFunctions(updatedRayParameters, basisTmp);
             interpolationPolynomials = new double[4][len];
             interpolatedDistanceValues = new double[len];
 
-            splineRoutines.tauSpline(
+            splineRoutines.computeTauSpline(
                 correctedTauValues,
                 correctedDistanceRange,
                 basisTmp,
@@ -738,7 +738,7 @@ public class BranchDataVolume {
 
             if (Math.abs(correctedSlownessRange[1] - branchReference.getSlownessRange()[1])
                 <= TauUtilities.DTOL) {
-              splineRoutines.tauSpline(
+              splineRoutines.computeTauSpline(
                   correctedTauValues,
                   correctedDistanceRange,
                   branchReference.getBasisCoefficients(),
@@ -746,8 +746,8 @@ public class BranchDataVolume {
                   interpolatedDistanceValues);
             } else {
               double[][] basisTmp = new double[5][len];
-              splineRoutines.basisSet(updatedRayParameters, basisTmp);
-              splineRoutines.tauSpline(
+              splineRoutines.constuctBasisFunctions(updatedRayParameters, basisTmp);
+              splineRoutines.computeTauSpline(
                   correctedTauValues,
                   correctedDistanceRange,
                   basisTmp,
