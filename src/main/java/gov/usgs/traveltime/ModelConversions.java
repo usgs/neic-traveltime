@@ -190,8 +190,8 @@ public class ModelConversions implements Serializable {
     dTdDelta = Math.toRadians(tauTTNormalization);
     surfaceRadius = in.rSurface;
     degreesToKilometers = Math.PI * surfaceRadius / 180d;
-    dTdDelta_Lg = degreesToKilometers / TauUtilities.LGGRPVEL;
-    dTdDelta_LR = degreesToKilometers / TauUtilities.LRGRPVEL;
+    dTdDelta_Lg = degreesToKilometers / TauUtilities.LGGROUPVELOCITY;
+    dTdDelta_LR = degreesToKilometers / TauUtilities.LRGROUPVELOCITY;
 
     // Compute some useful depths.
     upperMantleDepth = surfaceRadius - in.rUpperMantle;
@@ -226,8 +226,8 @@ public class ModelConversions implements Serializable {
     dTdDelta = Math.toRadians(tauTTNormalization);
     this.surfaceRadius = surfaceRadius;
     degreesToKilometers = Math.PI * surfaceRadius / 180d;
-    dTdDelta_Lg = degreesToKilometers / TauUtilities.LGGRPVEL;
-    dTdDelta_LR = degreesToKilometers / TauUtilities.LRGRPVEL;
+    dTdDelta_Lg = degreesToKilometers / TauUtilities.LGGROUPVELOCITY;
+    dTdDelta_LR = degreesToKilometers / TauUtilities.LRGROUPVELOCITY;
 
     // Compute some useful depths.
     upperMantleDepth = surfaceRadius - upperMantleRadius;

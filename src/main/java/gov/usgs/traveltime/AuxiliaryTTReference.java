@@ -127,23 +127,23 @@ public class AuxiliaryTTReference {
       throws IOException, ClassNotFoundException {
     // set the model path
     if (modelPath != null) {
-      TauUtilities.modelPath = modelPath;
+      TauUtilities.setDefaultModelPath(modelPath);
     }
 
     // set the serialization path
     if (serializedPath != null) {
-      TauUtilities.serializedPath = serializedPath;
+      TauUtilities.setDefaulSerializedPath(serializedPath);
     }
 
     // Create absolute path names.
     String[] absolutePaths = new String[dataFileNames.length];
     for (int j = 0; j < dataFileNames.length; j++) {
-      absolutePaths[j] = TauUtilities.model(dataFileNames[j]);
+      absolutePaths[j] = TauUtilities.getModelPath(dataFileNames[j]);
     }
 
     // If any of the raw input files have changed, regenerate the
     // serialized file.
-    if (FileChanged.isChanged(TauUtilities.serialize(serializedFileName), absolutePaths)) {
+    if (FileChanged.isChanged(TauUtilities.getSerializedPath(serializedFileName), absolutePaths)) {
       // Open and read the phase groups file.
       BufferedInputStream inGroup = new BufferedInputStream(new FileInputStream(absolutePaths[0]));
       fileReader = new Scanner(inGroup);
@@ -207,7 +207,7 @@ public class AuxiliaryTTReference {
 
       // Write out the serialized file.
       FileOutputStream serializeOutput =
-          new FileOutputStream(TauUtilities.serialize(serializedFileName));
+          new FileOutputStream(TauUtilities.getSerializedPath(serializedFileName));
       ObjectOutputStream objectOutput = new ObjectOutputStream(serializeOutput);
 
       // Wait for an exclusive lock for writing.
@@ -243,7 +243,7 @@ public class AuxiliaryTTReference {
     } else {
       // Read in the serialized file.
       FileInputStream serializeInput =
-          new FileInputStream(TauUtilities.serialize(serializedFileName));
+          new FileInputStream(TauUtilities.getSerializedPath(serializedFileName));
       ObjectInputStream objectInput = new ObjectInputStream(serializeInput);
 
       // Wait for a shared lock for reading.
@@ -685,7 +685,7 @@ public class AuxiliaryTTReference {
    */
   public double getPhaseBias(TravelTimeStatistics phaseStatistics, double distance) {
     if (phaseStatistics == null) {
-      return TauUtilities.DEFBIAS;
+      return TauUtilities.DEFAULTTTBIAS;
     } else {
       return phaseStatistics.getPhaseBias(distance);
     }
@@ -702,7 +702,7 @@ public class AuxiliaryTTReference {
   public double getPhaseSpread(
       TravelTimeStatistics phaseStatistics, double distance, boolean upGoing) {
     if (phaseStatistics == null) {
-      return TauUtilities.DEFSPREAD;
+      return TauUtilities.DEFAULTTTSPREAD;
     } else {
       return phaseStatistics.getPhaseSpread(distance, upGoing);
     }
@@ -719,7 +719,7 @@ public class AuxiliaryTTReference {
   public double getPhaseObservability(
       TravelTimeStatistics phaseStatistics, double distance, boolean upGoing) {
     if (phaseStatistics == null) {
-      return TauUtilities.DEFOBSERV;
+      return TauUtilities.DEFAULTTTOBSERVABILITY;
     } else {
       return phaseStatistics.getPhaseObservability(distance, upGoing);
     }

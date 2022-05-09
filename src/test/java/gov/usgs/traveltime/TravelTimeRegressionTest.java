@@ -58,7 +58,7 @@ public class TravelTimeRegressionTest {
     }
 
     // check supported modles
-    String[] models = ttLocal.getAvailModels();
+    String[] models = ttLocal.getAvailableModels();
     Assertions.assertEquals(5, models.length, "Model Count Check:");
 
     // check size of branch list

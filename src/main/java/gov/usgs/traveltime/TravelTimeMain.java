@@ -175,7 +175,7 @@ public class TravelTimeMain {
       ttLocal = new TravelTimeLocalSession(true, true, true, modelPath, modelPath);
 
       // Generate a list of available Earth models.
-      String[] models = TauUtilities.availableModels();
+      String[] models = TauUtilities.getAvailableModels();
       if (models.length > 0) {
         String modelString = "Available Earth models:";
         for (int j = 0; j < models.length; j++) {
@@ -187,7 +187,7 @@ public class TravelTimeMain {
       }
     }
 
-    //	TauUtilities.noCorr = true;
+    //	TauUtilities.suppressCorrections = true;
     try {
       // Set up a simple session.
       //		TablesUtil.deBugLevel = 3;

@@ -451,12 +451,12 @@ public class EarthModel {
    * phase codes.
    */
   private void refineBoundaries() {
-    double tempIC = TauUtilities.DMAX,
-        tempOC = TauUtilities.DMAX,
-        tempUM = TauUtilities.DMAX,
-        tempM = TauUtilities.DMAX,
-        tempC = TauUtilities.DMAX,
-        tempFS = TauUtilities.DMAX;
+    double tempIC = TauUtilities.MAXIMUMDOUBLE,
+        tempOC = TauUtilities.MAXIMUMDOUBLE,
+        tempUM = TauUtilities.MAXIMUMDOUBLE,
+        tempM = TauUtilities.MAXIMUMDOUBLE,
+        tempC = TauUtilities.MAXIMUMDOUBLE,
+        tempFS = TauUtilities.MAXIMUMDOUBLE;
 
     // Find the closest boundary to target boundaries.
     for (int j = 0; j < shells.size(); j++) {

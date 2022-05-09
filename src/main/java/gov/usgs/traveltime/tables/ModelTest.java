@@ -33,7 +33,8 @@ public class ModelTest {
     make = new MakeTables(earthModel);
     status =
         make.buildModel(
-            TauUtilities.model("m" + earthModel + ".mod"), TauUtilities.model("phases.txt"));
+            TauUtilities.getModelPath("m" + earthModel + ".mod"),
+            TauUtilities.getModelPath("phases.txt"));
 
     if (status == TravelTimeStatus.SUCCESS) {
       // Build the branch reference classes.

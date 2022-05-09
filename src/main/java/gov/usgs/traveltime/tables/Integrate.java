@@ -69,7 +69,7 @@ public class Integrate {
     tauFinalModel.putShells('S', tauDepthModel.getShellModelS());
     maximumDepth =
         modelConversions.computeFlatDepth(
-            modelConversions.getSurfaceRadius() - TauUtilities.MAXDEPTH);
+            modelConversions.getSurfaceRadius() - TauUtilities.MAXIMUMDEPTH);
     outerCoreDepth = referenceModel.getOuterCoreModel().getDepth();
     innerCoreDepth = referenceModel.getInnerCoreModel().getDepth();
 

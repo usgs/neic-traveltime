@@ -94,7 +94,7 @@ public class UpGoingDataVolume {
     //	modPri.printFind(false);
 
     // If the source is at the surface, we're already done.
-    if (-zSource <= TauUtilities.DTOL) return;
+    if (-zSource <= TauUtilities.DOUBLETOLERANCE) return;
     // Otherwise, copy the desired data into temporary storage.
     iUp = modPri.getModelReference().getUpGoingIndexes()[iSrc];
     //	System.out.println("\t\t\tiUp = "+iUp);
@@ -103,7 +103,7 @@ public class UpGoingDataVolume {
     xUp = Arrays.copyOf(ref.xUp[iUp], ref.xUp[iUp].length);
 
     // See if we need to correct tauUp.
-    if (Math.abs(ref.pTauUp[iUp] - pMax) <= TauUtilities.DTOL) corrTau = false;
+    if (Math.abs(ref.pTauUp[iUp] - pMax) <= TauUtilities.DOUBLETOLERANCE) corrTau = false;
     else corrTau = true;
 
     pMax = Math.min(pMax, pSource);
@@ -128,7 +128,7 @@ public class UpGoingDataVolume {
           //				(float)ref.pXUp[i]);
 
           // See if we need to correct an end point distance as well.
-          if (Math.abs(ref.pTauUp[j] - ref.pXUp[i]) <= TauUtilities.DTOL) {
+          if (Math.abs(ref.pTauUp[j] - ref.pXUp[i]) <= TauUtilities.DOUBLETOLERANCE) {
             xInt = intPri.getLayerIntDist();
             xUp[i++] -= xInt;
             //			System.out.println("i  x (after) dx = "+i+" "+

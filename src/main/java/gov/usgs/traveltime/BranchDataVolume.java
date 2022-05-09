@@ -265,7 +265,7 @@ public class BranchDataVolume {
     // Skip branches we aren't computing.
     if (shouldComputeTT) {
       // A surface source is a special case (i.e., no up-going phases).
-      if (-sourceDepth <= TauUtilities.DTOL) {
+      if (-sourceDepth <= TauUtilities.DOUBLETOLERANCE) {
         if (branchReference.getUpGoingCorrectionSign() < 0) {
           // This branch starts with a down-going ray.
           correctedBranchExists = true;
@@ -345,11 +345,12 @@ public class BranchDataVolume {
            * seemed worthwhile in this case.*/
           for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
             // See if we need this point.
-            if (branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) {
+            if (branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DOUBLETOLERANCE) {
               len++;
 
               // If this point is equal to pMax, we're done.
-              if (Math.abs(branchReference.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
+              if (Math.abs(branchReference.getSlownessGrid()[j] - pMax)
+                  <= TauUtilities.DOUBLETOLERANCE) {
                 break;
               }
               // Otherwise, add one more point and quit.
@@ -378,7 +379,7 @@ public class BranchDataVolume {
 
             // Correct tau for the up-going branch.
             // We assume that branchReference.getSlownessGrid() is a subset of upgoingPBranch.pUp
-            // We assume that TauUtilities.DTOL is being used as a
+            // We assume that TauUtilities.DOUBLETOLERANCE is being used as a
             // float epsilon for floating point comparisions
             // We assume upgoingPBranch.pUp is the same lenght as upgoingPBranch.tauUp
             // We assume that branchReference.getSlownessGrid() and upgoingPBranch.pUp are sorted in
@@ -387,7 +388,7 @@ public class BranchDataVolume {
             for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
               // Make sure we do not loop past the end of upgoingPBranch.pUp
-              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DTOL)
+              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DOUBLETOLERANCE)
                   && (i < upgoingPBranch.pUp.length)) {
                 // pTauUp is a superset of updatedRayParameters so we need to sync them.
                 // advance through the upgoingPBranch.pUp array until we find the index
@@ -396,7 +397,7 @@ public class BranchDataVolume {
                 // To make sure don't loop past the end of upgoingPBranch.pUp, we check
                 // length-1 because of how the while loop is structured
                 while ((Math.abs(branchReference.getSlownessGrid()[j] - upgoingPBranch.pUp[i])
-                        > TauUtilities.DTOL)
+                        > TauUtilities.DOUBLETOLERANCE)
                     && (i < upgoingPBranch.pUp.length - 1)) {
                   i++;
                 }
@@ -406,7 +407,8 @@ public class BranchDataVolume {
                 correctedTauValues[j] = upgoingPBranch.tauUp[i];
 
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
+                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax)
+                    <= TauUtilities.DOUBLETOLERANCE) {
                   break;
                 }
               } else {
@@ -450,7 +452,7 @@ public class BranchDataVolume {
             for (i = 0; i < correctedDistanceRange.length; i++) {
               for (; m < upgoingPBranch.ref.pXUp.length; m++) {
                 if (Math.abs(correctedSlownessRange[i] - upgoingPBranch.ref.pXUp[m])
-                    <= TauUtilities.DTOL) {
+                    <= TauUtilities.DOUBLETOLERANCE) {
                   if (m >= upgoingPBranch.xUp.length) {
                     correctedBranchExists = false;
                     return;
@@ -475,7 +477,7 @@ public class BranchDataVolume {
 
             // Correct tau for down-going branches.
             // We assume that branchReference.getSlownessGrid() is a subset of upgoingPBranch.pUp
-            // We assume that TauUtilities.DTOL is being used as a
+            // We assume that TauUtilities.DOUBLETOLERANCE is being used as a
             // float epsilon for floating point comparisions
             // We assume upgoingPBranch.pUp is the same lenght as upgoingPBranch.tauUp
             // We assume that branchReference.getSlownessGrid() and upgoingPBranch.pUp are sorted in
@@ -484,7 +486,7 @@ public class BranchDataVolume {
             for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
               // Make sure we do not loop past the end of upgoingPBranch.pUp
-              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DTOL)
+              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DOUBLETOLERANCE)
                   && (i < upgoingPBranch.pUp.length)) {
                 // pTauUp is a superset of updatedRayParameters so we need to sync them.
                 // advance through the upgoingPBranch.pUp array until we find the index
@@ -493,7 +495,7 @@ public class BranchDataVolume {
                 // To make sure don't loop past the end of upgoingPBranch.pUp, we check
                 // length-1 because of how the while loop is structured
                 while ((Math.abs(branchReference.getSlownessGrid()[j] - upgoingPBranch.pUp[i])
-                        > TauUtilities.DTOL)
+                        > TauUtilities.DOUBLETOLERANCE)
                     && (i < upgoingPBranch.pUp.length - 1)) {
                   i++;
                 }
@@ -505,7 +507,8 @@ public class BranchDataVolume {
                         + branchReference.getUpGoingCorrectionSign() * upgoingPBranch.tauUp[i];
 
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
+                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax)
+                    <= TauUtilities.DOUBLETOLERANCE) {
                   break;
                 }
               } else {
@@ -524,7 +527,7 @@ public class BranchDataVolume {
             interpolatedDistanceValues = new double[len];
 
             if (Math.abs(correctedSlownessRange[1] - branchReference.getSlownessRange()[1])
-                <= TauUtilities.DTOL) {
+                <= TauUtilities.DOUBLETOLERANCE) {
               splineRoutines.computeTauSpline(
                   correctedTauValues,
                   correctedDistanceRange,
@@ -560,11 +563,12 @@ public class BranchDataVolume {
            * seemed worthwhile in this case.*/
           for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
             // See if we need this point.
-            if (branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DTOL) {
+            if (branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DOUBLETOLERANCE) {
               len++;
 
               // If this point is equal to pMax, we're done.
-              if (Math.abs(branchReference.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
+              if (Math.abs(branchReference.getSlownessGrid()[j] - pMax)
+                  <= TauUtilities.DOUBLETOLERANCE) {
                 break;
               }
               // Otherwise, add one more point and quit.
@@ -592,7 +596,7 @@ public class BranchDataVolume {
 
             // Correct tau for the up-going branch.
             // We assume that branchReference.getSlownessGrid() is a subset of upgoingSBranch.pUp
-            // We assume that TauUtilities.DTOL is being used as a
+            // We assume that TauUtilities.DOUBLETOLERANCE is being used as a
             // float epsilon for floating point comparisions
             // We assume upgoingSBranch.pUp is the same lenght as upgoingSBranch.tauUp
             // We assume that branchReference.getSlownessGrid() and upgoingSBranch.pUp are sorted in
@@ -601,7 +605,7 @@ public class BranchDataVolume {
             for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
               // Make sure we do not loop past the end of upgoingSBranch.pUp
-              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DTOL)
+              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DOUBLETOLERANCE)
                   && (i < upgoingSBranch.pUp.length)) {
                 // pTauUp is a superset of updatedRayParameters so we need to sync them.
                 // advance through the upgoingSBranch.pUp array until we find the index
@@ -610,7 +614,7 @@ public class BranchDataVolume {
                 // To make sure don't loop past the end of upgoingSBranch.pUp, we check
                 // length-1 because of how the while loop is structured
                 while ((Math.abs(branchReference.getSlownessGrid()[j] - upgoingSBranch.pUp[i])
-                        > TauUtilities.DTOL)
+                        > TauUtilities.DOUBLETOLERANCE)
                     && (i < upgoingSBranch.pUp.length - 1)) {
                   i++;
                 }
@@ -620,7 +624,8 @@ public class BranchDataVolume {
                 correctedTauValues[j] = upgoingSBranch.tauUp[i];
 
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
+                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax)
+                    <= TauUtilities.DOUBLETOLERANCE) {
                   break;
                 }
               } else {
@@ -664,7 +669,7 @@ public class BranchDataVolume {
             for (i = 0; i < correctedDistanceRange.length; i++) {
               for (; m < upgoingSBranch.ref.pXUp.length; m++) {
                 if (Math.abs(correctedSlownessRange[i] - upgoingSBranch.ref.pXUp[m])
-                    <= TauUtilities.DTOL) {
+                    <= TauUtilities.DOUBLETOLERANCE) {
                   if (m >= upgoingSBranch.xUp.length) {
                     correctedBranchExists = false;
                     return;
@@ -688,7 +693,7 @@ public class BranchDataVolume {
 
             // Correct tau for down-going branches.
             // We assume that branchReference.getSlownessGrid() is a subset of upgoingSBranch.pUp
-            // We assume that TauUtilities.DTOL is being used as a
+            // We assume that TauUtilities.DOUBLETOLERANCE is being used as a
             // float epsilon for floating point comparisions
             // We assume upgoingSBranch.pUp is the same lenght as upgoingSBranch.tauUp
             // We assume that branchReference.getSlownessGrid() and upgoingSBranch.pUp are sorted in
@@ -697,7 +702,7 @@ public class BranchDataVolume {
             for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
               // Make sure we do not loop past the end of upgoingSBranch.pUp
-              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DTOL)
+              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DOUBLETOLERANCE)
                   && (i < upgoingSBranch.pUp.length)) {
                 // pTauUp is a superset of updatedRayParameters so we need to sync them.
                 // advance through the upgoingSBranch.pUp array until we find the index
@@ -706,7 +711,7 @@ public class BranchDataVolume {
                 // To make sure don't loop past the end of upgoingSBranch.pUp, we check
                 // length-1 because of how the while loop is structured
                 while ((Math.abs(branchReference.getSlownessGrid()[j] - upgoingSBranch.pUp[i])
-                        > TauUtilities.DTOL)
+                        > TauUtilities.DOUBLETOLERANCE)
                     && (i < upgoingSBranch.pUp.length - 1)) {
                   i++;
                 }
@@ -718,7 +723,8 @@ public class BranchDataVolume {
                         + branchReference.getUpGoingCorrectionSign() * upgoingSBranch.tauUp[i];
 
                 // If this point is equal to pMax, we're done.
-                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax) <= TauUtilities.DTOL) {
+                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax)
+                    <= TauUtilities.DOUBLETOLERANCE) {
                   break;
                 }
               } else {
@@ -737,7 +743,7 @@ public class BranchDataVolume {
             interpolatedDistanceValues = new double[len];
 
             if (Math.abs(correctedSlownessRange[1] - branchReference.getSlownessRange()[1])
-                <= TauUtilities.DTOL) {
+                <= TauUtilities.DOUBLETOLERANCE) {
               splineRoutines.computeTauSpline(
                   correctedTauValues,
                   correctedDistanceRange,
@@ -986,7 +992,7 @@ public class BranchDataVolume {
 
       // See if there's a caustic in this interval.
       causticFlags[j] = "";
-      if (Math.abs(interpolationPolynomials[2][j]) > TauUtilities.DMIN) {
+      if (Math.abs(interpolationPolynomials[2][j]) > TauUtilities.MINIMUMDOUBLE) {
         double sqrtPext = -0.375d * interpolationPolynomials[3][j] / interpolationPolynomials[2][j];
         double pExt = Math.pow(sqrtPext, 2d);
 
@@ -1094,7 +1100,7 @@ public class BranchDataVolume {
                 Math.max(3e-6d * (updatedRayParameters[j + 1] - updatedRayParameters[j]), 1e-4d);
 
             // This is the general case.
-            if (Math.abs(interpolationPolynomials[2][j]) > TauUtilities.DMIN) {
+            if (Math.abs(interpolationPolynomials[2][j]) > TauUtilities.MINIMUMDOUBLE) {
               // There should be two solutions.
               double dps =
                   -(3d * interpolationPolynomials[3][j]
@@ -1128,7 +1134,7 @@ public class BranchDataVolume {
                   // Fiddle the phase code for bc branches.
                   String tmpCode;
                   if (correctedPhaseCode.contains("ab") && ps <= correctedCausticSlowness) {
-                    tmpCode = TauUtilities.phSeg(correctedPhaseCode) + "bc";
+                    tmpCode = TauUtilities.createSegmentCode(correctedPhaseCode) + "bc";
                   } else {
                     tmpCode = correctedPhaseCode;
                   }
@@ -1149,7 +1155,7 @@ public class BranchDataVolume {
                       -(2d * interpolationPolynomials[2][j]
                               + 0.75d
                                   * interpolationPolynomials[3][j]
-                                  / Math.max(Math.abs(dps), TauUtilities.DTOL))
+                                  / Math.max(Math.abs(dps), TauUtilities.DOUBLETOLERANCE))
                           / modelConversions.getTauTTNormalization(),
                       false);
                 }
@@ -1176,7 +1182,7 @@ public class BranchDataVolume {
               // Fiddle the phase code for bc branches.
               String tmpCode;
               if (correctedPhaseCode.contains("ab") && ps <= correctedCausticSlowness) {
-                tmpCode = TauUtilities.phSeg(correctedPhaseCode) + "bc";
+                tmpCode = TauUtilities.createSegmentCode(correctedPhaseCode) + "bc";
               } else {
                 tmpCode = correctedPhaseCode;
               }
@@ -1195,7 +1201,7 @@ public class BranchDataVolume {
                   depthSign * Math.sqrt(Math.abs(slownessUpSquared - Math.pow(ps, 2d))),
                   -(0.75d
                           * interpolationPolynomials[3][j]
-                          / Math.max(Math.abs(dps), TauUtilities.DTOL))
+                          / Math.max(Math.abs(dps), TauUtilities.DOUBLETOLERANCE))
                       / modelConversions.getTauTTNormalization(),
                   false);
             }
@@ -1247,7 +1253,7 @@ public class BranchDataVolume {
               -(2d * interpolationPolynomials[2][0]
                       + 0.75d
                           * interpolationPolynomials[3][0]
-                          / Math.max(Math.abs(dps), TauUtilities.DTOL))
+                          / Math.max(Math.abs(dps), TauUtilities.DOUBLETOLERANCE))
                   / modelConversions.getTauTTNormalization(),
               false);
         }
@@ -1274,7 +1280,7 @@ public class BranchDataVolume {
             // See what we've got.
             if (branchReference.getAddOnPhaseCode().equals("Lg")) {
               // Make sure we have a valid depth.
-              if (sourceDepth <= TauUtilities.LGDEPMAX) {
+              if (sourceDepth <= TauUtilities.LGMAXIMUMDEPTH) {
                 travelTimeList.addPhase(
                     branchReference.getAddOnPhaseCode(),
                     uniquePhaseCode,
@@ -1286,8 +1292,8 @@ public class BranchDataVolume {
               }
             } else if (branchReference.getAddOnPhaseCode().equals("LR")) {
               // Make sure we have a valid depth and distance.
-              if (sourceDepth <= TauUtilities.LRDEPMAX
-                  && desiredDistance <= TauUtilities.LRDELMAX) {
+              if (sourceDepth <= TauUtilities.LRMAXIMUMDEPTH
+                  && desiredDistance <= TauUtilities.LRMAXIMUMDISTANCE) {
                 travelTimeList.addPhase(
                     branchReference.getAddOnPhaseCode(),
                     uniquePhaseCode,

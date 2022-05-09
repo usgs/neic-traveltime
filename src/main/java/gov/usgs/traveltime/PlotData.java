@@ -57,13 +57,13 @@ public class PlotData {
       double distanceStep)
       throws BadDepthException, TauIntegralException {
 
-    double distanceIncrement = TauUtilities.DDELPLOT;
+    double distanceIncrement = TauUtilities.PLOTDISTANCEINCREMENT;
     if (distanceStep > 0) {
       distanceIncrement = distanceStep;
     }
 
     // Make sure the depth is in range.
-    if (!Double.isNaN(depth) && depth >= 0d && depth <= TauUtilities.MAXDEPTH) {
+    if (!Double.isNaN(depth) && depth >= 0d && depth <= TauUtilities.MAXIMUMDEPTH) {
       plotData = new TravelTimePlot();
 
       // A simple request is all we can do.

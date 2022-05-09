@@ -131,7 +131,7 @@ public class ModelDataVolume {
 
     // If we're on a grid point, return that.
     if (Math.abs(depth - modelReference.getModelDepths()[currentSourceDepthIndex])
-        <= TauUtilities.DTOL) {
+        <= TauUtilities.DOUBLETOLERANCE) {
       sourceDepthOnGridPoint = true;
       foundSlowness = modelReference.getModelSlownesses()[currentSourceDepthIndex];
     } else {
@@ -184,7 +184,7 @@ public class ModelDataVolume {
           currentSourceDepthIndex--) {
         if (modelReference.getModelSlownesses()[currentSourceDepthIndex] >= slowness) {
           if (Math.abs(modelReference.getModelSlownesses()[currentSourceDepthIndex] - slowness)
-              <= TauUtilities.DTOL) currentSourceDepthIndex++;
+              <= TauUtilities.DOUBLETOLERANCE) currentSourceDepthIndex++;
           break;
         }
       }
@@ -205,7 +205,7 @@ public class ModelDataVolume {
 
     // If we're on a grid point, return that.
     if (Math.abs(slowness - modelReference.getModelSlownesses()[currentSourceDepthIndex])
-        <= TauUtilities.DTOL) {
+        <= TauUtilities.DOUBLETOLERANCE) {
       foundDepth = modelReference.getModelDepths()[currentSourceDepthIndex];
       sourceDepthOnGridPoint = true;
     } else {
@@ -224,7 +224,7 @@ public class ModelDataVolume {
                                   - modelReference
                                       .getModelSlownesses()[currentSourceDepthIndex - 1])
                           + 1d,
-                      TauUtilities.DMIN));
+                      TauUtilities.MINIMUMDOUBLE));
 
       sourceDepthOnGridPoint = false;
     }

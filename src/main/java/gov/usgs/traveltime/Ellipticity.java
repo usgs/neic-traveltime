@@ -106,11 +106,14 @@ public class Ellipticity implements Serializable {
 
     // Interpolate the tau functions.
     double tau0 =
-        TauUtilities.biLinear(recieverDistance, sourceDepth, distanceValues, depthValues, t0);
+        TauUtilities.biLinearInterpolation(
+            recieverDistance, sourceDepth, distanceValues, depthValues, t0);
     double tau1 =
-        TauUtilities.biLinear(recieverDistance, sourceDepth, distanceValues, depthValues, t1);
+        TauUtilities.biLinearInterpolation(
+            recieverDistance, sourceDepth, distanceValues, depthValues, t1);
     double tau2 =
-        TauUtilities.biLinear(recieverDistance, sourceDepth, distanceValues, depthValues, t2);
+        TauUtilities.biLinearInterpolation(
+            recieverDistance, sourceDepth, distanceValues, depthValues, t2);
 
     // Compute the correction.
     double EllipticityCorr =

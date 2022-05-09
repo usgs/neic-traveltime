@@ -409,14 +409,14 @@ public class TauIntegrate {
       throws TauIntegralException {
 
     // Handle a zero thickness layer (discontinuity).
-    if (Math.abs(topDepth - bottomDepth) <= TauUtilities.DTOL) {
+    if (Math.abs(topDepth - bottomDepth) <= TauUtilities.DOUBLETOLERANCE) {
       layerIntDist = 0d;
       return 0d;
     }
 
     // Handle a constant slowness layer.
-    if (Math.abs(topSlowness - bottomSlowness) <= TauUtilities.DTOL) {
-      if (Math.abs(rayParameter - topSlowness) <= TauUtilities.DTOL) {
+    if (Math.abs(topSlowness - bottomSlowness) <= TauUtilities.DOUBLETOLERANCE) {
+      if (Math.abs(rayParameter - topSlowness) <= TauUtilities.DOUBLETOLERANCE) {
         layerIntDist = 0d;
         return 0d;
       } else {
@@ -429,7 +429,8 @@ public class TauIntegrate {
     }
 
     // Handle the straight through ray at the center.
-    if (rayParameter <= TauUtilities.DTOL && bottomSlowness <= TauUtilities.DTOL) {
+    if (rayParameter <= TauUtilities.DOUBLETOLERANCE
+        && bottomSlowness <= TauUtilities.DOUBLETOLERANCE) {
       layerIntDist = Math.PI / 2d; // Accumulate all of x in the last layer.
       return topSlowness;
     }
@@ -454,7 +455,7 @@ public class TauIntegrate {
     }
 
     // Handle the straight through ray elsewhere.
-    if (rayParameter <= TauUtilities.DTOL) {
+    if (rayParameter <= TauUtilities.DOUBLETOLERANCE) {
       double tau =
           -(bottomSlowness
               - topSlowness
@@ -463,7 +464,7 @@ public class TauIntegrate {
                   * Math.log(
                       Math.max(
                           (topSlowness - b) * bottomSlowness / ((bottomSlowness - b) * topSlowness),
-                          TauUtilities.DMIN)));
+                          TauUtilities.MINIMUMDOUBLE)));
 
       layerIntDist = 0d;
       validateTau(rayParameter, topSlowness, bottomSlowness, topDepth, bottomDepth, tau);
@@ -485,7 +486,7 @@ public class TauIntegrate {
                     (topSlowness - b)
                         * (b * bottomSlowness - p2)
                         / ((bottomSlowness - b) * (b2 * pTop2 + b * topSlowness - p2)),
-                    TauUtilities.DMIN));
+                    TauUtilities.MINIMUMDOUBLE));
         layerIntDist = bottomSlowness * xInt / b2;
       } else {
         xInt =
@@ -518,7 +519,7 @@ public class TauIntegrate {
                     (topSlowness - b)
                         * (b2 * pBot2 + b * bottomSlowness - p2)
                         / ((bottomSlowness - b) * (b * topSlowness - p2)),
-                    TauUtilities.DMIN));
+                    TauUtilities.MINIMUMDOUBLE));
         layerIntDist = topSlowness * xInt / b2;
       } else {
         xInt =
@@ -561,7 +562,7 @@ public class TauIntegrate {
               + (float) b2);
     }
 
-    if (b2 <= TauUtilities.DMIN) {
+    if (b2 <= TauUtilities.MINIMUMDOUBLE) {
       xInt = 0d;
       layerIntDist =
           rayParameter
@@ -575,7 +576,7 @@ public class TauIntegrate {
                   (topSlowness - b)
                       * (b2 * pBot2 + b * bottomSlowness - p2)
                       / ((bottomSlowness - b) * (b2 * pTop2 + b * topSlowness - p2)),
-                  TauUtilities.DMIN));
+                  TauUtilities.MINIMUMDOUBLE));
 
       if (TablesUtil.deBugLevel > 2) {
         System.out.println(
@@ -668,8 +669,8 @@ public class TauIntegrate {
       double bottomDepth) {
     // Handle a zero thickness layer (discontinuity) or a constant
     // slowness layer.
-    if (Math.abs(topDepth - bottomDepth) <= TauUtilities.DTOL
-        || Math.abs(topSlowness - bottomSlowness) <= TauUtilities.DTOL) {
+    if (Math.abs(topDepth - bottomDepth) <= TauUtilities.DOUBLETOLERANCE
+        || Math.abs(topSlowness - bottomSlowness) <= TauUtilities.DOUBLETOLERANCE) {
       return 0d;
     }
 
@@ -677,7 +678,7 @@ public class TauIntegrate {
     double pTop2 = Math.pow(topSlowness, 2d);
 
     // Handle a bottoming ray.
-    if (Math.abs(rayParameter - bottomSlowness) <= TauUtilities.DTOL) {
+    if (Math.abs(rayParameter - bottomSlowness) <= TauUtilities.DOUBLETOLERANCE) {
       return (bottomDepth - topDepth)
           * (1d / Math.sqrt(Math.abs(pTop2 - p2)))
           / Math.log(topSlowness / bottomSlowness);
@@ -709,18 +710,18 @@ public class TauIntegrate {
       double bottomDepth,
       double tau)
       throws TauIntegralException {
-    if (tau < -TauUtilities.TAUINTTOL) {
+    if (tau < -TauUtilities.TAUCOMPARISONTOLERANCE) {
       System.out.format(
           "***** Bad tau: rayParameter = %8.6f, topSlowness = %8.6f, "
               + "bottomSlowness = %8.6f, topDepth = %9.6f, bottomDepth = %9.6f, tau = %11.4e, "
-              + "TAUINTTOL=%11.4e, x = %11.4e\n",
+              + "TAUCOMPARISONTOLERANCE=%11.4e, x = %11.4e\n",
           rayParameter,
           topSlowness,
           bottomSlowness,
           topDepth,
           bottomDepth,
           tau,
-          -TauUtilities.TAUINTTOL,
+          -TauUtilities.TAUCOMPARISONTOLERANCE,
           layerIntDist);
 
       if (rayParameter > topSlowness) {
@@ -728,7 +729,7 @@ public class TauIntegrate {
       }
 
       throw new TauIntegralException("Partial integrals cannot be negative");
-      /*	} else if(layerIntDist < -TauUtilities.DMIN) {
+      /*	} else if(layerIntDist < -TauUtilities.MINIMUMDOUBLE) {
       System.out.format("***** Bad x: rayParameter = %8.6f, topSlowness = %8.6f, "+
       		"bottomSlowness = %8.6f, topDepth = %9.6f, bottomDepth = %9.6f, tau = %11.4e, "+
       		"x = %11.4e\n", rayParameter, topSlowness, bottomSlowness, topDepth, bottomDepth, tau, layerIntDist);

@@ -64,7 +64,7 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
     this.spread = spread;
     this.observ = observ;
     this.dSdD = dSdD;
-    window = Math.max(TauUtilities.ASSOCFACTOR * spread, TauUtilities.WINDOWMIN);
+    window = Math.max(TauUtilities.ASSOCWINDOWFACTOR * spread, TauUtilities.ASSOCWINDOWMINIMUM);
   }
 
   /**

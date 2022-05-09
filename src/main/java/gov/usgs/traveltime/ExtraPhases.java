@@ -99,7 +99,7 @@ public class ExtraPhases {
       if (phaseCode.equals(diffractionPhaseCodes[j])) {
         if (!diffractionCodeUsed[j]) {
           diffractionCodeUsed[j] = true;
-          diffractedPhaseCode = TauUtilities.phSeg(diffractionPhaseCodes[j]) + "dif";
+          diffractedPhaseCode = TauUtilities.createSegmentCode(diffractionPhaseCodes[j]) + "dif";
 
           if (phaseCode.contains("ab")) {
             diffractedPhaseLimit = coreLimit;
@@ -148,7 +148,7 @@ public class ExtraPhases {
             addOnPhaseCode = addOnPhaseCodes[j];
             return true;
           } else {
-            if (minimumDistance < TauUtilities.SNDELMIN) {
+            if (minimumDistance < TauUtilities.SNMINIMUMDISTANCE) {
               // For Sn we want the second branch.
               addOnCodeUsed[j] = true;
               addOnPhaseCode = addOnPhaseCodes[j];

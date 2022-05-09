@@ -262,7 +262,7 @@ public class AllBranchVolume {
       throws BadDepthException, TauIntegralException {
 
     // Make sure the depth is in range.
-    if (depth >= 0d && depth <= TauUtilities.MAXDEPTH) {
+    if (depth >= 0d && depth <= TauUtilities.MAXIMUMDEPTH) {
       depthIsOutOfRange = false;
 
       // Remember the session control flags.
@@ -285,7 +285,7 @@ public class AllBranchVolume {
                   Math.log(
                       Math.max(
                           1d - sourceDimensionalDepth * modelConversions.getDistanceNormalization(),
-                          TauUtilities.DMIN)),
+                          TauUtilities.MINIMUMDOUBLE)),
                   0d);
           ttDepthDerivative =
               1d
@@ -419,9 +419,9 @@ public class AllBranchVolume {
               && (recieverLongitude >= -180d)
               && (recieverLongitude <= 180d)) {
             this.receiverDistance =
-                TauUtilities.delAz(
+                TauUtilities.computeDistAzm(
                     sourceLatitude, sourceLongitude, recieverLatitude, recieverLongitude);
-            this.receiverAzimuth = TauUtilities.recieverAzimuth;
+            this.receiverAzimuth = TauUtilities.getRecieverAzimuth();
           } else {
             isComplexRequest = false;
             this.receiverAzimuth = Double.NaN;
@@ -442,9 +442,9 @@ public class AllBranchVolume {
           && (recieverLongitude <= 180d)) {
         distanceIsOutOfRange = false;
         this.receiverDistance =
-            TauUtilities.delAz(
+            TauUtilities.computeDistAzm(
                 sourceLatitude, sourceLongitude, recieverLatitude, recieverLongitude);
-        this.receiverAzimuth = TauUtilities.recieverAzimuth;
+        this.receiverAzimuth = TauUtilities.getRecieverAzimuth();
       } else {
         distanceIsOutOfRange = true;
       }
@@ -452,8 +452,8 @@ public class AllBranchVolume {
 
     // If the elevation doesn't make sense, just set it to zero.
     if ((!Double.isNaN(recieverElevation))
-        && (recieverElevation >= TauUtilities.MINELEV)
-        && (recieverElevation <= TauUtilities.MAXELEV)) {
+        && (recieverElevation >= TauUtilities.MINIMUMELEVATION)
+        && (recieverElevation <= TauUtilities.MAXIUMUMELEVATION)) {
       return computeTravelTime(recieverElevation);
     } else {
       return computeTravelTime(0d);
@@ -480,8 +480,8 @@ public class AllBranchVolume {
     }
     // If the elevation doesn't make sense, just set it to zero.
     if (!Double.isNaN(recieverElevation)
-        && recieverElevation >= TauUtilities.MINELEV
-        && recieverElevation <= TauUtilities.MAXELEV) {
+        && recieverElevation >= TauUtilities.MINIMUMELEVATION
+        && recieverElevation <= TauUtilities.MAXIUMUMELEVATION) {
       return computeTravelTime(recieverElevation);
     } else {
       return computeTravelTime(0d);
@@ -514,13 +514,13 @@ public class AllBranchVolume {
 
     sourceRecieverDistances[1] = 2d * Math.PI - sourceRecieverDistances[0];
     sourceRecieverDistances[2] = sourceRecieverDistances[0] + 2d * Math.PI;
-    if (Math.abs(sourceRecieverDistances[0]) <= TauUtilities.DTOL) {
-      sourceRecieverDistances[0] = TauUtilities.DTOL;
+    if (Math.abs(sourceRecieverDistances[0]) <= TauUtilities.DOUBLETOLERANCE) {
+      sourceRecieverDistances[0] = TauUtilities.DOUBLETOLERANCE;
       sourceRecieverDistances[2] = -10d;
     }
 
-    if (Math.abs(sourceRecieverDistances[0] - Math.PI) <= TauUtilities.DTOL) {
-      sourceRecieverDistances[0] = Math.PI - TauUtilities.DTOL;
+    if (Math.abs(sourceRecieverDistances[0] - Math.PI) <= TauUtilities.DOUBLETOLERANCE) {
+      sourceRecieverDistances[0] = Math.PI - TauUtilities.DOUBLETOLERANCE;
       sourceRecieverDistances[1] = -10d;
     }
 
@@ -584,7 +584,7 @@ public class AllBranchVolume {
               }
 
               // This is the normal case.  Do various travel-time corrections.
-              if (!TauUtilities.noCorr) {
+              if (!TauUtilities.suppressCorrections) {
                 TravelTime.tt +=
                     elevationCorrection(TravelTime.phaseCode, recieverElevation, TravelTime.dTdD);
                 // If this was a complex request, do the Ellipticity and bounce
@@ -718,16 +718,17 @@ public class AllBranchVolume {
     }
 
     // Otherwise, the correction depends on the phase type at the station.
-    char type = TauUtilities.arrivalType(phaseCode);
+    char type = TauUtilities.classifyPhaseWaveType(phaseCode);
+
     if (type == 'P') {
-      return TauUtilities.elevationCorrection(
+      return TauUtilities.compElevationCorrection(
           recieverElevation,
-          TauUtilities.DEFVP,
+          TauUtilities.DEFAULTPVELOCITY,
           rayParameter / modelConversions.getDegreesToKilometers());
     } else if (type == 'S') {
-      return TauUtilities.elevationCorrection(
+      return TauUtilities.compElevationCorrection(
           recieverElevation,
-          TauUtilities.DEFVS,
+          TauUtilities.DEFAULTSVELOCITY,
           rayParameter / modelConversions.getDegreesToKilometers());
     } else {
       return 0d; // This should never happen
@@ -831,7 +832,7 @@ public class AllBranchVolume {
     double reflectionLatitude =
         TauUtilities.projectLatitude(
             sourceLatitude, sourceLongitude, reflectionDistance, recieverAzimuth);
-    double reflectionLongitude = TauUtilities.projLon;
+    double reflectionLongitude = TauUtilities.getProjectedLongitude();
 
     // Get the elevation at that point.
     double recieverElevation =
@@ -853,13 +854,13 @@ public class AllBranchVolume {
              * constant at the end compensates for the default delay of pwP behind
              * pP. */
             return 2d
-                    * (TauUtilities.elevationCorrection(
+                    * (TauUtilities.compElevationCorrection(
                             recieverElevation,
-                            TauUtilities.DEFVP,
+                            TauUtilities.DEFAULTPVELOCITY,
                             rayParameter / modelConversions.getDegreesToKilometers())
-                        - TauUtilities.elevationCorrection(
+                        - TauUtilities.compElevationCorrection(
                             recieverElevation,
-                            TauUtilities.DEFVW,
+                            TauUtilities.DEFAULTWATERPVELOCITY,
                             rayParameter / modelConversions.getDegreesToKilometers()))
                 - 4.67d;
           } else {
@@ -869,28 +870,28 @@ public class AllBranchVolume {
           // This is the normal case.
         } else {
           return 2d
-              * TauUtilities.elevationCorrection(
+              * TauUtilities.compElevationCorrection(
                   recieverElevation,
-                  TauUtilities.DEFVP,
+                  TauUtilities.DEFAULTPVELOCITY,
                   rayParameter / modelConversions.getDegreesToKilometers());
         }
         // Handle all converted phases.
       case "PS":
       case "SP":
-        return TauUtilities.elevationCorrection(
+        return TauUtilities.compElevationCorrection(
                 recieverElevation,
-                TauUtilities.DEFVP,
+                TauUtilities.DEFAULTPVELOCITY,
                 rayParameter / modelConversions.getDegreesToKilometers())
-            + TauUtilities.elevationCorrection(
+            + TauUtilities.compElevationCorrection(
                 recieverElevation,
-                TauUtilities.DEFVS,
+                TauUtilities.DEFAULTSVELOCITY,
                 rayParameter / modelConversions.getDegreesToKilometers());
         // Handle all reflecting S phases.
       case "SS":
         return 2d
-            * TauUtilities.elevationCorrection(
+            * TauUtilities.compElevationCorrection(
                 recieverElevation,
-                TauUtilities.DEFVS,
+                TauUtilities.DEFAULTSVELOCITY,
                 rayParameter / modelConversions.getDegreesToKilometers());
         // Again, this should never happen.
       default:
@@ -933,8 +934,8 @@ public class AllBranchVolume {
     double observability;
     double spreadDerivative;
     if (distance >= 360d || flags.getPhaseStatistics() == null) {
-      spread = TauUtilities.DEFSPREAD;
-      observability = TauUtilities.DEFOBSERV;
+      spread = TauUtilities.DEFAULTTTSPREAD;
+      observability = TauUtilities.DEFAULTTTOBSERVABILITY;
       spreadDerivative = 0d;
     } else {
       // Wrap distances greater than 180 degrees.
@@ -977,7 +978,7 @@ public class AllBranchVolume {
       throws PhaseNotFoundException {
     String tmpCode;
     if (phaseCode.contains("bc")) {
-      tmpCode = TauUtilities.phSeg(phaseCode) + "ab";
+      tmpCode = TauUtilities.createSegmentCode(phaseCode) + "ab";
     } else {
       tmpCode = phaseCode;
     }

@@ -24,7 +24,7 @@ public class TravelTimePlotPoint implements Comparable<TravelTimePlotPoint> {
   public TravelTimePlotPoint(double delta, double tt, double spread, double observ, double dTdD) {
     this.delta = delta;
     this.tt = tt;
-    if (spread < TauUtilities.DEFSPREAD) {
+    if (spread < TauUtilities.DEFAULTTTSPREAD) {
       this.spread = spread;
       this.observ = observ;
     } else {

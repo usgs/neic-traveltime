@@ -73,7 +73,7 @@ public class DecimateTravelTimeBranch {
           // sample.
           double pTarget = pNew[k] + 0.75d * (pOld[j] - pNew[k]);
           int iMin = 0;
-          double pDiff = TauUtilities.DMAX;
+          double pDiff = TauUtilities.MAXIMUMDOUBLE;
 
           for (int i = jLast; i <= j; i++) {
             if (Math.abs(pOld[i] - pTarget) < pDiff) {

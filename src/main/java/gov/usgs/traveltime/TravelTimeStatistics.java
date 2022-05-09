@@ -55,7 +55,7 @@ public class TravelTimeStatistics implements Serializable {
         return seg.interp(delta);
       }
     }
-    return TauUtilities.DEFBIAS;
+    return TauUtilities.DEFAULTTTBIAS;
   }
 
   /**
@@ -71,13 +71,13 @@ public class TravelTimeStatistics implements Serializable {
     for (int k = 0; k < spread.size(); k++) {
       seg = spread.get(k);
       if (delta >= seg.minDelta && delta <= seg.maxDelta) {
-        return Math.min(seg.interp(delta), TauUtilities.DEFSPREAD);
+        return Math.min(seg.interp(delta), TauUtilities.DEFAULTTTSPREAD);
       }
     }
     if (upGoing) {
-      return Math.min(spread.get(0).interp(delta), TauUtilities.DEFSPREAD);
+      return Math.min(spread.get(0).interp(delta), TauUtilities.DEFAULTTTSPREAD);
     }
-    return TauUtilities.DEFSPREAD;
+    return TauUtilities.DEFAULTTTSPREAD;
   }
 
   /**
@@ -93,13 +93,13 @@ public class TravelTimeStatistics implements Serializable {
     for (int k = 0; k < observ.size(); k++) {
       seg = observ.get(k);
       if (delta >= seg.minDelta && delta <= seg.maxDelta) {
-        return Math.max(seg.interp(delta), TauUtilities.DEFOBSERV);
+        return Math.max(seg.interp(delta), TauUtilities.DEFAULTTTOBSERVABILITY);
       }
     }
     if (upGoing) {
-      return Math.max(observ.get(0).interp(delta), TauUtilities.DEFOBSERV);
+      return Math.max(observ.get(0).interp(delta), TauUtilities.DEFAULTTTOBSERVABILITY);
     }
-    return TauUtilities.DEFOBSERV;
+    return TauUtilities.DEFAULTTTOBSERVABILITY;
   }
 
   /**

@@ -157,7 +157,7 @@ public class AllBranchReference {
       }
 
       // Set the segment code.
-      segmentCodes[i] = TauUtilities.phSeg(travelTimeInformation.phaseCode[j]);
+      segmentCodes[i] = TauUtilities.createSegmentCode(travelTimeInformation.phaseCode[j]);
     }
 
     // Load the branch data.

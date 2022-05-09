@@ -266,14 +266,14 @@ public class TravelTimeLocalSession {
     fileNames = new String[2];
     if (TauUtilities.useFortranFiles) {
       // Names for the Fortran files.
-      serName = TauUtilities.serialize(earthModel + "_for.ser");
-      fileNames[0] = TauUtilities.model(earthModel + ".hed");
-      fileNames[1] = TauUtilities.model(earthModel + ".tbl");
+      serName = TauUtilities.getSerializedPath(earthModel + "_for.ser");
+      fileNames[0] = TauUtilities.getModelPath(earthModel + ".hed");
+      fileNames[1] = TauUtilities.getModelPath(earthModel + ".tbl");
     } else {
       // Names for generating the model.
-      serName = TauUtilities.serialize(earthModel + "_gen.ser");
-      fileNames[0] = TauUtilities.model("m" + earthModel + ".mod");
-      fileNames[1] = TauUtilities.model("phases.txt");
+      serName = TauUtilities.getSerializedPath(earthModel + "_gen.ser");
+      fileNames[0] = TauUtilities.getModelPath("m" + earthModel + ".mod");
+      fileNames[1] = TauUtilities.getModelPath("phases.txt");
     }
     return FileChanged.isChanged(serName, fileNames);
   }
@@ -283,8 +283,8 @@ public class TravelTimeLocalSession {
    *
    * @return A list of available Earth model names
    */
-  public String[] getAvailModels() {
-    return TauUtilities.availableModels();
+  public String[] getAvailableModels() {
+    return TauUtilities.getAvailableModels();
   }
 
   /**

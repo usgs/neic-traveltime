@@ -117,24 +117,24 @@ public class TravelTime {
 
     // Filter the phases to make them easier to use.
     if (convertTectonic) {
-      TauUtilities.filterTect(phaseTravelTimes);
+      TauUtilities.filterTectonicPhases(phaseTravelTimes);
     }
 
     if (!returnBackBranches) {
-      TauUtilities.filterBack(phaseTravelTimes);
+      TauUtilities.filterBackBranches(phaseTravelTimes);
     } else {
-      TauUtilities.filterDef(phaseTravelTimes);
+      TauUtilities.filterClosePhases(phaseTravelTimes);
     }
 
     // A catch all filter to compensate for strange model artifacts.
-    TauUtilities.filterMisc(phaseTravelTimes, distance);
+    TauUtilities.applyMiscFilters(phaseTravelTimes, distance);
 
     // Modify the observabilities of phases closely following
     // another phase in time.
-    TauUtilities.modObserv(phaseTravelTimes);
+    TauUtilities.modifyCloseObservability(phaseTravelTimes);
 
     // Modify canUse for phases with no statistics.
-    TauUtilities.modCanUse(phaseTravelTimes);
+    TauUtilities.modifyCanUse(phaseTravelTimes);
   }
 
   /**

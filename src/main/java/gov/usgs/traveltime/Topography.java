@@ -158,7 +158,7 @@ public class Topography implements Serializable {
   public double getElev(double latitude, double longitude) {
     // The data is stored as meters of elevation in short integers.
     return 0.001d
-        * TauUtilities.biLinear(
+        * TauUtilities.biLinearInterpolation(
             longitude, latitude, TopographicLongitudes, TopographicLatitudes, topo);
   }
 }

@@ -231,10 +231,10 @@ public class TTSession {
             try {
               // prta(ttag + " Need to read in model=" + earthModel);
               ReadTau readTau = new ReadTau(earthModel);
-              readTau.readHeader(TauUtilities.model(fileNames[0]));
+              readTau.readHeader(TauUtilities.getModelPath(fileNames[0]));
               //	readTau.dumpSegments();
               //	readTau.dumpBranches();
-              readTau.readTable(TauUtilities.model(fileNames[1]));
+              readTau.readTable(TauUtilities.getModelPath(fileNames[1]));
               //	readTau.dumpUp(15);
               allRef = new AllBranchReference(serName, readTau, auxTTReference);
             } catch (IOException e) {
@@ -355,14 +355,14 @@ public class TTSession {
     fileNames = new String[2];
     if (TauUtilities.useFortranFiles) {
       // Names for the Fortran files.
-      serName = TauUtilities.serialize(earthModel + "_for.ser");
-      fileNames[0] = TauUtilities.model(earthModel + ".hed");
-      fileNames[1] = TauUtilities.model(earthModel + ".tbl");
+      serName = TauUtilities.getSerializedPath(earthModel + "_for.ser");
+      fileNames[0] = TauUtilities.getModelPath(earthModel + ".hed");
+      fileNames[1] = TauUtilities.getModelPath(earthModel + ".tbl");
     } else {
       // Names for generating the model.
-      serName = TauUtilities.serialize(earthModel + "_gen.ser");
-      fileNames[0] = TauUtilities.model("m" + earthModel + ".mod");
-      fileNames[1] = TauUtilities.model("phases.txt");
+      serName = TauUtilities.getSerializedPath(earthModel + "_gen.ser");
+      fileNames[0] = TauUtilities.getModelPath("m" + earthModel + ".mod");
+      fileNames[1] = TauUtilities.getModelPath("phases.txt");
     }
     return FileChanged.isChanged(serName, fileNames);
   }
