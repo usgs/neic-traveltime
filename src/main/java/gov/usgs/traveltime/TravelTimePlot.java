@@ -18,14 +18,14 @@ public class TravelTimePlot {
   double ttMax; // Maximum travel time for all branches
   double spreadMax; // Maximum spread for all branches
   double observMax; // Maximum observability for all branches
-  TreeMap<String, TravelTimeBranch> branches;
+  TreeMap<String, TravelTimePlotBranch> branches;
 
   /** Initialize the travel-time plotting information. */
   public TravelTimePlot() {
     ttMax = 0d;
     spreadMax = 0d;
     observMax = 0d;
-    branches = new TreeMap<String, TravelTimeBranch>();
+    branches = new TreeMap<String, TravelTimePlotBranch>();
   }
 
   /**
@@ -49,7 +49,7 @@ public class TravelTimePlot {
       double observ,
       double dTdD) {
     String key;
-    TravelTimeBranch branch;
+    TravelTimePlotBranch branch;
 
     if (!phaseCode.contains("bc")) {
       key = uniqueCode[0];
@@ -58,7 +58,7 @@ public class TravelTimePlot {
     }
     branch = branches.get(key);
     if (branch == null) {
-      branch = new TravelTimeBranch(phaseCode);
+      branch = new TravelTimePlotBranch(phaseCode);
       branches.put(key, branch);
     }
     branch.addPoint(new TravelTimePlotPoint(delta, tt, spread, observ, dTdD));
@@ -72,27 +72,27 @@ public class TravelTimePlot {
 
   /** Sort the points in all branches by ray parameter. */
   public void sortBranches() {
-    TravelTimeBranch branch;
+    TravelTimePlotBranch branch;
 
-    NavigableMap<String, TravelTimeBranch> map = branches.headMap("~", true);
+    NavigableMap<String, TravelTimePlotBranch> map = branches.headMap("~", true);
     for (@SuppressWarnings("rawtypes") Map.Entry entry : map.entrySet()) {
-      branch = (TravelTimeBranch) entry.getValue();
+      branch = (TravelTimePlotBranch) entry.getValue();
       branch.sortPoints();
     }
   }
 
   /** Print the plot data for all branches. */
   public void printBranches() {
-    TravelTimeBranch branch;
+    TravelTimePlotBranch branch;
 
     if (branches.size() > 0) {
       System.out.format(
           "\n\t\tPlot Data (maximums: tt = %7.2f spread = %5.2f " + "observ = %7.1f):\n",
           ttMax, spreadMax, observMax);
-      NavigableMap<String, TravelTimeBranch> map = branches.headMap("~", true);
+      NavigableMap<String, TravelTimePlotBranch> map = branches.headMap("~", true);
       for (@SuppressWarnings("rawtypes") Map.Entry entry : map.entrySet()) {
         //		System.out.println((String)entry.getKey());
-        branch = (TravelTimeBranch) entry.getValue();
+        branch = (TravelTimePlotBranch) entry.getValue();
         branch.printBranch();
       }
     } else {

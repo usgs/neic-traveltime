@@ -241,17 +241,17 @@ public class TravelTimeService implements gov.usgs.processingformats.TravelTimeS
               deltaStep);
 
       // add traveltimes to response
-      NavigableMap<String, TravelTimeBranch> map = plot.branches.headMap("~", true);
+      NavigableMap<String, TravelTimePlotBranch> map = plot.branches.headMap("~", true);
       for (@SuppressWarnings("rawtypes") Map.Entry entry : map.entrySet()) {
-        TravelTimeBranch branch = (TravelTimeBranch) entry.getValue();
+        TravelTimePlotBranch branch = (TravelTimePlotBranch) entry.getValue();
 
         // build travel time branch
         TravelTimePlotDataBranch dataBranch = new TravelTimePlotDataBranch();
-        dataBranch.Phase = branch.phaseCode;
+        dataBranch.Phase = branch.getPhaseCode();
 
         ArrayList<TravelTimePlotDataSample> dataSamples = new ArrayList<TravelTimePlotDataSample>();
-        for (int i = 0; i < branch.branch.size(); i++) {
-          TravelTimePlotPoint point = branch.branch.get(i);
+        for (int i = 0; i < branch.getBranchPoints().size(); i++) {
+          TravelTimePlotPoint point = branch.getBranchPoints().get(i);
 
           TravelTimePlotDataSample dataPoint = new TravelTimePlotDataSample();
           dataPoint.Distance = point.delta;
