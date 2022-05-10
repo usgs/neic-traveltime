@@ -839,7 +839,7 @@ public class AllBranchVolume {
         allBranchReference
             .getAuxTTData()
             .getBouncePointTopography()
-            .getElev(reflectionLatitude, reflectionLongitude);
+            .getElevation(reflectionLatitude, reflectionLongitude);
 
     // Do the correction.
     switch (branchReference.getConvertedPhaseCode()) {

@@ -9,59 +9,73 @@ import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 
 /**
- * Handle corrections for reflections from the free surface. These may be either positive (i.e.,
- * reflecting under a mountain) or negative (i.e., reflecting from the bottom of the ocean). The pwP
- * time (relative to pP) is also computed.
+ * The Topography class handles corrections for reflections from the free surface. These may be
+ * either positive (i.e., reflecting under a mountain) or negative (i.e., reflecting from the bottom
+ * of the ocean). The pwP time (relative to pP) is also computed.
  *
  * @author Ray Buland
  */
 public class Topography implements Serializable {
+  /** A long containing the version id used in serialization */
   private static final long serialVersionUID = 1L;
-  short[][] topo; // Global topography on a 20" grid in kilometers
-  TopographicLongitudes TopographicLongitudes; // Virtual array of longitude sample points
-  TopographicLatitudes TopographicLatitudes; // Virtual array of latitude sample points
 
   /**
-   * The constructor reads in the topography file.
+   * A two dimensional array of shorts containing the global topography on a 20" grid in kilometers
+   */
+  private short[][] topographyGrid;
+
+  /** A TopographicLongitudes object holding the virtual array of longitude sample points */
+  private TopographicLongitudes topographicLongitudes;
+
+  /** A TopographicLatitudes object holding the virtual array of latitude sample points */
+  private TopographicLatitudes topographicLatitudes;
+
+  /**
+   * The Topography constructor reads in the topography file.
    *
-   * @param topoFile Name of the topography file
+   * @param topographyFilePath A String containing the path to the topography file
    * @throws IOException On any I/O error or data mismatch
    */
-  public Topography(String topoFile) throws IOException {
+  public Topography(String topographyFilePath) throws IOException {
     // Read the topography data.
-    readTopo(topoFile);
+    readTopographyFile(topographyFilePath);
+
     // Set up the virtual arrays of latitude and longitude sample points.
-    TopographicLongitudes = new TopographicLongitudes();
-    TopographicLatitudes = new TopographicLatitudes();
+    topographicLongitudes = new TopographicLongitudes();
+    topographicLatitudes = new TopographicLatitudes();
   }
 
   /**
-   * Read the topography file.
+   * Function to read the topography file.
    *
-   * @param topoFile Name of the topography file
+   * @param topographyFilePath A String containing the path to the topography file
    * @throws IOException On any I/O error or data mismatch
    */
-  private void readTopo(String topoFile) throws IOException {
-    byte[] byteArray;
-    int bytesRead, recLen = 0, recLast;
+  private void readTopographyFile(String topographyFilePath) throws IOException {
     @SuppressWarnings("unused")
-    int iData, nLon, nLat;
+    int dataCount, numLongitudes, numLatitudes;
     @SuppressWarnings("unused")
-    double dLatdLon, lonMin, dLon, lonMax, latMin, dLat, latMax;
-    ByteBuffer byteBuf;
-    BufferedInputStream in;
+    double dLatdLon,
+        minimumLongitude,
+        longitudeStep,
+        maximumLongitude,
+        minimumLatitude,
+        latitudeStep,
+        maximumLatitude;
 
     // Set up the byte buffer.
-    byteArray = new byte[2164];
-    byteBuf = ByteBuffer.wrap(byteArray);
+    byte[] byteArray = new byte[2164];
+    ByteBuffer byteBuf = ByteBuffer.wrap(byteArray);
     byteBuf.order(ByteOrder.LITTLE_ENDIAN);
     ShortBuffer shorts = byteBuf.asShortBuffer();
 
     // Open the topo file.
-    in = new BufferedInputStream(new FileInputStream(topoFile));
+    BufferedInputStream in = new BufferedInputStream(new FileInputStream(topographyFilePath));
 
     // Read the record header.
-    bytesRead = in.read(byteArray, 0, 4);
+    int bytesRead = in.read(byteArray, 0, 4);
+
+    int recLen = 0;
     if (bytesRead == 4) {
       recLen = byteBuf.getInt();
     } else {
@@ -69,25 +83,30 @@ public class Topography implements Serializable {
       in.close();
       throw new IOException();
     }
+
     // Read the header record.
     byteBuf.clear();
     bytesRead = in.read(byteArray, 0, recLen + 4);
+
     if (bytesRead >= recLen + 4) {
-      iData = byteBuf.getInt();
-      nLon = byteBuf.getInt();
-      nLat = byteBuf.getInt();
+      dataCount = byteBuf.getInt();
+      numLongitudes = byteBuf.getInt();
+      numLatitudes = byteBuf.getInt();
       dLatdLon = byteBuf.getFloat();
-      lonMin = byteBuf.getFloat();
-      dLon = byteBuf.getFloat();
-      lonMax = byteBuf.getFloat();
-      latMin = byteBuf.getFloat();
-      dLat = byteBuf.getFloat();
-      latMax = byteBuf.getFloat();
+      minimumLongitude = byteBuf.getFloat();
+      longitudeStep = byteBuf.getFloat();
+      maximumLongitude = byteBuf.getFloat();
+      minimumLatitude = byteBuf.getFloat();
+      latitudeStep = byteBuf.getFloat();
+      maximumLatitude = byteBuf.getFloat();
+
       //		System.out.format("Dims: %4d %4d %4d rat: %4.1f X: %9.4f %6.4f "+
-      //				"%8.4f X: %8.4f %6.4f %7.4f\n", iData, nLon, nLat, dLatdLon,
-      //				lonMin, dLon, lonMax, latMin, dLat, latMax);
+      //				"%8.4f X: %8.4f %6.4f %7.4f\n", dataCount, numLongitudes, numLatitudes, dLatdLon,
+      //				minimumLongitude, longitudeStep, maximumLongitude, minimumLatitude, latitudeStep,
+      // maximumLatitude);
       // Check the record length.
-      recLast = byteBuf.getInt();
+      int recLast = byteBuf.getInt();
+
       if (recLast != recLen) {
         System.out.println("Header record length mismatch.");
         in.close();
@@ -101,13 +120,14 @@ public class Topography implements Serializable {
 
     // Allocate the topography storage.  Make the longitude two bigger
     // to accommodate the wrap around at +/-180 degrees.
-    topo = new short[nLon + 2][nLat];
+    topographyGrid = new short[numLongitudes + 2][numLatitudes];
 
     // Loop over the latitudes.
-    for (int j = 0; j < nLat; j++) {
+    for (int j = 0; j < numLatitudes; j++) {
       // Get the record length.
       byteBuf.clear();
       bytesRead = in.read(byteArray, 0, 4);
+
       if (bytesRead == 4) {
         recLen = byteBuf.getInt();
       } else {
@@ -115,22 +135,27 @@ public class Topography implements Serializable {
         in.close();
         throw new IOException();
       }
+
       // Read the data record.
       byteBuf.clear();
       bytesRead = in.read(byteArray, 0, recLen + 4);
-      if (bytesRead == recLen + 4 && recLen == nLon * 2) {
+
+      if (bytesRead == recLen + 4 && recLen == numLongitudes * 2) {
         // Transfer the data.
-        for (int i = 0; i < nLon; i++) {
-          topo[i + 1][j] = shorts.get(i);
+        for (int i = 0; i < numLongitudes; i++) {
+          topographyGrid[i + 1][j] = shorts.get(i);
         }
+
         // Handle the wrap around.
-        topo[0][j] = topo[nLon][j];
-        topo[nLon + 1][j] = topo[1][j];
+        topographyGrid[0][j] = topographyGrid[numLongitudes][j];
+        topographyGrid[numLongitudes + 1][j] = topographyGrid[1][j];
+
         //		if(j%100 == 0) System.out.format("Rec %4d: %5d %5d\n",
-        //				j, topo[1][j], topo[nLon][j]);
+        //				j, topographyGrid[1][j], topographyGrid[numLongitudes][j]);
         // Check the record length.
         byteBuf.position(recLen);
-        recLast = byteBuf.getInt();
+        int recLast = byteBuf.getInt();
+
         if (recLast != recLen) {
           System.out.println("Data record " + j + " length mismatch.");
           in.close();
@@ -148,17 +173,17 @@ public class Topography implements Serializable {
   }
 
   /**
-   * Get the elevation at any point on Earth. Note that under the ocean, this will be minus the
-   * ocean depth.
+   * Function to get the elevation at any point on Earth. Note that under the ocean, this will be
+   * minus the ocean depth.
    *
-   * @param latitude Geographic latitude in degrees
-   * @param longitude Longitude in degrees
-   * @return Elevation in kilometers
+   * @param latitude A double containing the geographic latitude in degrees
+   * @param longitude A double containing the longitude in degrees
+   * @return A double containing the elevation in kilometers
    */
-  public double getElev(double latitude, double longitude) {
+  public double getElevation(double latitude, double longitude) {
     // The data is stored as meters of elevation in short integers.
     return 0.001d
         * TauUtilities.biLinearInterpolation(
-            longitude, latitude, TopographicLongitudes, TopographicLatitudes, topo);
+            longitude, latitude, topographicLongitudes, topographicLatitudes, topographyGrid);
   }
 }
