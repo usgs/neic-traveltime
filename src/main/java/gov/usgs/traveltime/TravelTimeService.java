@@ -129,7 +129,7 @@ public class TravelTimeService implements gov.usgs.processingformats.TravelTimeS
           data.StatisticalSpread = phase.getStatisticalSpread();
           data.Observability = phase.getObservability();
           data.TeleseismicPhaseGroup = phase.getGroupPhaseCode();
-          data.AuxiliaryPhaseGroup = phase.getAuxiliaryPhaseCode();
+          data.AuxiliaryPhaseGroup = phase.getAuxiliaryGroupPhaseCode();
           data.LocationUseFlag = phase.getLocationCanUse();
           data.AssociationWeightFlag = phase.getAssocDownWeight();
 

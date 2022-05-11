@@ -56,7 +56,7 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
   private String groupPhaseCode;
 
   /** A String holding the auxiliary phase group code */
-  private String auxiliaryPhaseCode;
+  private String auxiliaryGroupPhaseCode;
 
   /** A boolean flag, if true, the travel time (and phase) is regional */
   private boolean isRegional;
@@ -207,8 +207,8 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
    *
    * @return A String holding the auxiliary phase group code
    */
-  public String getAuxiliaryPhaseCode() {
-    return auxiliaryPhaseCode;
+  public String getAuxiliaryGroupPhaseCode() {
+    return auxiliaryGroupPhaseCode;
   }
 
   /**
@@ -321,7 +321,7 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
    * Function to set the phase flags.
    *
    * @param groupPhaseCode A String containing the group phase code
-   * @param auxiliaryPhaseCode A String holding the auxiliary phase group code
+   * @param auxiliaryGroupPhaseCode A String holding the auxiliary phase group code
    * @param isRegional A boolean flag, true if this is a regional phase
    * @param isDepthSensitive A boolean flag, true if this is a depth phase
    * @param locationCanUse A boolean flag, true if this phase can be used in an earthquake location
@@ -330,13 +330,13 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
    */
   public void addFlags(
       String groupPhaseCode,
-      String auxiliaryPhaseCode,
+      String auxiliaryGroupPhaseCode,
       boolean isRegional,
       boolean isDepthSensitive,
       boolean locationCanUse,
       boolean assocDownWeight) {
     this.groupPhaseCode = groupPhaseCode;
-    this.auxiliaryPhaseCode = auxiliaryPhaseCode;
+    this.auxiliaryGroupPhaseCode = auxiliaryGroupPhaseCode;
     this.isRegional = isRegional;
     this.isDepthSensitive = isDepthSensitive;
     this.locationCanUse = locationCanUse;
@@ -389,7 +389,7 @@ public class TravelTimeData implements Comparable<TravelTimeData> {
         statisticalSpread,
         observability,
         groupPhaseCode,
-        auxiliaryPhaseCode,
+        auxiliaryGroupPhaseCode,
         locationCanUse,
         isRegional,
         isDepthSensitive,

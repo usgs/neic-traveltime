@@ -773,7 +773,7 @@ public class BranchDataVolume {
       // statistics and ellipticity correction.
       if (branchReference.getIsBranchUpGoing()) {
         ttStatistics = auxTTReference.findPhaseStatistics(correctedPhaseCode);
-        ellipticityCorrections = auxTTReference.findEllipticity(ttFlags.PhaseGroup + "up");
+        ellipticityCorrections = auxTTReference.findEllipticity(ttFlags.getGroupPhaseCode() + "up");
       } else {
         ttStatistics = ttFlags.getPhaseStatistics();
         ellipticityCorrections = ttFlags.getEllipticityCorrections();

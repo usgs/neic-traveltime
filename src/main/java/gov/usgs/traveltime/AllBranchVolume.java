@@ -564,7 +564,8 @@ public class AllBranchVolume {
 
             // There's a special case for up-going P and S.
             if (travelTime.getDepthDerivitive() > 0d
-                && (flags.PhaseGroup.equals("P") || flags.PhaseGroup.equals("S"))) {
+                && (flags.getGroupPhaseCode().equals("P")
+                    || flags.getGroupPhaseCode().equals("S"))) {
               upGoing = true;
             } else {
               upGoing = false;
@@ -771,8 +772,10 @@ public class AllBranchVolume {
       // There's a special case for the Ellipticity of up-going P
       // and S waves.
       if (isUpGoing) {
-        return flags.upEllipticity.getEllipticityCorrection(
-            sourceLatitude, sourceDepth, recieverDistance, recieverAzimuth);
+        return flags
+            .getUpGoingEllipticityCorrections()
+            .getEllipticityCorrection(
+                sourceLatitude, sourceDepth, recieverDistance, recieverAzimuth);
         // Otherwise, it's business as usual.
       } else {
         return flags
@@ -971,12 +974,12 @@ public class AllBranchVolume {
 
     // Add flags.
     travelTime.addFlags(
-        flags.PhaseGroup,
-        flags.auxGroup,
-        flags.isRegionalPhase,
-        flags.isDepth,
-        flags.canUse,
-        flags.dis);
+        flags.getGroupPhaseCode(),
+        flags.getAuxiliaryGroupPhaseCode(),
+        flags.getIsRegional(),
+        flags.getIsDepthSensitive(),
+        flags.getLocationCanUse(),
+        flags.getAssocDownWeight());
   }
 
   /**

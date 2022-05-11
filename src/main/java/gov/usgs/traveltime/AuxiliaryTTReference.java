@@ -897,12 +897,12 @@ public class AuxiliaryTTReference {
       System.out.format(
           "%8s: %8s %8s  flags = %5b %5b %5b %5b",
           entry.getKey(),
-          flags.PhaseGroup,
-          flags.auxGroup,
-          flags.canUse,
-          flags.isRegionalPhase,
-          flags.isDepth,
-          flags.dis);
+          flags.getGroupPhaseCode(),
+          flags.getAuxiliaryGroupPhaseCode(),
+          flags.getLocationCanUse(),
+          flags.getIsRegional(),
+          flags.getIsDepthSensitive(),
+          flags.getAssocDownWeight());
 
       if (flags.getPhaseStatistics() == null) {
         System.out.print("   stats = null    ");
@@ -916,10 +916,12 @@ public class AuxiliaryTTReference {
         System.out.format(" Ellipticity = %-8s", flags.getEllipticityCorrections().getPhaseCode());
       }
 
-      if (flags.upEllipticity == null) {
+      if (flags.getUpGoingEllipticityCorrections() == null) {
         System.out.println(" upEllipticityCorrection = null");
       } else {
-        System.out.format(" upEllipticityCorrection = %-8s\n", flags.upEllipticity.getPhaseCode());
+        System.out.format(
+            " upEllipticityCorrection = %-8s\n",
+            flags.getUpGoingEllipticityCorrections().getPhaseCode());
       }
     }
   }

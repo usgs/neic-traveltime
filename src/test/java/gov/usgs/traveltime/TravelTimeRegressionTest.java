@@ -99,7 +99,9 @@ public class TravelTimeRegressionTest {
     Assertions.assertEquals(
         "P", firstTravelTime.getGroupPhaseCode(), "TravelTime first phase group:");
     Assertions.assertEquals(
-        "PKP", firstTravelTime.getAuxiliaryPhaseCode(), "TravelTime first auxiliary phase group:");
+        "PKP",
+        firstTravelTime.getAuxiliaryGroupPhaseCode(),
+        "TravelTime first auxiliary phase group:");
     Assertions.assertEquals(
         true, firstTravelTime.getIsRegional(), "TravelTime first regional flag:");
     Assertions.assertEquals(
@@ -144,7 +146,9 @@ public class TravelTimeRegressionTest {
     Assertions.assertEquals(
         "P", firstTravelTime.getGroupPhaseCode(), "TravelTime first phase group:");
     Assertions.assertEquals(
-        "PKP", firstTravelTime.getAuxiliaryPhaseCode(), "TravelTime first auxiliary phase group:");
+        "PKP",
+        firstTravelTime.getAuxiliaryGroupPhaseCode(),
+        "TravelTime first auxiliary phase group:");
     Assertions.assertEquals(
         false, firstTravelTime.getIsRegional(), "TravelTime first regional flag:");
     Assertions.assertEquals(
