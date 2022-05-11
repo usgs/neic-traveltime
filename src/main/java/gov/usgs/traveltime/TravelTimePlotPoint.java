@@ -6,11 +6,20 @@ package gov.usgs.traveltime;
  * @author Ray Buland
  */
 public class TravelTimePlotPoint implements Comparable<TravelTimePlotPoint> {
-  double delta; // Distance in degrees
-  double tt; // Travel time in seconds
-  double spread; // Statistical spread in seconds
-  double observ; // Relative observability
-  double dTdD; // Ray parameter in seconds/degree
+  /** A double containing the distance in degrees */
+  private double distance;
+
+  /** A double holding the travel time in seconds */
+  private double travelTime;
+
+  /** A double holding the statistical spread in seconds */
+  private double spread;
+
+  /** A double holding the relative observability */
+  private double observability;
+
+  /** A double holding the ray parameter in seconds/degree */
+  double rayParameter;
 
   /**
    * Get the distance.
@@ -18,7 +27,7 @@ public class TravelTimePlotPoint implements Comparable<TravelTimePlotPoint> {
    * @return A double value containing the distance in degrees
    */
   public double getDistance() {
-    return delta;
+    return distance;
   }
 
   /**
@@ -27,7 +36,7 @@ public class TravelTimePlotPoint implements Comparable<TravelTimePlotPoint> {
    * @return A double value containing the travel time in seconds
    */
   public double getTravelTime() {
-    return tt;
+    return travelTime;
   }
 
   /**
@@ -45,7 +54,7 @@ public class TravelTimePlotPoint implements Comparable<TravelTimePlotPoint> {
    * @return A double value holding the relative statistical observability of the travel time
    */
   public double getObservability() {
-    return observ;
+    return observability;
   }
 
   /**
@@ -55,48 +64,69 @@ public class TravelTimePlotPoint implements Comparable<TravelTimePlotPoint> {
    *     degree seconds (degree-s)
    */
   public double getRayParameter() {
-    return dTdD;
+    return rayParameter;
   }
 
   /**
-   * Save plot data.
+   * The TravelTimePlotPoint constructor, saves plot data.
    *
-   * @param delta Distance in degrees
-   * @param tt Travel time in seconds
-   * @param spread Statistical spread in seconds
-   * @param observ Relative observability
-   * @param dTdD Ray parameter in seconds/degree
+   * @param distance A double containing the distance in degrees
+   * @param travelTime A double holding the travel time in seconds
+   * @param spread A double holding the statistical spread in seconds
+   * @param observability A double holding the relative observability
+   * @param rayParameter A double holding the ray parameter in seconds/degree
    */
-  public TravelTimePlotPoint(double delta, double tt, double spread, double observ, double dTdD) {
-    this.delta = delta;
-    this.tt = tt;
+  public TravelTimePlotPoint(
+      double distance,
+      double travelTime,
+      double spread,
+      double observability,
+      double rayParameter) {
+    this.distance = distance;
+    this.travelTime = travelTime;
+
     if (spread < TauUtilities.DEFAULTTTSPREAD) {
       this.spread = spread;
-      this.observ = observ;
+      this.observability = observability;
     } else {
       this.spread = Double.NaN;
-      this.observ = Double.NaN;
+      this.observability = Double.NaN;
     }
-    this.dTdD = Math.abs(dTdD);
+    this.rayParameter = Math.abs(rayParameter);
   }
 
   /**
-   * We need to be able to sort the plot points into ray parameter order so caustics will look OK.
+   * Function to compare a TravelTimePlotPoint with this one for sorting. The sort is by the ray
+   * parameter
+   *
+   * @param point A TravelTimePlotPoint containing the travel time plot value to compare
+   * @return An int representing whether the given travel time plot ray paramteter value is
+   *     "greater", "lesser", or equal.
    */
   @Override
   public int compareTo(TravelTimePlotPoint point) {
     // Sort into decreasing ray parameter order.
-    if (this.dTdD < point.dTdD) return +1;
-    else if (this.dTdD == point.dTdD) return 0;
-    else return -1;
+    if (this.rayParameter < point.rayParameter) {
+      return +1;
+    } else if (this.rayParameter == point.rayParameter) {
+      return 0;
+    } else {
+      return -1;
+    }
   }
 
+  /**
+   * Function to convert this TravelTimePlotPoint into a string.
+   *
+   * @return A String containing the string representation of this TravelTimePlotPoint
+   */
   @Override
   public String toString() {
     if (!Double.isNaN(spread)) {
-      return String.format("%5.1f %7.2f +/- %5.2f (%7.1f)", delta, tt, spread, observ);
+      return String.format(
+          "%5.1f %7.2f +/- %5.2f (%7.1f)", distance, travelTime, spread, observability);
     } else {
-      return String.format("%5.1f %7.2f", delta, tt);
+      return String.format("%5.1f %7.2f", distance, travelTime);
     }
   }
 }

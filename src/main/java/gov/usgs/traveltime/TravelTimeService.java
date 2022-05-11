@@ -252,11 +252,11 @@ public class TravelTimeService implements gov.usgs.processingformats.TravelTimeS
           TravelTimePlotPoint point = branch.getBranchPoints().get(i);
 
           TravelTimePlotDataSample dataPoint = new TravelTimePlotDataSample();
-          dataPoint.Distance = point.delta;
-          dataPoint.TravelTime = point.tt;
-          dataPoint.StatisticalSpread = point.spread;
-          dataPoint.Observability = point.observ;
-          dataPoint.RayParameter = point.dTdD;
+          dataPoint.Distance = point.getDistance();
+          dataPoint.TravelTime = point.getTravelTime();
+          dataPoint.StatisticalSpread = point.getStatisticalSpread();
+          dataPoint.Observability = point.getObservability();
+          dataPoint.RayParameter = point.getRayParameter();
 
           // add point to list
           dataSamples.add(dataPoint);

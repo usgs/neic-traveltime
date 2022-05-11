@@ -77,8 +77,8 @@ public class TravelTimePlot {
    * @param phaseCode A String containing the phase code
    * @param uniqueCode An array of Strings containing the unique phase code list
    * @param distance A double containing the distance in degrees
-   * @param travelTime A double holding the travel time
-   * @param spread A double holding the Statistical spread in seconds
+   * @param travelTime A double holding the travel time in seconds
+   * @param spread A double holding the statistical spread in seconds
    * @param observability A double holding the relative observability
    * @param rayParameter A double holding the ray parameter in seconds/degree
    */
