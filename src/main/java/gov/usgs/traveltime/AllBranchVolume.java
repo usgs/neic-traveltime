@@ -961,12 +961,12 @@ public class AllBranchVolume {
       // Do the interpolation.
       if (travelTime.getModifyFromStatistics()) {
         travelTime.setTravelTime(
-            travelTime.getTravelTime() + flags.getPhaseStatistics().getPhaseBias(distance));
+            travelTime.getTravelTime() + flags.getPhaseStatistics().calcPhaseBias(distance));
       }
 
-      spread = flags.getPhaseStatistics().getPhaseSpread(distance, upGoing);
-      observability = flags.getPhaseStatistics().getPhaseObservability(distance, upGoing);
-      spreadDerivative = flags.getPhaseStatistics().getSpreadDerivative(distance, upGoing);
+      spread = flags.getPhaseStatistics().calcPhaseSpread(distance, upGoing);
+      observability = flags.getPhaseStatistics().calcPhaseObservability(distance, upGoing);
+      spreadDerivative = flags.getPhaseStatistics().calcSpreadDerivative(distance, upGoing);
     }
 
     // Add statistics.

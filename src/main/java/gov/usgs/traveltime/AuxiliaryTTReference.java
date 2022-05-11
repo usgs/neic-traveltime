@@ -183,7 +183,7 @@ public class AuxiliaryTTReference {
       // Scan phase statistics until we run out.
       do {
         phaseStatistics = readOneStatisticsHeader();
-        travelTimeStatistics.put(phaseStatistics.phaseCode, phaseStatistics);
+        travelTimeStatistics.put(phaseStatistics.getPhaseCode(), phaseStatistics);
         readOneStatisticsData(new TravelTimeStatisticsLinearFit(phaseStatistics));
       } while (fileReader.hasNext());
       inStats.close();
@@ -658,7 +658,7 @@ public class AuxiliaryTTReference {
     } while (!done);
 
     // Crunch the linear fits.
-    fit.fitAll();
+    fit.doAllStatisticsFits();
     fit = null;
   }
 
@@ -687,7 +687,7 @@ public class AuxiliaryTTReference {
     if (phaseStatistics == null) {
       return TauUtilities.DEFAULTTTBIAS;
     } else {
-      return phaseStatistics.getPhaseBias(distance);
+      return phaseStatistics.calcPhaseBias(distance);
     }
   }
 
@@ -704,7 +704,7 @@ public class AuxiliaryTTReference {
     if (phaseStatistics == null) {
       return TauUtilities.DEFAULTTTSPREAD;
     } else {
-      return phaseStatistics.getPhaseSpread(distance, upGoing);
+      return phaseStatistics.calcPhaseSpread(distance, upGoing);
     }
   }
 
@@ -721,7 +721,7 @@ public class AuxiliaryTTReference {
     if (phaseStatistics == null) {
       return TauUtilities.DEFAULTTTOBSERVABILITY;
     } else {
-      return phaseStatistics.getPhaseObservability(distance, upGoing);
+      return phaseStatistics.calcPhaseObservability(distance, upGoing);
     }
   }
 
@@ -907,7 +907,7 @@ public class AuxiliaryTTReference {
       if (flags.getPhaseStatistics() == null) {
         System.out.print("   stats = null    ");
       } else {
-        System.out.format("   stats = %-8s", flags.getPhaseStatistics().phaseCode);
+        System.out.format("   stats = %-8s", flags.getPhaseStatistics().getPhaseCode());
       }
 
       if (flags.getEllipticityCorrections() == null) {

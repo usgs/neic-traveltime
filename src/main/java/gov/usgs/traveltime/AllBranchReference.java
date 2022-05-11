@@ -397,7 +397,7 @@ public class AllBranchReference {
   /**
    * Function to print surface branch data for one travel-time phase code for debugging purposes.
    *
-   * @param phaseCode A string containing the desired phase code
+   * @param phaseCode A String containing the desired phase code
    * @param full A boolean flag indicating whether to print the detailed branch specification as
    *     well
    */

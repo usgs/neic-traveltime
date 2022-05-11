@@ -8,55 +8,123 @@ import java.io.Serializable;
  * @author Ray Buland
  */
 public class TravelTimeStatisticsSegment implements Serializable {
+  /** A long containing the version id used in serialization */
   private static final long serialVersionUID = 1L;
-  double minDelta; // Minimum distance in degrees
-  double maxDelta; // Maximum distance in degrees
-  double slope; // Slope of linear interpolation
-  double offset; // Offset of linear interpolation
+
+  /** A double containing the minimum distance in degrees */
+  private double minimumDistance;
+
+  /** A double containing the maximum distance in degrees */
+  private double maximumDistance;
+
+  /** A double containing the slope of linear interpolation */
+  private double linearFitSlope;
+
+  /** A double containing the offset of linear interpolation */
+  private double linearFitOffset;
 
   /**
-   * Create the linear segment.
+   * Set the miniumum distance.
    *
-   * @param minDelta Minimum distance in degrees
-   * @param maxDelta Maximum distance in degrees
-   * @param slope Slope of the linear fit
-   * @param offset Offset of the linear fit
+   * @param minimumDistance A double value containing the miniumum distance in degrees
    */
-  protected TravelTimeStatisticsSegment(
-      double minDelta, double maxDelta, double slope, double offset) {
-    this.minDelta = minDelta;
-    this.maxDelta = maxDelta;
-    this.slope = slope;
-    this.offset = offset;
+  public void setMinimumDistance(double minimumDistance) {
+    this.minimumDistance = minimumDistance;
   }
 
   /**
-   * Interpolate the linear fit at one distance. Note that the interpolation will be done for
-   * distances less than the minimum, but fixed at the minimum distance. This is a hack needed for
-   * up-going P and S at short distances from deep sources.
+   * Get the miniumum distance.
    *
-   * @param delta Distance in degrees where statistics are desired
+   * @return A double value containing the miniumum distance in degrees
+   */
+  public double getMinimumDistance() {
+    return minimumDistance;
+  }
+
+  /**
+   * Set the maximum distance.
+   *
+   * @param maximumDistance A double value containing the maximum distance in degrees
+   */
+  public void setMaximumDistance(double maximumDistance) {
+    this.maximumDistance = maximumDistance;
+  }
+
+  /**
+   * Get the maximum distance.
+   *
+   * @return A double value containing the maximum distance in degrees
+   */
+  public double getMaximumDistance() {
+    return maximumDistance;
+  }
+
+  /**
+   * Get the slope of linear interpolation
+   *
+   * @return A double containing the slope of linear interpolation
+   */
+  public double getLinearFitSlope() {
+    return linearFitSlope;
+  }
+
+  /**
+   * Get the offset of linear interpolation
+   *
+   * @return A double containing the offset of linear interpolation
+   */
+  public double getLinearFitOffset() {
+    return linearFitOffset;
+  }
+
+  /**
+   * TravelTimeStatisticsSegment constructor, creates the linear segment.
+   *
+   * @param minimumDistance Minimum distance in degrees
+   * @param maximumDistance Maximum distance in degrees
+   * @param linearFitSlope Slope of the linear fit
+   * @param linearFitOffset Offset of the linear fit
+   */
+  protected TravelTimeStatisticsSegment(
+      double minimumDistance,
+      double maximumDistance,
+      double linearFitSlope,
+      double linearFitOffset) {
+    this.minimumDistance = minimumDistance;
+    this.maximumDistance = maximumDistance;
+    this.linearFitSlope = linearFitSlope;
+    this.linearFitOffset = linearFitOffset;
+  }
+
+  /**
+   * Function to interpolate the linear fit at one distance. Note that the interpolation will be
+   * done for distances less than the minimum, but fixed at the minimum distance. This is a hack
+   * needed for up-going P and S at short distances from deep sources.
+   *
+   * @param distance Distance in degrees where statistics are desired
    * @return Interpolated parameter
    */
-  protected double interp(double delta) {
-    if (delta <= maxDelta) {
-      return offset + Math.max(delta, minDelta) * slope;
+  protected double interpolate(double distance) {
+    if (distance <= maximumDistance) {
+      return linearFitOffset + Math.max(distance, minimumDistance) * linearFitSlope;
     }
+
     return Double.NaN;
   }
 
   /**
-   * Get the derivative of the linear fit at one distance. Note that the interpolation will be done
-   * for distances less than the minimum, but fixed at the minimum distance. This is a hack needed
-   * for up-going P and S at short distances from deep sources.
+   * Function to get the derivative of the linear fit at one distance. Note that the interpolation
+   * will be done for distances less than the minimum, but fixed at the minimum distance. This is a
+   * hack needed for up-going P and S at short distances from deep sources.
    *
-   * @param delta Distance in degrees where derivatives are desired
+   * @param distance Distance in degrees where derivatives are desired
    * @return Derivative of the parameter
    */
-  protected double deriv(double delta) {
-    if (delta <= maxDelta) {
-      return slope;
+  protected double getDerivative(double distance) {
+    if (distance <= maximumDistance) {
+      return linearFitSlope;
     }
+
     return Double.NaN;
   }
 }

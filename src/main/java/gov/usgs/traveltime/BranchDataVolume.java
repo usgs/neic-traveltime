@@ -1267,8 +1267,8 @@ public class BranchDataVolume {
         if (addFlags.getPhaseStatistics() != null) {
           double distance = Math.toDegrees(desiredDistance);
 
-          if (distance >= addFlags.getPhaseStatistics().minDelta
-              && distance <= addFlags.getPhaseStatistics().maxDelta) {
+          if (distance >= addFlags.getPhaseStatistics().getMinimumDistance()
+              && distance <= addFlags.getPhaseStatistics().getMaxiumumDistance()) {
             // Fiddle the unique code.
             if (uniquePhaseCode == null) {
               uniquePhaseCode = new String[2];

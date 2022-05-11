@@ -3,128 +3,175 @@ package gov.usgs.traveltime;
 import java.util.ArrayList;
 
 /**
- * Acquire the travel-time statistics data in one degree bins, do the linear fits between the break
- * flags, and release the raw statistics data.
+ * The TravelTimeStatisticsLinearFit class stores the travel-time statistics data in one degree
+ * bins, do the linear fits between the break flags, and release the raw statistics data.
  *
  * @author Ray Buland
  */
 public class TravelTimeStatisticsLinearFit {
-  double[] res, spd, obs;
-  boolean[] resBrk, spdBrk, obsBrk;
-  TravelTimeStatistics TravelTimeStatistics;
-  int minDelta, maxDelta;
+  /** An array of double values containing the travel-time residual bias in seconds */
+  private double[] residualBias;
 
   /**
-   * Set up the 1 degree arrays.
-   *
-   * @param TravelTimeStatistics Phase statistics object
+   * An array of boolean values indicating when to break the interpolation at the corresponding
+   * residualBias if true
    */
-  protected TravelTimeStatisticsLinearFit(TravelTimeStatistics TravelTimeStatistics) {
-    this.TravelTimeStatistics = TravelTimeStatistics;
-    minDelta = TravelTimeStatistics.minDelta;
-    maxDelta = TravelTimeStatistics.maxDelta;
+  private boolean[] residualBiasBreakFlags;
+
+  /**
+   * An array of double values containing a robust estimate of the spread (scatter) of travel-time
+   * residuals in seconds
+   */
+  private double[] spread;
+
+  /**
+   * An array of boolean values indicating when to break the interpolation at the corresponding
+   * spread if true
+   */
+  private boolean[] spreadBreakFlags;
+
+  /**
+   * An array of double values containing the number of times this phase was observed in the
+   * defining study
+   */
+  private double[] observability;
+
+  /**
+   * An array of boolean values indicating when to break the interpolation at the corresponding
+   * observability if true
+   */
+  private boolean[] observabilityBreakFlags;
+
+  /** A TravelTimeStatistics object containing the phase statistics */
+  private TravelTimeStatistics phaseStatistics;
+
+  /** An integer containing the minimum distance in degrees */
+  private int minimumDistance;
+
+  /** An integer containing the maxiumum distance in degrees */
+  private int maximumDistance;
+
+  /**
+   * The TravelTimeStatisticsLinearFit constructor, sets up the 1 degree arrays.
+   *
+   * @param phaseStatistics A TravelTimeStatistics object containing the phase statistics
+   */
+  protected TravelTimeStatisticsLinearFit(TravelTimeStatistics phaseStatistics) {
+    this.phaseStatistics = phaseStatistics;
+    minimumDistance = phaseStatistics.getMinimumDistance();
+    maximumDistance = phaseStatistics.getMaxiumumDistance();
 
     // set up the 1 degree statistics arrays.
-    res = new double[maxDelta - minDelta + 1];
-    resBrk = new boolean[maxDelta - minDelta + 1];
-    spd = new double[maxDelta - minDelta + 1];
-    spdBrk = new boolean[maxDelta - minDelta + 1];
-    obs = new double[maxDelta - minDelta + 1];
-    obsBrk = new boolean[maxDelta - minDelta + 1];
+    residualBias = new double[maximumDistance - minimumDistance + 1];
+    residualBiasBreakFlags = new boolean[maximumDistance - minimumDistance + 1];
+    spread = new double[maximumDistance - minimumDistance + 1];
+    spreadBreakFlags = new boolean[maximumDistance - minimumDistance + 1];
+    observability = new double[maximumDistance - minimumDistance + 1];
+    observabilityBreakFlags = new boolean[maximumDistance - minimumDistance + 1];
+
     // Initialize the arrays.
-    for (int j = 0; j < res.length; j++) {
-      res[j] = Double.NaN;
-      resBrk[j] = false;
-      spd[j] = Double.NaN;
-      spdBrk[j] = false;
-      obs[j] = Double.NaN;
-      obsBrk[j] = false;
+    for (int j = 0; j < residualBias.length; j++) {
+      residualBias[j] = Double.NaN;
+      residualBiasBreakFlags[j] = false;
+      spread[j] = Double.NaN;
+      spreadBreakFlags[j] = false;
+      observability[j] = Double.NaN;
+      observabilityBreakFlags[j] = false;
     }
   }
 
   /**
-   * Add statistics for one 1 degree distance bin.
+   * Function to add statistics for one 1 degree distance bin.
    *
-   * @param delta Distance in degrees at the bin center
-   * @param res Travel-time residual bias in seconds
-   * @param resBrk Break the interpolation at this bin if true
-   * @param spd Robust estimate of the scatter of travel-time residuals
-   * @param spdBrk Break the interpolation at this bin if true
-   * @param obs Number of times this phase was observed in the defining study
-   * @param obsBrk Break the interpolation at this bin if true
+   * @param distance An integer containing the distance in degrees at the bin center
+   * @param residualBias A double containing the travel-time residual bias in seconds
+   * @param residualBiasBreakFlags A boolean flag, if true, break the interpolation at this distance
+   *     bin
+   * @param spread A double containing the robust estimate of the scatter of travel-time residuals
+   * @param spreadBreakFlags A boolean flag, if true, break the interpolation at this distance bin
+   * @param observability A double containing the number of times this phase was observed in the
+   *     defining study
+   * @param observabilityBreakFlags A boolean flag, if true, break the interpolation at this
+   *     distance bin
    */
   protected void add(
-      int delta,
-      double res,
-      boolean resBrk,
-      double spd,
-      boolean spdBrk,
-      double obs,
-      boolean obsBrk) {
-    this.res[delta - minDelta] = res;
-    this.resBrk[delta - minDelta] = resBrk;
-    this.spd[delta - minDelta] = spd;
-    this.spdBrk[delta - minDelta] = spdBrk;
-    this.obs[delta - minDelta] = obs;
-    this.obsBrk[delta - minDelta] = obsBrk;
+      int distance,
+      double residualBias,
+      boolean residualBiasBreakFlags,
+      double spread,
+      boolean spreadBreakFlags,
+      double observability,
+      boolean observabilityBreakFlags) {
+    this.residualBias[distance - minimumDistance] = residualBias;
+    this.residualBiasBreakFlags[distance - minimumDistance] = residualBiasBreakFlags;
+    this.spread[distance - minimumDistance] = spread;
+    this.spreadBreakFlags[distance - minimumDistance] = spreadBreakFlags;
+    this.observability[distance - minimumDistance] = observability;
+    this.observabilityBreakFlags[distance - minimumDistance] = observabilityBreakFlags;
   }
 
-  /** Do the linear fits for all statistics variables. */
-  protected void fitAll() {
-    doFits(TravelTimeStatistics.bias, res, resBrk);
-    doFits(TravelTimeStatistics.spread, spd, spdBrk);
-    doFits(TravelTimeStatistics.observ, obs, obsBrk);
+  /** Function to perform the linear fits for all statistics variables. */
+  protected void doAllStatisticsFits() {
+    doFits(phaseStatistics.getResidualBias(), residualBias, residualBiasBreakFlags);
+    doFits(phaseStatistics.getSpread(), spread, spreadBreakFlags);
+    doFits(phaseStatistics.getObservability(), observability, observabilityBreakFlags);
   }
 
   /**
-   * Do the linear fits for all segments of one statistics variable.
+   * Function to perform the linear fits for all segments of one statistics variable.
    *
-   * @param interp The ArrayList where the fits will be stored
-   * @param value Array of parameter values
-   * @param brk Array of break point flags
+   * @param interpolation An ArrayList of TravelTimeStatisticsSegment objects where where the fits
+   *     will be stored
+   * @param value An Array doubles containing the statistics values to fit
+   * @param breakFlags Array of booleans holding the break point flags for this statistics variable.
    */
   protected void doFits(
-      ArrayList<TravelTimeStatisticsSegment> interp, double[] value, boolean[] brk) {
+      ArrayList<TravelTimeStatisticsSegment> interpolation, double[] value, boolean[] breakFlags) {
     int start, end = 0;
-    double startDelta, endDelta;
-    double[] b;
+    double[] fitSlopeOffset;
 
     // Find the break points and invoke the fitter for each segment.
-    endDelta = minDelta;
+    double endDistance = minimumDistance;
     for (int j = 0; j < value.length; j++) {
-      if (brk[j]) {
+      if (breakFlags[j]) {
         start = end;
         end = j;
-        startDelta = endDelta;
-        endDelta = minDelta + (double) j;
-        b = do1Fit(start, end, minDelta, value);
-        interp.add(new TravelTimeStatisticsSegment(startDelta, endDelta, b[0], b[1]));
+        double startDistance = endDistance;
+        endDistance = minimumDistance + (double) j;
+        fitSlopeOffset = do1Fit(start, end, minimumDistance, value);
+
+        interpolation.add(
+            new TravelTimeStatisticsSegment(
+                startDistance, endDistance, fitSlopeOffset[0], fitSlopeOffset[1]));
       }
     }
+
     // Fit the last segment.
     start = end;
     end = value.length - 1;
-    startDelta = endDelta;
-    endDelta = minDelta + (double) end;
-    b = do1Fit(start, end, minDelta, value);
-    interp.add(new TravelTimeStatisticsSegment(startDelta, endDelta, b[0], b[1]));
-    fixEnds(interp);
+    double startDistance = endDistance;
+    endDistance = minimumDistance + (double) end;
+    fitSlopeOffset = do1Fit(start, end, minimumDistance, value);
+
+    interpolation.add(
+        new TravelTimeStatisticsSegment(
+            startDistance, endDistance, fitSlopeOffset[0], fitSlopeOffset[1]));
+    fixEnds(interpolation);
   }
 
   /**
-   * Do the linear fit for one segment of one statistics variable.
+   * Function to perform the linear fit for one segment of one statistics variable.
    *
-   * @param start Array index of the start of the segment
-   * @param end Array index of the end of the segment
-   * @param minDelta Minimum distance where the phase is observed in degrees
-   * @param value Raw statistics data to be fit
-   * @return An array containing the fit slope and offset
+   * @param start An integer contaiing the array index of the start of the segment
+   * @param end An integer contaiing the array index of the end of the segment
+   * @param minimumObservedDistance A double containing the minimum distance where the phase is
+   *     observed in degrees
+   * @param value An array of doubles containing the raw statistics data to be fit
+   * @return An array of doubles containing the fit slope and offset
    */
-  protected double[] do1Fit(int start, int end, double minDelta, double[] value) {
+  protected double[] do1Fit(int start, int end, double minimumObservedDistance, double[] value) {
     double[][] a = new double[2][2];
     double[] y = new double[2];
-    double[] b = new double[2];
-    double delta, det;
 
     // Initialize temporary storage.
     for (int i = 0; i < 2; i++) {
@@ -137,61 +184,86 @@ public class TravelTimeStatisticsLinearFit {
     // Skip null bins and collect the data available.
     for (int j = start; j <= end; j++) {
       if (!Double.isNaN(value[j])) {
-        delta = minDelta + j;
-        y[0] += value[j] * delta;
+        double distance = minimumObservedDistance + j;
+        y[0] += value[j] * distance;
         y[1] += value[j];
         a[0][0] += 1d;
-        a[0][1] -= delta;
-        a[1][1] += Math.pow(delta, 2);
+        a[0][1] -= distance;
+        a[1][1] += Math.pow(distance, 2);
       }
     }
     a[1][0] = a[0][1];
 
     // Do the fit.
-    det = a[0][0] * a[1][1] - a[0][1] * a[1][0];
-    b[0] = (a[0][0] * y[0] + a[0][1] * y[1]) / det;
-    b[1] = (a[1][0] * y[0] + a[1][1] * y[1]) / det;
-    return b;
+    double det = a[0][0] * a[1][1] - a[0][1] * a[1][0];
+    double[] fitSlopeOffset = new double[2];
+    fitSlopeOffset[0] = (a[0][0] * y[0] + a[0][1] * y[1]) / det;
+    fitSlopeOffset[1] = (a[1][0] * y[0] + a[1][1] * y[1]) / det;
+    return fitSlopeOffset;
   }
 
   /**
-   * Successive linear fits don't quite connect with each other at exactly the break point
-   * distances. Compute the actual cross- over distances and apply them to the end of one segment
-   * and the start of the next.
+   * Function to fix issues at the break points. Successive linear fits don't quite connect with
+   * each other at exactly the break point distances. Compute the actual cross- over distances and
+   * apply them to the end of one segment and the start of the next.
    *
-   * @param interp ArrayList of linear fit segments for one parameter
+   * @param interpolation An ArrayList of TravelTimeStatisticsSegment objects holding the linear fit
+   *     segments for one parameter
    */
-  protected void fixEnds(ArrayList<TravelTimeStatisticsSegment> interp) {
-    TravelTimeStatisticsSegment last, cur;
+  protected void fixEnds(ArrayList<TravelTimeStatisticsSegment> interpolation) {
+    TravelTimeStatisticsSegment current = interpolation.get(0);
 
-    cur = interp.get(0);
-    for (int j = 1; j < interp.size(); j++) {
-      last = cur;
-      cur = interp.get(j);
-      last.maxDelta = -(last.offset - cur.offset) / (last.slope - cur.slope);
-      cur.minDelta = last.maxDelta;
+    for (int j = 1; j < interpolation.size(); j++) {
+      TravelTimeStatisticsSegment last = current;
+      current = interpolation.get(j);
+      last.setMaximumDistance(
+          -(last.getLinearFitOffset() - current.getLinearFitOffset())
+              / (last.getLinearFitSlope() - current.getLinearFitSlope()));
+      current.setMinimumDistance(last.getMaximumDistance());
     }
   }
 
-  /** Print the travel-time statistics. */
+  /** Function to print the travel-time statistics. */
   protected void dumpStats() {
-    char[] flag;
     // Print the header.
     System.out.println(
-        "\n" + TravelTimeStatistics.phaseCode + "     " + minDelta + "     " + maxDelta);
+        "\n"
+            + phaseStatistics.getPhaseCode()
+            + "     "
+            + minimumDistance
+            + "     "
+            + maximumDistance);
 
     // If the arrays still exist, dump the raw statistics.
-    flag = new char[3];
-    for (int j = 0; j < res.length; j++) {
-      if (resBrk[j]) flag[0] = '*';
-      else flag[0] = ' ';
-      if (spdBrk[j]) flag[1] = '*';
-      else flag[1] = ' ';
-      if (obsBrk[j]) flag[2] = '*';
-      else flag[2] = ' ';
+    char[] flag = new char[3];
+    for (int j = 0; j < residualBias.length; j++) {
+      if (residualBiasBreakFlags[j]) {
+        flag[0] = '*';
+      } else {
+        flag[0] = ' ';
+      }
+
+      if (spreadBreakFlags[j]) {
+        flag[1] = '*';
+      } else {
+        flag[1] = ' ';
+      }
+
+      if (observabilityBreakFlags[j]) {
+        flag[2] = '*';
+      } else {
+        flag[2] = ' ';
+      }
+
       System.out.format(
           "  %3d  %7.2f%c  %7.2f%c  %8.1f%c\n",
-          j + minDelta, res[j], flag[0], spd[j], flag[1], obs[j], flag[2]);
+          j + minimumDistance,
+          residualBias[j],
+          flag[0],
+          spread[j],
+          flag[1],
+          observability[j],
+          flag[2]);
     }
   }
 }
