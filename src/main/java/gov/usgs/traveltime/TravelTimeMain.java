@@ -1,6 +1,5 @@
 package gov.usgs.traveltime;
 
-import gov.usgs.traveltime.session.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -163,64 +162,44 @@ public class TravelTimeMain {
     double staLon = -113.9115d;
     double azimuth = 151.4299d; */
     // Classes we will need.
-    boolean local = true;
     TravelTimeLocalSession ttLocal = null;
-    TTSessionPool ttPool = null;
-    TTSession ttServer = null;
     TravelTime ttList;
     //	TravelTimePlot TravelTimePlot;
 
-    if (local) {
-      // Initialize the local travel-time manager.
-      ttLocal = new TravelTimeLocalSession(true, true, true, modelPath, modelPath);
+    // Initialize the local travel-time manager.
+    ttLocal = new TravelTimeLocalSession(true, true, true, modelPath, modelPath);
 
-      // Generate a list of available Earth models.
-      String[] models = TauUtilities.getAvailableModels();
-      if (models.length > 0) {
-        String modelString = "Available Earth models:";
-        for (int j = 0; j < models.length; j++) {
-          modelString += ("\n" + models[j]);
-        }
-        LOGGER.fine(modelString);
-      } else {
-        LOGGER.info("There are no available Earth models?");
+    // Generate a list of available Earth models.
+    String[] models = TauUtilities.getAvailableModels();
+    if (models.length > 0) {
+      String modelString = "Available Earth models:";
+      for (int j = 0; j < models.length; j++) {
+        modelString += ("\n" + models[j]);
       }
+      LOGGER.fine(modelString);
+    } else {
+      LOGGER.info("There are no available Earth models?");
     }
 
     //	TauUtilities.suppressCorrections = true;
     try {
       // Set up a simple session.
       //		TablesUtil.deBugLevel = 3;
-      if (local) {
-        ttLocal.newSession(
-            earthModel, sourceDepth, phList, returnAllPhases, returnBackBranches, tectonic);
-        // Set up a complex session.
-        //			ttLocal.newSession(earthModel, sourceDepth, phList, sourceLat,
-        //					sourceLon, returnAllPhases, returnBackBranches, tectonic);
-        //			ttLocal.printRefBranches(false);
-        //			ttLocal.printBranches(false, false, false, returnAllPhases);
-        //			ttLocal.printCaustics(false, false, false, returnAllPhases);
-        ttLocal.logTable(returnAllPhases);
 
-      } else {
-        ttServer =
-            TTSessionPool.getTravelTimeSession(
-                earthModel,
-                sourceDepth,
-                phList,
-                returnAllPhases,
-                returnBackBranches,
-                tectonic,
-                false);
-      }
+      ttLocal.newSession(
+          earthModel, sourceDepth, phList, returnAllPhases, returnBackBranches, tectonic);
+      // Set up a complex session.
+      //			ttLocal.newSession(earthModel, sourceDepth, phList, sourceLat,
+      //					sourceLon, returnAllPhases, returnBackBranches, tectonic);
+      //			ttLocal.printRefBranches(false);
+      //			ttLocal.printBranches(false, false, false, returnAllPhases);
+      //			ttLocal.printCaustics(false, false, false, returnAllPhases);
+      ttLocal.logTable(returnAllPhases);
 
       for (int j = 0; j < delta.length; j++) {
         // Get the simple travel times.
-        if (local) {
-          ttList = ttLocal.getTT(elev, delta[j]);
-        } else {
-          ttList = ttServer.getTT(delta[j], elev);
-        }
+        ttList = ttLocal.getTT(elev, delta[j]);
+
         // Get the complex travel times.
         //			ttList = ttLocal.getTT(staLat, staLon, elev, delta, azimuth);
         // Print them.
