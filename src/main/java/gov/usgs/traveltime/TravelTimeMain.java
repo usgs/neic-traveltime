@@ -56,9 +56,9 @@ public class TravelTimeMain {
   private static final Logger LOGGER = Logger.getLogger(TravelTimeMain.class.getName());
 
   /**
-   * Test main program for the travel-time package.
+   * Main program for the travel-time package.
    *
-   * @param args Command line arguments (not used)
+   * @param args An array of Strings containing the command line arguments
    * @throws Exception If the travel-time setup fails
    */
   public static void main(String[] args) throws Exception {
