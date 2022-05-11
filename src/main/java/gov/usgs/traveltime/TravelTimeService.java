@@ -103,7 +103,7 @@ public class TravelTimeService implements gov.usgs.processingformats.TravelTimeS
 
         double azimuth = Double.NaN;
 
-        TravelTime travelTime = ttLocal.getTT(lat, lon, elev, delta, azimuth);
+        TravelTime travelTime = ttLocal.getTravelTimes(lat, lon, elev, delta, azimuth);
 
         if (travelTime == null) {
           continue;
@@ -227,7 +227,7 @@ public class TravelTimeService implements gov.usgs.processingformats.TravelTimeS
 
       // get plotting information
       TravelTimePlot plot =
-          ttLocal.getPlot(
+          ttLocal.getPlotTravelTimes(
               request.EarthModel,
               request.Source.Depth,
               phases,

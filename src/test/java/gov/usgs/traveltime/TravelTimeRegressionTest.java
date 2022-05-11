@@ -65,7 +65,7 @@ public class TravelTimeRegressionTest {
     Assertions.assertEquals(86, ttLocal.getBranchCount(returnAllPhases), "BranchList Size Check:");
 
     // check the travel time package at distance of 1 degree
-    TravelTime ttList1 = ttLocal.getTT(elev, delta1);
+    TravelTime ttList1 = ttLocal.getTravelTimes(elev, delta1);
 
     // check number of TravelTimes
     Assertions.assertEquals(20, ttList1.getNumPhases(), "TravelTimes Size Check:");
@@ -112,7 +112,7 @@ public class TravelTimeRegressionTest {
         false, firstTravelTime.getAssocDownWeight(), "TravelTime first disrespect flag:");
 
     // check the travel time package at distance of 90 degrees
-    TravelTime ttList2 = ttLocal.getTT(elev, delta2);
+    TravelTime ttList2 = ttLocal.getTravelTimes(elev, delta2);
 
     // check number of TravelTimes
     Assertions.assertEquals(32, ttList2.getNumPhases(), "TravelTimes Size Check:");
@@ -159,7 +159,7 @@ public class TravelTimeRegressionTest {
         false, firstTravelTime.getAssocDownWeight(), "TravelTime first disrespect flag:");
 
     // check the travel time package at distance of 180 degrees
-    TravelTime ttList3 = ttLocal.getTT(elev, delta3);
+    TravelTime ttList3 = ttLocal.getTravelTimes(elev, delta3);
 
     // check number of TravelTimes
     Assertions.assertEquals(12, ttList3.getNumPhases(), "TravelTimes Size Check:");

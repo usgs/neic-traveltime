@@ -198,10 +198,10 @@ public class TravelTimeMain {
 
       for (int j = 0; j < delta.length; j++) {
         // Get the simple travel times.
-        ttList = ttLocal.getTT(elev, delta[j]);
+        ttList = ttLocal.getTravelTimes(elev, delta[j]);
 
         // Get the complex travel times.
-        //			ttList = ttLocal.getTT(staLat, staLon, elev, delta, azimuth);
+        //			ttList = ttLocal.getTravelTimes(staLat, staLon, elev, delta, azimuth);
         // Print them.
         ttList.dumpPhases();
       }
@@ -214,7 +214,7 @@ public class TravelTimeMain {
 
         if (!"quit".equals(input)) {
           double userDelta = Double.parseDouble(input);
-          ttList = ttLocal.getTT(elev, userDelta);
+          ttList = ttLocal.getTravelTimes(elev, userDelta);
           ttList.dumpPhases();
         }
       }
