@@ -1310,10 +1310,10 @@ public class BranchDataVolume {
               travelTimeList.addPhase(
                   branchReference.getAddOnPhaseCode(),
                   uniquePhaseCode,
-                  travelTime.tt,
-                  travelTime.dTdD,
-                  travelTime.dTdZ,
-                  travelTime.dXdP,
+                  travelTime.getTravelTime(),
+                  travelTime.getDistanceDerivitive(),
+                  travelTime.getDepthDerivitive(),
+                  travelTime.getRayDerivative(),
                   true);
             }
           }

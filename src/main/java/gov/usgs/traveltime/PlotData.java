@@ -78,15 +78,15 @@ public class PlotData {
         for (int j = 0; j < ttList.getNumPhases(); j++) {
           TravelTimeData travelTime = ttList.getPhase(j);
 
-          if (travelTime.tt <= maximumTime) {
+          if (travelTime.getTravelTime() <= maximumTime) {
             plotData.addPoint(
-                travelTime.phaseCode,
-                travelTime.uniqueCode,
+                travelTime.getPhaseCode(),
+                travelTime.getUniquePhaseCodeList(),
                 distance,
-                travelTime.tt,
-                travelTime.spread,
-                travelTime.observ,
-                travelTime.dTdD);
+                travelTime.getTravelTime(),
+                travelTime.getStatisticalSpread(),
+                travelTime.getObservability(),
+                travelTime.getDistanceDerivitive());
           }
         }
       }

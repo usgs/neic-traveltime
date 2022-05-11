@@ -74,33 +74,40 @@ public class TravelTimeRegressionTest {
     TravelTimeData firstTravelTime = ttList1.getPhase(0);
     Assertions.assertEquals("Pg", firstTravelTime.getPhaseCode(), "TravelTime first phase code:");
     Assertions.assertEquals(
-        19.234, firstTravelTime.getTT(), 0.001, "TravelTime first arrival time:");
+        19.234, firstTravelTime.getTravelTime(), 0.001, "TravelTime first arrival time:");
     Assertions.assertEquals(
-        19.070, firstTravelTime.getDTdD(), 0.001, "TravelTime first tangential derivative time:");
+        19.070,
+        firstTravelTime.getDistanceDerivitive(),
+        0.001,
+        "TravelTime first tangential derivative time:");
     Assertions.assertEquals(
-        0.0148, firstTravelTime.getDTdZ(), 0.0001, "TravelTime first vertical derivative time:");
+        0.0148,
+        firstTravelTime.getDepthDerivitive(),
+        0.0001,
+        "TravelTime first vertical derivative time:");
     Assertions.assertEquals(
         0.0012,
-        firstTravelTime.getDXdP(),
+        firstTravelTime.getRayDerivative(),
         0.0001,
         "TravelTime first ray parameter derivative time:");
     Assertions.assertEquals(
-        0.666, firstTravelTime.getPhaseSpread(), 0.001, "TravelTime first spread:");
+        0.666, firstTravelTime.getStatisticalSpread(), 0.001, "TravelTime first spread:");
     Assertions.assertEquals(
-        14873.999,
-        firstTravelTime.getPhaseObservability(),
-        0.001,
-        "TravelTime first observability:");
+        14873.999, firstTravelTime.getObservability(), 0.001, "TravelTime first observability:");
     Assertions.assertEquals(
-        5.0, firstTravelTime.getWindow(), 0.001, "TravelTime first association window:");
-    Assertions.assertEquals("P", firstTravelTime.getPhaseGroup(), "TravelTime first phase group:");
+        5.0, firstTravelTime.getAssocWindow(), 0.001, "TravelTime first association window:");
     Assertions.assertEquals(
-        "PKP", firstTravelTime.getAuxGroup(), "TravelTime first auxiliary phase group:");
+        "P", firstTravelTime.getGroupPhaseCode(), "TravelTime first phase group:");
     Assertions.assertEquals(
-        true, firstTravelTime.isRegionalPhase(), "TravelTime first regional flag:");
-    Assertions.assertEquals(false, firstTravelTime.isDepth(), "TravelTime first depth flag:");
-    Assertions.assertEquals(true, firstTravelTime.canUse(), "TravelTime first phase use flag:");
-    Assertions.assertEquals(false, firstTravelTime.getDis(), "TravelTime first disrespect flag:");
+        "PKP", firstTravelTime.getAuxiliaryPhaseCode(), "TravelTime first auxiliary phase group:");
+    Assertions.assertEquals(
+        true, firstTravelTime.getIsRegional(), "TravelTime first regional flag:");
+    Assertions.assertEquals(
+        false, firstTravelTime.getIsDepthSensitive(), "TravelTime first depth flag:");
+    Assertions.assertEquals(
+        true, firstTravelTime.getLocationCanUse(), "TravelTime first phase use flag:");
+    Assertions.assertEquals(
+        false, firstTravelTime.getAssocDownWeight(), "TravelTime first disrespect flag:");
 
     // check the travel time package at distance of 90 degrees
     TravelTime ttList2 = ttLocal.getTT(elev, delta2);
@@ -112,33 +119,40 @@ public class TravelTimeRegressionTest {
     firstTravelTime = ttList2.getPhase(0);
     Assertions.assertEquals("P", firstTravelTime.getPhaseCode(), "TravelTime first phase code:");
     Assertions.assertEquals(
-        779.729, firstTravelTime.getTT(), 0.001, "TravelTime first arrival time:");
+        779.729, firstTravelTime.getTravelTime(), 0.001, "TravelTime first arrival time:");
     Assertions.assertEquals(
-        4.655, firstTravelTime.getDTdD(), 0.001, "TravelTime first tangential derivative time:");
+        4.655,
+        firstTravelTime.getDistanceDerivitive(),
+        0.001,
+        "TravelTime first tangential derivative time:");
     Assertions.assertEquals(
-        -0.1672, firstTravelTime.getDTdZ(), 0.0001, "TravelTime first vertical derivative time:");
+        -0.1672,
+        firstTravelTime.getDepthDerivitive(),
+        0.0001,
+        "TravelTime first vertical derivative time:");
     Assertions.assertEquals(
         -0.0088,
-        firstTravelTime.getDXdP(),
+        firstTravelTime.getRayDerivative(),
         0.0001,
         "TravelTime first ray parameter derivative time:");
     Assertions.assertEquals(
-        1.102, firstTravelTime.getPhaseSpread(), 0.001, "TravelTime first spread:");
+        1.102, firstTravelTime.getStatisticalSpread(), 0.001, "TravelTime first spread:");
     Assertions.assertEquals(
-        12898.048,
-        firstTravelTime.getPhaseObservability(),
-        0.001,
-        "TravelTime first observability:");
+        12898.048, firstTravelTime.getObservability(), 0.001, "TravelTime first observability:");
     Assertions.assertEquals(
-        7.715, firstTravelTime.getWindow(), 0.001, "TravelTime first association window:");
-    Assertions.assertEquals("P", firstTravelTime.getPhaseGroup(), "TravelTime first phase group:");
+        7.715, firstTravelTime.getAssocWindow(), 0.001, "TravelTime first association window:");
     Assertions.assertEquals(
-        "PKP", firstTravelTime.getAuxGroup(), "TravelTime first auxiliary phase group:");
+        "P", firstTravelTime.getGroupPhaseCode(), "TravelTime first phase group:");
     Assertions.assertEquals(
-        false, firstTravelTime.isRegionalPhase(), "TravelTime first regional flag:");
-    Assertions.assertEquals(false, firstTravelTime.isDepth(), "TravelTime first depth flag:");
-    Assertions.assertEquals(true, firstTravelTime.canUse(), "TravelTime first phase use flag:");
-    Assertions.assertEquals(false, firstTravelTime.getDis(), "TravelTime first disrespect flag:");
+        "PKP", firstTravelTime.getAuxiliaryPhaseCode(), "TravelTime first auxiliary phase group:");
+    Assertions.assertEquals(
+        false, firstTravelTime.getIsRegional(), "TravelTime first regional flag:");
+    Assertions.assertEquals(
+        false, firstTravelTime.getIsDepthSensitive(), "TravelTime first depth flag:");
+    Assertions.assertEquals(
+        true, firstTravelTime.getLocationCanUse(), "TravelTime first phase use flag:");
+    Assertions.assertEquals(
+        false, firstTravelTime.getAssocDownWeight(), "TravelTime first disrespect flag:");
 
     // check the travel time package at distance of 180 degrees
     TravelTime ttList3 = ttLocal.getTT(elev, delta3);
@@ -151,11 +165,17 @@ public class TravelTimeRegressionTest {
     Assertions.assertEquals(
         "PKPdf", firstTravelTime.getPhaseCode(), "TravelTime first phase code:");
     Assertions.assertEquals(
-        1210.790, firstTravelTime.getTT(), 0.001, "TravelTime first arrival time:");
+        1210.790, firstTravelTime.getTravelTime(), 0.001, "TravelTime first arrival time:");
     Assertions.assertEquals(
-        3.315E-9, firstTravelTime.getDTdD(), 0.001, "TravelTime first tangential derivative time:");
+        3.315E-9,
+        firstTravelTime.getDistanceDerivitive(),
+        0.001,
+        "TravelTime first tangential derivative time:");
     Assertions.assertEquals(
-        -0.1724, firstTravelTime.getDTdZ(), 0.0001, "TravelTime first vertical derivative time:");
+        -0.1724,
+        firstTravelTime.getDepthDerivitive(),
+        0.0001,
+        "TravelTime first vertical derivative time:");
     Assertions.assertEquals(
         10.278, firstTTime.getWindow(), 0.001, "tTime first association window:");
     Assertions.assertEquals("PKP", firstTTime.getPhGroup(), "tTime first phase group:");

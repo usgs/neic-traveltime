@@ -1,277 +1,398 @@
 package gov.usgs.traveltime;
 
 /**
- * Holds everything known about one seismic phase at a particular source depth and source-receiver
- * distance.
+ * TravelTimeData holds everything known about one seismic phase at a particular source depth and
+ * source-receiver distance.
  *
  * @author Ray Buland
  */
 public class TravelTimeData implements Comparable<TravelTimeData> {
-  String phaseCode; // Phase code
-  String[] uniqueCode; // Unique phase codes
-  double tt; // Travel time (s)
-  double dTdD; // Derivative of time with respect to distance (s/degree)
-  double dTdZ; // Derivative of time with respect to depth (s/km)
-  double dXdP; // Derivative of distance with respect to ray parameter (degree-s)
-  double spread; // Statistical spread (s)
-  double observ; // Relative statistical observability
-  double dSdD; // Derivative of spread with respect to distance (s/degree)
-  double window; // Association window in seconds
-  String PhaseGroup; // Teleseismic phase group
-  String auxGroup; // Auxiliary phase group
-  boolean isRegionalPhase; // If true, phase is regional
-  boolean isDepth; // If true, phase is depth sensitive
-  boolean canUse; // If true, can use the phase for location
-  boolean dis; // Disrespect (down weight) this phase
-  boolean corrTt; // If true, get the arrival time from the phase statistics
+  /** A String containing the phase code */
+  private String phaseCode;
+
+  /** An array of Strings containing the list of unique phase codes */
+  private String[] uniquePhaseCodeList;
+
+  /** A double value containing the travel time in seconds */
+  private double travelTime;
 
   /**
-   * The constructor accepts basic travel time information.
-   *
-   * @param phaseCode Phase code
-   * @param uniqueCode Unique phase code
-   * @param tt Travel time
-   * @param dTdD Derivative of time with respect to distance
-   * @param dTdZ Derivative of time with respect to depth
-   * @param dXdP Derivative of distance with respect to ray parameter
-   * @param corrTt True if the travel-time itself needs to be modified by the statistical bias
+   * A double value containing the tangential derivative of time with respect to distance in seconds
+   * per degree (s/degree)
    */
-  public TravelTimeData(
-      String phaseCode,
-      String[] uniqueCode,
-      double tt,
-      double dTdD,
-      double dTdZ,
-      double dXdP,
-      boolean corrTt) {
-    this.phaseCode = phaseCode;
-    this.uniqueCode = uniqueCode;
-    this.tt = tt;
-    this.dTdD = dTdD;
-    this.dTdZ = dTdZ;
-    this.dXdP = dXdP;
-    this.corrTt = corrTt;
-  }
+  private double distanceDerivitive;
 
   /**
-   * Add phase statistical parameters.
-   *
-   * @param spread Statistical spread
-   * @param observ Relative statistical observability
-   * @param dSdD Derivative of spread with respect to distance
+   * A double value containing the vertical derivative of time with respect to source depth in
+   * seconds per kilometer (s/km)
    */
-  public void addStats(double spread, double observ, double dSdD) {
-    this.spread = spread;
-    this.observ = observ;
-    this.dSdD = dSdD;
-    window = Math.max(TauUtilities.ASSOCWINDOWFACTOR * spread, TauUtilities.ASSOCWINDOWMINIMUM);
-  }
+  private double depthDerivitive;
 
   /**
-   * Add phase flags.
-   *
-   * @param PhaseGroup Base phase group
-   * @param auxGroup Auxiliary phase group
-   * @param isRegionalPhase True if this is a regional phase
-   * @param isDepth True if this is a depth phase
-   * @param canUse True if this phase can be used in an earthquake location
-   * @param dis True if this phase should be down weighted during phase identification
+   * A double value containing the derivative of distance with respect to ray parameter in degree
+   * seconds (degree-s)
    */
-  public void addFlags(
-      String PhaseGroup,
-      String auxGroup,
-      boolean isRegionalPhase,
-      boolean isDepth,
-      boolean canUse,
-      boolean dis) {
-    this.PhaseGroup = PhaseGroup;
-    this.auxGroup = auxGroup;
-    this.isRegionalPhase = isRegionalPhase;
-    this.isDepth = isDepth;
-    this.canUse = canUse;
-    this.dis = dis;
-  }
+  private double rayDerivative;
+
+  /** A double value holding the statistical spread (scatter) of the travel time in seconds */
+  private double statisticalSpread;
+
+  /** A double value holding the relative statistical observability of the travel time */
+  private double observability;
 
   /**
-   * Find all instances of one string and replace them with another. Used to turn Pb into Pg and Sb
-   * into Sg. Also, resets the disrespect flag.
-   *
-   * @param find String to replace
-   * @param replace Replacement string
+   * A double value holding the derivative of the statistical spread of the travel time with respect
+   * to distance in seconds per degree (s/degree)
    */
-  public void replace(String find, String replace) {
-    phaseCode = phaseCode.replace(find, replace);
-    dis = false;
-  }
+  private double spreadDerivative;
 
   /**
-   * Getter for phase code.
+   * A double value containing the assocation and identification window for this travel time in
+   * seconds
+   */
+  private double assocWindow;
+
+  /** A String holding the teleseismic phase group code */
+  private String groupPhaseCode;
+
+  /** A String holding the auxiliary phase group code */
+  private String auxiliaryPhaseCode;
+
+  /** A boolean flag, if true, the travel time (and phase) is regional */
+  private boolean isRegional;
+
+  /** A boolean flag, if true, the travel time (and phase) is depth sensitive */
+  private boolean isDepthSensitive;
+
+  /** A boolean flag, if true, the travel time (and phase) can be used for locations */
+  private boolean locationCanUse;
+
+  /**
+   * A boolean flag, if true, the travel time (and phase) should be down weighted (disrespected) for
+   * assocation and identification
+   */
+  private boolean assocDownWeight;
+
+  /**
+   * A boolan flag, if true the travel-time itself needs to be modified by the statistical bias from
+   * the phase statistics
+   */
+  private boolean modifyFromStatistics;
+
+  /**
+   * Function to get the phase code
    *
-   * @return Phase code
+   * @return A String containing the phase code
    */
   public String getPhaseCode() {
     return phaseCode;
   }
 
   /**
-   * Getter for travel time.
+   * Function to get the list of unique phase codes
    *
-   * @return Travel time in seconds
+   * @return An array of Strings containing the list of unique phase codes
    */
-  public double getTT() {
-    return tt;
+  public String[] getUniquePhaseCodeList() {
+    return uniquePhaseCodeList;
   }
 
   /**
-   * Getter for the tangential derivative.
+   * Get the travel time.
    *
-   * @return Derivative of travel time with distance
+   * @return A double value containing the travel time in seconds
    */
-  public double getDTdD() {
-    return dTdD;
+  public double getTravelTime() {
+    return travelTime;
   }
 
   /**
-   * Getter for the vertical derivative.
+   * Set the travel time.
    *
-   * @return Derivative of travel time with source depth
+   * @param travelTime A double value containing the travel time in seconds
    */
-  public double getDTdZ() {
-    return dTdZ;
+  public void setTravelTime(double travelTime) {
+    this.travelTime = travelTime;
   }
 
   /**
-   * Getter for the ray parameter derivative.
+   * Get the tangential derivative of time with respect to distance
    *
-   * @return Derivative of distance with ray parameter
+   * @return A double value containing the tangential derivative of time with respect to distance in
+   *     seconds per degree (s/degree)
    */
-  public double getDXdP() {
-    return dXdP;
+  public double getDistanceDerivitive() {
+    return distanceDerivitive;
   }
 
   /**
-   * Getter for spread.
+   * Get the vertical derivative of time with respect to source depth
    *
-   * @return Spread (scatter) of travel times in seconds
+   * @return A double value containing the vertical derivative of time with respect to source depth
+   *     in seconds per kilometer (s/km)
    */
-  public double getPhaseSpread() {
-    return spread;
+  public double getDepthDerivitive() {
+    return depthDerivitive;
   }
 
   /**
-   * Getter for observability.
+   * Get the ray parameter derivative.
    *
-   * @return Relative number of observations
+   * @return A double value containing the derivative of distance with respect to ray parameter in
+   *     degree seconds (degree-s)
    */
-  public double getPhaseObservability() {
-    return observ;
+  public double getRayDerivative() {
+    return rayDerivative;
   }
 
   /**
-   * Getter for the derivative of spread with respect to distance.
+   * Get the statistical spread (scatter) of the travel time
    *
-   * @return Derivative of spread with respect to distance
+   * @return A double value holding the statistical spread (scatter) of the travel time in seconds
    */
-  public double getDSdD() {
-    return dSdD;
+  public double getStatisticalSpread() {
+    return statisticalSpread;
   }
 
   /**
-   * Getter for association window.
+   * Set the relative statistical observability of the travel time
    *
-   * @return Association window in seconds
+   * @param observability A double value containing the relative statistical observability of the
+   *     travel time
    */
-  public double getWindow() {
-    return window;
+  public void setObservability(double observability) {
+    this.observability = observability;
   }
 
   /**
-   * Getter for phase group.
+   * Get the relative statistical observability of the travel time
    *
-   * @return Phase group
+   * @return A double value holding the relative statistical observability of the travel time
    */
-  public String getPhaseGroup() {
-    return PhaseGroup;
+  public double getObservability() {
+    return observability;
   }
 
   /**
-   * Getter for the auxiliary phase group.
+   * Get the derivative of the statistical spread of the travel time with respect to distance
    *
-   * @return Auxiliary phase group
+   * @return A double value holding the derivative of the statistical spread of the travel time with
+   *     respect to distance in seconds per degree (s/degree)
    */
-  public String getAuxGroup() {
-    return auxGroup;
+  public double getSpreadDerivative() {
+    return spreadDerivative;
   }
 
   /**
-   * Getter for the regional flag.
+   * Get the assocation and identification window for this travel time
    *
-   * @return True if the phase is regional
+   * @return A double value containing the assocation and identification window for this travel time
+   *     in seconds
    */
-  public boolean isRegionalPhase() {
-    return isRegionalPhase;
+  public double getAssocWindow() {
+    return assocWindow;
   }
 
   /**
-   * Getter for the depth flag.
+   * Get the the teleseismic phase group code
    *
-   * @return True if the phase is depth sensitive
+   * @return A String holding the teleseismic phase group code
    */
-  public boolean isDepth() {
-    return isDepth;
+  public String getGroupPhaseCode() {
+    return groupPhaseCode;
   }
 
   /**
-   * Getter for the phase use flag.
+   * Get the auxiliary phase group code
    *
-   * @return True if the phase can be used in an earthquake location
+   * @return A String holding the auxiliary phase group code
    */
-  public boolean canUse() {
-    return canUse;
+  public String getAuxiliaryPhaseCode() {
+    return auxiliaryPhaseCode;
   }
 
   /**
-   * Getter for the disrespect flag.
+   * Get whether the travel time (and phase) is regional
    *
-   * @return True if this phase should be down weighted
+   * @return A boolean flag, if true, the travel time (and phase) is regional
    */
-  public boolean getDis() {
-    return dis;
+  public boolean getIsRegional() {
+    return isRegional;
   }
 
   /**
-   * Make arrival times sortable into time order.
+   * Get whether the travel time (and phase) is depth sensitive
    *
-   * @param arrival An travel-time data object.
-   * @return +1, 0, or -1 if arrival is later, the same time or earlier
+   * @return A boolean flag, if true, the travel time (and phase) is depth sensitive
+   */
+  public boolean getIsDepthSensitive() {
+    return isDepthSensitive;
+  }
+
+  /**
+   * Set whether the travel time (and phase) can be used for locations
+   *
+   * @param locationCanUse A boolean flag, if true, the travel time (and phase) can be used for
+   *     locations
+   */
+  public void setLocationCanUse(boolean locationCanUse) {
+    this.locationCanUse = locationCanUse;
+  }
+
+  /**
+   * Get whether the travel time (and phase) can be used for locations
+   *
+   * @return A boolean flag, if true, the travel time (and phase) can be used for locations
+   */
+  public boolean getLocationCanUse() {
+    return locationCanUse;
+  }
+
+  /**
+   * Get whether the travel time (and phase) should be down weighted (disrespected) for assocation
+   * and identification
+   *
+   * @return A boolean flag, if true, the travel time (and phase) should be down weighted
+   *     (disrespected) for assocation and identification
+   */
+  public boolean getAssocDownWeight() {
+    return assocDownWeight;
+  }
+
+  /**
+   * Get whether the travel time (and phase) needs to be modified by the statistical bias from the
+   * phase statistics
+   *
+   * @return A boolan flag, if true the travel-time itself needs to be modified by the statistical
+   *     bias from the phase statistics
+   */
+  public boolean getModifyFromStatistics() {
+    return modifyFromStatistics;
+  }
+
+  /**
+   * The TravelTimeData constructor, accepts basic travel time information.
+   *
+   * @param phaseCode A String containing the phase code
+   * @param uniquePhaseCodeList An array of Strings containing the unique phase code list
+   * @param travelTime A double holding the travel time
+   * @param distanceDerivitive A double holding the derivative of time with respect to distance
+   * @param depthDerivitive A double holding the derivative of time with respect to depth
+   * @param rayDerivative A double holding the derivative of distance with respect to ray parameter
+   * @param modifyFromStatistics A boolan flag, if true the travel-time itself needs to be modified
+   *     by the statistical bias from the phase statistics
+   */
+  public TravelTimeData(
+      String phaseCode,
+      String[] uniquePhaseCodeList,
+      double travelTime,
+      double distanceDerivitive,
+      double depthDerivitive,
+      double rayDerivative,
+      boolean modifyFromStatistics) {
+    this.phaseCode = phaseCode;
+    this.uniquePhaseCodeList = uniquePhaseCodeList;
+    this.travelTime = travelTime;
+    this.distanceDerivitive = distanceDerivitive;
+    this.depthDerivitive = depthDerivitive;
+    this.rayDerivative = rayDerivative;
+    this.modifyFromStatistics = modifyFromStatistics;
+  }
+
+  /**
+   * Function to add phase statistical parameters.
+   *
+   * @param statisticalSpread A double containing the phase statistical spread
+   * @param observability A double containing the phase relative statistical observability
+   * @param spreadDerivative A double containing the phase derivative of spread with respect to
+   *     distance
+   */
+  public void addStats(double statisticalSpread, double observability, double spreadDerivative) {
+    this.statisticalSpread = statisticalSpread;
+    this.observability = observability;
+    this.spreadDerivative = spreadDerivative;
+
+    assocWindow =
+        Math.max(
+            TauUtilities.ASSOCWINDOWFACTOR * statisticalSpread, TauUtilities.ASSOCWINDOWMINIMUM);
+  }
+
+  /**
+   * Function to set the phase flags.
+   *
+   * @param groupPhaseCode A String containing the group phase code
+   * @param auxiliaryPhaseCode A String holding the auxiliary phase group code
+   * @param isRegional A boolean flag, true if this is a regional phase
+   * @param isDepthSensitive A boolean flag, true if this is a depth phase
+   * @param locationCanUse A boolean flag, true if this phase can be used in an earthquake location
+   * @param assocDownWeight A boolean flag, true if this phase should be down weighted during phase
+   *     assocation and identification
+   */
+  public void addFlags(
+      String groupPhaseCode,
+      String auxiliaryPhaseCode,
+      boolean isRegional,
+      boolean isDepthSensitive,
+      boolean locationCanUse,
+      boolean assocDownWeight) {
+    this.groupPhaseCode = groupPhaseCode;
+    this.auxiliaryPhaseCode = auxiliaryPhaseCode;
+    this.isRegional = isRegional;
+    this.isDepthSensitive = isDepthSensitive;
+    this.locationCanUse = locationCanUse;
+    this.assocDownWeight = assocDownWeight;
+  }
+
+  /**
+   * Function to find find all instances of one phase code string and replace them with another.
+   * Used to turn Pb into Pg and Sb into Sg. Also, resets the disrespect flag.
+   *
+   * @param find A String to holding the string replace
+   * @param replace A String holding the replacement string
+   */
+  public void replacePhaseCode(String find, String replace) {
+    phaseCode = phaseCode.replace(find, replace);
+    assocDownWeight = false;
+  }
+
+  /**
+   * TravelTimeData comparision function, makes travel times sortable into arrival time order.
+   *
+   * @param travelTime A TravelTimeData object to compare to.
+   * @return An integer value, +1, 0, or -1 if TravelTimeData object is later, the same time or
+   *     earlier
    */
   @Override
-  public int compareTo(TravelTimeData arrival) {
+  public int compareTo(TravelTimeData travelTime) {
     // Sort into arrival time order.
-    if (this.tt < arrival.tt) return +1;
-    else if (this.tt == arrival.tt) return 0;
-    else return -1;
+    if (this.travelTime < travelTime.travelTime) {
+      return +1;
+    } else if (this.travelTime == travelTime.travelTime) {
+      return 0;
+    } else {
+      return -1;
+    }
   }
 
   /**
-   * Return this arrival formatted similarly to the arrival time list produced by the Locator
-   * version of Ttim.
+   * Function to return this TravelTimeData as a string, formatted similarly to the travel time list
+   * produced by the Locator version of Ttim.
    */
   @Override
   public String toString() {
     return String.format(
         "%-8s %7.2f %10.2e %10.2e %6.2f %7.1f  " + "%-6s %-6s %-6b %-6b %-6b %-6b",
         phaseCode,
-        tt,
-        dTdD,
-        dTdZ,
-        spread,
-        observ,
-        PhaseGroup,
-        auxGroup,
-        canUse,
-        isRegionalPhase,
-        isDepth,
-        dis);
+        travelTime,
+        distanceDerivitive,
+        depthDerivitive,
+        statisticalSpread,
+        observability,
+        groupPhaseCode,
+        auxiliaryPhaseCode,
+        locationCanUse,
+        isRegional,
+        isDepthSensitive,
+        assocDownWeight);
   }
 }

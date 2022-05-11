@@ -402,8 +402,9 @@ public class TauUtilities {
    */
   public static void filterClosePhases(ArrayList<TravelTimeData> travelTimeList) {
     for (int j = 1; j < travelTimeList.size(); j++) {
-      if (travelTimeList.get(j).phaseCode.equals(travelTimeList.get(j - 1).phaseCode)
-          && travelTimeList.get(j).tt - travelTimeList.get(j - 1).tt <= SAMEPHASESEPERATION) {
+      if (travelTimeList.get(j).getPhaseCode().equals(travelTimeList.get(j - 1).getPhaseCode())
+          && travelTimeList.get(j).getTravelTime() - travelTimeList.get(j - 1).getTravelTime()
+              <= SAMEPHASESEPERATION) {
         travelTimeList.remove(j--);
       }
     }
@@ -426,28 +427,34 @@ public class TauUtilities {
         TravelTimeData travelTimeI = travelTimeList.get(i);
 
         // If the phases are close together, modify the later phase.
-        if (travelTimeI.tt - travelTimeJ.tt < OBSERVABILITYSHADOW) {
+        if (travelTimeI.getTravelTime() - travelTimeJ.getTravelTime() < OBSERVABILITYSHADOW) {
           // If the later phase has some observability, make sure it
           // might still be used.
-          if (travelTimeI.observ >= MINIMUMOBSERVABILITY) {
-            travelTimeI.observ =
+          if (travelTimeI.getObservability() >= MINIMUMOBSERVABILITY) {
+            travelTimeI.setObservability(
                 Math.max(
-                    travelTimeI.observ
+                    travelTimeI.getObservability()
                         - 0.5d
-                            * travelTimeJ.observ
-                            * (Math.cos(OBSERVABILITYFREQUENCY * (travelTimeI.tt - travelTimeJ.tt))
+                            * travelTimeJ.getObservability()
+                            * (Math.cos(
+                                    OBSERVABILITYFREQUENCY
+                                        * (travelTimeI.getTravelTime()
+                                            - travelTimeJ.getTravelTime()))
                                 + 1d),
-                    MINIMUMOBSERVABILITY);
+                    MINIMUMOBSERVABILITY));
             // Otherwise, let the later phase observability go to zero.
           } else {
-            travelTimeI.observ =
+            travelTimeI.setObservability(
                 Math.max(
-                    travelTimeI.observ
+                    travelTimeI.getObservability()
                         - 0.5d
-                            * travelTimeJ.observ
-                            * (Math.cos(OBSERVABILITYFREQUENCY * (travelTimeI.tt - travelTimeJ.tt))
+                            * travelTimeJ.getObservability()
+                            * (Math.cos(
+                                    OBSERVABILITYFREQUENCY
+                                        * (travelTimeI.getTravelTime()
+                                            - travelTimeJ.getTravelTime()))
                                 + 1d),
-                    0d);
+                    0d));
           }
         } else {
           break;
@@ -466,7 +473,7 @@ public class TauUtilities {
   public static void filterBackBranches(ArrayList<TravelTimeData> travelTimeList) {
     for (int j = 0; j < travelTimeList.size() - 1; j++) {
       for (int i = j + 1; i < travelTimeList.size(); i++) {
-        if (travelTimeList.get(j).phaseCode.equals(travelTimeList.get(i).phaseCode)) {
+        if (travelTimeList.get(j).getPhaseCode().equals(travelTimeList.get(i).getPhaseCode())) {
           travelTimeList.remove(i--);
         }
       }
@@ -488,36 +495,37 @@ public class TauUtilities {
   public static void filterTectonicPhases(ArrayList<TravelTimeData> travelTimeList) {
     for (int j = 0; j < travelTimeList.size(); j++) {
       // Turn Pbs into Pgs.
-      if (travelTimeList.get(j).phaseCode.contains("Pb")
-          && !travelTimeList.get(j).phaseCode.contains("K")) {
-        travelTimeList.get(j).replace("Pb", "Pg");
+      if (travelTimeList.get(j).getPhaseCode().contains("Pb")
+          && !travelTimeList.get(j).getPhaseCode().contains("K")) {
+        travelTimeList.get(j).replacePhaseCode("Pb", "Pg");
       }
 
       // Turn Sbs into Sgs.
-      if (travelTimeList.get(j).phaseCode.contains("Sb")
-          && !travelTimeList.get(j).phaseCode.contains("K")) {
-        travelTimeList.get(j).replace("Sb", "Sg");
+      if (travelTimeList.get(j).getPhaseCode().contains("Sb")
+          && !travelTimeList.get(j).getPhaseCode().contains("K")) {
+        travelTimeList.get(j).replacePhaseCode("Sb", "Sg");
       }
     }
   }
 
   /**
-   * Function to modify the can use flag. By default, canUse only reflects phase types that make
-   * sense to use in an earthquake location. However, phases can't be used if they have no
-   * statistics either. Setting canUse to reflect both conditions makes it easier for the Locator.
+   * Function to modify the location can use flag. By default, locationCanUse only reflects phase
+   * types that make sense to use in an earthquake location. However, phases can't be used if they
+   * have no statistics either. Setting locationCanUse to reflect both conditions makes it easier
+   * for the Locator.
    *
    * @param travelTimeList An ArrayList of TravelTimeData objects to filter
    */
   public static void modifyCanUse(ArrayList<TravelTimeData> travelTimeList) {
     for (int j = 0; j < travelTimeList.size(); j++) {
-      if (travelTimeList.get(j).spread >= DEFAULTTTSPREAD
-          || travelTimeList.get(j).observ <= DEFAULTTTOBSERVABILITY)
-        travelTimeList.get(j).canUse = false;
+      if (travelTimeList.get(j).getStatisticalSpread() >= DEFAULTTTSPREAD
+          || travelTimeList.get(j).getObservability() <= DEFAULTTTOBSERVABILITY)
+        travelTimeList.get(j).setLocationCanUse(false);
 
       /* This is the way the old Locator worked.  It is less correct
       and it should make little difference, but it makes side-by-side
       comparison difficult.
-      	if(travelTimeList.get(j).spread >= DEFAULTTTSPREAD) travelTimeList.get(j).canUse = false;
+      	if(travelTimeList.get(j).getStatisticalSpread() >= DEFAULTTTSPREAD) travelTimeList.get(j).setLocationCanUse(false);
       */
     }
   }
@@ -533,8 +541,8 @@ public class TauUtilities {
       for (int j = 0; j < travelTimeList.size(); j++) {
         if (distance > SNMAXIMUMDISTANCE) {
           // Filter Sn, pSn, and sSn at large distances.
-          if (travelTimeList.get(j).phaseCode.contains("Sn")
-              && travelTimeList.get(j).phaseCode.length() < 4) {
+          if (travelTimeList.get(j).getPhaseCode().contains("Sn")
+              && travelTimeList.get(j).getPhaseCode().length() < 4) {
             travelTimeList.remove(j);
             break;
           }

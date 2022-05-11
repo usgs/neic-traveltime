@@ -470,6 +470,7 @@ public class AllBranchVolume {
    */
   public TravelTime getTravelTime(double recieverElevation, double recieverDistance) {
     isComplexRequest = false;
+
     // See if the distance makes sense.
     if (!Double.isNaN(recieverDistance) && recieverDistance >= 0d && recieverDistance <= 180d) {
       distanceIsOutOfRange = false;
@@ -478,6 +479,7 @@ public class AllBranchVolume {
     } else {
       distanceIsOutOfRange = true;
     }
+
     // If the elevation doesn't make sense, just set it to zero.
     if (!Double.isNaN(recieverElevation)
         && recieverElevation >= TauUtilities.MINIMUMELEVATION
@@ -553,15 +555,15 @@ public class AllBranchVolume {
 
           for (int k = lastTT; k < ttList.getNumPhases(); k++) {
             double upGoingBounceDistance;
-            TravelTimeData TravelTime = ttList.getPhase(k);
-            flags = allBranchReference.getAuxTTData().findPhaseFlags(TravelTime.phaseCode);
+            TravelTimeData travelTime = ttList.getPhase(k);
+            flags = allBranchReference.getAuxTTData().findPhaseFlags(travelTime.getPhaseCode());
 
-            if (TravelTime.phaseCode.equals("pwP")) {
+            if (travelTime.getPhaseCode().equals("pwP")) {
               delTT = k;
             }
 
             // There's a special case for up-going P and S.
-            if (TravelTime.dTdZ > 0d
+            if (travelTime.getDepthDerivitive() > 0d
                 && (flags.PhaseGroup.equals("P") || flags.PhaseGroup.equals("S"))) {
               upGoing = true;
             } else {
@@ -569,14 +571,16 @@ public class AllBranchVolume {
             }
 
             // Set the correction to surface focus.
-            if (TravelTime.phaseCode.charAt(0) == 'L') {
+            if (travelTime.getPhaseCode().charAt(0) == 'L') {
               // Travel-time corrections and correction to surface focus
               // don't make sense for surface waves.
               upGoingBounceDistance = 0d;
             } else {
               // Get the correction.
               try {
-                upGoingBounceDistance = computeUpRayCutoff(TravelTime.phaseCode, TravelTime.dTdD);
+                upGoingBounceDistance =
+                    computeUpRayCutoff(
+                        travelTime.getPhaseCode(), travelTime.getDistanceDerivitive());
               } catch (PhaseNotFoundException e) {
                 // This should never happen.
                 System.out.println(e.toString());
@@ -585,19 +589,24 @@ public class AllBranchVolume {
 
               // This is the normal case.  Do various travel-time corrections.
               if (!TauUtilities.suppressCorrections) {
-                TravelTime.tt +=
-                    elevationCorrection(TravelTime.phaseCode, recieverElevation, TravelTime.dTdD);
+                travelTime.setTravelTime(
+                    travelTime.getTravelTime()
+                        + elevationCorrection(
+                            travelTime.getPhaseCode(),
+                            recieverElevation,
+                            travelTime.getDistanceDerivitive()));
                 // If this was a complex request, do the Ellipticity and bounce
                 // point corrections.
                 if (isComplexRequest) {
                   // The Ellipticity correction is straightforward.
-                  TravelTime.tt +=
-                      ellipticityCorrection(
-                          sourceLatitude,
-                          sourceDimensionalDepth,
-                          receiverDistance,
-                          receiverAzimuth,
-                          upGoing);
+                  travelTime.setTravelTime(
+                      travelTime.getTravelTime()
+                          + ellipticityCorrection(
+                              sourceLatitude,
+                              sourceDimensionalDepth,
+                              receiverDistance,
+                              receiverAzimuth,
+                              upGoing));
 
                   // The bounce point correction is not.  See if there is a bounce.
                   if (branches[j].getBranchReference().getReflectionPhaseCode() != null) {
@@ -613,7 +622,9 @@ public class AllBranchVolume {
                           .getReflectionPhaseCode()
                           .equals("PS")) {
                         tmpCode =
-                            TravelTime.phaseCode.substring(0, TravelTime.phaseCode.indexOf('S'));
+                            travelTime
+                                .getPhaseCode()
+                                .substring(0, travelTime.getPhaseCode().indexOf('S'));
                       } else {
                         tmpCode = null;
                       }
@@ -623,12 +634,13 @@ public class AllBranchVolume {
                       if (tmpCode != null) {
                         try {
                           downGoingBounceDistance =
-                              computeSurfaceRayDistance(tmpCode, TravelTime.dTdD);
+                              computeSurfaceRayDistance(
+                                  tmpCode, travelTime.getDistanceDerivitive());
                         } catch (PhaseNotFoundException e) {
                           // This should never happen.
                           System.out.println(e.toString());
                           //				System.out.format("Phase = %-8s distance = %6.2f\n",
-                          // TravelTime.phaseCode,
+                          // travelTime.getPhaseCode(),
                           // receiverDistance);
                           downGoingBounceDistance = 0.5d * receiverDistance;
                         }
@@ -637,28 +649,28 @@ public class AllBranchVolume {
                       }
 
                       // Finally, we can do the bounce point correction.
-                      if (TravelTime.dTdD > 0d) {
+                      if (travelTime.getDistanceDerivitive() > 0d) {
                         reflectionCorrection =
                             reflectionCorrection(
-                                TravelTime.phaseCode,
+                                travelTime.getPhaseCode(),
                                 branches[j].getBranchReference(),
                                 sourceLatitude,
                                 sourceLongitude,
                                 receiverDistance,
                                 receiverAzimuth,
-                                TravelTime.dTdD,
+                                travelTime.getDistanceDerivitive(),
                                 upGoingBounceDistance,
                                 downGoingBounceDistance);
                       } else {
                         reflectionCorrection =
                             reflectionCorrection(
-                                TravelTime.phaseCode,
+                                travelTime.getPhaseCode(),
                                 branches[j].getBranchReference(),
                                 sourceLatitude,
                                 sourceLongitude,
                                 retrogradeDistance,
                                 retrogradeAzimuth,
-                                TravelTime.dTdD,
+                                travelTime.getDistanceDerivitive(),
                                 upGoingBounceDistance,
                                 downGoingBounceDistance);
                       }
@@ -667,8 +679,8 @@ public class AllBranchVolume {
                     }
 
                     if (!Double.isNaN(reflectionCorrection)) {
-                      TravelTime.tt += reflectionCorrection;
-                      if (TravelTime.phaseCode.equals("pwP")) {
+                      travelTime.setTravelTime(travelTime.getTravelTime() + reflectionCorrection);
+                      if (travelTime.getPhaseCode().equals("pwP")) {
                         delTT = -1;
                       }
                     }
@@ -679,10 +691,10 @@ public class AllBranchVolume {
 
             // Add auxiliary information.
             addPhaseStatistics(
-                TravelTime.phaseCode,
+                travelTime.getPhaseCode(),
                 sourceRecieverDistances[i],
                 upGoingBounceDistance,
-                TravelTime,
+                travelTime,
                 upGoing);
           }
 
@@ -907,14 +919,14 @@ public class AllBranchVolume {
    * @param phaseCode A string containing the phase code
    * @param sourceRecieverDistance A double containing the source-receiver distance in radians
    * @param upGoingBounceDistance A double containing the surface focus correction in degrees
-   * @param TravelTime A TravelTimeData object to update
+   * @param travelTime A TravelTimeData object to update
    * @param upGoing A boolean flag, true if the phase is an up-going P or S
    */
   protected void addPhaseStatistics(
       String phaseCode,
       double sourceRecieverDistance,
       double upGoingBounceDistance,
-      TravelTimeData TravelTime,
+      TravelTimeData travelTime,
       boolean upGoing) {
 
     // Add the phase statistics.  First, convert distance to degrees
@@ -942,20 +954,23 @@ public class AllBranchVolume {
       if (distance > 180d) {
         distance = 360d - distance;
       }
+
       // Do the interpolation.
-      if (TravelTime.corrTt) {
-        TravelTime.tt += flags.getPhaseStatistics().getPhaseBias(distance);
+      if (travelTime.getModifyFromStatistics()) {
+        travelTime.setTravelTime(
+            travelTime.getTravelTime() + flags.getPhaseStatistics().getPhaseBias(distance));
       }
+
       spread = flags.getPhaseStatistics().getPhaseSpread(distance, upGoing);
       observability = flags.getPhaseStatistics().getPhaseObservability(distance, upGoing);
       spreadDerivative = flags.getPhaseStatistics().getSpreadDerivative(distance, upGoing);
     }
 
     // Add statistics.
-    TravelTime.addStats(spread, observability, spreadDerivative);
+    travelTime.addStats(spread, observability, spreadDerivative);
 
     // Add flags.
-    TravelTime.addFlags(
+    travelTime.addFlags(
         flags.PhaseGroup,
         flags.auxGroup,
         flags.isRegionalPhase,

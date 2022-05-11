@@ -17,6 +17,6 @@ public class ArrivalTimeCompare implements Comparator<TravelTimeData> {
    * @return an integer representing the comparison result
    */
   public int compare(TravelTimeData arrival1, TravelTimeData arrival2) {
-    return (int) Math.signum(arrival1.tt - arrival2.tt);
+    return (int) Math.signum(arrival1.getTravelTime() - arrival2.getTravelTime());
   }
 }

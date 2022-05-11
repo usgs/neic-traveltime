@@ -253,13 +253,13 @@ public class TTSessionPool {
                 + depth);
         // Sample from 2 degrees to 82 degrees in 10 degree steps
         for (int delta = 2; delta < 90; delta = delta + 10) {
-          TravelTime TravelTime = session.getTT((double) delta, 0.);
-          for (int i = 0; i < TravelTime.getNumPhases(); i++) {
-            String phase = TravelTime.getPhase(i).getPhaseCode();
+          TravelTime travelTime = session.getTT((double) delta, 0.);
+          for (int i = 0; i < travelTime.getNumPhases(); i++) {
+            String phase = travelTime.getPhase(i).getPhaseCode();
             if (phase.equalsIgnoreCase("P")
                 || phase.equalsIgnoreCase("Pn")
                 || phase.equalsIgnoreCase("Pn")) {
-              System.out.print("delta=" + delta + " " + TravelTime.getPhase(i).toString());
+              System.out.print("delta=" + delta + " " + travelTime.getPhase(i).toString());
             }
           }
         }

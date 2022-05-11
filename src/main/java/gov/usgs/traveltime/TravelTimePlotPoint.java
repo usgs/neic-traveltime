@@ -13,6 +13,52 @@ public class TravelTimePlotPoint implements Comparable<TravelTimePlotPoint> {
   double dTdD; // Ray parameter in seconds/degree
 
   /**
+   * Get the distance.
+   *
+   * @return A double value containing the distance in degrees
+   */
+  public double getDistance() {
+    return delta;
+  }
+
+  /**
+   * Get the travel time.
+   *
+   * @return A double value containing the travel time in seconds
+   */
+  public double getTravelTime() {
+    return tt;
+  }
+
+  /**
+   * Get the statistical spread (scatter) of the travel time
+   *
+   * @return A double value holding the statistical spread (scatter) of the travel time in seconds
+   */
+  public double getStatisticalSpread() {
+    return spread;
+  }
+
+  /**
+   * Get the relative statistical observability of the travel time
+   *
+   * @return A double value holding the relative statistical observability of the travel time
+   */
+  public double getObservability() {
+    return observ;
+  }
+
+  /**
+   * Get the ray parameter derivative.
+   *
+   * @return A double value containing the derivative of distance with respect to ray parameter in
+   *     degree seconds (degree-s)
+   */
+  public double getRayParameter() {
+    return dTdD;
+  }
+
+  /**
    * Save plot data.
    *
    * @param delta Distance in degrees

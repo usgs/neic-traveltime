@@ -121,17 +121,17 @@ public class TravelTimeService implements gov.usgs.processingformats.TravelTimeS
           // build travel time data
           gov.usgs.processingformats.TravelTimeData data =
               new gov.usgs.processingformats.TravelTimeData();
-          data.Phase = phase.phaseCode;
-          data.TravelTime = phase.tt;
-          data.DistanceDerivative = phase.dTdD;
-          data.DepthDerivative = phase.dTdZ;
-          data.RayDerivative = phase.dXdP;
-          data.StatisticalSpread = phase.spread;
-          data.Observability = phase.observ;
-          data.TeleseismicPhaseGroup = phase.PhaseGroup;
-          data.AuxiliaryPhaseGroup = phase.auxGroup;
-          data.LocationUseFlag = phase.canUse;
-          data.AssociationWeightFlag = phase.dis;
+          data.Phase = phase.getPhaseCode();
+          data.TravelTime = phase.getTravelTime();
+          data.DistanceDerivative = phase.getDistanceDerivitive();
+          data.DepthDerivative = phase.getDepthDerivitive();
+          data.RayDerivative = phase.getRayDerivative();
+          data.StatisticalSpread = phase.getStatisticalSpread();
+          data.Observability = phase.getObservability();
+          data.TeleseismicPhaseGroup = phase.getGroupPhaseCode();
+          data.AuxiliaryPhaseGroup = phase.getAuxiliaryPhaseCode();
+          data.LocationUseFlag = phase.getLocationCanUse();
+          data.AssociationWeightFlag = phase.getAssocDownWeight();
 
           // add to list
           response.Branches.add(data);

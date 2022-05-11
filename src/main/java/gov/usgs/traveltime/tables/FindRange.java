@@ -61,7 +61,7 @@ public class FindRange implements UnivariateFunction {
     } catch (Exception e) {
       System.out.println("Bad tau integration interval!");
       e.printStackTrace();
-      System.exit(TravelTimeStatus.BAD_TAU_INTERVAL.status());
+      System.exit(TravelTimeStatus.BAD_TAU_INTERVAL.getStatus());
     }
 
     return tauInt.getSummaryIntDist() - targetRange;
