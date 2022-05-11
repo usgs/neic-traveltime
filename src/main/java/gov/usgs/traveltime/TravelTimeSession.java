@@ -7,11 +7,11 @@ import java.io.IOException;
 import java.util.TreeMap;
 
 /**
- * Manage travel-time calculations locally, but in a manner similar to the travel time server pool.
+ * Manage travel-time calculations
  *
  * @author Ray Buland
  */
-public class TravelTimeLocalSession {
+public class TravelTimeSession {
   String lastModel = "";
   TreeMap<String, AllBranchReference> modelData;
   MakeTables make;
@@ -33,7 +33,7 @@ public class TravelTimeLocalSession {
    * @throws IOException On any read error
    * @throws ClassNotFoundException In input serialization is hosed
    */
-  public TravelTimeLocalSession(
+  public TravelTimeSession(
       boolean readStats,
       boolean readEllipticity,
       boolean readTopo,

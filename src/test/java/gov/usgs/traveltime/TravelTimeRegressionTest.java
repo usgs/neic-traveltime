@@ -37,11 +37,11 @@ public class TravelTimeRegressionTest {
     double delta2 = 90.0;
     double delta3 = 180.0;
     double elev = 0.0d;
-    TravelTimeLocalSession ttLocal = null;
+    TravelTimeSession ttLocal = null;
 
     try {
       // Initialize the local travel-time manager.
-      ttLocal = new TravelTimeLocalSession(true, true, true, modelPath, modelPath);
+      ttLocal = new TravelTimeSession(true, true, true, modelPath, modelPath);
     } catch (IOException | ClassNotFoundException e) {
       System.out.println("Unable to read travel-time auxiliary data.");
       Assertions.fail("Unable to read travel-time auxiliary data");

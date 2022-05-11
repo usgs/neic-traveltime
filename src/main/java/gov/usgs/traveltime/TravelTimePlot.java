@@ -5,94 +5,139 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 
 /**
- * Store plot data for all travel-time branches. Note that the travel-time branches are stored by
- * unique code rather than phase code. The phase code is stored with the branch, but may not be
- * unique. This actually makes sense because while branches with duplicate phase codes are the same
- * phase for a different ray parameter range, they may overlap in distance (i.e., there was a
- * triplication). This wouldn't be a problem except that the back branch connecting the pieces
- * hasn't been computed.
+ * The TravelTimePlot class stores plot data for all travel-time branches. Note that the travel-time
+ * branches are stored by unique code rather than phase code. The phase code is stored with the
+ * branch, but may not be unique. This actually makes sense because while branches with duplicate
+ * phase codes are the same phase for a different ray parameter range, they may overlap in distance
+ * (i.e., there was a triplication). This wouldn't be a problem except that the back branch
+ * connecting the pieces hasn't been computed.
  *
  * @author Ray Buland
  */
 public class TravelTimePlot {
-  double ttMax; // Maximum travel time for all branches
-  double spreadMax; // Maximum spread for all branches
-  double observMax; // Maximum observability for all branches
+  /** A double containing the maximum travel time for all branches */
+  private double maxiumumTravelTime;
+
+  /** A double containing the maximum travel time spread for all branches */
+  private double maxiumumSpread;
+
+  /** A double containing the maximum travel time observability for all branches */
+  private double maxObservability;
+
+  /** A TreeMap of Strings and TravelTimePlotBranch objects containing the branches */
   TreeMap<String, TravelTimePlotBranch> branches;
 
-  /** Initialize the travel-time plotting information. */
+  /**
+   * Get the maximum travel time for all branches
+   *
+   * @return A double containing the maximum travel time for all branches
+   */
+  public double getMaxiumumTravelTime() {
+    return maxiumumTravelTime;
+  }
+
+  /**
+   * Get the maximum travel time spread for all branches
+   *
+   * @return A double containing the maximum travel time spread for all branches
+   */
+  public double getMaxiumumSpread() {
+    return maxiumumSpread;
+  }
+
+  /**
+   * Get the maximum travel time observability for all branches
+   *
+   * @return A double containing the maximum travel time observability for all branches
+   */
+  public double getMaxObservability() {
+    return maxObservability;
+  }
+
+  /**
+   * Get the branches
+   *
+   * @return A TreeMap of Strings and TravelTimePlotBranch objects containing the branches
+   */
+  public TreeMap<String, TravelTimePlotBranch> getBranches() {
+    return branches;
+  }
+
+  /** TravelTimePlot constructor, initializes the travel-time plotting information. */
   public TravelTimePlot() {
-    ttMax = 0d;
-    spreadMax = 0d;
-    observMax = 0d;
+    maxiumumTravelTime = 0d;
+    maxiumumSpread = 0d;
+    maxObservability = 0d;
     branches = new TreeMap<String, TravelTimePlotBranch>();
   }
 
   /**
-   * Add one plot point for one travel-time branch.
+   * Function to add one plot point for one travel-time branch.
    *
-   * @param phaseCode Phase code
-   * @param uniqueCode A unique phase code for branches with duplicate names (two versions for
-   *     PKPab/PKPbc)
-   * @param delta Distance in degrees
-   * @param tt Travel time in seconds
-   * @param spread Statistical spread in seconds
-   * @param observ Relative observability
-   * @param dTdD Ray parameter in seconds/degree
+   * @param phaseCode A String containing the phase code
+   * @param uniqueCode An array of Strings containing the unique phase code list
+   * @param distance A double containing the distance in degrees
+   * @param travelTime A double holding the travel time
+   * @param spread A double holding the Statistical spread in seconds
+   * @param observability A double holding the relative observability
+   * @param rayParameter A double holding the ray parameter in seconds/degree
    */
   public void addPoint(
       String phaseCode,
       String[] uniqueCode,
-      double delta,
-      double tt,
+      double distance,
+      double travelTime,
       double spread,
-      double observ,
-      double dTdD) {
-    String key;
-    TravelTimePlotBranch branch;
+      double observability,
+      double rayParameter) {
 
+    String key;
     if (!phaseCode.contains("bc")) {
       key = uniqueCode[0];
     } else {
       key = uniqueCode[1];
     }
-    branch = branches.get(key);
+
+    TravelTimePlotBranch branch = branches.get(key);
     if (branch == null) {
       branch = new TravelTimePlotBranch(phaseCode);
       branches.put(key, branch);
     }
-    branch.addPoint(new TravelTimePlotPoint(delta, tt, spread, observ, dTdD));
+    branch.addPoint(
+        new TravelTimePlotPoint(distance, travelTime, spread, observability, rayParameter));
+
     // Keep track of maximums for plot scaling purposes.
-    ttMax = Math.max(ttMax, tt);
+    maxiumumTravelTime = Math.max(maxiumumTravelTime, travelTime);
+
     if (!Double.isNaN(spread)) {
-      spreadMax = Math.max(spreadMax, spread);
-      observMax = Math.max(observMax, observ);
+      maxiumumSpread = Math.max(maxiumumSpread, spread);
+      maxObservability = Math.max(maxObservability, observability);
     }
   }
 
-  /** Sort the points in all branches by ray parameter. */
+  /** Function to sort the travel time points in all branches by ray parameter. */
   public void sortBranches() {
-    TravelTimePlotBranch branch;
-
     NavigableMap<String, TravelTimePlotBranch> map = branches.headMap("~", true);
+
     for (@SuppressWarnings("rawtypes") Map.Entry entry : map.entrySet()) {
-      branch = (TravelTimePlotBranch) entry.getValue();
+      TravelTimePlotBranch branch = (TravelTimePlotBranch) entry.getValue();
       branch.sortPoints();
     }
   }
 
-  /** Print the plot data for all branches. */
+  /** Function to print the plot data for all branches. */
   public void printBranches() {
-    TravelTimePlotBranch branch;
-
     if (branches.size() > 0) {
       System.out.format(
-          "\n\t\tPlot Data (maximums: tt = %7.2f spread = %5.2f " + "observ = %7.1f):\n",
-          ttMax, spreadMax, observMax);
+          "\n\t\tPlot Data (maximums: travelTime = %7.2f spread = %5.2f "
+              + "observability = %7.1f):\n",
+          maxiumumTravelTime, maxiumumSpread, maxObservability);
+
       NavigableMap<String, TravelTimePlotBranch> map = branches.headMap("~", true);
+
       for (@SuppressWarnings("rawtypes") Map.Entry entry : map.entrySet()) {
         //		System.out.println((String)entry.getKey());
-        branch = (TravelTimePlotBranch) entry.getValue();
+        TravelTimePlotBranch branch = (TravelTimePlotBranch) entry.getValue();
         branch.printBranch();
       }
     } else {

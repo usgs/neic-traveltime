@@ -162,12 +162,12 @@ public class TravelTimeMain {
     double staLon = -113.9115d;
     double azimuth = 151.4299d; */
     // Classes we will need.
-    TravelTimeLocalSession ttLocal = null;
+    TravelTimeSession ttLocal = null;
     TravelTime ttList;
     //	TravelTimePlot TravelTimePlot;
 
     // Initialize the local travel-time manager.
-    ttLocal = new TravelTimeLocalSession(true, true, true, modelPath, modelPath);
+    ttLocal = new TravelTimeSession(true, true, true, modelPath, modelPath);
 
     // Generate a list of available Earth models.
     String[] models = TauUtilities.getAvailableModels();

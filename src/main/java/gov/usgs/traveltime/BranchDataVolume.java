@@ -211,7 +211,7 @@ public class BranchDataVolume {
   /**
    * Set up volatile copies of data that changes with depth
    *
-   * @param A BranchDataReference object containing the branch data reference object
+   * @param branchReference A BranchDataReference object containing the branch data reference object
    * @param upgoingPBranch An UpGoingDataVolume object holding the corrected P up-going branch
    *     source
    * @param upgoingSBranch An UpGoingDataVolume object holding the corrected S up-going branch

@@ -63,9 +63,8 @@ public class TravelTimeService implements gov.usgs.processingformats.TravelTimeS
       String phases[] = request.PhaseTypes.toArray(new String[request.PhaseTypes.size()]);
 
       // setup new session
-      TravelTimeLocalSession ttLocal =
-          new TravelTimeLocalSession(
-              readStats, readEllipticity, readTopo, modelPath, serializedPath);
+      TravelTimeSession ttLocal =
+          new TravelTimeSession(readStats, readEllipticity, readTopo, modelPath, serializedPath);
       ttLocal.newSession(
           request.EarthModel,
           request.Source.Depth,
@@ -211,9 +210,8 @@ public class TravelTimeService implements gov.usgs.processingformats.TravelTimeS
       }
 
       // setup new session
-      TravelTimeLocalSession ttLocal =
-          new TravelTimeLocalSession(
-              readStats, readEllipticity, readTopo, modelPath, serializedPath);
+      TravelTimeSession ttLocal =
+          new TravelTimeSession(readStats, readEllipticity, readTopo, modelPath, serializedPath);
       ttLocal.newSession(
           request.EarthModel,
           request.Source.Depth,
