@@ -450,8 +450,10 @@ public class BranchDataVolume {
             // Correct distance.
             int m = 0;
             for (i = 0; i < correctedDistanceRange.length; i++) {
-              for (; m < upgoingPBranch.ref.pXUp.length; m++) {
-                if (Math.abs(correctedSlownessRange[i] - upgoingPBranch.ref.pXUp[m])
+              for (; m < upgoingPBranch.ref.getBranchEndpointSlownesses().length; m++) {
+                if (Math.abs(
+                        correctedSlownessRange[i]
+                            - upgoingPBranch.ref.getBranchEndpointSlownesses()[m])
                     <= TauUtilities.DOUBLETOLERANCE) {
                   if (m >= upgoingPBranch.xUp.length) {
                     correctedBranchExists = false;
@@ -464,7 +466,7 @@ public class BranchDataVolume {
                 }
               }
 
-              if (m >= upgoingPBranch.ref.pXUp.length) {
+              if (m >= upgoingPBranch.ref.getBranchEndpointSlownesses().length) {
                 correctedDistanceRange[i] = computeLastDistance();
               }
             }
@@ -667,8 +669,10 @@ public class BranchDataVolume {
             // Correct distance.
             int m = 0;
             for (i = 0; i < correctedDistanceRange.length; i++) {
-              for (; m < upgoingSBranch.ref.pXUp.length; m++) {
-                if (Math.abs(correctedSlownessRange[i] - upgoingSBranch.ref.pXUp[m])
+              for (; m < upgoingSBranch.ref.getBranchEndpointSlownesses().length; m++) {
+                if (Math.abs(
+                        correctedSlownessRange[i]
+                            - upgoingSBranch.ref.getBranchEndpointSlownesses()[m])
                     <= TauUtilities.DOUBLETOLERANCE) {
                   if (m >= upgoingSBranch.xUp.length) {
                     correctedBranchExists = false;
@@ -680,7 +684,7 @@ public class BranchDataVolume {
                   break;
                 }
               }
-              if (m >= upgoingSBranch.ref.pXUp.length) {
+              if (m >= upgoingSBranch.ref.getBranchEndpointSlownesses().length) {
                 correctedDistanceRange[i] = computeLastDistance();
               }
             }

@@ -23,7 +23,7 @@ public interface TravelTimeControllerClient {
    * @return A TravelTimeRequest with the response section containing the resulting TravelTime data
    * @throws gov.usgs.processingformats.TravelTimeException Throws a TravelTimeException upon
    *     certain severe errors.
-   */    
+   */
   @Post("/traveltime")
   public TravelTimeRequest getTravelTime(@NotBlank TravelTimeRequest request)
       throws TravelTimeException;
@@ -36,7 +36,7 @@ public interface TravelTimeControllerClient {
    *     plot data
    * @throws gov.usgs.processingformats.TravelTimeException Throws a TravelTimeException upon
    *     certain severe errors.
-   */      
+   */
   @Post("/traveltimeplot")
   public TravelTimePlotRequest getTravelTimePlot(@NotBlank TravelTimePlotRequest request)
       throws TravelTimeException;

@@ -98,12 +98,15 @@ public class UpGoingDataVolume {
     // Otherwise, copy the desired data into temporary storage.
     iUp = modPri.getModelReference().getUpGoingIndexes()[iSrc];
     //	System.out.println("\t\t\tiUp = "+iUp);
-    pUp = Arrays.copyOf(ref.pTauUp, ref.tauUp[iUp].length);
-    tauUp = Arrays.copyOf(ref.tauUp[iUp], pUp.length);
-    xUp = Arrays.copyOf(ref.xUp[iUp], ref.xUp[iUp].length);
+    pUp = Arrays.copyOf(ref.getSlownessGrid(), ref.getUpGoingTauValues()[iUp].length);
+    tauUp = Arrays.copyOf(ref.getUpGoingTauValues()[iUp], pUp.length);
+    xUp =
+        Arrays.copyOf(
+            ref.getUpGoingDistanceValues()[iUp], ref.getUpGoingDistanceValues()[iUp].length);
 
     // See if we need to correct tauUp.
-    if (Math.abs(ref.pTauUp[iUp] - pMax) <= TauUtilities.DOUBLETOLERANCE) corrTau = false;
+    if (Math.abs(ref.getSlownessGrid()[iUp] - pMax) <= TauUtilities.DOUBLETOLERANCE)
+      corrTau = false;
     else corrTau = true;
 
     pMax = Math.min(pMax, pSource);
@@ -113,22 +116,23 @@ public class UpGoingDataVolume {
     (float)modPri.getModelReference().getModelDepths()[iSrc]); */
     i = 0;
     for (int j = 0; j < tauUp.length; j++) {
-      if (ref.pTauUp[j] <= pMax) {
+      if (ref.getSlownessGrid()[j] <= pMax) {
         if (corrTau) {
           //		System.out.println("j  p tau (before): "+(j+1)+" "+
-          //				(float)ref.pTauUp[j]+" "+(float)tauUp[j]);
+          //				(float)ref.getSlownessGrid()[j]+" "+(float)tauUp[j]);
           tauUp[j] -=
               intPri.integrateLayer(
-                  ref.pTauUp[j],
+                  ref.getSlownessGrid()[j],
                   pSource,
                   modPri.getModelReference().getModelSlownesses()[iSrc],
                   zSource,
                   modPri.getModelReference().getModelDepths()[iSrc]);
           //		System.out.println("     tau (after): "+(float)tauUp[j]+" "+
-          //				(float)ref.pXUp[i]);
+          //				(float)ref.getBranchEndpointSlownesses()[i]);
 
           // See if we need to correct an end point distance as well.
-          if (Math.abs(ref.pTauUp[j] - ref.pXUp[i]) <= TauUtilities.DOUBLETOLERANCE) {
+          if (Math.abs(ref.getSlownessGrid()[j] - ref.getBranchEndpointSlownesses()[i])
+              <= TauUtilities.DOUBLETOLERANCE) {
             xInt = intPri.getLayerIntDist();
             xUp[i++] -= xInt;
             //			System.out.println("i  x (after) dx = "+i+" "+
@@ -276,7 +280,7 @@ public class UpGoingDataVolume {
    * @param full If true print the corrected tau array as well.
    */
   public void dumpCorrUp(boolean full) {
-    System.out.println("\n     Up-going " + ref.typeUp + " corrected");
+    System.out.println("\n     Up-going " + ref.getWaveType() + " corrected");
     System.out.format(
         "TauEnd: %8.6f %8.6f %8.6f  XEnd: %8.6f %8.6f %8.6f\n",
         tauEndUp, tauEndLvz, tauEndCnv, xEndUp, xEndLvz, xEndCnv);
@@ -298,7 +302,7 @@ public class UpGoingDataVolume {
    * @param full If true print the corrected tau array as well.
    */
   public void dumpDecUp(boolean full) {
-    System.out.println("\n     Up-going " + ref.typeUp + " decimated");
+    System.out.println("\n     Up-going " + ref.getWaveType() + " decimated");
     System.out.format(
         "TauEnd: %8.6f %8.6f %8.6f  XEnd: %8.6f %8.6f %8.6f\n",
         tauEndUp, tauEndLvz, tauEndCnv, xEndUp, xEndLvz, xEndCnv);
