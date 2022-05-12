@@ -656,7 +656,7 @@ public class BranchDataReference implements Serializable {
         System.out.format("add-on = %s  ", addOnPhaseCode);
       }
 
-      System.out.format("isPhaseUseless = %b\n", isPhaseUseless);
+      System.out.format("isPhaseUsisUselesseless = %b\n", isPhaseUseless);
       System.out.format(
           "Segment: code = %s  type = %c        sign = %2d" + "  count = %d\n",
           genericPhaseCode, correctionPhaseType[0], upGoingCorrectionSign, numMantleTraversals);
@@ -671,7 +671,7 @@ public class BranchDataReference implements Serializable {
         System.out.format("add-on = %s  ", addOnPhaseCode);
       }
 
-      System.out.format("isPhaseUseless = %b\n", isPhaseUseless);
+      System.out.format("isUseless = %b\n", isPhaseUseless);
       System.out.format(
           "Segment: code = %s  type = %c, %c, %c  " + "sign = %2d  count = %d",
           genericPhaseCode,
@@ -689,7 +689,7 @@ public class BranchDataReference implements Serializable {
     }
 
     System.out.format(
-        "Branch: slownessRange = %8.6f - %8.6f  distanceRange = %6.2f - %6.2f\n",
+        "Branch: pRange = %8.6f - %8.6f  xRange = %6.2f - %6.2f\n",
         slownessRange[0],
         slownessRange[1],
         Math.toDegrees(distanceRange[0]),

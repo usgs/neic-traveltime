@@ -260,7 +260,7 @@ public class Integrate {
       double pLim = tauDepthModel.getSample('P', j).getSlowness();
       if (TablesUtil.deBugLevel > 0) {
         System.out.format(
-            "\ni maximumDepth pLim zm = %3d %9.6f %8.6f %9.6f\n",
+            "\ni zMax pLim zm = %3d %9.6f %8.6f %9.6f\n",
             j, maximumDepth, pLim, tauDepthModel.getSample('P', j).getDepth());
       }
 
