@@ -54,7 +54,7 @@ public class TravelTimeRegressionTest {
 
     } catch (Exception e) {
       System.out.println("Session setup failed");
-      Assertions.fail("Session setup failed");
+      Assertions.fail("Session setup failed " + e.toString());
     }
 
     // check supported modles

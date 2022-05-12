@@ -1158,7 +1158,7 @@ public class AllBranchVolume {
   }
 
   /** Function to print global or header data for debugging purposes. */
-  public void dumpHead() {
+  public void dumpHeaderData() {
     String headerString = "\n     " + allBranchReference.getEarthModelName();
 
     headerString +=
@@ -1233,7 +1233,7 @@ public class AllBranchVolume {
    * @param waveType A char containing the wave type ('P' = compressional, 'S' = shear)
    * @param nice A boolean flag, if true print the model in dimensional units
    */
-  public void dumpMod(char waveType, boolean nice) {
+  public void dumpModelParams(char waveType, boolean nice) {
     if (waveType == 'P') {
       allBranchReference.getEarthModelP().dumpModel(nice);
     } else if (waveType == 'S') {

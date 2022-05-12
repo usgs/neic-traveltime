@@ -266,20 +266,20 @@ public class TravelTimeSession {
           }
         }
 
-        //			allRef.dumpHead();
-        //			allRef.dumpMod('P', true);
-        //			allRef.dumpMod('S', true);
-        //			allRef.dumpBrn(true);
-        //			allRef.dumpBrn("pS", true);
-        //			allRef.dumpUp('P');
-        //			allRef.dumpUp('S');
+        allRef.dumpHeaderData();
+        allRef.dumpModelParams('P', true);
+        allRef.dumpModelParams('S', true);
+        allRef.dumpBranchData(true);
+        allRef.dumpBranchData("pS", true);
+        allRef.dumpUpGoingData('P');
+        allRef.dumpUpGoingData('S');
         modelData.put(earthModelName, allRef);
       }
 
       // Set up the (depth dependent) volatile part.
       allBrn = new AllBranchVolume(allRef);
-      //		allBrn.dumpHead();
-      //		allBrn.dumpBrn("PnPn", false, false, true);
+      allBrn.dumpHeaderData();
+      // allBrn.dumpBranchInformation("PnPn", false, false, true);
     }
   }
 
