@@ -656,7 +656,7 @@ public class BranchDataReference implements Serializable {
         System.out.format("add-on = %s  ", addOnPhaseCode);
       }
 
-      System.out.format("isPhaseUsisUselesseless = %b\n", isPhaseUseless);
+      System.out.format("isUseless = %b\n", isPhaseUseless);
       System.out.format(
           "Segment: code = %s  type = %c        sign = %2d" + "  count = %d\n",
           genericPhaseCode, correctionPhaseType[0], upGoingCorrectionSign, numMantleTraversals);
@@ -697,7 +697,7 @@ public class BranchDataReference implements Serializable {
 
     if (branchHasDiffraction)
       System.out.format(
-          "        maxDiffractedDistance = %6.2f\n", Math.toDegrees(maxDiffractedDistance));
+          "        xDiff = %6.2f\n", Math.toDegrees(maxDiffractedDistance));
 
     if (turningModelShellName != null) {
       System.out.format(
