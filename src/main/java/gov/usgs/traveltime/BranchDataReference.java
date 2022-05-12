@@ -398,7 +398,7 @@ public class BranchDataReference implements Serializable {
 
     if (branchPhaseCode != null) {
       if (branchPhaseCode.equals("PnPn")) {
-        System.out.println("Got PnPn (BranchDataReference 1)!");
+        System.out.println("Got PnPn (BrnDataRef 1)!");
         System.out.println();
       }
     }
@@ -546,7 +546,7 @@ public class BranchDataReference implements Serializable {
 
     if (branchPhaseCode != null) {
       if (branchPhaseCode.equals("PnPn")) {
-        System.out.println("Got PnPn (BranchDataReference 2)!");
+        System.out.println("Got PnPn (BrnDataRef 2)!");
         System.out.println();
       }
     }
