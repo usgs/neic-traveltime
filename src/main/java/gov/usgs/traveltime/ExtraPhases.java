@@ -11,7 +11,7 @@ public class ExtraPhases {
   private final double mantleLimit = Math.toRadians(132d);
 
   /** A double containing the limit of the core in radians */
-  private final double coreLimit = Math.toRadians(132d);
+  private final double coreLimit = Math.toRadians(164d);
 
   /** A list of Strings containing the possible diffracted phase codes */
   private final String[] diffractionPhaseCodes = {
