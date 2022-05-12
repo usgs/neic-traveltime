@@ -6,137 +6,311 @@ import gov.usgs.traveltime.tables.TauIntegrate;
 import java.util.Arrays;
 
 /**
- * Store volatile up-going branch data for one wave type. Note that all data have been normalized.
+ * The UpGoingDataVolume class stores volatile up-going branch data for one wave type. Note that all
+ * data have been normalized.
  *
  * @author Ray Buland
  */
 public class UpGoingDataVolume {
-  int iSrc; // Source depth model index
-  double zSource; // Normalized source depth
-  double pSource; // Slowness at the source depth
-  double pMax; // Lid slowness if source is in a low velocity zone
-  double[] pUp; // Corrected up-going branch ray parameters
-  double[] tauUp; // Corrected up-going branch tau
-  double[] xUp; // Corrected up-going branch distance
-  double tauEndUp; // Tau integral from surface to LVZ for this wave type
-  double tauEndLvz; // Tau integral from LVZ to source for this wave type
-  double tauEndCnv; // Tau integral from surface to source for other wave type
-  double xEndUp; // Distance integral from surface to LVZ for this wave type
-  double xEndLvz; // Distance integral from LVZ to source for this wave type
-  double xEndCnv; // Distance integral from surface to source for other wave type
-  int lenNew; // Length of the decimated up-going branch
-  double[] pDec; // Decimated up-going branch ray parameters
-  double[] tauDec; // Decimated up-going branch tau
-  UpGoingDataReference ref;
-  ModelDataVolume modPri, modSec;
-  ModelConversions cvt;
-  TauIntegrate intPri, intSec;
-  Decimate dec;
+  /** An integer containing the source depth model index */
+  private int sourceDepthModelIndex;
+
+  /** A double containing the normalized source depth */
+  private double sourceDepth;
+
+  /** A double containing the slowness at the source depth */
+  private double sourceSlowness;
+
+  /** A double containing the maximum (lid) slowness if source is in a low velocity zone */
+  private double maximumSlowness;
+
+  /** An array of doubles containing the corrected up-going branch ray parameters */
+  private double[] upGoingBranchRayParams;
+
+  /** An array of doubles containing the corrected up-going branch tau */
+  private double[] upGoingBranchTau;
+
+  /** An array of doubles containing the corrected up-going branch distance */
+  private double[] upGoingBranchDistance;
+
+  /** A double containing the tau integral from surface to LVZ for this wave type */
+  private double tauIntSurfaceToLVZ;
+
+  /** A double containing the tau integral from LVZ to source for this wave type */
+  private double tauIntLVZToSource;
+
+  /** A double containing the tau integral from surface to source for other wave type */
+  private double tauIntSurfaceToSource;
+
+  /** A double containing the distance integral from surface to LVZ for this wave type */
+  private double distIntSurfaceToLVZ;
+
+  /** A double containing the distance integral from LVZ to source for this wave type */
+  private double distIntLVZToSource;
+
+  /** A double containing the distance integral from surface to source for other wave type */
+  private double distIntSurfaceToSource;
+
+  /** An integer containing the length of the decimated up-going branch */
+  private int decimatedBranchLength;
+
+  /** An array of doubles containing the decimated up-going branch ray parameters */
+  private double[] decUpGoingBranchRayParams;
+
+  /** An array of doubles containing the decimated up-going branch tau */
+  private double[] decUpGoingBranchTau;
+
+  /** An UpGoingDataReference object containing the up-going reference data source */
+  private UpGoingDataReference upGoingReference;
+
+  /** A ModelDataVolume object containing the primary Earth model data source */
+  private ModelDataVolume primaryEarthModel;
+
+  /** A ModelDataVolume object containing the secondary Earth model data source */
+  private ModelDataVolume secondaryEarthModel;
+
+  /** A ModelConversions object containing model dependent constants and conversions */
+  private final ModelConversions modelConversions;
+
+  /** A TauIntegrate object containing the primary tau integration routines */
+  private TauIntegrate primaryIntegrations;
+
+  /** A TauIntegrate object containing the secondary tau integration routines */
+  private TauIntegrate secondaryIntegrations;
+
+  /** The Decimate object used for decimation */
+  private Decimate decimator;
 
   /**
-   * Set up volatile copies of data that changes with depth. Note that both P and S models are
-   * needed. If this is handling the up-going data for P, the primary model would be for P and the
-   * secondary model would be for S.
+   * Get the slowness at the source depth
    *
-   * @param ref The up-going reference data source
-   * @param modPri The primary Earth model data source
-   * @param modSec the secondary Earth model data source
-   * @param cvt Model specific conversions
+   * @return A double containing the slowness at the source depth
    */
-  public UpGoingDataVolume(
-      UpGoingDataReference ref,
-      ModelDataVolume modPri,
-      ModelDataVolume modSec,
-      ModelConversions cvt) {
-    this.ref = ref;
-    this.modPri = modPri;
-    this.modSec = modSec;
-    this.cvt = cvt;
-
-    // Set up the integration routines.
-    intPri = new TauIntegrate(modPri);
-    intSec = new TauIntegrate(modSec);
-    // Set up the decimation.
-    dec = new Decimate();
+  public double getSourceSlowness() {
+    return sourceSlowness;
   }
 
   /**
-   * Correct up-going tau to the desired source depth. The up-going branches are used to correct tau
-   * for all ray parameters for all travel-time branches. At the same time, integrals are computed
-   * for the largest ray parameter (usually equal to the source depth slowness) needed to correct
-   * tau for the largest ray parameter for all branches.
+   * Get the maximum (lid) slowness if source is in a low velocity zone
    *
-   * @param depth Normalized source depth
+   * @return A double containing the maximum (lid) slowness if source is in a low velocity zone
+   */
+  public double getMaximumSlowness() {
+    return maximumSlowness;
+  }
+
+  /**
+   * Get the corrected up-going branch ray parameters
+   *
+   * @return An array of doubles containing the corrected up-going branch ray parameters
+   */
+  public double[] getUpGoingBranchRayParams() {
+    return upGoingBranchRayParams;
+  }
+
+  /**
+   * Get the corrected up-going branch tau
+   *
+   * @return An array of doubles containing the corrected up-going branch tau
+   */
+  public double[] getUpGoingBranchTau() {
+    return upGoingBranchTau;
+  }
+
+  /**
+   * Get the corrected up-going branch distance
+   *
+   * @return An array of doubles containing the corrected up-going branch distance
+   */
+  public double[] getUpGoingBranchDistance() {
+    return upGoingBranchDistance;
+  }
+
+  /**
+   * Get the decimated tau values associated with the decimated ray parameter grid.
+   *
+   * @return Decimated, normalized tau on the decimated ray parameter grid
+   */
+  public double[] getDecimatedTau() {
+    return decUpGoingBranchTau;
+  }
+
+  /**
+   * Get the tau integral from surface to LVZ for this wave type
+   *
+   * @return A double containing the tau integral from surface to LVZ for this wave type
+   */
+  public double getTauIntSurfaceToLVZ() {
+    return tauIntSurfaceToLVZ;
+  }
+
+  /**
+   * Get the tau integral from LVZ to source for this wave type
+   *
+   * @return A double containing the tau integral from LVZ to source for this wave type
+   */
+  public double getTauIntLVZToSource() {
+    return tauIntLVZToSource;
+  }
+
+  /**
+   * Get the tau integral from surface to source for other wave type
+   *
+   * @return A double containing the tau integral from surface to source for other wave type
+   */
+  public double getTauIntSurfaceToSource() {
+    return tauIntSurfaceToSource;
+  }
+
+  /**
+   * Get the distance integral from surface to LVZ for this wave type
+   *
+   * @return A double containing the distance integral from surface to LVZ for this wave type
+   */
+  public double getDistIntSurfaceToLVZ() {
+    return distIntSurfaceToLVZ;
+  }
+
+  /**
+   * Get the distance integral from LVZ to source for this wave type
+   *
+   * @return A double containing the distance integral from LVZ to source for this wave type
+   */
+  public double getDistIntLVZToSource() {
+    return distIntLVZToSource;
+  }
+
+  /**
+   * Get the distance integral from surface to source for other wave type
+   *
+   * @return A double containing the distance integral from surface to source for other wave type
+   */
+  public double getDistIntSurfaceToSource() {
+    return distIntSurfaceToSource;
+  }
+
+  /**
+   * Get the up-going reference data source
+   *
+   * @return An UpGoingDataReference object containing the up-going reference data source
+   */
+  public UpGoingDataReference getUpGoingReference() {
+    return upGoingReference;
+  }
+
+  /**
+   * The UpGoingDataVolume constructor, set up volatile copies of data that changes with depth. Note
+   * that both P and S models are needed. If this is handling the up-going data for P, the primary
+   * model would be for P and the secondary model would be for S.
+   *
+   * @param upGoingReference An UpGoingDataReference object containing the up-going reference data
+   *     source
+   * @param primaryEarthModel A ModelDataVolume object containing the primary Earth model data
+   *     source
+   * @param secondaryEarthModel A ModelDataVolume object containing the secondary Earth model data
+   *     source
+   * @param modelConversions A ModelConversions object containing model dependent constants and
+   *     conversions
+   */
+  public UpGoingDataVolume(
+      UpGoingDataReference upGoingReference,
+      ModelDataVolume primaryEarthModel,
+      ModelDataVolume secondaryEarthModel,
+      ModelConversions modelConversions) {
+    this.upGoingReference = upGoingReference;
+    this.primaryEarthModel = primaryEarthModel;
+    this.secondaryEarthModel = secondaryEarthModel;
+    this.modelConversions = modelConversions;
+
+    // Set up the integration routines.
+    primaryIntegrations = new TauIntegrate(primaryEarthModel);
+    secondaryIntegrations = new TauIntegrate(secondaryEarthModel);
+
+    // Set up the decimation.
+    decimator = new Decimate();
+  }
+
+  /**
+   * Function to correct up-going tau to the desired source depth. The up-going branches are used to
+   * correct tau for all ray parameters for all travel-time branches. At the same time, integrals
+   * are computed for the largest ray parameter (usually equal to the source depth slowness) needed
+   * to correct tau for the largest ray parameter for all branches.
+   *
+   * @param depth A double containing the normalized source depth
    * @throws BadDepthException If the source depth is too deep
    * @throws TauIntegralException If the tau integral fails
    */
-  public void newDepth(double depth) throws BadDepthException, TauIntegralException {
-    int i;
-    double xInt;
-    boolean corrTau; // True if tauUp needs correcting
-    int iUp; // Up-going branch index
-    int iBot; // Bottoming depth model index
-    double zMax; // Depth of pMax below a low velocity zone
-
+  public void correctTauForDepth(double depth) throws BadDepthException, TauIntegralException {
     // Initialize.
-    zSource = depth;
-    tauEndUp = 0d;
-    tauEndLvz = 0d;
-    tauEndCnv = 0d;
-    xEndUp = 0d;
-    xEndLvz = 0d;
-    xEndCnv = 0d;
+    sourceDepth = depth;
+    tauIntSurfaceToLVZ = 0d;
+    tauIntLVZToSource = 0d;
+    tauIntSurfaceToSource = 0d;
+    distIntSurfaceToLVZ = 0d;
+    distIntLVZToSource = 0d;
+    distIntSurfaceToSource = 0d;
 
     // Get the source slowness.
-    pSource = modPri.findSlowness(zSource);
-    iSrc = modPri.getCurrentSourceDepthIndex();
-    pMax = modPri.findMaximumSlowness();
-    //	modPri.printFind(false);
+    sourceSlowness = primaryEarthModel.findSlowness(sourceDepth);
+    sourceDepthModelIndex = primaryEarthModel.getCurrentSourceDepthIndex();
+    maximumSlowness = primaryEarthModel.findMaximumSlowness();
 
     // If the source is at the surface, we're already done.
-    if (-zSource <= TauUtilities.DOUBLETOLERANCE) return;
+    if (-sourceDepth <= TauUtilities.DOUBLETOLERANCE) {
+      return;
+    }
+
     // Otherwise, copy the desired data into temporary storage.
-    iUp = modPri.getModelReference().getUpGoingIndexes()[iSrc];
-    //	System.out.println("\t\t\tiUp = "+iUp);
-    pUp = Arrays.copyOf(ref.getSlownessGrid(), ref.getUpGoingTauValues()[iUp].length);
-    tauUp = Arrays.copyOf(ref.getUpGoingTauValues()[iUp], pUp.length);
-    xUp =
+    int upGoingBranchIndex =
+        primaryEarthModel.getModelReference().getUpGoingIndexes()[sourceDepthModelIndex];
+
+    upGoingBranchRayParams =
         Arrays.copyOf(
-            ref.getUpGoingDistanceValues()[iUp], ref.getUpGoingDistanceValues()[iUp].length);
+            upGoingReference.getSlownessGrid(),
+            upGoingReference.getUpGoingTauValues()[upGoingBranchIndex].length);
 
-    // See if we need to correct tauUp.
-    if (Math.abs(ref.getSlownessGrid()[iUp] - pMax) <= TauUtilities.DOUBLETOLERANCE)
-      corrTau = false;
-    else corrTau = true;
+    upGoingBranchTau =
+        Arrays.copyOf(
+            upGoingReference.getUpGoingTauValues()[upGoingBranchIndex],
+            upGoingBranchRayParams.length);
 
-    pMax = Math.min(pMax, pSource);
+    upGoingBranchDistance =
+        Arrays.copyOf(
+            upGoingReference.getUpGoingDistanceValues()[upGoingBranchIndex],
+            upGoingReference.getUpGoingDistanceValues()[upGoingBranchIndex].length);
+
+    // See if we need to correct upGoingBranchTau.
+    boolean correctTau; // True if upGoingBranchTau needs correcting
+    if (Math.abs(upGoingReference.getSlownessGrid()[upGoingBranchIndex] - maximumSlowness)
+        <= TauUtilities.DOUBLETOLERANCE) {
+      correctTau = false;
+    } else {
+      correctTau = true;
+    }
+
+    maximumSlowness = Math.min(maximumSlowness, sourceSlowness);
+
     // Correct the up-going tau values to the exact source depth.
-    /*	System.out.println("Partial integrals: "+(float)pSource+" - "+
-    (float)modPri.getModelReference().getModelSlownesses()[iSrc]+"  "+(float)zSource+" - "+
-    (float)modPri.getModelReference().getModelDepths()[iSrc]); */
-    i = 0;
-    for (int j = 0; j < tauUp.length; j++) {
-      if (ref.getSlownessGrid()[j] <= pMax) {
-        if (corrTau) {
-          //		System.out.println("j  p tau (before): "+(j+1)+" "+
-          //				(float)ref.getSlownessGrid()[j]+" "+(float)tauUp[j]);
-          tauUp[j] -=
-              intPri.integrateLayer(
-                  ref.getSlownessGrid()[j],
-                  pSource,
-                  modPri.getModelReference().getModelSlownesses()[iSrc],
-                  zSource,
-                  modPri.getModelReference().getModelDepths()[iSrc]);
-          //		System.out.println("     tau (after): "+(float)tauUp[j]+" "+
-          //				(float)ref.getBranchEndpointSlownesses()[i]);
+    int i = 0;
+    for (int j = 0; j < upGoingBranchTau.length; j++) {
+      if (upGoingReference.getSlownessGrid()[j] <= maximumSlowness) {
+        if (correctTau) {
+          upGoingBranchTau[j] -=
+              primaryIntegrations.integrateLayer(
+                  upGoingReference.getSlownessGrid()[j],
+                  sourceSlowness,
+                  primaryEarthModel.getModelReference().getModelSlownesses()[sourceDepthModelIndex],
+                  sourceDepth,
+                  primaryEarthModel.getModelReference().getModelDepths()[sourceDepthModelIndex]);
 
           // See if we need to correct an end point distance as well.
-          if (Math.abs(ref.getSlownessGrid()[j] - ref.getBranchEndpointSlownesses()[i])
+          if (Math.abs(
+                  upGoingReference.getSlownessGrid()[j]
+                      - upGoingReference.getBranchEndpointSlownesses()[i])
               <= TauUtilities.DOUBLETOLERANCE) {
-            xInt = intPri.getLayerIntDist();
-            xUp[i++] -= xInt;
-            //			System.out.println("i  x (after) dx = "+i+" "+
-            //					(float)xUp[i-1]+" "+(float)xInt);
+            double xInt = primaryIntegrations.getLayerIntDist();
+
+            upGoingBranchDistance[i++] -= xInt;
           }
         }
       } else break;
@@ -146,28 +320,32 @@ public class UpGoingDataVolume {
      * Compute tau and distance for the ray parameter equal to the source slowness (i.e., horizontal
      * take-off angle from the source).
      */
-    //	System.out.println("\nEnd integral: "+(float)pMax+" "+iSrc+" "+
-    //			(float)pSource+" "+(float)zSource);
-    tauEndUp = intPri.integrateRange(pMax, 0, iSrc - 1, pSource, zSource);
-    xEndUp = intPri.getSummaryIntDist();
-    //	System.out.println("tau x = "+(float)tauEndUp+" "+xEndUp);
+    tauIntSurfaceToLVZ =
+        primaryIntegrations.integrateRange(
+            maximumSlowness, 0, sourceDepthModelIndex - 1, sourceSlowness, sourceDepth);
+    distIntSurfaceToLVZ = primaryIntegrations.getSummaryIntDist();
 
     /**
      * If the source depth is in a low velocity zone, we need to compute tau and distance down to
      * the shallowest turning ray (the horizontal ray is trapped).
      */
-    if (pMax > pSource) {
-      zMax = modPri.findDepth(pMax, false);
-      iBot = modPri.getCurrentSourceDepthIndex();
-      //	System.out.println("\nLVZ integral: "+(float)pMax+" "+iSrc+" "+
-      //			iBot+" "+(float)pSource+" "+(float)zSource+" "+(float)pMax+
-      //			" "+(float)zMax);
-      tauEndLvz = intPri.integrateRange(pMax, iSrc, iBot, pSource, zSource, pMax, zMax);
-      xEndLvz = intPri.getSummaryIntDist();
-      //	System.out.println("tau x = "+(float)tauEndLvz+" "+xEndLvz);
+    if (maximumSlowness > sourceSlowness) {
+      double maxSlownessDepth = primaryEarthModel.findDepth(maximumSlowness, false);
+      int bottomDepthModelIndex = primaryEarthModel.getCurrentSourceDepthIndex();
+
+      tauIntLVZToSource =
+          primaryIntegrations.integrateRange(
+              maximumSlowness,
+              sourceDepthModelIndex,
+              bottomDepthModelIndex,
+              sourceSlowness,
+              sourceDepth,
+              maximumSlowness,
+              maxSlownessDepth);
+      distIntLVZToSource = primaryIntegrations.getSummaryIntDist();
     } else {
-      tauEndLvz = 0d;
-      xEndLvz = 0d;
+      tauIntLVZToSource = 0d;
+      distIntLVZToSource = 0d;
     }
 
     /**
@@ -175,141 +353,161 @@ public class UpGoingDataVolume {
      * slowness.
      */
     try {
-      zMax = modSec.findDepth(pMax, true);
-      iBot = modSec.getCurrentSourceDepthIndex();
-      //	System.out.println("\nCnv integral: "+(float)pMax+" "+iBot+" "+
-      //			(float)pMax+" "+(float)zMax);
-      tauEndCnv = intSec.integrateRange(pMax, 0, iBot - 1, pMax, zMax);
-      xEndCnv = intSec.getSummaryIntDist();
-      //	System.out.println("tau x = "+(float)tauEndCnv+" "+xEndCnv);
+      double maxSlownessDepth = secondaryEarthModel.findDepth(maximumSlowness, true);
+      int bottomDepthModelIndex = secondaryEarthModel.getCurrentSourceDepthIndex();
+
+      tauIntSurfaceToSource =
+          secondaryIntegrations.integrateRange(
+              maximumSlowness, 0, bottomDepthModelIndex - 1, maximumSlowness, maxSlownessDepth);
+      distIntSurfaceToSource = secondaryIntegrations.getSummaryIntDist();
     } catch (BadDepthException | TauIntegralException e) {
-      tauEndCnv = 0d;
-      xEndCnv = 0d;
-      //	System.out.println("\nNo Cnv correction needed");
+      tauIntSurfaceToSource = 0d;
+      distIntSurfaceToSource = 0d;
     }
   }
 
   /**
-   * Generate the up-going branch that will be used to compute travel times. The stored up-going
-   * branches must be complete in ray parameter samples in order to correct all other travel-time
-   * branches to the desired source depth. However, due to the irregular spacing of the ray
-   * parameter grid, the interpolation will be unstable. Therefore, the up-going branch must be
+   * Funtion to generate the up-going branch that will be used to compute travel times. The stored
+   * up-going branches must be complete in ray parameter samples in order to correct all other
+   * travel-time branches to the desired source depth. However, due to the irregular spacing of the
+   * ray parameter grid, the interpolation will be unstable. Therefore, the up-going branch must be
    * decimated to be useful later. For very shallow sources, even the decimated grid will be
    * unstable and must be completely replaced.
    *
-   * @param pBrn Normalized raw ray parameter grid
-   * @param tauBrn Normalized raw tau grid
-   * @param xRange Normalized distance range
-   * @param xMin Normalized minimum distance interval desired
-   * @return A new grid of ray parameter values for the up-going branch
+   * @param rayRayParamGrid An array of doubles containing the normalized raw ray parameter grid
+   * @param tauGrid An array of doubles containing the normalized raw tau grid
+   * @param distanceRange An array of doubles containing the normalized distance range
+   * @param minimumDistInterval A double containing the normalized minimum distance interval desired
+   * @return An array of doubles containing a new grid of ray parameter values for the up-going
+   *     branch
    * @throws TauIntegralException If the tau integration fails
    */
-  public double[] realUp(double pBrn[], double tauBrn[], double[] xRange, double xMin)
+  public double[] generateUpGoingRayParams(
+      double[] rayRayParamGrid,
+      double[] tauGrid,
+      double[] distanceRange,
+      double minimumDistInterval)
       throws TauIntegralException {
-    int power, len;
-    double depth, dp;
-    boolean[] keep;
-
-    depth = cvt.computeDimensionalDepth(zSource);
-    if (depth <= cvt.getUpGoingReplacementDepth()) {
+    double depth = modelConversions.computeDimensionalDepth(sourceDepth);
+    int power;
+    if (depth <= modelConversions.getUpGoingReplacementDepth()) {
       // For shallow sources, recompute tau on a more stable ray
       // parameter grid.  The parameters are depth dependent.
       if (depth < 1.5) {
-        lenNew = 5;
+        decimatedBranchLength = 5;
         power = 6;
       } else if (depth < 10.5) {
-        lenNew = 6;
+        decimatedBranchLength = 6;
         power = 6;
       } else {
-        lenNew = 6;
+        decimatedBranchLength = 6;
         power = 7;
       }
+
       // Allocate some space.
-      pDec = new double[lenNew];
-      tauDec = new double[lenNew];
+      decUpGoingBranchRayParams = new double[decimatedBranchLength];
+      decUpGoingBranchTau = new double[decimatedBranchLength];
 
       // Create the up-going branch.
-      pDec[0] = pBrn[0];
-      tauDec[0] = tauBrn[0];
-      dp = 0.75d * pMax / Math.pow(lenNew - 2, power);
-      for (int j = 1; j < lenNew - 1; j++) {
-        pDec[j] = pMax - dp * Math.pow(lenNew - j - 1, power--);
-        tauDec[j] = intPri.integrateRange(pDec[j], 0, iSrc - 1, pSource, zSource);
+      decUpGoingBranchRayParams[0] = rayRayParamGrid[0];
+      decUpGoingBranchTau[0] = tauGrid[0];
+      double dp = 0.75d * maximumSlowness / Math.pow(decimatedBranchLength - 2, power);
+
+      for (int j = 1; j < decimatedBranchLength - 1; j++) {
+        decUpGoingBranchRayParams[j] =
+            maximumSlowness - dp * Math.pow(decimatedBranchLength - j - 1, power--);
+        decUpGoingBranchTau[j] =
+            primaryIntegrations.integrateRange(
+                decUpGoingBranchRayParams[j],
+                0,
+                sourceDepthModelIndex - 1,
+                sourceSlowness,
+                sourceDepth);
       }
-      pDec[lenNew - 1] = pMax;
-      tauDec[lenNew - 1] = tauEndUp;
+
+      decUpGoingBranchRayParams[decimatedBranchLength - 1] = maximumSlowness;
+      decUpGoingBranchTau[decimatedBranchLength - 1] = tauIntSurfaceToLVZ;
     } else {
       // For deeper sources, it is enough to decimate the ray
       // parameter grid we already have.
-      keep = dec.fastDecimation(pBrn, tauBrn, xRange, xMin);
+      boolean[] keep =
+          decimator.fastDecimation(rayRayParamGrid, tauGrid, distanceRange, minimumDistInterval);
+
       if (keep != null) {
         // Do the decimation.
-        len = 0;
+        int len = 0;
         for (int k = 0; k < keep.length; k++) {
-          if (keep[k]) len++;
+          if (keep[k]) {
+            len++;
+          }
         }
-        pDec = new double[len];
-        tauDec = new double[len];
+
+        decUpGoingBranchRayParams = new double[len];
+        decUpGoingBranchTau = new double[len];
+
         for (int k = 0, l = 0; k < keep.length; k++) {
           if (keep[k]) {
-            pDec[l] = pBrn[k];
-            tauDec[l++] = tauBrn[k];
+            decUpGoingBranchRayParams[l] = rayRayParamGrid[k];
+            decUpGoingBranchTau[l++] = tauGrid[k];
           }
         }
       } else {
         // We don't need to decimate.
-        pDec = Arrays.copyOf(pBrn, pBrn.length);
-        tauDec = Arrays.copyOf(tauBrn, tauBrn.length);
+        decUpGoingBranchRayParams = Arrays.copyOf(rayRayParamGrid, rayRayParamGrid.length);
+        decUpGoingBranchTau = Arrays.copyOf(tauGrid, tauGrid.length);
       }
     }
-    return pDec;
+
+    return decUpGoingBranchRayParams;
   }
 
   /**
-   * Get the decimated tau values associated with the decimated ray parameter grid.
+   * Function to print out the up-going branch data corrected for the source depth.
    *
-   * @return Decimated, normalized tau on the decimated ray parameter grid
+   * @param full A boolean flag, if true print the corrected tau array as well.
    */
-  public double[] getDecTau() {
-    return tauDec;
-  }
-
-  /**
-   * Print out the up-going branch data corrected for the source depth.
-   *
-   * @param full If true print the corrected tau array as well.
-   */
-  public void dumpCorrUp(boolean full) {
-    System.out.println("\n     Up-going " + ref.getWaveType() + " corrected");
+  public void dumpUpGoingCorrectedBranch(boolean full) {
+    System.out.println("\n     Up-going " + upGoingReference.getWaveType() + " corrected");
     System.out.format(
         "TauEnd: %8.6f %8.6f %8.6f  XEnd: %8.6f %8.6f %8.6f\n",
-        tauEndUp, tauEndLvz, tauEndCnv, xEndUp, xEndLvz, xEndCnv);
+        tauIntSurfaceToLVZ,
+        tauIntLVZToSource,
+        tauIntSurfaceToSource,
+        distIntSurfaceToLVZ,
+        distIntLVZToSource,
+        distIntSurfaceToSource);
+
     if (full) {
       System.out.println("          p        tau");
-      for (int k = 0; k < tauUp.length; k++) {
-        System.out.format("%3d  %8.6f %11.4e\n", k, pUp[k], tauUp[k]);
+
+      for (int k = 0; k < upGoingBranchTau.length; k++) {
+        System.out.format("%3d  %8.6f %11.4e\n", k, upGoingBranchRayParams[k], upGoingBranchTau[k]);
       }
-      /*	if(brnLen > tauUp.length) {
-      	System.out.format("%3d  %8.6f  %8.6f\n",brnLen-1,pUp[brnLen-1],
-      			tauEndUp+tauEndLvz);
-      } */
     }
   }
 
   /**
-   * Print out the decimated up-going branch data corrected for the source depth.
+   * Function to print out the decimated up-going branch data corrected for the source depth.
    *
-   * @param full If true print the corrected tau array as well.
+   * @param full A boolean flag, if true print the corrected tau array as well.
    */
-  public void dumpDecUp(boolean full) {
-    System.out.println("\n     Up-going " + ref.getWaveType() + " decimated");
+  public void dumpUpGoingDecimatedBranch(boolean full) {
+    System.out.println("\n     Up-going " + upGoingReference.getWaveType() + " decimated");
     System.out.format(
         "TauEnd: %8.6f %8.6f %8.6f  XEnd: %8.6f %8.6f %8.6f\n",
-        tauEndUp, tauEndLvz, tauEndCnv, xEndUp, xEndLvz, xEndCnv);
+        tauIntSurfaceToLVZ,
+        tauIntLVZToSource,
+        tauIntSurfaceToSource,
+        distIntSurfaceToLVZ,
+        distIntLVZToSource,
+        distIntSurfaceToSource);
+
     if (full) {
       System.out.println("          p        tau");
-      for (int k = 0; k < tauDec.length; k++) {
-        System.out.format("%3d  %8.6f %11.4e\n", k, pDec[k], tauDec[k]);
+
+      for (int k = 0; k < decUpGoingBranchTau.length; k++) {
+        System.out.format(
+            "%3d  %8.6f %11.4e\n", k, decUpGoingBranchRayParams[k], decUpGoingBranchTau[k]);
       }
     }
   }

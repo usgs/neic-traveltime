@@ -341,8 +341,8 @@ public class AllBranchVolume {
         }
 
         // Correct the up-going branch data.
-        upgoingPBranch.newDepth(sourceFlatDepth);
-        upgoingSBranch.newDepth(sourceFlatDepth);
+        upgoingPBranch.correctTauForDepth(sourceFlatDepth);
+        upgoingSBranch.correctTauForDepth(sourceFlatDepth);
 
         // To correct each branch we need a few depth dependent pieces.
         char branchSuffix;
@@ -1329,11 +1329,11 @@ public class AllBranchVolume {
    * @param waveType A char containing the wave type ('P' = compressional, 'S' = shear)
    * @param full A boolean flag, if true, print the detailed branch specification as well
    */
-  public void dumpCorrUp(char waveType, boolean full) {
+  public void dumpUpGoingCorrectedBranch(char waveType, boolean full) {
     if (waveType == 'P') {
-      upgoingPBranch.dumpCorrUp(full);
+      upgoingPBranch.dumpUpGoingCorrectedBranch(full);
     } else if (waveType == 'S') {
-      upgoingSBranch.dumpCorrUp(full);
+      upgoingSBranch.dumpUpGoingCorrectedBranch(full);
     }
   }
 
@@ -1343,11 +1343,11 @@ public class AllBranchVolume {
    * @param waveType A char containing the wave type ('P' = compressional, 'S' = shear)
    * @param full A boolean flag, if true, print the detailed branch specification as well
    */
-  public void dumpDecUp(char waveType, boolean full) {
+  public void dumpUpGoingDecimatedBranch(char waveType, boolean full) {
     if (waveType == 'P') {
-      upgoingPBranch.dumpDecUp(full);
+      upgoingPBranch.dumpUpGoingDecimatedBranch(full);
     } else if (waveType == 'S') {
-      upgoingSBranch.dumpDecUp(full);
+      upgoingSBranch.dumpUpGoingDecimatedBranch(full);
     }
   }
 }

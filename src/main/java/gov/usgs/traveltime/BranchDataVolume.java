@@ -330,26 +330,28 @@ public class BranchDataVolume {
         // Do phases that start as P.
         if (branchReference.getCorrectionPhaseType()[0] == 'P') {
           // Correct ray parameter range.
-          double pMax = Math.min(correctedSlownessRange[1], upgoingPBranch.pMax);
+          double maximumSlowness =
+              Math.min(correctedSlownessRange[1], upgoingPBranch.getMaximumSlowness());
 
           // Screen phases that don't exist.
-          if (correctedSlownessRange[0] >= pMax) {
+          if (correctedSlownessRange[0] >= maximumSlowness) {
             correctedBranchExists = false;
             return;
           }
 
-          correctedSlownessRange[1] = pMax;
+          correctedSlownessRange[1] = maximumSlowness;
 
           /* See how long we need the corrected arrays to be.  This is
            * awkward and not very Java-like, but the gain in performance
            * seemed worthwhile in this case.*/
           for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
             // See if we need this point.
-            if (branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DOUBLETOLERANCE) {
+            if (branchReference.getSlownessGrid()[j]
+                < maximumSlowness + TauUtilities.DOUBLETOLERANCE) {
               len++;
 
-              // If this point is equal to pMax, we're done.
-              if (Math.abs(branchReference.getSlownessGrid()[j] - pMax)
+              // If this point is equal to maximumSlowness, we're done.
+              if (Math.abs(branchReference.getSlownessGrid()[j] - maximumSlowness)
                   <= TauUtilities.DOUBLETOLERANCE) {
                 break;
               }
@@ -375,39 +377,47 @@ public class BranchDataVolume {
           // Correct an up-going branch separately.
           if (branchReference.getIsBranchUpGoing()) {
             // Correct the distance.
-            correctedDistanceRange[1] = upgoingPBranch.xEndUp;
+            correctedDistanceRange[1] = upgoingPBranch.getDistIntSurfaceToLVZ();
 
             // Correct tau for the up-going branch.
-            // We assume that branchReference.getSlownessGrid() is a subset of upgoingPBranch.pUp
+            // We assume that branchReference.getSlownessGrid() is a subset of
+            // upgoingPBranch.getUpGoingBranchRayParams()
             // We assume that TauUtilities.DOUBLETOLERANCE is being used as a
             // float epsilon for floating point comparisions
-            // We assume upgoingPBranch.pUp is the same lenght as upgoingPBranch.tauUp
-            // We assume that branchReference.getSlownessGrid() and upgoingPBranch.pUp are sorted in
+            // We assume upgoingPBranch.getUpGoingBranchRayParams() is the same length as
+            // upgoingPBranch.getUpGoingBranchTau()
+            // We assume that branchReference.getSlownessGrid() and
+            // upgoingPBranch.getUpGoingBranchRayParams() are sorted in
             // increasing order JMP 1/13/2022
             i = 0;
             for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
-              // Make sure we do not loop past the end of upgoingPBranch.pUp
-              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DOUBLETOLERANCE)
-                  && (i < upgoingPBranch.pUp.length)) {
+              // Make sure we do not loop past the end of upgoingPBranch.getUpGoingBranchRayParams()
+              if ((branchReference.getSlownessGrid()[j]
+                      < maximumSlowness + TauUtilities.DOUBLETOLERANCE)
+                  && (i < upgoingPBranch.getUpGoingBranchRayParams().length)) {
                 // pTauUp is a superset of updatedRayParameters so we need to sync them.
-                // advance through the upgoingPBranch.pUp array until we find the index
-                // of upgoingPBranch.pUp that matches the value in
+                // advance through the upgoingPBranch.getUpGoingBranchRayParams() array until we
+                // find the index
+                // of upgoingPBranch.getUpGoingBranchRayParams() that matches the value in
                 // branchReference.getSlownessGrid()[j].
-                // To make sure don't loop past the end of upgoingPBranch.pUp, we check
+                // To make sure don't loop past the end of
+                // upgoingPBranch.getUpGoingBranchRayParams(), we check
                 // length-1 because of how the while loop is structured
-                while ((Math.abs(branchReference.getSlownessGrid()[j] - upgoingPBranch.pUp[i])
+                while ((Math.abs(
+                            branchReference.getSlownessGrid()[j]
+                                - upgoingPBranch.getUpGoingBranchRayParams()[i])
                         > TauUtilities.DOUBLETOLERANCE)
-                    && (i < upgoingPBranch.pUp.length - 1)) {
+                    && (i < upgoingPBranch.getUpGoingBranchRayParams().length - 1)) {
                   i++;
                 }
 
                 // Correct the tau and x values.
                 updatedRayParameters[j] = branchReference.getSlownessGrid()[j];
-                correctedTauValues[j] = upgoingPBranch.tauUp[i];
+                correctedTauValues[j] = upgoingPBranch.getUpGoingBranchTau()[i];
 
-                // If this point is equal to pMax, we're done.
-                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax)
+                // If this point is equal to maximumSlowness, we're done.
+                if (Math.abs(branchReference.getSlownessGrid()[j] - maximumSlowness)
                     <= TauUtilities.DOUBLETOLERANCE) {
                   break;
                 }
@@ -415,8 +425,8 @@ public class BranchDataVolume {
                 // Otherwise, (we've hit the max, or run out of
                 // elements in pTauUp)
                 // we add one more point and quit.
-                updatedRayParameters[j] = pMax;
-                correctedTauValues[j] = upgoingPBranch.tauEndUp;
+                updatedRayParameters[j] = maximumSlowness;
+                correctedTauValues[j] = upgoingPBranch.getTauIntSurfaceToLVZ();
 
                 break;
               }
@@ -424,12 +434,12 @@ public class BranchDataVolume {
 
             // Decimate the up-going branch.
             updatedRayParameters =
-                upgoingPBranch.realUp(
+                upgoingPBranch.generateUpGoingRayParams(
                     updatedRayParameters,
                     correctedTauValues,
                     correctedDistanceRange,
                     minimumDistance);
-            correctedTauValues = upgoingPBranch.getDecTau();
+            correctedTauValues = upgoingPBranch.getDecimatedTau();
 
             // Spline it.
             len = updatedRayParameters.length;
@@ -450,23 +460,26 @@ public class BranchDataVolume {
             // Correct distance.
             int m = 0;
             for (i = 0; i < correctedDistanceRange.length; i++) {
-              for (; m < upgoingPBranch.ref.getBranchEndpointSlownesses().length; m++) {
+              for (;
+                  m < upgoingPBranch.getUpGoingReference().getBranchEndpointSlownesses().length;
+                  m++) {
                 if (Math.abs(
                         correctedSlownessRange[i]
-                            - upgoingPBranch.ref.getBranchEndpointSlownesses()[m])
+                            - upgoingPBranch.getUpGoingReference().getBranchEndpointSlownesses()[m])
                     <= TauUtilities.DOUBLETOLERANCE) {
-                  if (m >= upgoingPBranch.xUp.length) {
+                  if (m >= upgoingPBranch.getUpGoingBranchDistance().length) {
                     correctedBranchExists = false;
                     return;
                   }
 
                   correctedDistanceRange[i] +=
-                      branchReference.getUpGoingCorrectionSign() * upgoingPBranch.xUp[m];
+                      branchReference.getUpGoingCorrectionSign()
+                          * upgoingPBranch.getUpGoingBranchDistance()[m];
                   break;
                 }
               }
 
-              if (m >= upgoingPBranch.ref.getBranchEndpointSlownesses().length) {
+              if (m >= upgoingPBranch.getUpGoingReference().getBranchEndpointSlownesses().length) {
                 correctedDistanceRange[i] = computeLastDistance();
               }
             }
@@ -478,27 +491,35 @@ public class BranchDataVolume {
             }
 
             // Correct tau for down-going branches.
-            // We assume that branchReference.getSlownessGrid() is a subset of upgoingPBranch.pUp
+            // We assume that branchReference.getSlownessGrid() is a subset of
+            // upgoingPBranch.getUpGoingBranchRayParams()
             // We assume that TauUtilities.DOUBLETOLERANCE is being used as a
             // float epsilon for floating point comparisions
-            // We assume upgoingPBranch.pUp is the same lenght as upgoingPBranch.tauUp
-            // We assume that branchReference.getSlownessGrid() and upgoingPBranch.pUp are sorted in
+            // We assume upgoingPBranch.getUpGoingBranchRayParams() is the same length as
+            // upgoingPBranch.getUpGoingBranchTau()
+            // We assume that branchReference.getSlownessGrid() and
+            // upgoingPBranch.getUpGoingBranchRayParams() are sorted in
             // increasing order JMP 1/13/2022
             i = 0;
             for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
-              // Make sure we do not loop past the end of upgoingPBranch.pUp
-              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DOUBLETOLERANCE)
-                  && (i < upgoingPBranch.pUp.length)) {
+              // Make sure we do not loop past the end of upgoingPBranch.getUpGoingBranchRayParams()
+              if ((branchReference.getSlownessGrid()[j]
+                      < maximumSlowness + TauUtilities.DOUBLETOLERANCE)
+                  && (i < upgoingPBranch.getUpGoingBranchRayParams().length)) {
                 // pTauUp is a superset of updatedRayParameters so we need to sync them.
-                // advance through the upgoingPBranch.pUp array until we find the index
-                // of upgoingPBranch.pUp that matches the value in
+                // advance through the upgoingPBranch.getUpGoingBranchRayParams() array until we
+                // find the index
+                // of upgoingPBranch.getUpGoingBranchRayParams() that matches the value in
                 // branchReference.getSlownessGrid()[j].
-                // To make sure don't loop past the end of upgoingPBranch.pUp, we check
+                // To make sure don't loop past the end of
+                // upgoingPBranch.getUpGoingBranchRayParams(), we check
                 // length-1 because of how the while loop is structured
-                while ((Math.abs(branchReference.getSlownessGrid()[j] - upgoingPBranch.pUp[i])
+                while ((Math.abs(
+                            branchReference.getSlownessGrid()[j]
+                                - upgoingPBranch.getUpGoingBranchRayParams()[i])
                         > TauUtilities.DOUBLETOLERANCE)
-                    && (i < upgoingPBranch.pUp.length - 1)) {
+                    && (i < upgoingPBranch.getUpGoingBranchRayParams().length - 1)) {
                   i++;
                 }
 
@@ -506,10 +527,11 @@ public class BranchDataVolume {
                 updatedRayParameters[j] = branchReference.getSlownessGrid()[j];
                 correctedTauValues[j] =
                     branchReference.getTauGrid()[j]
-                        + branchReference.getUpGoingCorrectionSign() * upgoingPBranch.tauUp[i];
+                        + branchReference.getUpGoingCorrectionSign()
+                            * upgoingPBranch.getUpGoingBranchTau()[i];
 
-                // If this point is equal to pMax, we're done.
-                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax)
+                // If this point is equal to maximumSlowness, we're done.
+                if (Math.abs(branchReference.getSlownessGrid()[j] - maximumSlowness)
                     <= TauUtilities.DOUBLETOLERANCE) {
                   break;
                 }
@@ -517,7 +539,7 @@ public class BranchDataVolume {
                 // Otherwise, (we've hit the max, or run out of
                 // elements in pTauUp)
                 // we add one more point and quit.
-                updatedRayParameters[j] = pMax;
+                updatedRayParameters[j] = maximumSlowness;
                 correctedTauValues[j] = computeLastTau();
 
                 break;
@@ -550,26 +572,28 @@ public class BranchDataVolume {
           // Do phases that start as S.
         } else {
           // Correct ray parameter range.
-          double pMax = Math.min(correctedSlownessRange[1], upgoingSBranch.pMax);
+          double maximumSlowness =
+              Math.min(correctedSlownessRange[1], upgoingSBranch.getMaximumSlowness());
 
           // Screen phases that don't exist.
-          if (correctedSlownessRange[0] >= pMax) {
+          if (correctedSlownessRange[0] >= maximumSlowness) {
             correctedBranchExists = false;
             return;
           }
 
-          correctedSlownessRange[1] = pMax;
+          correctedSlownessRange[1] = maximumSlowness;
 
           /* See how long we need the corrected arrays to be.  This is
            * awkward and not very Java-like, but the gain in performance
            * seemed worthwhile in this case.*/
           for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
             // See if we need this point.
-            if (branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DOUBLETOLERANCE) {
+            if (branchReference.getSlownessGrid()[j]
+                < maximumSlowness + TauUtilities.DOUBLETOLERANCE) {
               len++;
 
-              // If this point is equal to pMax, we're done.
-              if (Math.abs(branchReference.getSlownessGrid()[j] - pMax)
+              // If this point is equal to maximumSlowness, we're done.
+              if (Math.abs(branchReference.getSlownessGrid()[j] - maximumSlowness)
                   <= TauUtilities.DOUBLETOLERANCE) {
                 break;
               }
@@ -594,39 +618,47 @@ public class BranchDataVolume {
           // Correct an up-going branch separately.
           if (branchReference.getIsBranchUpGoing()) {
             // Correct the distance.
-            correctedDistanceRange[1] = upgoingSBranch.xEndUp;
+            correctedDistanceRange[1] = upgoingSBranch.getDistIntSurfaceToLVZ();
 
             // Correct tau for the up-going branch.
-            // We assume that branchReference.getSlownessGrid() is a subset of upgoingSBranch.pUp
+            // We assume that branchReference.getSlownessGrid() is a subset of
+            // upgoingSBranch.getUpGoingBranchRayParams()
             // We assume that TauUtilities.DOUBLETOLERANCE is being used as a
             // float epsilon for floating point comparisions
-            // We assume upgoingSBranch.pUp is the same lenght as upgoingSBranch.tauUp
-            // We assume that branchReference.getSlownessGrid() and upgoingSBranch.pUp are sorted in
+            // We assume upgoingSBranch.getUpGoingBranchRayParams() is the same length as
+            // upgoingSBranch.getUpGoingBranchTau()
+            // We assume that branchReference.getSlownessGrid() and
+            // upgoingSBranch.getUpGoingBranchRayParams() are sorted in
             // increasing order JMP 1/13/2022
             i = 0;
             for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
-              // Make sure we do not loop past the end of upgoingSBranch.pUp
-              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DOUBLETOLERANCE)
-                  && (i < upgoingSBranch.pUp.length)) {
+              // Make sure we do not loop past the end of upgoingSBranch.getUpGoingBranchRayParams()
+              if ((branchReference.getSlownessGrid()[j]
+                      < maximumSlowness + TauUtilities.DOUBLETOLERANCE)
+                  && (i < upgoingSBranch.getUpGoingBranchRayParams().length)) {
                 // pTauUp is a superset of updatedRayParameters so we need to sync them.
-                // advance through the upgoingSBranch.pUp array until we find the index
-                // of upgoingSBranch.pUp that matches the value in
+                // advance through the upgoingSBranch.getUpGoingBranchRayParams() array until we
+                // find the index
+                // of upgoingSBranch.getUpGoingBranchRayParams() that matches the value in
                 // branchReference.getSlownessGrid()[j].
-                // To make sure don't loop past the end of upgoingSBranch.pUp, we check
+                // To make sure don't loop past the end of
+                // upgoingSBranch.getUpGoingBranchRayParams(), we check
                 // length-1 because of how the while loop is structured
-                while ((Math.abs(branchReference.getSlownessGrid()[j] - upgoingSBranch.pUp[i])
+                while ((Math.abs(
+                            branchReference.getSlownessGrid()[j]
+                                - upgoingSBranch.getUpGoingBranchRayParams()[i])
                         > TauUtilities.DOUBLETOLERANCE)
-                    && (i < upgoingSBranch.pUp.length - 1)) {
+                    && (i < upgoingSBranch.getUpGoingBranchRayParams().length - 1)) {
                   i++;
                 }
 
                 // Correct the tau and x values.
                 updatedRayParameters[j] = branchReference.getSlownessGrid()[j];
-                correctedTauValues[j] = upgoingSBranch.tauUp[i];
+                correctedTauValues[j] = upgoingSBranch.getUpGoingBranchTau()[i];
 
-                // If this point is equal to pMax, we're done.
-                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax)
+                // If this point is equal to maximumSlowness, we're done.
+                if (Math.abs(branchReference.getSlownessGrid()[j] - maximumSlowness)
                     <= TauUtilities.DOUBLETOLERANCE) {
                   break;
                 }
@@ -634,8 +666,8 @@ public class BranchDataVolume {
                 // Otherwise, (we've hit the max, or run out of
                 // elements in pTauUp)
                 // we add one more point and quit.
-                updatedRayParameters[j] = pMax;
-                correctedTauValues[j] = upgoingSBranch.tauEndUp;
+                updatedRayParameters[j] = maximumSlowness;
+                correctedTauValues[j] = upgoingSBranch.getTauIntSurfaceToLVZ();
 
                 break;
               }
@@ -643,12 +675,12 @@ public class BranchDataVolume {
 
             // Decimate the up-going branch.
             updatedRayParameters =
-                upgoingSBranch.realUp(
+                upgoingSBranch.generateUpGoingRayParams(
                     updatedRayParameters,
                     correctedTauValues,
                     correctedDistanceRange,
                     minimumDistance);
-            correctedTauValues = upgoingSBranch.getDecTau();
+            correctedTauValues = upgoingSBranch.getDecimatedTau();
 
             // Spline it.
             len = updatedRayParameters.length;
@@ -669,22 +701,25 @@ public class BranchDataVolume {
             // Correct distance.
             int m = 0;
             for (i = 0; i < correctedDistanceRange.length; i++) {
-              for (; m < upgoingSBranch.ref.getBranchEndpointSlownesses().length; m++) {
+              for (;
+                  m < upgoingSBranch.getUpGoingReference().getBranchEndpointSlownesses().length;
+                  m++) {
                 if (Math.abs(
                         correctedSlownessRange[i]
-                            - upgoingSBranch.ref.getBranchEndpointSlownesses()[m])
+                            - upgoingSBranch.getUpGoingReference().getBranchEndpointSlownesses()[m])
                     <= TauUtilities.DOUBLETOLERANCE) {
-                  if (m >= upgoingSBranch.xUp.length) {
+                  if (m >= upgoingSBranch.getUpGoingBranchDistance().length) {
                     correctedBranchExists = false;
                     return;
                   }
 
                   correctedDistanceRange[i] +=
-                      branchReference.getUpGoingCorrectionSign() * upgoingSBranch.xUp[m];
+                      branchReference.getUpGoingCorrectionSign()
+                          * upgoingSBranch.getUpGoingBranchDistance()[m];
                   break;
                 }
               }
-              if (m >= upgoingSBranch.ref.getBranchEndpointSlownesses().length) {
+              if (m >= upgoingSBranch.getUpGoingReference().getBranchEndpointSlownesses().length) {
                 correctedDistanceRange[i] = computeLastDistance();
               }
             }
@@ -696,27 +731,35 @@ public class BranchDataVolume {
             }
 
             // Correct tau for down-going branches.
-            // We assume that branchReference.getSlownessGrid() is a subset of upgoingSBranch.pUp
+            // We assume that branchReference.getSlownessGrid() is a subset of
+            // upgoingSBranch.getUpGoingBranchRayParams()
             // We assume that TauUtilities.DOUBLETOLERANCE is being used as a
             // float epsilon for floating point comparisions
-            // We assume upgoingSBranch.pUp is the same lenght as upgoingSBranch.tauUp
-            // We assume that branchReference.getSlownessGrid() and upgoingSBranch.pUp are sorted in
+            // We assume upgoingSBranch.getUpGoingBranchRayParams() is the same length as
+            // upgoingSBranch.getUpGoingBranchTau()
+            // We assume that branchReference.getSlownessGrid() and
+            // upgoingSBranch.getUpGoingBranchRayParams() are sorted in
             // increasing order JMP 1/13/2022
             i = 0;
             for (int j = 0; j < branchReference.getSlownessGrid().length; j++) {
               // See if we need to correct this point.
-              // Make sure we do not loop past the end of upgoingSBranch.pUp
-              if ((branchReference.getSlownessGrid()[j] < pMax + TauUtilities.DOUBLETOLERANCE)
-                  && (i < upgoingSBranch.pUp.length)) {
+              // Make sure we do not loop past the end of upgoingSBranch.getUpGoingBranchRayParams()
+              if ((branchReference.getSlownessGrid()[j]
+                      < maximumSlowness + TauUtilities.DOUBLETOLERANCE)
+                  && (i < upgoingSBranch.getUpGoingBranchRayParams().length)) {
                 // pTauUp is a superset of updatedRayParameters so we need to sync them.
-                // advance through the upgoingSBranch.pUp array until we find the index
-                // of upgoingSBranch.pUp that matches the value in
+                // advance through the upgoingSBranch.getUpGoingBranchRayParams() array until we
+                // find the index
+                // of upgoingSBranch.getUpGoingBranchRayParams() that matches the value in
                 // branchReference.getSlownessGrid()[j].
-                // To make sure don't loop past the end of upgoingSBranch.pUp, we check
+                // To make sure don't loop past the end of
+                // upgoingSBranch.getUpGoingBranchRayParams(), we check
                 // length-1 because of how the while loop is structured
-                while ((Math.abs(branchReference.getSlownessGrid()[j] - upgoingSBranch.pUp[i])
+                while ((Math.abs(
+                            branchReference.getSlownessGrid()[j]
+                                - upgoingSBranch.getUpGoingBranchRayParams()[i])
                         > TauUtilities.DOUBLETOLERANCE)
-                    && (i < upgoingSBranch.pUp.length - 1)) {
+                    && (i < upgoingSBranch.getUpGoingBranchRayParams().length - 1)) {
                   i++;
                 }
 
@@ -724,10 +767,11 @@ public class BranchDataVolume {
                 updatedRayParameters[j] = branchReference.getSlownessGrid()[j];
                 correctedTauValues[j] =
                     branchReference.getTauGrid()[j]
-                        + branchReference.getUpGoingCorrectionSign() * upgoingSBranch.tauUp[i];
+                        + branchReference.getUpGoingCorrectionSign()
+                            * upgoingSBranch.getUpGoingBranchTau()[i];
 
-                // If this point is equal to pMax, we're done.
-                if (Math.abs(branchReference.getSlownessGrid()[j] - pMax)
+                // If this point is equal to maximumSlowness, we're done.
+                if (Math.abs(branchReference.getSlownessGrid()[j] - maximumSlowness)
                     <= TauUtilities.DOUBLETOLERANCE) {
                   break;
                 }
@@ -735,7 +779,7 @@ public class BranchDataVolume {
                 // Otherwise, (we've hit the max, or run out of
                 // elements in pTauUp)
                 // we add one more point and quit.
-                updatedRayParameters[j] = pMax;
+                updatedRayParameters[j] = maximumSlowness;
                 correctedTauValues[j] = computeLastTau();
 
                 break;
@@ -804,16 +848,17 @@ public class BranchDataVolume {
       // it would be added.  For a down-going branch it would be
       // subtracted (because that part of the branch is cut off by the
       // source depth).
-      tau = branchReference.getUpGoingCorrectionSign() * upgoingPBranch.tauEndUp;
+      tau = branchReference.getUpGoingCorrectionSign() * upgoingPBranch.getTauIntSurfaceToLVZ();
 
       // Add the down-going part, which may not be the same as the
       // up-going piece (e.g., sP).
       if (branchReference.getCorrectionPhaseType()[1] == 'P') {
         tau +=
             branchReference.getNumMantleTraversals()
-                * (upgoingPBranch.tauEndUp + upgoingPBranch.tauEndLvz);
+                * (upgoingPBranch.getTauIntSurfaceToLVZ() + upgoingPBranch.getTauIntLVZToSource());
       } else {
-        tau += branchReference.getNumMantleTraversals() * (upgoingPBranch.tauEndCnv);
+        tau +=
+            branchReference.getNumMantleTraversals() * (upgoingPBranch.getTauIntSurfaceToSource());
       }
 
       // Add the coming-back-up part, which may not be the same as the
@@ -821,25 +866,27 @@ public class BranchDataVolume {
       if (branchReference.getCorrectionPhaseType()[2] == 'P') {
         tau +=
             branchReference.getNumMantleTraversals()
-                * (upgoingPBranch.tauEndUp + upgoingPBranch.tauEndLvz);
+                * (upgoingPBranch.getTauIntSurfaceToLVZ() + upgoingPBranch.getTauIntLVZToSource());
       } else {
-        tau += branchReference.getNumMantleTraversals() * (upgoingPBranch.tauEndCnv);
+        tau +=
+            branchReference.getNumMantleTraversals() * (upgoingPBranch.getTauIntSurfaceToSource());
       }
     } else {
       // Add or subtract the up-going piece.  For a surface reflection
       // it would be added.  For a down-going branch it would be
       // subtracted (because that part of the branch is cut off by the
       // source depth).
-      tau = branchReference.getUpGoingCorrectionSign() * upgoingSBranch.tauEndUp;
+      tau = branchReference.getUpGoingCorrectionSign() * upgoingSBranch.getTauIntSurfaceToLVZ();
 
       // Add the down-going part, which may not be the same as the
       // up-going piece (e.g., sP).
       if (branchReference.getCorrectionPhaseType()[1] == 'S') {
         tau +=
             branchReference.getNumMantleTraversals()
-                * (upgoingSBranch.tauEndUp + upgoingSBranch.tauEndLvz);
+                * (upgoingSBranch.getTauIntSurfaceToLVZ() + upgoingSBranch.getTauIntLVZToSource());
       } else {
-        tau += branchReference.getNumMantleTraversals() * (upgoingSBranch.tauEndCnv);
+        tau +=
+            branchReference.getNumMantleTraversals() * (upgoingSBranch.getTauIntSurfaceToSource());
       }
 
       // Add the coming-back-up part, which may not be the same as the
@@ -847,9 +894,10 @@ public class BranchDataVolume {
       if (branchReference.getCorrectionPhaseType()[2] == 'S') {
         tau +=
             branchReference.getNumMantleTraversals()
-                * (upgoingSBranch.tauEndUp + upgoingSBranch.tauEndLvz);
+                * (upgoingSBranch.getTauIntSurfaceToLVZ() + upgoingSBranch.getTauIntLVZToSource());
       } else {
-        tau += branchReference.getNumMantleTraversals() * (upgoingSBranch.tauEndCnv);
+        tau +=
+            branchReference.getNumMantleTraversals() * (upgoingSBranch.getTauIntSurfaceToSource());
       }
     }
 
@@ -871,16 +919,19 @@ public class BranchDataVolume {
       // it would be added.  For a down-going branch it would be
       // subtracted (because that part of the branch is cut off by the
       // source depth).
-      distance = branchReference.getUpGoingCorrectionSign() * upgoingPBranch.xEndUp;
+      distance =
+          branchReference.getUpGoingCorrectionSign() * upgoingPBranch.getDistIntSurfaceToLVZ();
 
       // Add the down-going part, which may not be the same as the
       // up-going piece (e.g., sP).
       if (branchReference.getCorrectionPhaseType()[1] == 'P') {
         distance +=
             branchReference.getNumMantleTraversals()
-                * (upgoingPBranch.xEndUp + upgoingPBranch.xEndLvz);
+                * (upgoingPBranch.getDistIntSurfaceToLVZ()
+                    + upgoingPBranch.getDistIntLVZToSource());
       } else {
-        distance += branchReference.getNumMantleTraversals() * (upgoingPBranch.xEndCnv);
+        distance +=
+            branchReference.getNumMantleTraversals() * (upgoingPBranch.getDistIntSurfaceToSource());
       }
 
       // Add the coming-back-up part, which may not be the same as the
@@ -888,25 +939,30 @@ public class BranchDataVolume {
       if (branchReference.getCorrectionPhaseType()[2] == 'P') {
         distance +=
             branchReference.getNumMantleTraversals()
-                * (upgoingPBranch.xEndUp + upgoingPBranch.xEndLvz);
+                * (upgoingPBranch.getDistIntSurfaceToLVZ()
+                    + upgoingPBranch.getDistIntLVZToSource());
       } else {
-        distance += branchReference.getNumMantleTraversals() * (upgoingPBranch.xEndCnv);
+        distance +=
+            branchReference.getNumMantleTraversals() * (upgoingPBranch.getDistIntSurfaceToSource());
       }
     } else {
       // Add or subtract the up-going piece.  For a surface reflection
       // it would be added.  For a down-going branch it would be
       // subtracted (because that part of the branch is cut off by the
       // source depth).
-      distance = branchReference.getUpGoingCorrectionSign() * upgoingSBranch.xEndUp;
+      distance =
+          branchReference.getUpGoingCorrectionSign() * upgoingSBranch.getDistIntSurfaceToLVZ();
 
       // Add the down-going part, which may not be the same as the
       // up-going piece (e.g., sP).
       if (branchReference.getCorrectionPhaseType()[1] == 'S') {
         distance +=
             branchReference.getNumMantleTraversals()
-                * (upgoingSBranch.xEndUp + upgoingSBranch.xEndLvz);
+                * (upgoingSBranch.getDistIntSurfaceToLVZ()
+                    + upgoingSBranch.getDistIntLVZToSource());
       } else {
-        distance += branchReference.getNumMantleTraversals() * (upgoingSBranch.xEndCnv);
+        distance +=
+            branchReference.getNumMantleTraversals() * (upgoingSBranch.getDistIntSurfaceToSource());
       }
 
       // Add the coming-back-up part, which may not be the same as the
@@ -914,9 +970,11 @@ public class BranchDataVolume {
       if (branchReference.getCorrectionPhaseType()[2] == 'S') {
         distance +=
             branchReference.getNumMantleTraversals()
-                * (upgoingSBranch.xEndUp + upgoingSBranch.xEndLvz);
+                * (upgoingSBranch.getDistIntSurfaceToLVZ()
+                    + upgoingSBranch.getDistIntLVZToSource());
       } else {
-        distance += branchReference.getNumMantleTraversals() * (upgoingSBranch.xEndCnv);
+        distance +=
+            branchReference.getNumMantleTraversals() * (upgoingSBranch.getDistIntSurfaceToSource());
       }
     }
 
@@ -1090,9 +1148,9 @@ public class BranchDataVolume {
           depthSign = depthDerivativeNorm * branchReference.getUpGoingCorrectionSign();
 
           if (branchReference.getCorrectionPhaseType()[0] == 'P') {
-            slownessUpSquared = Math.pow(upgoingPBranch.pSource, 2d);
+            slownessUpSquared = Math.pow(upgoingPBranch.getSourceSlowness(), 2d);
           } else {
-            slownessUpSquared = Math.pow(upgoingSBranch.pSource, 2d);
+            slownessUpSquared = Math.pow(upgoingSBranch.getSourceSlowness(), 2d);
           }
         }
 
@@ -1222,9 +1280,9 @@ public class BranchDataVolume {
             rayParameterEndValue = updatedRayParameters[updatedRayParameters.length - 1];
             depthSign = depthDerivativeNorm * branchReference.getUpGoingCorrectionSign();
             if (branchReference.getCorrectionPhaseType()[0] == 'P') {
-              slownessUpSquared = Math.pow(upgoingPBranch.pSource, 2d);
+              slownessUpSquared = Math.pow(upgoingPBranch.getSourceSlowness(), 2d);
             } else {
-              slownessUpSquared = Math.pow(upgoingSBranch.pSource, 2d);
+              slownessUpSquared = Math.pow(upgoingSBranch.getSourceSlowness(), 2d);
             }
           }
 

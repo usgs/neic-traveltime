@@ -16,7 +16,7 @@ import java.util.Arrays;
  */
 public class DecimateTravelTimeBranch {
   /** The Decimate object used for decimation */
-  private Decimate dec;
+  private Decimate decimator;
 
   /** A TauModel containing the final model */
   private TauModel finalTTModel;
@@ -33,7 +33,7 @@ public class DecimateTravelTimeBranch {
   public DecimateTravelTimeBranch(TauModel finalTTModel, ModelConversions modelConversions) {
     this.finalTTModel = finalTTModel;
     this.modelConversions = modelConversions;
-    this.dec = new Decimate();
+    this.decimator = new Decimate();
   }
 
   /**
@@ -52,7 +52,7 @@ public class DecimateTravelTimeBranch {
     double[] pOld = piece.getProxyRayParameters();
     double[] xOld = piece.getProxyRanges();
     boolean[] upKeep =
-        dec.slowDecimation(xOld, modelConversions.normalizeRadius(TablesUtil.DELXUP));
+        decimator.slowDecimation(xOld, modelConversions.normalizeRadius(TablesUtil.DELXUP));
 
     // Do some setup.
     double pLim = TablesUtil.PLIM * pOld[pOld.length - 1];
@@ -134,7 +134,8 @@ public class DecimateTravelTimeBranch {
       if ((xOld[i + 1] - xOld[i]) * (xOld[i] - xOld[i - 1]) <= 0d) {
         // Got one.  Decimate the branch up to the caustic.
         if (i - 2 > beg) {
-          downKeep = dec.slowDecimation(Arrays.copyOfRange(xOld, beg, i - 1), rangeSpacingTarget);
+          downKeep =
+              decimator.slowDecimation(Arrays.copyOfRange(xOld, beg, i - 1), rangeSpacingTarget);
 
           for (int j = beg, l = 0; j < i - 1; j++, l++) {
             if (downKeep[l]) {
@@ -161,7 +162,8 @@ public class DecimateTravelTimeBranch {
 
     // Decimate after the last caustic (or the whole branch if there
     // are no caustics.
-    downKeep = dec.slowDecimation(Arrays.copyOfRange(xOld, beg, xOld.length), rangeSpacingTarget);
+    downKeep =
+        decimator.slowDecimation(Arrays.copyOfRange(xOld, beg, xOld.length), rangeSpacingTarget);
     for (int j = beg, l = 0; j < xOld.length; j++, l++) {
       if (downKeep[l]) {
         pNew[++k] = pOld[j];
