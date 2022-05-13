@@ -268,6 +268,7 @@ public class AllBranchVolume {
       // Remember the session control flags.
       this.returnAllPhases = returnAllPhases;
       this.returnBackBranches = returnBackBranches;
+      this.isTectonicSource = isTectonicSource;
 
       if (depth != lastComputedDepth) {
         // Set up the new source depth.

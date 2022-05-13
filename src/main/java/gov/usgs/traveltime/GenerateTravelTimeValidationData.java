@@ -18,7 +18,6 @@ public class GenerateTravelTimeValidationData {
 
   boolean returnAllPhases = true;
   boolean returnBackBranches = true;
-  boolean rstt = false;
   boolean tectonic = true;
 
   String modelPath = null;
@@ -41,8 +40,8 @@ public class GenerateTravelTimeValidationData {
   public void generate(String modelPath, String serializedPath) throws Exception {
 
     // create session
-    TTSessionLocal ttLocal =
-        new TTSessionLocal(readStats, readEllip, readTopo, modelPath, serializedPath);
+    TravelTimeSession ttLocal =
+        new TravelTimeSession(readStats, readEllip, readTopo, modelPath, serializedPath);
 
     // for each model
     for (int i = 0; i < modelList.length; i++) {
@@ -61,14 +60,14 @@ public class GenerateTravelTimeValidationData {
 
         // setup new session
         ttLocal.newSession(
-            earthModel, sourceDepth, phList, returnAllPhases, returnBackBranches, tectonic, rstt);
+            earthModel, sourceDepth, phList, returnAllPhases, returnBackBranches, tectonic);
 
         // for each distance
         JSONArray distanceArray = new JSONArray();
         for (int k = 0; k < distanceList.length; k++) {
           double distance = distanceList[k];
 
-          TTime ttList = ttLocal.getTT(elevation, distance);
+          TravelTime ttList = ttLocal.getTravelTimes(elevation, distance);
 
           JSONObject distanceObject = new JSONObject();
           distanceObject.put("Distance", distance);
@@ -76,23 +75,23 @@ public class GenerateTravelTimeValidationData {
           // for each phase
           JSONArray phaseArray = new JSONArray();
           for (int l = 0; l < ttList.getNumPhases(); l++) {
-            TTimeData phase = ttList.getPhase(l);
+            TravelTimeData phase = ttList.getPhase(l);
             JSONObject phaseObject = new JSONObject();
 
-            phaseObject.put("Phase", phase.phCode);
-            phaseObject.put("TravelTime", phase.tt);
-            phaseObject.put("DistanceDerivative", phase.dTdD);
-            phaseObject.put("DepthDerivative", phase.dTdZ);
-            phaseObject.put("RayDerivative", phase.dXdP);
-            phaseObject.put("StatisticalSpread", phase.spread);
-            phaseObject.put("Observability", phase.observ);
-            phaseObject.put("AssociationWindow", phase.window);
-            phaseObject.put("TeleseismicPhaseGroup", phase.phGroup);
-            phaseObject.put("AuxiliaryPhaseGroup", phase.auxGroup);
-            phaseObject.put("LocationUseFlag", phase.canUse);
-            phaseObject.put("AssociationWeightFlag", phase.dis);
-            phaseObject.put("DepthFlag", phase.isDepth);
-            phaseObject.put("RegionalFlag", phase.isRegional);
+            phaseObject.put("Phase", phase.getPhaseCode());
+            phaseObject.put("TravelTime", phase.getTravelTime());
+            phaseObject.put("DistanceDerivative", phase.getDistanceDerivitive());
+            phaseObject.put("DepthDerivative", phase.getDepthDerivitive());
+            phaseObject.put("RayDerivative", phase.getRayDerivative());
+            phaseObject.put("StatisticalSpread", phase.getStatisticalSpread());
+            phaseObject.put("Observability", phase.getObservability());
+            phaseObject.put("AssociationWindow", phase.getAssocWindow());
+            phaseObject.put("TeleseismicPhaseGroup", phase.getGroupPhaseCode());
+            phaseObject.put("AuxiliaryPhaseGroup", phase.getAuxiliaryGroupPhaseCode());
+            phaseObject.put("LocationUseFlag", phase.getLocationCanUse());
+            phaseObject.put("AssociationWeightFlag", phase.getAssocDownWeight());
+            phaseObject.put("DepthFlag", phase.getIsDepthSensitive());
+            phaseObject.put("RegionalFlag", phase.getIsRegional());
 
             // add the phase to the phase list
             phaseArray.add(phaseObject);

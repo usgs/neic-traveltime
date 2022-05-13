@@ -696,8 +696,7 @@ public class BranchDataReference implements Serializable {
         Math.toDegrees(distanceRange[1]));
 
     if (branchHasDiffraction)
-      System.out.format(
-          "        xDiff = %6.2f\n", Math.toDegrees(maxDiffractedDistance));
+      System.out.format("        xDiff = %6.2f\n", Math.toDegrees(maxDiffractedDistance));
 
     if (turningModelShellName != null) {
       System.out.format(
