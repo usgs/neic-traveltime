@@ -247,19 +247,19 @@ public class TTSessionLocal {
             System.exit(202);
           }
         }
-        allRef.dumpHead();
-        allRef.dumpMod('P', true);
-        allRef.dumpMod('S', true);
-        allRef.dumpBrn(true);
-        allRef.dumpBrn("pS", true);
-        allRef.dumpUp('P');
-        allRef.dumpUp('S');
+        // allRef.dumpHead();
+        // allRef.dumpMod('P', true);
+        // allRef.dumpMod('S', true);
+        // allRef.dumpBrn(true);
+        // allRef.dumpBrn("pS", true);
+        // allRef.dumpUp('P');
+        // allRef.dumpUp('S');
         modelData.put(earthModel, allRef);
       }
 
       // Set up the (depth dependent) volatile part.
       allBrn = new AllBrnVol(allRef);
-      allBrn.dumpHead();
+      // allBrn.dumpHead();
       //		allBrn.dumpBrn("PnPn", false, false, true);
     }
   }

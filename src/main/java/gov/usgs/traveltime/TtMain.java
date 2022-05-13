@@ -50,6 +50,9 @@ public class TtMain {
   /** Mode to run web service. */
   public static final String MODE_SERVICE = "service";
 
+  /** Mode to generate validation data. */
+  public static final String MODE_VALIDATE = "validate";
+
   /** Private logging object. */
   private static final Logger LOGGER = Logger.getLogger(TtMain.class.getName());
 
@@ -130,6 +133,15 @@ public class TtMain {
     if (MODE_SERVICE.equals(mode)) {
       gov.usgs.traveltimeservice.Application.main(args);
       // service runs in separate thread, just return from this method...
+      return;
+    }
+
+    if (MODE_VALIDATE.equals(mode)) {
+      GenerateTravelTimeValidationData generator = new GenerateTravelTimeValidationData();
+
+      generator.generate(modelPath, modelPath);
+
+      // done after generation
       return;
     }
 

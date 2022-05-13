@@ -129,7 +129,7 @@ public class TTService implements TravelTimeService {
           data.StatisticalSpread = phase.spread;
           data.Observability = phase.observ;
           data.TeleseismicPhaseGroup = phase.phGroup;
-          data.AuxiliaryPhaseGroup = phase.auxGroup;
+          data.AuxiliaryPhaseGroup = phase.phGroup;
           data.LocationUseFlag = phase.canUse;
           data.AssociationWeightFlag = phase.dis;
 
