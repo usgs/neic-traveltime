@@ -13,64 +13,79 @@ import java.util.TreeMap;
  * @author Ray Buland
  */
 public class TravelTimeSession {
-  String lastModel = "";
-  TreeMap<String, AllBranchReference> modelData;
-  MakeTables make;
-  TravelTimeStatus status;
-  AuxiliaryTTReference auxTT;
-  AllBranchVolume allBrn;
-  // Set up serialization.
-  String serName; // Serialized file name for this model
-  String[] fileNames; // Raw input file names for this model
+  /** A String containing the name of the last earth model used */
+  private String lastEarthModel = "";
+
+  /** A TreeMap of Strings and AllBranchReference objects containing the model data */
+  private TreeMap<String, AllBranchReference> modelDataList;
+
+  /** A MakeTables object containing the travel-time table generation driver */
+  private MakeTables tableGenerator;
+
+  /** A TravelTimeStatus object containing the model result */
+  private TravelTimeStatus modelStatus;
+
+  /** A AuxiliaryTTReference object holding the model independent travel time auxiliary data */
+  private AuxiliaryTTReference auxTTReference;
+
+  /** An AllBranchVolume object containing the branch travel time data */
+  private AllBranchVolume branchData;
+
+  /** A String containing the path and name of the model serialization file */
+  private String serializationFileName; // Serialized file name for this model
+
+  /** An array of Strings contaiing the model input file names */
+  private String[] modelFileList;
 
   /**
    * Get a list of available Earth models.
    *
-   * @return A list of available Earth model names
+   * @return An array of Strings containing the list of available Earth model names
    */
   public String[] getAvailableModels() {
     return TauUtilities.getAvailableModels();
   }
 
   /**
-   * Get a pointer to the auxiliary travel-time information.
+   * Get the model independent auxiliary data
    *
-   * @return Auxiliary travel-time data
+   * @return A AuxiliaryTTReference object holding the model independent auxiliary data
    */
-  public AuxiliaryTTReference getAuxTT() {
-    return auxTT;
+  public AuxiliaryTTReference getAuxTTData() {
+    return auxTTReference;
   }
 
   /**
-   * Initialize auxiliary data common to all models.
+   * TravelTimeSession Constructor, initializes auxiliary data common to all models.
    *
-   * @param readStats A boolean flag, if true, read the phase statistics
+   * @param readStatistics A boolean flag, if true, read the phase statistics
    * @param readEllipticity A boolean flag, if true, read the Ellipticity corrections
-   * @param readTopo A boolean flag, if true, read the topography file
-   * @param modelPath If not null, path to model files
-   * @param serializedPath If not null, path to serialized files
+   * @param readTopography A boolean flag, if true, read the topography file
+   * @param modelPath A String, if not null, path to model files
+   * @param serializedPath A String, if not null, path to serialized files
    * @throws IOException On any read error
    * @throws ClassNotFoundException In input serialization is hosed
    */
   public TravelTimeSession(
-      boolean readStats,
+      boolean readStatistics,
       boolean readEllipticity,
-      boolean readTopo,
+      boolean readTopography,
       String modelPath,
       String serializedPath)
       throws IOException, ClassNotFoundException {
 
     // Read in data common to all models.
-    auxTT =
-        new AuxiliaryTTReference(readStats, readEllipticity, readTopo, modelPath, serializedPath);
+    auxTTReference =
+        new AuxiliaryTTReference(
+            readStatistics, readEllipticity, readTopography, modelPath, serializedPath);
   }
 
   /**
    * Function to set up a "simple" travel-time session.
    *
    * @param earthModelName A String containing the earth model name
-   * @param sourceDepth Source depth in kilometers
-   * @param phases Array of phase use commands
+   * @param sourceDepth A double containing the desired source depth in kilometers
+   * @param phasesToUse An array of Strings containing the list desired phases to use
    * @param returnAllPhases A boolean flag, if true, provide all phases
    * @param returnBackBranches A boolean flag, if true, return all back branches
    * @param tectonic A boolean flag, if true, map Pb and Sb onto Pg and Sg
@@ -80,24 +95,24 @@ public class TravelTimeSession {
   public void newSession(
       String earthModelName,
       double sourceDepth,
-      String[] phases,
+      String[] phasesToUse,
       boolean returnAllPhases,
       boolean returnBackBranches,
       boolean tectonic)
       throws BadDepthException, TauIntegralException {
 
     setModel(earthModelName.toLowerCase());
-    allBrn.newSession(sourceDepth, phases, returnAllPhases, returnBackBranches, tectonic);
+    branchData.newSession(sourceDepth, phasesToUse, returnAllPhases, returnBackBranches, tectonic);
   }
 
   /**
    * Function to set up a "complex" travel-time session.
    *
    * @param earthModelName A String containing the earth model name
-   * @param sourceDepth Source depth in kilometers
-   * @param phases Array of phase use commands
-   * @param srcLat Source geographical latitude in degrees
-   * @param srcLong Source longitude in degrees
+   * @param sourceDepth A double containing the desired source depth in kilometers
+   * @param phasesToUseAn array of Strings containing the list desired phases to use
+   * @param sourceLatitude A double containing the source geographical latitude in degrees
+   * @param sourceLongitude A double containing the source longitude in degrees
    * @param returnAllPhases A boolean flag, if true, provide all phases
    * @param returnBackBranches A boolean flag, if true, return all back branches
    * @param tectonic A boolean flag, if true, map Pb and Sb onto Pg and Sg
@@ -107,17 +122,23 @@ public class TravelTimeSession {
   public void newSession(
       String earthModelName,
       double sourceDepth,
-      String[] phases,
-      double srcLat,
-      double srcLong,
+      String[] phasesToUse,
+      double sourceLatitude,
+      double sourceLongitude,
       boolean returnAllPhases,
       boolean returnBackBranches,
       boolean tectonic)
       throws BadDepthException, TauIntegralException {
 
     setModel(earthModelName.toLowerCase());
-    allBrn.newSession(
-        srcLat, srcLong, sourceDepth, phases, returnAllPhases, returnBackBranches, tectonic);
+    branchData.newSession(
+        sourceLatitude,
+        sourceLongitude,
+        sourceDepth,
+        phasesToUse,
+        returnAllPhases,
+        returnBackBranches,
+        tectonic);
   }
 
   /**
@@ -128,7 +149,7 @@ public class TravelTimeSession {
    * @return A TravelTime object containing the list of travel times
    */
   public TravelTime getTravelTimes(double recieverElevation, double recieverDistance) {
-    return allBrn.getTravelTime(recieverElevation, recieverDistance);
+    return branchData.getTravelTime(recieverElevation, recieverDistance);
   }
 
   /**
@@ -139,7 +160,7 @@ public class TravelTimeSession {
    * @param recieverLongitude A double containing the reciever (station) longitude in degrees
    * @param recieverElevation A double containing the reciever (station) elevation in kilometers
    * @param recieverDistance A double containing the source receiver distance desired in degrees
-   * @param recieverAzimuth Receiver azimuth at the source in degrees
+   * @param recieverAzimuth A double containing the receiver azimuth at the source in degrees
    * @return A TravelTime object containing the list of travel times
    */
   public TravelTime getTravelTimes(
@@ -148,7 +169,7 @@ public class TravelTimeSession {
       double recieverElevation,
       double recieverDistance,
       double recieverAzimuth) {
-    return allBrn.getTravelTime(
+    return branchData.getTravelTime(
         recieverLatitude, recieverLongitude, recieverElevation, recieverDistance, recieverAzimuth);
   }
 
@@ -157,7 +178,7 @@ public class TravelTimeSession {
    *
    * @param earthModelName A String containing the earth model name
    * @param sourceDepth A double containing the source depth in kilometers
-   * @param phases An array of strings containing the phases to use
+   * @param phasesToUse An array of strings containing the phases to use
    * @param returnAllPhases A boolean flag, if true, provide all phases
    * @param returnBackBranches A boolean flag, if true, return all back branches
    * @param tectonic A boolean flag, if true, map Pb and Sb onto Pg and Sg
@@ -171,7 +192,7 @@ public class TravelTimeSession {
   public TravelTimePlot getPlotTravelTimes(
       String earthModelName,
       double sourceDepth,
-      String[] phases,
+      String[] phasesToUse,
       boolean returnAllPhases,
       boolean returnBackBranches,
       boolean tectonic,
@@ -181,10 +202,10 @@ public class TravelTimeSession {
       throws BadDepthException, TauIntegralException {
     setModel(earthModelName.toLowerCase());
 
-    PlotData plotData = new PlotData(allBrn);
+    PlotData plotData = new PlotData(branchData);
     plotData.makePlot(
         sourceDepth,
-        phases,
+        phasesToUse,
         returnAllPhases,
         returnBackBranches,
         tectonic,
@@ -195,23 +216,24 @@ public class TravelTimeSession {
   }
 
   /**
-   * Function to set up for a new Earth model.
+   * Function to set up the session for a new Earth model.
    *
    * @param earthModelName A String containing the earth model name
    */
   private void setModel(String earthModelName) {
-    if (!earthModelName.equals(lastModel)) {
-      lastModel = earthModelName;
+    if (!earthModelName.equals(lastEarthModel)) {
+      lastEarthModel = earthModelName;
+
       // Initialize model storage if necessary.
-      if (modelData == null) {
-        modelData = new TreeMap<String, AllBranchReference>();
+      if (modelDataList == null) {
+        modelDataList = new TreeMap<String, AllBranchReference>();
       }
 
       // See if we know this model.
-      AllBranchReference allRef = modelData.get(earthModelName);
+      AllBranchReference branchDataReference = modelDataList.get(earthModelName);
 
       // If not, set it up.
-      if (allRef == null) {
+      if (branchDataReference == null) {
         if (modelChanged(earthModelName)) {
           if (TauUtilities.useFortranFiles) {
             ReadTau readTau = null;
@@ -219,8 +241,8 @@ public class TravelTimeSession {
             // Read the tables from the Fortran files.
             try {
               readTau = new ReadTau(earthModelName);
-              readTau.readHeader(fileNames[0]);
-              readTau.readTable(fileNames[1]);
+              readTau.readHeader(modelFileList[0]);
+              readTau.readTable(modelFileList[1]);
             } catch (IOException e) {
               System.out.println("Unable to read Earth model " + earthModelName + ".");
               System.exit(202);
@@ -228,7 +250,8 @@ public class TravelTimeSession {
 
             // Reorganize the reference data.
             try {
-              allRef = new AllBranchReference(serName, readTau, auxTT);
+              branchDataReference =
+                  new AllBranchReference(serializationFileName, readTau, auxTTReference);
             } catch (IOException e) {
               System.out.println(
                   "Unable to write Earth model " + earthModelName + " serialization file.");
@@ -236,20 +259,21 @@ public class TravelTimeSession {
           } else {
             // Generate the tables.
             TablesUtil.deBugLevel = 1;
-            make = new MakeTables(earthModelName);
+            tableGenerator = new MakeTables(earthModelName);
 
             try {
-              status = make.buildModel(fileNames[0], fileNames[1]);
+              modelStatus = tableGenerator.buildModel(modelFileList[0], modelFileList[1]);
             } catch (Exception e) {
               System.out.println(
-                  "Unable to generate Earth model " + earthModelName + " (" + status + ").");
+                  "Unable to generate Earth model " + earthModelName + " (" + modelStatus + ").");
               e.printStackTrace();
               System.exit(202);
             }
 
             // Build the branch reference classes.
             try {
-              allRef = make.fillInBranchReferenceData(serName, auxTT);
+              branchDataReference =
+                  tableGenerator.fillInBranchReferenceData(serializationFileName, auxTTReference);
             } catch (IOException e) {
               System.out.println(
                   "Unable to write Earth model " + earthModelName + " serialization file.");
@@ -258,7 +282,8 @@ public class TravelTimeSession {
         } else {
           // If the model input hasn't changed, just serialize the model in.
           try {
-            allRef = new AllBranchReference(serName, earthModelName, auxTT);
+            branchDataReference =
+                new AllBranchReference(serializationFileName, earthModelName, auxTTReference);
           } catch (ClassNotFoundException | IOException e) {
             System.out.println(
                 "Unable to read Earth model " + earthModelName + " serialization file.");
@@ -266,20 +291,20 @@ public class TravelTimeSession {
           }
         }
 
-        allRef.dumpHeaderData();
-        allRef.dumpModelParams('P', true);
-        allRef.dumpModelParams('S', true);
-        allRef.dumpBranchData(true);
-        allRef.dumpBranchData("pS", true);
-        allRef.dumpUpGoingData('P');
-        allRef.dumpUpGoingData('S');
-        modelData.put(earthModelName, allRef);
+        branchDataReference.dumpHeaderData();
+        branchDataReference.dumpModelParams('P', true);
+        branchDataReference.dumpModelParams('S', true);
+        branchDataReference.dumpBranchData(true);
+        branchDataReference.dumpBranchData("pS", true);
+        branchDataReference.dumpUpGoingData('P');
+        branchDataReference.dumpUpGoingData('S');
+        modelDataList.put(earthModelName, branchDataReference);
       }
 
       // Set up the (depth dependent) volatile part.
-      allBrn = new AllBranchVolume(allRef);
-      allBrn.dumpHeaderData();
-      // allBrn.dumpBranchInformation("PnPn", false, false, true);
+      branchData = new AllBranchVolume(branchDataReference);
+      branchData.dumpHeaderData();
+      // branchData.dumpBranchInformation("PnPn", false, false, true);
     }
   }
 
@@ -291,36 +316,36 @@ public class TravelTimeSession {
    */
   private boolean modelChanged(String earthModelName) {
     // We need two files in either case.
-    fileNames = new String[2];
+    modelFileList = new String[2];
 
     if (TauUtilities.useFortranFiles) {
       // Names for the Fortran files.
-      serName = TauUtilities.getSerializedPath(earthModelName + "_for.ser");
-      fileNames[0] = TauUtilities.getModelPath(earthModelName + ".hed");
-      fileNames[1] = TauUtilities.getModelPath(earthModelName + ".tbl");
+      serializationFileName = TauUtilities.getSerializedPath(earthModelName + "_for.ser");
+      modelFileList[0] = TauUtilities.getModelPath(earthModelName + ".hed");
+      modelFileList[1] = TauUtilities.getModelPath(earthModelName + ".tbl");
     } else {
       // Names for generating the model.
-      serName = TauUtilities.getSerializedPath(earthModelName + "_gen.ser");
-      fileNames[0] = TauUtilities.getModelPath("m" + earthModelName + ".mod");
-      fileNames[1] = TauUtilities.getModelPath("phases.txt");
+      serializationFileName = TauUtilities.getSerializedPath(earthModelName + "_gen.ser");
+      modelFileList[0] = TauUtilities.getModelPath("m" + earthModelName + ".mod");
+      modelFileList[1] = TauUtilities.getModelPath("phases.txt");
     }
 
-    return FileChanged.isChanged(serName, fileNames);
+    return FileChanged.isChanged(serializationFileName, modelFileList);
   }
 
   /** Function to print phase groups. */
   public void printGroups() {
-    auxTT.printGroups();
+    auxTTReference.printGroups();
   }
 
   /** Function to print phase statistics. */
   public void printPhaseStatistics() {
-    auxTT.printPhaseStatistics();
+    auxTTReference.printPhaseStatistics();
   }
 
   /** Function to print phase flags. */
   public void printFlags() {
-    auxTT.printPhaseFlags();
+    auxTTReference.printPhaseFlags();
   }
 
   /**
@@ -329,11 +354,11 @@ public class TravelTimeSession {
    * @param returnAllPhases A boolean flag, if false, only print "useful" phases.
    */
   public void logTable(boolean returnAllPhases) {
-    allBrn.logTable(returnAllPhases);
+    branchData.logTable(returnAllPhases);
   }
 
   public int getBranchCount(boolean returnAllPhases) {
-    return (allBrn.getBranchCount(returnAllPhases));
+    return (branchData.getBranchCount(returnAllPhases));
   }
 
   /**
@@ -346,7 +371,7 @@ public class TravelTimeSession {
    */
   public void printBranches(
       boolean full, boolean all, boolean scientificNotation, boolean returnAllPhases) {
-    allBrn.dumpBranchInformation(full, all, scientificNotation, returnAllPhases);
+    branchData.dumpBranchInformation(full, all, scientificNotation, returnAllPhases);
   }
 
   /**
@@ -359,7 +384,7 @@ public class TravelTimeSession {
    */
   public void printCaustics(
       boolean full, boolean all, boolean scientificNotation, boolean returnAllPhases) {
-    allBrn.dumpCaustics(full, all, scientificNotation, returnAllPhases);
+    branchData.dumpCaustics(full, all, scientificNotation, returnAllPhases);
   }
 
   /**
@@ -368,6 +393,6 @@ public class TravelTimeSession {
    * @param full A boolean flag, if true, print the detailed branch specification as well
    */
   public void printRefBranches(boolean full) {
-    allBrn.getAllBranchReference().dumpBranchData(full);
+    branchData.getAllBranchReference().dumpBranchData(full);
   }
 }

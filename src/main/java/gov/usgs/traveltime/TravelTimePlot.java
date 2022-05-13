@@ -25,7 +25,7 @@ public class TravelTimePlot {
   private double maxObservability;
 
   /** A TreeMap of Strings and TravelTimePlotBranch objects containing the branches */
-  TreeMap<String, TravelTimePlotBranch> branches;
+  private TreeMap<String, TravelTimePlotBranch> branches;
 
   /**
    * Get the maximum travel time for all branches

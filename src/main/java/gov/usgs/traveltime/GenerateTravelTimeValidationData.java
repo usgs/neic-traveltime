@@ -6,42 +6,65 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 /**
- * Sample driver for the travel-time package.
+ * The GenerateTravelTimeValidationData class is a utility class that generates a json file of
+ * validation data for use in regression unit tests.
  *
  * @author Ray Buland
  */
 public class GenerateTravelTimeValidationData {
 
-  boolean readStats = true;
-  boolean readEllip = true;
-  boolean readTopo = true;
+  /** A boolean flag, if true, read the phase statistics */
+  private boolean readStatistics = true;
 
-  boolean returnAllPhases = true;
-  boolean returnBackBranches = true;
-  boolean tectonic = true;
+  /** A boolean flag, if true, read the Ellipticity corrections */
+  private boolean readEllipiticity = true;
 
-  String modelPath = null;
-  String serializedPath = null;
-  String[] phList = null;
+  /** A boolean flag, if true, read the topography file */
+  private boolean readTopography = true;
 
-  String[] modelList = {"ak135", "cia", "cus", "ogs", "wus"};
-  double[] depthList = {1d, 10d, 35d, 100d, 200d, 300d, 500d, 600d, 750d};
-  double[] distanceList = {
+  /** A boolean flag, if false, only provide "useful" crustal phases */
+  private boolean returnAllPhases = true;
+
+  /** A boolean flag, if false, suppress back branches */
+  private boolean returnBackBranches = true;
+
+  /** A boolean flag, if true, map Pb and Sb onto Pg and Sg */
+  private boolean isTectonicSource = true;
+
+  /** A String, if not null, contains the path to model files */
+  private String modelPath = null;
+
+  /** A String, if not null, contains the path to serialized files */
+  private String serializedPath = null;
+
+  /** An array of strings containing the phase use commands */
+  private String[] phasesToUse = null;
+
+  /** An array of Strings containing the list of models to generate */
+  private String[] modelList = {"ak135", "cia", "cus", "ogs", "wus"};
+
+  /** An array of double values to holding the depths to generate */
+  private double[] depthList = {1d, 10d, 35d, 100d, 200d, 300d, 500d, 600d, 750d};
+
+  /** An array of double values to holding the distances to generate */
+  private double[] distanceList = {
     1d, 2d, 3d, 4d, 5d, 10d, 20d, 30d, 40d, 50d, 60d, 75d, 90d, 110d, 130d, 150d, 180d
   };
-  double elevation = 0.0d;
+
+  /** A double containing the elevation to generate */
+  private double elevation = 0.0d;
 
   /**
-   * main function to generate travel time validation data.
+   * Function to generate travel time validation data.
    *
    * @param args Command line arguments (not used)
    * @throws Exception If the travel-time setup fails
    */
   public void generate(String modelPath, String serializedPath) throws Exception {
-
     // create session
     TravelTimeSession ttLocal =
-        new TravelTimeSession(readStats, readEllip, readTopo, modelPath, serializedPath);
+        new TravelTimeSession(
+            readStatistics, readEllipiticity, readTopography, modelPath, serializedPath);
 
     // for each model
     for (int i = 0; i < modelList.length; i++) {
@@ -60,7 +83,12 @@ public class GenerateTravelTimeValidationData {
 
         // setup new session
         ttLocal.newSession(
-            earthModel, sourceDepth, phList, returnAllPhases, returnBackBranches, tectonic);
+            earthModel,
+            sourceDepth,
+            phasesToUse,
+            returnAllPhases,
+            returnBackBranches,
+            isTectonicSource);
 
         // for each distance
         JSONArray distanceArray = new JSONArray();

@@ -239,7 +239,7 @@ public class TravelTimeService implements gov.usgs.processingformats.TravelTimeS
               deltaStep);
 
       // add traveltimes to response
-      NavigableMap<String, TravelTimePlotBranch> map = plot.branches.headMap("~", true);
+      NavigableMap<String, TravelTimePlotBranch> map = plot.getBranches().headMap("~", true);
       for (@SuppressWarnings("rawtypes") Map.Entry entry : map.entrySet()) {
         TravelTimePlotBranch branch = (TravelTimePlotBranch) entry.getValue();
 

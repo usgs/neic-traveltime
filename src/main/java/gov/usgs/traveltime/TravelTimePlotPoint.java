@@ -19,7 +19,7 @@ public class TravelTimePlotPoint implements Comparable<TravelTimePlotPoint> {
   private double observability;
 
   /** A double holding the ray parameter in seconds/degree */
-  double rayParameter;
+  private double rayParameter;
 
   /**
    * Get the distance.
