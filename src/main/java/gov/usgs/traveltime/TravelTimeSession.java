@@ -1,7 +1,6 @@
 package gov.usgs.traveltime;
 
 import gov.usgs.traveltime.tables.MakeTables;
-import gov.usgs.traveltime.tables.TablesUtil;
 import gov.usgs.traveltime.tables.TauIntegralException;
 import java.io.IOException;
 import java.util.TreeMap;
@@ -258,7 +257,7 @@ public class TravelTimeSession {
             }
           } else {
             // Generate the tables.
-            TablesUtil.deBugLevel = 1;
+            // TablesUtil.deBugLevel = 1;
             tableGenerator = new MakeTables(earthModelName);
 
             try {
@@ -291,19 +290,19 @@ public class TravelTimeSession {
           }
         }
 
-        branchDataReference.dumpHeaderData();
-        branchDataReference.dumpModelParams('P', true);
-        branchDataReference.dumpModelParams('S', true);
-        branchDataReference.dumpBranchData(true);
-        branchDataReference.dumpBranchData("pS", true);
-        branchDataReference.dumpUpGoingData('P');
-        branchDataReference.dumpUpGoingData('S');
+        // branchDataReference.dumpHeaderData();
+        // branchDataReference.dumpModelParams('P', true);
+        // branchDataReference.dumpModelParams('S', true);
+        // branchDataReference.dumpBranchData(true);
+        // branchDataReference.dumpBranchData("pS", true);
+        // branchDataReference.dumpUpGoingData('P');
+        // branchDataReference.dumpUpGoingData('S');
         modelDataList.put(earthModelName, branchDataReference);
       }
 
       // Set up the (depth dependent) volatile part.
       branchData = new AllBranchVolume(branchDataReference);
-      branchData.dumpHeaderData();
+      // branchData.dumpHeaderData();
       // branchData.dumpBranchInformation("PnPn", false, false, true);
     }
   }
