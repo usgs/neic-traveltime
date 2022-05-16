@@ -3,48 +3,60 @@ package gov.usgs.traveltime.tables;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 
 /**
- * Univariate function returning the non-dimensional derivative of range (ray travel distance) as a
- * function of ray parameter. This is intended to be used with the Apache Commons math library suite
- * of root finders
+ * The FindCaustic class is an univariate function class returning the non-dimensional derivative of
+ * range (ray travel distance) as a function of ray parameter. This is intended to be used with the
+ * Apache Commons math library suite of root finders
  *
  * @author Ray Buland
  */
 public class FindCaustic implements UnivariateFunction {
-  char type;
-  int limit;
-  TauInt tauInt;
+  /** A char containing the wave type ('P' = compressional, 'S' = shear) */
+  private char waveType;
+
+  /** An integer containing the index of the deepest model level to integrate to */
+  private int modelLimitIndex;
+
+  /** A TauInt object containing the Tau-X integration logic */
+  private TauIntegrate tauInt;
 
   /**
-   * Remember the tau-x integration routine.
+   * FindCaustic constructor, stores the tau-x integration routine.
    *
-   * @param tauInt Tau-X integration logic
+   * @param tauInt A TauInt object containing the Tau-X integration logic
    */
-  public FindCaustic(TauInt tauInt) {
+  public FindCaustic(TauIntegrate tauInt) {
     this.tauInt = tauInt;
   }
 
   /**
-   * Set up the root finding environment.
+   * Function to set up the root finding environment.
    *
-   * @param type Wave type (P = P-waves, S = S-waves)
-   * @param limit Index of the deepest model level to integrate to
+   * @param waveType A char containing the wave type ('P' = compressional, 'S' = shear)
+   * @param modelLimitIndex An integer containing the index of the deepest model level to integrate
+   *     to
    */
-  public void setUp(char type, int limit) {
-    this.type = type;
-    this.limit = limit;
+  public void setUp(char waveType, int modelLimitIndex) {
+    this.waveType = waveType;
+    this.modelLimitIndex = modelLimitIndex;
   }
 
+  /**
+   * Function to calculate the Normalized integrated tau.
+   *
+   * @param rayParameter A double containing the normalized ray parameter
+   * @return A double containing the normalized integrated tau
+   */
   @Override
-  public double value(double p) {
-    double dXdP;
+  public double value(double rayParameter) {
+    double normIntTau = tauInt.integrateTauDist(waveType, rayParameter, modelLimitIndex);
 
-    dXdP = tauInt.intDxDp(type, p, limit);
-    // dXdp blows up at the top of shells.  Back off until we get
+    // normIntTau blows up at the top of shells.  Back off until we get
     // a finite value.
-    while (Double.isNaN(dXdP)) {
-      p -= TablesUtil.SLOWOFF;
-      dXdP = tauInt.intDxDp(type, p, limit);
+    while (Double.isNaN(normIntTau)) {
+      rayParameter -= TablesUtil.SLOWOFF;
+      normIntTau = tauInt.integrateTauDist(waveType, rayParameter, modelLimitIndex);
     }
-    return dXdP;
+
+    return normIntTau;
   }
 }

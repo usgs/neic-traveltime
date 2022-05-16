@@ -1,52 +1,69 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.TtStatus;
+import gov.usgs.traveltime.TravelTimeStatus;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 
 /**
- * Univariate function returning the difference between a non- dimensional range (ray travel
- * distance) and a target range as a function of ray parameter. This is intended to be used with the
- * Apache Commons math library suite of root finders
+ * The FindRange class is an univariate function returning the difference between a non-dimensional
+ * range (ray travel distance) and a target range as a function of ray parameter. This is intended
+ * to be used with the Apache Commons math library suite of root finders
  *
  * @author Ray Buland
  */
 public class FindRange implements UnivariateFunction {
-  char type;
-  int limit;
-  double xTarget;
-  TauInt tauInt;
+  /** A char containing the wave type ('P' = compressional, 'S' = shear) */
+  private char waveType;
+
+  /** An integer containing the index of the deepest model level to integrate to */
+  private int modelLimitIndex;
+
+  /** A double containing the non-dimensional target range (ray travel distance) */
+  private double targetRange;
+
+  /** A TauInt object containing the Tau-X integration logic */
+  private TauIntegrate tauInt;
 
   /**
-   * Remember the tau-x integration routine.
+   * FindRange constructor, stores the tau-x integration routine.
    *
-   * @param tauInt Tau-X integration logic
+   * @param tauInt A TauInt object containing the Tau-X integration logic
    */
-  public FindRange(TauInt tauInt) {
+  public FindRange(TauIntegrate tauInt) {
     this.tauInt = tauInt;
   }
 
   /**
-   * Set up the root finding environment.
+   * Function to set up the root finding environment.
    *
-   * @param type Wave type (P = P-waves, S = S-waves)
-   * @param xTarget Non-dimensional target range (ray travel distance)
-   * @param limit Index of the deepest model level to integrate to
+   * @param waveType A char containing the wave type ('P' = compressional, 'S' = shear)
+   * @param targetRange Non-dimensional target range (ray travel distance)
+   * @param modelLimitIndex An integer containing the index of the deepest model level to integrate
+   *     to
    */
-  public void setUp(char type, double xTarget, int limit) {
-    this.type = type;
-    this.xTarget = xTarget;
-    this.limit = limit;
+  public void setUp(char waveType, double targetRange, int modelLimitIndex) {
+    this.waveType = waveType;
+    this.targetRange = targetRange;
+    this.modelLimitIndex = modelLimitIndex;
   }
 
+  /**
+   * Function to calculate difference between a non-dimensional range (ray travel distance) and a
+   * target range as a function of ray parameter.
+   *
+   * @param rayParameter A double containing the normalized ray parameter
+   * @return A double containing the difference between a non-dimensional range (ray travel
+   *     distance) and a target range as a function of ray parameter.
+   */
   @Override
-  public double value(double p) {
+  public double value(double rayParameter) {
     try {
-      tauInt.intX(type, p, limit);
+      tauInt.integrateDist(waveType, rayParameter, modelLimitIndex);
     } catch (Exception e) {
       System.out.println("Bad tau integration interval!");
       e.printStackTrace();
-      System.exit(TtStatus.BAD_TAU_INTERVAL.status());
+      System.exit(TravelTimeStatus.BAD_TAU_INTERVAL.getStatus());
     }
-    return tauInt.getXSum() - xTarget;
+
+    return tauInt.getSummaryIntDist() - targetRange;
   }
 }

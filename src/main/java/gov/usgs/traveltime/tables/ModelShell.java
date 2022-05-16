@@ -3,117 +3,287 @@ package gov.usgs.traveltime.tables;
 import java.util.ArrayList;
 
 /**
- * Keep track of one range between model discontinuities (i.e., one shell of the Earth model).
+ * The ModelShell class is used to keep track of one range between model discontinuities (i.e., one
+ * shell of the Earth model).
  *
  * @author Ray Buland
  */
 public class ModelShell {
-  String name; // Shell name (typical Earth model nomenclature)
-  String pCode; // Temporary P-wave phase code
-  String sCode; // Temporary S-wave phase code
-  boolean isDisc; // True if this is a discontinuity
-  boolean hasLVZ; // True if this shell contains a high slowness zone
-  int iBot; // Index of the deepest sample in this region
-  int iTop; // Index of the shallowest sample in this region
-  double rBot; // Radius of the deepest sample in this region in kilometers
-  double rTop; // Radius of the shallowest sample in this region in kilometers
-  double delX; // Range increment target for this layer in kilometers
+  /** A string containing the model shell name (typical Earth model nomenclature) */
+  private String name;
+
+  /** A string containing the temporary P-wave phase code */
+  private String tempPCode;
+
+  /** A string containing the temporary S-wave phase code */
+  private String tempSCode; // Temporary S-wave phase code
+
+  /** A boolean flag indicating this shell is a discontinuity */
+  private boolean isDiscontinuity; // True if this is a discontinuity
+
+  /** A boolean flag indicating if this shell contains a high slowness zone */
+  boolean hasLowVelocityZone;
+
+  /** An integer containing the deepest sample in this shell */
+  private int bottomSampleIndex;
+
+  /** An integer containing the shallowest sample in this shell */
+  private int topSampleIndex;
+
+  /** A double containing the radius in kilometers of the deepest sample in this shell */
+  private double bottomSampleRadius;
+
+  /** A double containing the radius in kilometers of the shallowest sample in this shell */
+  private double topSampleRadius;
+
+  /** A double containing the range increment target for this shell in kilometers */
+  private double rangeIncrementTarget;
 
   /**
-   * Initialize the shell with the parameters at the deep end.
+   * Function to return the name of this model shell.
    *
-   * @param index Model sample index
-   * @param r Model sample radius in kilometers
+   * @return A String containing the name of this model shell.
    */
-  public ModelShell(int index, double r) {
-    isDisc = false;
-    hasLVZ = false;
-    iBot = index;
-    rBot = r;
+  public String getName() {
+    return name;
+  }
+
+  /**
+   * Function to return the temporary P-wave phase code
+   *
+   * @return A String containing the temporary P-wave phase code
+   */
+  public String getTempPCode() {
+    return tempPCode;
+  }
+
+  /**
+   * Function to return the temporary S-wave phase code
+   *
+   * @return A String containing the temporary S-wave phase code
+   */
+  public String getTempSCode() {
+    return tempSCode;
+  }
+
+  /**
+   * Function to get the temporary phase code associated with this shell.
+   *
+   * @param typeA char containing the desired wave type (P = compressional, S = shear)
+   * @return A string containing the temporary phase code
+   */
+  public String getTempCode(char type) {
+    if (type == 'P') {
+      return tempPCode;
+    } else {
+      return tempSCode;
+    }
+  }
+
+  /**
+   * Function to return whether this shell is a discontinuity
+   *
+   * @return A boolean flag, true indicating whether this shell is a discontinuity
+   */
+  public boolean getIsDiscontinuity() {
+    return isDiscontinuity;
+  }
+
+  /**
+   * Function to return whether this shell contains a high slowness zone
+   *
+   * @return A boolean flag, true if this shell contains a high slowness zone
+   */
+  public boolean getHasLowVelocityZone() {
+    return hasLowVelocityZone;
+  }
+
+  /**
+   * Function to return the index of the bottom (deepest) sample in this shell
+   *
+   * @return An integer containing the index of the bottom (deepest) sample in this shell
+   */
+  public int getBottomSampleIndex() {
+    return bottomSampleIndex;
+  }
+
+  /**
+   * Function to return the index of the top (shallowest) sample in this shell
+   *
+   * @return An integer containing the index of the top (shallowest) sample in this shell
+   */
+  public int getTopSampleIndex() {
+    return topSampleIndex;
+  }
+
+  /**
+   * Function to set the index of the top (shallowest) sample in this shell
+   *
+   * @param topSampleIndex An integer containing the index of the top (shallowest) sample in this
+   *     shell
+   */
+  public void setTopSampleIndex(int topSampleIndex) {
+    this.topSampleIndex = topSampleIndex;
+  }
+
+  /**
+   * Function to return the radius in kilometers of the bottom (deepest) sample in this shell
+   *
+   * @return A double containing the adius in kilometers of the bottom (deepest) sample in this
+   *     shell
+   */
+  public double getBottomSampleRadius() {
+    return bottomSampleRadius;
+  }
+
+  /**
+   * Function to return the radius in kilometers of the top (shallowest) sample in this shell
+   *
+   * @return A double containing the radius in kilometers of the top (shallowest) sample in this
+   *     shell
+   */
+  public double getTopSampleRadius() {
+    return topSampleRadius;
+  }
+
+  /**
+   * Function to set the radius in kilometers of the top (shallowest) sample in this shell
+   *
+   * @param topSampleRadius A double containing the radius in kilometers of the top (shallowest)
+   *     sample in this shell
+   */
+  public void setTopSampleRadius(double topSampleRadius) {
+    this.topSampleRadius = topSampleRadius;
+  }
+
+  /**
+   * Function to return the range increment target in kilometers for this shell
+   *
+   * @return A double containing the range increment target in kilometers for this shell
+   */
+  public double getRangeIncrementTarget() {
+    return rangeIncrementTarget;
+  }
+
+  /**
+   * Function to set the range increment target in kilometers for this shell
+   *
+   * @param rangeIncrementTarget A double containing the range increment target in kilometers for
+   *     this shell
+   */
+  public void setRangeIncrementTarget(double rangeIncrementTarget) {
+    this.rangeIncrementTarget = rangeIncrementTarget;
+  }
+
+  /**
+   * Function to set the flag saying this shell has an embedded high slowness zone.
+   *
+   * @param hasLowVelocityZone A boolean flag indicating that this shell has an embedded high
+   *     slowness zone.
+   */
+  public void setHasLowVelocityZone(boolean hasLowVelocityZone) {
+    this.hasLowVelocityZone = hasLowVelocityZone;
+  }
+
+  /**
+   * Function to initialize the shell with the parameters at the deep end.
+   *
+   * @param index An integer containing the bottom (deepest) model sample index
+   * @param radius A double containing the bottom (deepest) model sample radius in kilometers
+   */
+  public ModelShell(int index, double radius) {
+    isDiscontinuity = false;
+    hasLowVelocityZone = false;
+    bottomSampleIndex = index;
+    bottomSampleRadius = radius;
     name = null;
-    pCode = null;
-    sCode = null;
+    tempPCode = null;
+    tempSCode = null;
   }
 
   /**
-   * Create a discontinuity.
+   * Function to create a discontinuity shell.
    *
-   * @param iBot Model sample index for the bottom
-   * @param iTop Model sample index for the top
-   * @param r Model sample radius in kilometers
+   * @param bottomSampleIndex An integer containing the bottom (deepest) model sample index
+   * @param topSampleIndex An integer containing the top (shallowest) model sample index
+   * @param radius A double containing the model sample radius (deepest and shallowest) in
+   *     kilometers
    */
-  public ModelShell(int iBot, int iTop, double r) {
-    isDisc = true;
-    hasLVZ = false;
-    this.iBot = iBot;
-    this.iTop = iTop;
-    rBot = r;
-    rTop = r;
+  public ModelShell(int bottomSampleIndex, int topSampleIndex, double radius) {
+    isDiscontinuity = true;
+    hasLowVelocityZone = false;
+    this.bottomSampleIndex = bottomSampleIndex;
+    this.topSampleIndex = topSampleIndex;
+    bottomSampleRadius = radius;
+    topSampleRadius = radius;
     name = null;
-    pCode = null;
-    sCode = null;
+    tempPCode = null;
+    tempSCode = null;
   }
 
   /**
-   * Initialize the shell by copying from another shell.
+   * Function to initialize the shell by copying from another shell.
    *
-   * @param shell Reference shell
-   * @param index Sample index for the bottom of the model shell
+   * @param shell A ModelShell object containing the reference shell to copy from
+   * @param bottomSampleIndex An integer containing the bottom (deepest) model sample index
    */
-  public ModelShell(ModelShell shell, int index) {
-    iBot = index;
-    isDisc = shell.isDisc;
-    hasLVZ = shell.hasLVZ;
-    rBot = shell.rBot;
-    delX = shell.delX;
-    name = shell.name;
-    pCode = shell.pCode;
-    sCode = shell.sCode;
+  public ModelShell(ModelShell shell, int bottomSampleIndex) {
+    this.bottomSampleIndex = bottomSampleIndex;
+    isDiscontinuity = shell.getIsDiscontinuity();
+    hasLowVelocityZone = shell.getHasLowVelocityZone();
+    bottomSampleRadius = shell.getBottomSampleRadius();
+    rangeIncrementTarget = shell.getRangeIncrementTarget();
+    name = shell.getName();
+    tempPCode = shell.getTempPCode();
+    tempSCode = shell.getTempSCode();
   }
 
   /**
-   * Add the parameters at the shallow end of the shell.
+   * Function to add the parameters at the top (shallow) end of the shell.
    *
-   * @param index Model sample index
-   * @param r Model sample radius in kilometers
+   * @param topSampleIndex An integer containing the top (shallowest) model sample index
+   * @param topSampleRadius A double containing the top model sample radius (shallowest) in
+   *     kilometers
    */
-  public void addEnd(int index, double r) {
-    iTop = index;
-    rTop = r;
+  public void addTop(int topSampleIndex, double topSampleRadius) {
+    this.topSampleIndex = topSampleIndex;
+    this.topSampleRadius = topSampleRadius;
   }
 
   /**
-   * Add a convenience name to the shell and keep track of the target range increment.
+   * Function to add a convenience name to the shell and set the target range increment.
    *
-   * @param name Shell name enumeration
-   * @param depth Depth of the top of the shell in kilometers
-   * @param delX Target range increment for this shell
+   * @param shellName A ShellName enumeration containing the shell name
+   * @param depthTop A double containing the depth of the top of the shell in kilometers
+   * @param rangeIncrementTarget Target range increment for this shell in kilometers
    */
-  public void addName(ShellName name, double depth, double delX) {
-    if (name != null) {
-      this.name = name.toString();
-      pCode = name.tmpPcode();
-      sCode = name.tmpScode();
-      if (pCode == null && sCode == null) {
-        pCode = String.format("rPd%dP", (int) (depth + .5d));
-        sCode = String.format("rSd%dS", (int) (depth + .5d));
+  public void addName(ShellName shellName, double depthTop, double rangeIncrementTarget) {
+    if (shellName != null) {
+      this.name = shellName.toString();
+      tempPCode = shellName.getTempPCode();
+      tempSCode = shellName.getTempSCode();
+
+      if (tempPCode == null && tempSCode == null) {
+        tempPCode = String.format("rPd%dP", (int) (depthTop + .5d));
+        tempSCode = String.format("rSd%dS", (int) (depthTop + .5d));
       }
     } else {
-      this.name = String.format("%d km discontinuity", (int) (depth + .5d));
-      pCode = String.format("rPd%dP", (int) (depth + .5d));
-      sCode = String.format("rSd%dS", (int) (depth + .5d));
+      this.name = String.format("%d km discontinuity", (int) (depthTop + .5d));
+      tempPCode = String.format("rPd%dP", (int) (depthTop + .5d));
+      tempSCode = String.format("rSd%dS", (int) (depthTop + .5d));
     }
-    this.delX = delX;
+
+    this.rangeIncrementTarget = rangeIncrementTarget;
   }
 
   /**
-   * Determine if a sample radius is in this shell.
+   * Function to determine if a given sample radius is in this shell.
    *
-   * @param r Sample radius in kilometers
-   * @return True if the radius is inside this shell
+   * @param radius A double containig the sample radius in kilometers to check
+   * @return A boolean flag, true if the radius is inside this shell
    */
-  public boolean isInShell(double r) {
-    if (r >= rBot && r <= rTop) {
+  public boolean isInShell(double radius) {
+    if (radius >= bottomSampleRadius && radius <= topSampleRadius) {
       return true;
     } else {
       return false;
@@ -121,22 +291,24 @@ public class ModelShell {
   }
 
   /**
-   * Determine if a sample slowness is in this shell.
+   * Function to determine if a given sample slowness is in this shell.
    *
-   * @param type Wave type (P = compressional, S = shear)
-   * @param slow Non-dimensional slowness
-   * @param model Earth model
-   * @return True if the slowness is in this shell
+   * @param type A char containing the desired wave type (P = compressional, S = shear)
+   * @param slowness A double containing the non-dimensional slowness
+   * @param model An ArrayList of ModelSample objects containing the Earth model
+   * @return A boolean flag, true if the slowness is inside this shell
    */
-  public boolean isInShell(char type, double slow, ArrayList<ModelSample> model) {
+  public boolean isInShell(char type, double slowness, ArrayList<ModelSample> model) {
     if (type == 'P') {
-      if (slow >= model.get(iBot).slowP && slow <= model.get(iTop).slowP) {
+      if ((slowness >= model.get(bottomSampleIndex).getCompressionalWaveSlowness())
+          && (slowness <= model.get(topSampleIndex).getCompressionalWaveSlowness())) {
         return true;
       } else {
         return false;
       }
     } else {
-      if (slow >= model.get(iBot).slowS && slow <= model.get(iTop).slowS) {
+      if ((slowness >= model.get(bottomSampleIndex).getShearWaveSlowness())
+          && (slowness <= model.get(topSampleIndex).getShearWaveSlowness())) {
         return true;
       } else {
         return false;
@@ -144,64 +316,63 @@ public class ModelShell {
     }
   }
 
-  /** Set the flag saying this shell has an embedded high slowness zone. */
-  public void setLVZ() {
-    hasLVZ = true;
-  }
-
   /**
-   * Retrieve the embedded high slowness zone flag.
+   * Function to print this wave type specific shell for the depth model.
    *
-   * @return True if this shell has an embedded high slowness zone
-   */
-  public boolean hasLVZ() {
-    return hasLVZ;
-  }
-
-  /**
-   * Get the temporary phase code associated with this shell.
-   *
-   * @param type Wave type (P = compressional, S = shear)
-   * @return Temporary phase code
-   */
-  public String getCode(char type) {
-    if (type == 'P') {
-      return pCode;
-    } else {
-      return sCode;
-    }
-  }
-
-  /**
-   * Print this wave type specific shell for the depth model.
-   *
-   * @param type Wave type (P = compressional, S = shear)
-   * @return String representing this shell
+   * @param type A char containing the desired wave type (P = compressional, S = shear)
+   * @return A String representing this shell
    */
   public String printShell(char type) {
     if (type == 'P') {
-      if (pCode != null) {
+      if (tempPCode != null) {
         return String.format(
             "%3d - %3d range: %7.2f - %7.2f %5b delX: %6.2f %-8s %s",
-            iBot, iTop, rBot, rTop, isDisc, delX, pCode, name);
+            bottomSampleIndex,
+            topSampleIndex,
+            bottomSampleRadius,
+            topSampleRadius,
+            isDiscontinuity,
+            rangeIncrementTarget,
+            tempPCode,
+            name);
       } else {
         return null;
       }
     } else {
-      if (sCode != null) {
+      if (tempSCode != null) {
         return String.format(
             "%3d - %3d range: %7.2f - %7.2f %5b delX: %6.2f %-8s %s",
-            iBot, iTop, rBot, rTop, isDisc, delX, sCode, name);
+            bottomSampleIndex,
+            topSampleIndex,
+            bottomSampleRadius,
+            topSampleRadius,
+            isDiscontinuity,
+            rangeIncrementTarget,
+            tempSCode,
+            name);
       } else {
         return null;
       }
     }
   }
 
+  /**
+   * Function to convert this shell to a string for printing
+   *
+   * @return A String representing this shell
+   */
   @Override
   public String toString() {
     return String.format(
         "%3d - %3d range: %7.2f - %7.2f %5b delX: %6.2f %-8s %-8s %s",
-        iBot, iTop, rBot, rTop, isDisc, delX, pCode, sCode, name);
+        bottomSampleIndex,
+        topSampleIndex,
+        bottomSampleRadius,
+        topSampleRadius,
+        isDiscontinuity,
+        rangeIncrementTarget,
+        tempPCode,
+        tempSCode,
+        name);
   }
 }

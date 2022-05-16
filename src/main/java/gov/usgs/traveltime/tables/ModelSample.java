@@ -1,9 +1,9 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.ModConvert;
+import gov.usgs.traveltime.ModelConversions;
 
 /**
- * Deal with all model parameters at one radius.
+ * ModelSample class contains all model parameters at one radius.
  *
  * @author Ray Buland
  */
@@ -17,131 +17,239 @@ public class ModelSample {
    * model. The spherical approximation works for seismology because the oblateness is small enough
    * (~1/300) to be considered a perturbation.
    */
-  double r; // Radius in kilometers
 
-  double vp; // Isotropic velocity in kilometers/second
-  double vs; // Isotropic velocity in kilometers/second
-  double z; // Non-dimensional Earth flattened depth
-  double slowP; // Non-dimensional compressional wave slowness
-  double slowS; // Non-dimensional shear wave slowness
+  /** A double value containing the radius in kilometers */
+  private double radius;
+
+  /** A double value containing the isotropic P velocity in kilometers/second */
+  private double isotropicPVelocity;
+
+  /** A double value containing the isotropic S velocity in kilometers/second */
+  private double isotropicSVelocity;
+
+  /** A double value containing the non-dimensional Earth flattened depth in kilometers */
+  private double depth;
+
+  /** A double value containing the non-dimensional compressional wave slowness */
+  private double compressionalWaveSlowness;
+
+  /** A double value containing the non-dimensional shear wave slowness */
+  private double shearWaveSlowness;
 
   /**
-   * Create a (possibly) anisotropic model sample and it's isotropic equivalent.
+   * Get the model sample radius in kilometers
    *
-   * @param r Radius in kilometers
-   * @param vpv Vertically polarized P velocity in kilometers/second
-   * @param vph Horizontally polarized P velocity in kilometers/second
-   * @param vsv Vertically polarized S velocity in kilometers/second
-   * @param vsh Horizontally polarized S velocity in kilometers/second
-   * @param eta Anisotropy parameter
+   * @return A double holding the model sample radius in kilometers
    */
-  public ModelSample(double r, double vpv, double vph, double vsv, double vsh, double eta) {
+  public double getRadius() {
+    return radius;
+  }
 
-    this.r = r;
+  /**
+   * Get the model sample isotropic P velocity in kilometers/second
+   *
+   * @return A double holding the model isotropic P velocity in kilometers/second
+   */
+  public double getIsotropicPVelocity() {
+    return isotropicPVelocity;
+  }
+
+  /**
+   * Set the model sample isotropic P velocity in kilometers/second
+   *
+   * @param isotropicPVelocity A double holding the model isotropic P velocity in kilometers/second
+   */
+  public void setIsotropicPVelocity(double isotropicPVelocity) {
+    this.isotropicPVelocity = isotropicPVelocity;
+  }
+
+  /**
+   * Get the model sample isotropic S velocity in kilometers/second
+   *
+   * @return A double holding the model isotropic S velocity in kilometers/second
+   */
+  public double getIsotropicSVelocity() {
+    return isotropicSVelocity;
+  }
+
+  /**
+   * Set the model sample isotropic S velocity in kilometers/second
+   *
+   * @param isotropicSVelocity A double holding the model isotropic S velocity in kilometers/second
+   */
+  public void setIsotropicSVelocity(double isotropicSVelocity) {
+    this.isotropicSVelocity = isotropicSVelocity;
+  }
+
+  /**
+   * Get the non-dimensional Earth flattened depth
+   *
+   * @return A double holding the non-dimensional Earth flattened depth
+   */
+  public double getDepth() {
+    return depth;
+  }
+
+  /**
+   * Get the non-dimensional compressional wave slowness
+   *
+   * @return A double holding the non-dimensional compressional wave slowness
+   */
+  public double getCompressionalWaveSlowness() {
+    return compressionalWaveSlowness;
+  }
+
+  /**
+   * Get the non-dimensional shear wave slowness
+   *
+   * @return A double holding the non-dimensional shear wave slowness
+   */
+  public double getShearWaveSlowness() {
+    return shearWaveSlowness;
+  }
+
+  /**
+   * Function to create a (possibly) anisotropic model sample and it's isotropic equivalent.
+   *
+   * @param radius A double containing the radius in kilometers
+   * @param vertPolarizedPVelocity A double containing the vertically polarized P velocity in
+   *     kilometers/second
+   * @param horizPolarizedPVelocity A double containng the horizontally polarized P velocity in
+   *     kilometers/second
+   * @param vertPolarizedSVelocity A double containing the vertically polarized S velocity in
+   *     kilometers/second
+   * @param horizPolarizedSVelocity A double containing the horizontally polarized S velocity in
+   *     kilometers/second
+   * @param eta A double containing the anisotropy parameter
+   */
+  public ModelSample(
+      double radius,
+      double vertPolarizedPVelocity,
+      double horizPolarizedPVelocity,
+      double vertPolarizedSVelocity,
+      double horizPolarizedSVelocity,
+      double anisotropyParam) {
+    this.radius = radius;
 
     // Create the isotropic version.
-    if (eta != 1d || vpv != vph || vsv != vsh) {
-      vs =
+    if ((anisotropyParam != 1d)
+        || (vertPolarizedPVelocity != horizPolarizedPVelocity)
+        || (vertPolarizedSVelocity != horizPolarizedSVelocity)) {
+      isotropicSVelocity =
           Math.sqrt(
               0.0666666666666667d
-                  * ((1d - 2d * eta) * Math.pow(vph, 2d)
-                      + Math.pow(vpv, 2d)
-                      + 5d * Math.pow(vsh, 2d)
-                      + (6d + 4d * eta) * Math.pow(vsv, 2d)));
-      vp =
+                  * ((1d - 2d * anisotropyParam) * Math.pow(horizPolarizedPVelocity, 2d)
+                      + Math.pow(vertPolarizedPVelocity, 2d)
+                      + 5d * Math.pow(horizPolarizedSVelocity, 2d)
+                      + (6d + 4d * anisotropyParam) * Math.pow(vertPolarizedSVelocity, 2d)));
+
+      isotropicPVelocity =
           Math.sqrt(
               0.0666666666666667d
-                  * ((8d + 4d * eta) * Math.pow(vph, 2d)
-                      + 3d * Math.pow(vpv, 2d)
-                      + (8d - 8d * eta) * Math.pow(vsv, 2d)));
+                  * ((8d + 4d * anisotropyParam) * Math.pow(horizPolarizedPVelocity, 2d)
+                      + 3d * Math.pow(vertPolarizedPVelocity, 2d)
+                      + (8d - 8d * anisotropyParam) * Math.pow(vertPolarizedSVelocity, 2d)));
     } else {
-      vp = vpv;
-      vs = vsv;
+      isotropicPVelocity = vertPolarizedPVelocity;
+      isotropicSVelocity = vertPolarizedSVelocity;
     }
+
     // Mask fluid areas.
-    if (vs == 0d) vs = vp;
+    if (isotropicSVelocity == 0d) {
+      isotropicSVelocity = isotropicPVelocity;
+    }
   }
 
   /**
-   * Create an isotropic model sample.
+   * Function to create an isotropic model sample.
    *
-   * @param r Radius in kilometers
-   * @param vp P velocity in kilometers/second
-   * @param vs S velocity in kilometers/second
+   * @param radius A double containing the radius in kilometers
+   * @param isotropicPVelocity A double containing the isotropic P velocity in kilometers/second
+   * @param isotropicSVelocity A double containing the isotropic S velocity in kilometers/second
    */
-  public ModelSample(double r, double vp, double vs) {
+  public ModelSample(double radius, double isotropicPVelocity, double isotropicSVelocity) {
 
-    this.r = r;
-    this.vp = vp;
-    this.vs = vs;
+    this.radius = radius;
+    this.isotropicPVelocity = isotropicPVelocity;
+    this.isotropicSVelocity = isotropicSVelocity;
+
     // Mask fluid areas.
-    if (vs == 0d) vs = vp;
+    if (isotropicSVelocity == 0d) {
+      isotropicSVelocity = isotropicPVelocity;
+    }
   }
 
   /**
-   * Create a model sample by copying from another model sample.
+   * ModelSample copy constructor, creates a model sample by copying from another model sample.
    *
-   * @param sample Reference model sample
+   * @param sample A ModelSample object containing the reference model sample to copy from
    */
   public ModelSample(ModelSample sample) {
-    r = sample.r;
-    vp = sample.vp;
-    vs = sample.vs;
-    z = sample.z;
-    slowP = sample.slowP;
-    slowS = sample.slowS;
+    radius = sample.getRadius();
+    isotropicPVelocity = sample.getIsotropicPVelocity();
+    isotropicSVelocity = sample.getIsotropicSVelocity();
+    depth = sample.getDepth();
+    compressionalWaveSlowness = sample.getCompressionalWaveSlowness();
+    shearWaveSlowness = sample.getShearWaveSlowness();
   }
 
   /**
-   * Eliminate the poorly observed PKJKP phase by replacing the S velocity in the inner core with
-   * the P velocity.
+   * Method to eliminate the poorly observed PKJKP phase by replacing the S velocity in the inner
+   * core with the P velocity.
    */
-  protected void elimPKJKP() {
-    vs = vp;
+  protected void eliminatePKJKP() {
+    isotropicSVelocity = isotropicPVelocity;
   }
 
   /**
-   * Non-dimensionalize and apply the Earth flattening transformation.
+   * Function to non-dimensionalize the sample and apply the Earth flattening transformation.
    *
-   * @param convert Model sensitive conversion constants
+   * @param convert A ModelConversions object containing the model sensitive conversion constants
    */
-  public void flatten(ModConvert convert) {
-    z = convert.flatZ(r);
-    slowP = convert.flatP(vp, r);
-    slowS = convert.flatP(vs, r);
+  public void flatten(ModelConversions convert) {
+    depth = convert.computeFlatDepth(radius);
+    compressionalWaveSlowness = convert.computeFlatSlowness(isotropicPVelocity, radius);
+    shearWaveSlowness = convert.computeFlatSlowness(isotropicSVelocity, radius);
   }
 
   /**
    * Getter for slowness.
    *
-   * @param type Slowness type (P = P-wave, S = S-wave)
+   * @param waveType A char containing the wave type ('P' = compressional, 'S' = shear)
    * @return Non-dimensional Earth flattened slowness
    */
-  public double getSlow(char type) {
-    if (type == 'P') {
-      return slowP;
+  public double getSlowness(char waveType) {
+    if (waveType == 'P') {
+      return compressionalWaveSlowness;
     } else {
-      return slowS;
+      return shearWaveSlowness;
     }
   }
 
   /**
-   * Print the model sample.
+   * Function to create a string representing the model sample.
    *
-   * @param flat If true print the Earth flattened parameters
-   * @param convert If not null, convert to dimensional depth
+   * @param flat A boolean flag, if true print the Earth flattened parameters
+   * @param convert A ModelConversions object containing the model sensitive conversion constants,
+   *     if not null, convert to dimensional depth
    * @return String describing this model sample
    */
-  public String printSample(boolean flat, ModConvert convert) {
+  public String printSample(boolean flat, ModelConversions convert) {
 
     if (flat) {
       if (convert == null) {
-        return String.format("%7.2f %9.4f %8.6f %8.6f", r, z, slowP, slowS);
+        return String.format(
+            "%7.2f %9.4f %8.6f %8.6f", radius, depth, compressionalWaveSlowness, shearWaveSlowness);
       } else {
-        return String.format("%8.2f %7.2f %8.6f %8.6f", r, convert.realZ(z), slowP, slowS);
+        return String.format(
+            "%8.2f %7.2f %8.6f %8.6f",
+            radius,
+            convert.computeDimensionalDepth(depth),
+            compressionalWaveSlowness,
+            shearWaveSlowness);
       }
     } else {
-      return String.format("%9.2f %7.4f %7.4f", r, vp, vs);
+      return String.format("%9.2f %7.4f %7.4f", radius, isotropicPVelocity, isotropicSVelocity);
     }
   }
 }

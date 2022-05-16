@@ -1,49 +1,60 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.ModConvert;
+import gov.usgs.traveltime.ModelConversions;
 import java.util.ArrayList;
 
 /**
- * Put together the bits and pieces we'll need to make the travel-time branch layout and decimation
- * come out right.
+ * The TablePieces class puts together the bits and pieces we'll need to make the travel-time branch
+ * layout and decimation come out right.
  *
  * @author Ray Buland
  */
 public class TablePieces {
-  IntPieces pPieces, sPieces;
-  ArrayList<ModelShell> pShells, sShells;
-  ModConvert convert;
+  /** A BranchIntegrals object containing the P model pieces */
+  private BranchIntegrals modelPiecesP;
+
+  /** A BranchIntegrals object containing the S model pieces */
+  private BranchIntegrals modelPiecesS;
+
+  /** An ArrayList of ModelShell objects containing the P shells */
+  private ArrayList<ModelShell> shellModelP;
+
+  /** An ArrayList of ModelShell objects containing the S shells */
+  private ArrayList<ModelShell> shellModelS;
+
+  /** A ModelConversions object containing the model dependant conversions */
+  private ModelConversions modelConversions;
 
   /**
-   * Initialize bits and pieces for each phase type.
+   * TablePieces constructor. Initialize bits and pieces for each phase type.
    *
-   * @param finModel Final tau model
+   * @param finalTauModel Final tau model
    */
-  public TablePieces(TauModel finModel) {
-    convert = finModel.convert;
-    pShells = finModel.pShells;
-    sShells = finModel.sShells;
-    pPieces = new IntPieces('P', finModel);
-    sPieces = new IntPieces('S', finModel);
+  public TablePieces(TauModel finalTauModel) {
+    modelConversions = finalTauModel.getModelConversions();
+    shellModelP = finalTauModel.getShellModelP();
+    shellModelS = finalTauModel.getShellModelS();
+    modelPiecesP = new BranchIntegrals('P', finalTauModel);
+    modelPiecesS = new BranchIntegrals('S', finalTauModel);
   }
 
-  /** Decimate the ray parameter arrays for both the P and S models. */
-  public void decimateP() {
-    pPieces.decimateP();
-    sPieces.decimateP();
+  /** Function to decimate the ray parameter arrays for both the P and S models. */
+  public void decimateRayParameters() {
+    modelPiecesP.decimateRayParameters();
+    modelPiecesS.decimateRayParameters();
   }
 
   /**
    * Get the integral pieces for one phase type.
    *
-   * @param type Model type (P = P slowness, S = S slowness)
-   * @return Integral pieces
+   * @param phaseType A char containing the model phase type (P = P slowness, S = S slowness)
+   * @return A BranchIntegrals object containing the integral pieces
    */
-  public IntPieces getPiece(char type) {
-    if (type == 'P') {
-      return pPieces;
+  public BranchIntegrals getPiece(char phaseType) {
+    if (phaseType == 'P') {
+      return modelPiecesP;
     } else {
-      return sPieces;
+      return modelPiecesS;
     }
   }
 
@@ -55,45 +66,46 @@ public class TablePieces {
    * @return Ray parameter
    */
   public double getP(int index) {
-    return sPieces.p[index];
+    return modelPiecesS.getRayParameters()[index];
   }
 
   /**
-   * Get all the ray parameters.
+   * Function to get all the ray parameters.
    *
    * @return Ray parameter array
    */
   public double[] getP() {
-    return sPieces.p;
+    return modelPiecesS.getRayParameters();
   }
 
   /**
-   * Get a major shell tau value by index.
+   * Function to get a major shell tau value by index.
    *
-   * @param type Model type (P = P slowness, S = S slowness)
-   * @param index Tau index
-   * @param shell Major shell index (0 = mantle, 1 = outer core, 2 = inner core)
-   * @return Tau value
+   * @param phaseType A char containing the model phase type (P = P slowness, S = S slowness)
+   * @param tauIndex An integer containing the Tau index
+   * @param shellIndex An integer containing the major shell index (0 = mantle, 1 = outer core, 2 =
+   *     inner core)
+   * @return A double containing the tau value
    */
-  public double getTau(char type, int index, int shell) {
-    switch (shell) {
+  public double getTau(char type, int tauIndex, int shellIndex) {
+    switch (shellIndex) {
       case 0:
         if (type == 'P') {
-          return pPieces.mantleTau[index];
+          return modelPiecesP.getMantleTauIntegrals()[tauIndex];
         } else {
-          return sPieces.mantleTau[index];
+          return modelPiecesS.getMantleTauIntegrals()[tauIndex];
         }
       case 1:
         if (type == 'P') {
-          return pPieces.outerCoreTau[index];
+          return modelPiecesP.getOuterCoreTauIntegrals()[tauIndex];
         } else {
-          return sPieces.outerCoreTau[index];
+          return modelPiecesS.getOuterCoreTauIntegrals()[tauIndex];
         }
       case 2:
         if (type == 'P') {
-          return pPieces.innerCoreTau[index];
+          return modelPiecesP.getInnerCoreTauIntegrals()[tauIndex];
         } else {
-          return sPieces.innerCoreTau[index];
+          return modelPiecesS.getInnerCoreTauIntegrals()[tauIndex];
         }
       default:
         return Double.NaN;
@@ -101,32 +113,33 @@ public class TablePieces {
   }
 
   /**
-   * Get a major shell range value by index.
+   * Function to get a major shell range value by index.
    *
-   * @param type Model type (P = P slowness, S = S slowness)
-   * @param index Range index
-   * @param shell Major shell index (0 = mantle, 1 = outer core, 2 = inner core)
-   * @return Range value
+   * @param phaseType A char containing the model phase type (P = P slowness, S = S slowness)
+   * @param rangeIndex Range index
+   * @param shellIndex An integer containing the major shell index (0 = mantle, 1 = outer core, 2 =
+   *     inner core)
+   * @return A double containign the shell range value
    */
-  public double getX(char type, int index, int shell) {
-    switch (shell) {
+  public double getShellRange(char phaseType, int rangeIndex, int shellIndex) {
+    switch (shellIndex) {
       case 0:
-        if (type == 'P') {
-          return pPieces.mantleX[index];
+        if (phaseType == 'P') {
+          return modelPiecesP.getMantleRangeIntegrals()[rangeIndex];
         } else {
-          return sPieces.mantleX[index];
+          return modelPiecesS.getMantleRangeIntegrals()[rangeIndex];
         }
       case 1:
-        if (type == 'P') {
-          return pPieces.outerCoreX[index];
+        if (phaseType == 'P') {
+          return modelPiecesP.getOuterCoreRangeIntegrals()[rangeIndex];
         } else {
-          return sPieces.outerCoreX[index];
+          return modelPiecesS.getOuterCoreRangeIntegrals()[rangeIndex];
         }
       case 2:
-        if (type == 'P') {
-          return pPieces.innerCoreX[index];
+        if (phaseType == 'P') {
+          return modelPiecesP.getInnerCoreRangeIntegrals()[rangeIndex];
         } else {
-          return sPieces.innerCoreX[index];
+          return modelPiecesS.getInnerCoreRangeIntegrals()[rangeIndex];
         }
       default:
         return Double.NaN;
@@ -134,117 +147,132 @@ public class TablePieces {
   }
 
   /**
-   * Get the radial sampling interval associated with a shell by index.
+   * Function to get the radial sampling interval associated with a shell by index.
    *
-   * @param type Model type (P = P slowness, S = S slowness)
-   * @param index Shell index
-   * @return Non-dimensional radial sampling
+   * @param phaseType A char containing the model phase type (P = P slowness, S = S slowness)
+   * @param shellIndex An integer containing the major shell index (0 = mantle, 1 = outer core, 2 =
+   *     inner core)
+   * @return A double containing the non-dimensional radial sampling
    */
-  public double getDelX(char type, int index) {
-    if (type == 'P') {
-      return convert.normR(pShells.get(index).delX);
+  public double getRadialSampling(char phaseType, int shellIndex) {
+    if (phaseType == 'P') {
+      return modelConversions.normalizeRadius(
+          shellModelP.get(shellIndex).getRangeIncrementTarget());
     } else {
-      return convert.normR(sShells.get(index).delX);
+      return modelConversions.normalizeRadius(
+          shellModelS.get(shellIndex).getRangeIncrementTarget());
     }
   }
 
   /**
-   * Get the radial sampling interval associated with the shell above the current one.
+   * Function to get the radial sampling interval associated with the shell above the current one.
    *
-   * @param type Model type (P = P slowness, S = S slowness)
-   * @param index Shell index
+   * @param phaseType A char containing the model phase type (P = P slowness, S = S slowness)
+   * @param shellIndex An integer containing the major shell index (0 = mantle, 1 = outer core, 2 =
+   *     inner core)
    * @return Non-dimensional radial sampling
    */
-  public double getNextDelX(char type, int index) {
-    if (type == 'P') {
-      for (int j = index + 1; j < pShells.size(); j++) {
-        if (!pShells.get(j).isDisc) {
-          return convert.normR(pShells.get(j).delX);
+  public double getNextRadialSampling(char phaseType, int shellIndex) {
+    if (phaseType == 'P') {
+      for (int j = shellIndex + 1; j < shellModelP.size(); j++) {
+        if (!shellModelP.get(j).getIsDiscontinuity()) {
+          return modelConversions.normalizeRadius(shellModelP.get(j).getRangeIncrementTarget());
         }
       }
     } else {
-      for (int j = index + 1; j < sShells.size(); j++) {
-        if (!sShells.get(j).isDisc) {
-          return convert.normR(sShells.get(j).delX);
+      for (int j = shellIndex + 1; j < shellModelS.size(); j++) {
+        if (!shellModelS.get(j).getIsDiscontinuity()) {
+          return modelConversions.normalizeRadius(shellModelS.get(j).getRangeIncrementTarget());
         }
       }
     }
+
     return Double.NaN;
   }
 
   /**
-   * Get the master decimation array.
+   * Function to retrieve the master decimation array.
    *
-   * @param type Model type (P = P slowness, S = S slowness)
-   * @return The master decimation array
+   * @param phaseType A char containing the model phase type (P = P slowness, S = S slowness)
+   * @return An array of boolean values containing the the master decimation array
    */
-  public boolean[] getDecimation(char type) {
-    if (type == 'P') {
-      return pPieces.keep;
+  public boolean[] getDecimation(char phaseType) {
+    if (phaseType == 'P') {
+      return modelPiecesP.getDecimationKeep();
     } else {
-      return sPieces.keep;
+      return modelPiecesS.getDecimationKeep();
     }
   }
 
-  /** Print out the proxy ranges. */
+  /** Function to print out the proxy ranges. */
   public void printProxy() {
-    int nP, nS;
-
     System.out.println("\n\t\t\tProxy Ranges");
     System.out.println("                  P                            S");
     System.out.println("    slowness      X       delX   slowness" + "      X       delX");
-    nP = pPieces.proxyX.length;
-    nS = sPieces.proxyX.length;
+    int nP = modelPiecesP.getProxyRanges().length;
+    int nS = modelPiecesS.getProxyRanges().length;
+
     System.out.format(
         "%3d %8.6f %8.2f            %8.6f %8.2f\n",
         0,
-        pPieces.proxyP[0],
-        convert.dimR(pPieces.proxyX[0]),
-        sPieces.proxyP[0],
-        convert.dimR(sPieces.proxyX[0]));
+        modelPiecesP.getProxyRayParameters()[0],
+        modelConversions.convertDimensionalRadius(modelPiecesP.getProxyRanges()[0]),
+        modelPiecesS.getProxyRayParameters()[0],
+        modelConversions.convertDimensionalRadius(modelPiecesS.getProxyRanges()[0]));
+
     for (int j = 1; j < nP; j++) {
       System.out.format(
           "%3d %8.6f %8.2f %8.2f   %8.6f %8.2f %8.2f\n",
           j,
-          pPieces.proxyP[j],
-          convert.dimR(pPieces.proxyX[j]),
-          convert.dimR(pPieces.proxyX[j] - pPieces.proxyX[j - 1]),
-          sPieces.proxyP[j],
-          convert.dimR(sPieces.proxyX[j]),
-          convert.dimR(sPieces.proxyX[j + 1] - sPieces.proxyX[j]));
+          modelPiecesP.getProxyRayParameters()[j],
+          modelConversions.convertDimensionalRadius(modelPiecesP.getProxyRanges()[j]),
+          modelConversions.convertDimensionalRadius(
+              modelPiecesP.getProxyRanges()[j] - modelPiecesP.getProxyRanges()[j - 1]),
+          modelPiecesS.getProxyRayParameters()[j],
+          modelConversions.convertDimensionalRadius(modelPiecesS.getProxyRanges()[j]),
+          modelConversions.convertDimensionalRadius(
+              modelPiecesS.getProxyRanges()[j + 1] - modelPiecesS.getProxyRanges()[j]));
     }
+
     for (int j = nP; j < nS; j++) {
       System.out.format(
           "%3d                              " + "%8.6f %8.2f %8.2f\n",
           j,
-          sPieces.proxyP[j],
-          convert.dimR(sPieces.proxyX[j]),
-          convert.dimR(sPieces.proxyX[j] - sPieces.proxyX[j - 1]));
+          modelPiecesS.getProxyRayParameters()[j],
+          modelConversions.convertDimensionalRadius(modelPiecesS.getProxyRanges()[j]),
+          modelConversions.convertDimensionalRadius(
+              modelPiecesS.getProxyRanges()[j] - modelPiecesS.getProxyRanges()[j - 1]));
     }
   }
 
   /**
-   * Print the integrals for the whole mantle, outer core, and inner core.
+   * Function to print the integrals for the whole mantle, outer core, and inner core.
    *
-   * @param type Model type (P = P slowness, S = S slowness)
+   * @param phaseType A char containing the model phase type (P = P slowness, S = S slowness)
    */
-  public void printShellInts(char type) {
-    if (type == 'P') {
-      pPieces.printShellInts();
+  public void printShellIntegrals(char phaseType) {
+    if (phaseType == 'P') {
+      modelPiecesP.printShellIntegrals();
     } else {
-      sPieces.printShellInts();
+      modelPiecesS.printShellIntegrals();
     }
   }
 
-  /** Print the ray parameter arrays for both the P and S branches. */
+  /** Function to print the ray parameter arrays for both the P and S branches. */
   public void printP() {
     System.out.println("\nMaster Ray Parameters");
     System.out.println("       P        S");
-    for (int j = 0; j < pPieces.p.length; j++) {
-      System.out.format("%3d %8.6f %8.6f\n", j, pPieces.p[j], sPieces.p[j]);
+
+    for (int j = 0; j < modelPiecesP.getRayParameters().length; j++) {
+      System.out.format(
+          "%3d %8.6f %8.6f\n",
+          j, modelPiecesP.getRayParameters()[j], modelPiecesS.getRayParameters()[j]);
     }
-    for (int j = pPieces.p.length; j < sPieces.p.length; j++) {
-      System.out.format("%3d          %8.6f\n", j, sPieces.p[j]);
+
+    for (int j = modelPiecesP.getRayParameters().length;
+        j < modelPiecesS.getRayParameters().length;
+        j++) {
+      System.out.format("%3d          %8.6f\n", j, modelPiecesS.getRayParameters()[j]);
     }
   }
 }

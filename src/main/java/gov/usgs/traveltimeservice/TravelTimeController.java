@@ -3,7 +3,7 @@ package gov.usgs.traveltimeservice;
 import gov.usgs.processingformats.TravelTimeException;
 import gov.usgs.processingformats.TravelTimePlotRequest;
 import gov.usgs.processingformats.TravelTimeRequest;
-import gov.usgs.traveltime.TTService;
+import gov.usgs.traveltime.TravelTimeService;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
@@ -16,7 +16,7 @@ import java.net.URI;
 
 /**
  * The TravelTimeController is a required Micronaut class defining the desired uri's and endpoints
- * for travel time webservices, and linking those endpoints with the corresponding TTService
+ * for travel time webservices, and linking those endpoints with the corresponding TravelTimeService
  * methods.
  *
  * @author John Patton
@@ -62,7 +62,7 @@ public class TravelTimeController {
   @Post(uri = "/traveltime", consumes = MediaType.APPLICATION_JSON)
   public TravelTimeRequest getTravelTime(@Body TravelTimeRequest request)
       throws TravelTimeException {
-    TTService service = new TTService(modelPath, serializedPath);
+    TravelTimeService service = new TravelTimeService(modelPath, serializedPath);
     return service.getTravelTimes(request);
   }
 
@@ -78,7 +78,7 @@ public class TravelTimeController {
   @Post(uri = "/traveltimeplot", consumes = MediaType.APPLICATION_JSON)
   public TravelTimePlotRequest getTravelTimePlot(@Body TravelTimePlotRequest request)
       throws TravelTimeException {
-    TTService service = new TTService(modelPath, serializedPath);
+    TravelTimeService service = new TravelTimeService(modelPath, serializedPath);
     return service.getTravelTimePlot(request);
   }
 }
