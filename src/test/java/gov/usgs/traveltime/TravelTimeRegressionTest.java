@@ -17,178 +17,6 @@ import org.junit.jupiter.api.Test;
  * @author John Patton
  */
 public class TravelTimeRegressionTest {
-
-  /**
-   * This test is designed as a overall regression test for the traveltime package. If the behavior
-   * of the traveltime package is changed in such a that the travel time results are expected to
-   * change, this test will need to be updated
-   */
-  /*  @Test
-  public void testAK135TravelTimes() {
-    String modelPath = "build/models/";
-    String earthModel = "ak135";
-    double sourceDepth = 10.0;
-    boolean returnAllPhases = false;
-    boolean returnBackBranches = false;
-    boolean tectonic = false;
-    String[] phList = null;
-    double delta1 = 1.0;
-    double delta2 = 90.0;
-    double delta3 = 180.0;
-    double elev = 0.0d;
-    TravelTimeSession ttLocal = null;
-
-    try {
-      // Initialize the local travel-time manager.
-      ttLocal = new TravelTimeSession(true, true, true, modelPath, modelPath);
-    } catch (IOException | ClassNotFoundException e) {
-      System.out.println("Unable to read travel-time auxiliary data.");
-      Assertions.fail("Unable to read travel-time auxiliary data");
-    }
-
-    // Set up a simple session.
-    try {
-      ttLocal.newSession(
-          earthModel, sourceDepth, phList, returnAllPhases, returnBackBranches, tectonic);
-
-    } catch (Exception e) {
-      System.out.println("Session setup failed");
-      Assertions.fail("Session setup failed " + e.toString());
-    }
-
-    // check supported modles
-    String[] models = ttLocal.getAvailableModels();
-    Assertions.assertEquals(5, models.length, "Model Count Check:");
-
-    // check size of branch list
-    Assertions.assertEquals(86, ttLocal.getBranchCount(returnAllPhases), "BranchList Size Check:");
-
-    // check the travel time package at distance of 1 degree
-    TravelTime ttList1 = ttLocal.getTravelTimes(elev, delta1);
-
-    // check number of TravelTimes
-    Assertions.assertEquals(20, ttList1.getNumPhases(), "TravelTimes Size Check:");
-
-    // check the first TravelTime
-    TravelTimeData firstTravelTime = ttList1.getPhase(0);
-    Assertions.assertEquals("Pg", firstTravelTime.getPhaseCode(), "TravelTime first phase code:");
-    Assertions.assertEquals(
-        19.234, firstTravelTime.getTravelTime(), 0.001, "TravelTime first arrival time:");
-    Assertions.assertEquals(
-        19.070,
-        firstTravelTime.getDistanceDerivitive(),
-        0.001,
-        "TravelTime first tangential derivative time:");
-    Assertions.assertEquals(
-        0.0148,
-        firstTravelTime.getDepthDerivitive(),
-        0.0001,
-        "TravelTime first vertical derivative time:");
-    Assertions.assertEquals(
-        0.0012,
-        firstTravelTime.getRayDerivative(),
-        0.0001,
-        "TravelTime first ray parameter derivative time:");
-    Assertions.assertEquals(
-        0.666, firstTravelTime.getStatisticalSpread(), 0.001, "TravelTime first spread:");
-    Assertions.assertEquals(
-        14873.999, firstTravelTime.getObservability(), 0.001, "TravelTime first observability:");
-    Assertions.assertEquals(
-        5.0, firstTravelTime.getAssocWindow(), 0.001, "TravelTime first association window:");
-    Assertions.assertEquals(
-        "P", firstTravelTime.getGroupPhaseCode(), "TravelTime first phase group:");
-    Assertions.assertEquals(
-        "PKP",
-        firstTravelTime.getAuxiliaryGroupPhaseCode(),
-        "TravelTime first auxiliary phase group:");
-    Assertions.assertEquals(
-        true, firstTravelTime.getIsRegional(), "TravelTime first regional flag:");
-    Assertions.assertEquals(
-        false, firstTravelTime.getIsDepthSensitive(), "TravelTime first depth flag:");
-    Assertions.assertEquals(
-        true, firstTravelTime.getLocationCanUse(), "TravelTime first phase use flag:");
-    Assertions.assertEquals(
-        false, firstTravelTime.getAssocDownWeight(), "TravelTime first disrespect flag:");
-
-    // check the travel time package at distance of 90 degrees
-    TravelTime ttList2 = ttLocal.getTravelTimes(elev, delta2);
-
-    // check number of TravelTimes
-    Assertions.assertEquals(32, ttList2.getNumPhases(), "TravelTimes Size Check:");
-
-    // check the first TravelTime
-    firstTravelTime = ttList2.getPhase(0);
-    Assertions.assertEquals("P", firstTravelTime.getPhaseCode(), "TravelTime first phase code:");
-    Assertions.assertEquals(
-        779.729, firstTravelTime.getTravelTime(), 0.001, "TravelTime first arrival time:");
-    Assertions.assertEquals(
-        4.655,
-        firstTravelTime.getDistanceDerivitive(),
-        0.001,
-        "TravelTime first tangential derivative time:");
-    Assertions.assertEquals(
-        -0.1672,
-        firstTravelTime.getDepthDerivitive(),
-        0.0001,
-        "TravelTime first vertical derivative time:");
-    Assertions.assertEquals(
-        -0.0088,
-        firstTravelTime.getRayDerivative(),
-        0.0001,
-        "TravelTime first ray parameter derivative time:");
-    Assertions.assertEquals(
-        1.102, firstTravelTime.getStatisticalSpread(), 0.001, "TravelTime first spread:");
-    Assertions.assertEquals(
-        12898.048, firstTravelTime.getObservability(), 0.001, "TravelTime first observability:");
-    Assertions.assertEquals(
-        7.715, firstTravelTime.getAssocWindow(), 0.001, "TravelTime first association window:");
-    Assertions.assertEquals(
-        "P", firstTravelTime.getGroupPhaseCode(), "TravelTime first phase group:");
-    Assertions.assertEquals(
-        "PKP",
-        firstTravelTime.getAuxiliaryGroupPhaseCode(),
-        "TravelTime first auxiliary phase group:");
-    Assertions.assertEquals(
-        false, firstTravelTime.getIsRegional(), "TravelTime first regional flag:");
-    Assertions.assertEquals(
-        false, firstTravelTime.getIsDepthSensitive(), "TravelTime first depth flag:");
-    Assertions.assertEquals(
-        true, firstTravelTime.getLocationCanUse(), "TravelTime first phase use flag:");
-    Assertions.assertEquals(
-        false, firstTravelTime.getAssocDownWeight(), "TravelTime first disrespect flag:");
-
-    // check the travel time package at distance of 180 degrees
-    TravelTime ttList3 = ttLocal.getTravelTimes(elev, delta3);
-
-    // check number of TravelTimes
-    Assertions.assertEquals(12, ttList3.getNumPhases(), "TravelTimes Size Check:");
-
-    // check the first TravelTime
-    firstTravelTime = ttList3.getPhase(0);
-    Assertions.assertEquals(
-        "PKPdf", firstTravelTime.getPhaseCode(), "TravelTime first phase code:");
-    Assertions.assertEquals(
-        1210.790, firstTravelTime.getTravelTime(), 0.001, "TravelTime first arrival time:");
-    Assertions.assertEquals(
-        3.315E-9,
-        firstTravelTime.getDistanceDerivitive(),
-        0.001,
-        "TravelTime first tangential derivative time:");
-    Assertions.assertEquals(
-        -0.1724,
-        firstTravelTime.getDepthDerivitive(),
-        0.0001,
-        "TravelTime first vertical derivative time:");
-    Assertions.assertEquals(
-        10.278, firstTTime.getWindow(), 0.001, "tTime first association window:");
-    Assertions.assertEquals("PKP", firstTTime.getPhGroup(), "tTime first phase group:");
-    Assertions.assertEquals("P", firstTTime.getAuxGroup(), "tTime first auxiliary phase group:");
-    Assertions.assertEquals(false, firstTTime.isRegional(), "tTime first regional flag:");
-    Assertions.assertEquals(false, firstTTime.isDepth(), "tTime first depth flag:");
-    Assertions.assertEquals(true, firstTTime.canUse(), "tTime first phase use flag:");
-    Assertions.assertEquals(false, firstTTime.getDis(), "tTime first disrespect flag:");
-  }*/
-
   /**
    * These tests are designed as a overall regression tests for the travel time package. If the
    * behavior of the travel time package is changed in such a that the results are expected to
@@ -252,6 +80,19 @@ public class TravelTimeRegressionTest {
 
     try {
       runModelTest("build/resources/test/wusValidationData.json", "build/models/");
+    } catch (Exception e) {
+      // failure
+      Assertions.fail(e.toString());
+      return;
+    }
+  }
+
+  @Test
+  public void runComplexTest() {
+    System.out.println("runComplexTest:");
+
+    try {
+      runComplexTest("build/resources/test/complexValidationData.json", "build/models/");
     } catch (Exception e) {
       // failure
       Assertions.fail(e.toString());
@@ -452,6 +293,202 @@ public class TravelTimeRegressionTest {
 
           System.out.println("Done with phase " + expectedPhase);
         }
+      }
+    }
+  }
+
+  public void runComplexTest(String verificationFile, String modelPath) throws Exception {
+    System.out.println("runComplexTest: " + verificationFile);
+
+    // note that these values are expected to match what was set in GenerateTravelTimeValidationData
+    boolean readStats = true;
+    boolean readEllip = true;
+    boolean readTopo = true;
+    boolean returnAllPhases = true;
+    boolean returnBackBranches = true;
+    boolean rstt = false;
+    boolean tectonic = true;
+    String[] phList = null;
+
+    // load from file
+    String verificationString = loadFromFile(verificationFile);
+
+    // parse input string into json
+    JSONObject verificationObject;
+    try {
+      verificationObject = Utility.fromJSONString(verificationString);
+    } catch (ParseException e) {
+      // parse failure
+      Assertions.fail(e.toString());
+      return;
+    }
+
+    // Initialize the local travel-time manager.
+    TravelTimeSession ttLocal = null;
+
+    try {
+      ttLocal = new TravelTimeSession(readStats, readEllip, readTopo, modelPath, modelPath);
+    } catch (IOException | ClassNotFoundException e) {
+      System.out.println("Unable to read travel-time auxiliary data.");
+      Assertions.fail("Unable to read travel-time auxiliary data");
+      return;
+    }
+
+    System.out.println("set up session:");
+
+    // get the source values
+    double sourceLatitude = (double) verificationObject.get("SourceLatitude");
+    double sourceLongitude = (double) verificationObject.get("SourceLongitude");
+    double sourceDepth = (double) verificationObject.get("SourceDepth");
+
+    // setup new complex session
+    ttLocal.newSession(
+        "ak135",
+        sourceDepth,
+        phList,
+        sourceLatitude,
+        sourceLongitude,
+        returnAllPhases,
+        returnBackBranches,
+        tectonic);
+
+    // get the points
+    JSONArray pointArray = (JSONArray) verificationObject.get("Points");
+
+    // go through all Points
+    for (int j = 0; j < pointArray.size(); j++) {
+      // get the point object
+      JSONObject pointObject = (JSONObject) pointArray.get(j);
+
+      // get the current receiver
+      double recieverLatitude = (double) pointObject.get("RecieverLatitude");
+      double receiverLongitude = (double) pointObject.get("ReceiverLongitude");
+      double receiverElevation = (double) pointObject.get("ReceiverElevation");
+      double receiverDistance = Double.NaN;
+      double recieverAzimuth = Double.NaN;
+
+      // get the expected travel tmes
+      JSONArray phaseArray = (JSONArray) pointObject.get("Phases");
+
+      // get the travel times (complex)
+      TravelTime ttList =
+          ttLocal.getTravelTimes(
+              recieverLatitude,
+              receiverLongitude,
+              receiverElevation,
+              receiverDistance,
+              recieverAzimuth);
+
+      // check the size of the tt list
+      Assertions.assertEquals(phaseArray.size(), ttList.getNumPhases(), "tt list size:");
+
+      // go through all phases
+      for (int l = 0; l < phaseArray.size(); l++) {
+        // get the expected data
+        JSONObject phaseObject = (JSONObject) phaseArray.get(l);
+
+        String expectedPhase = phaseObject.get("Phase").toString();
+        double expectedTravelTime = (double) phaseObject.get("TravelTime");
+        double expectedDistanceDerivative = (double) phaseObject.get("DistanceDerivative");
+        double expectedDepthDerivative = (double) phaseObject.get("DepthDerivative");
+        double expectedRayDerivative = (double) phaseObject.get("RayDerivative");
+
+        double expectedStatisticalSpread = Double.NaN;
+        try {
+          expectedStatisticalSpread = (double) phaseObject.get("StatisticalSpread");
+        } catch (NullPointerException e) {
+          System.out.println(
+              "Warning: Complex Request:"
+                  + " Point: "
+                  + String.valueOf(recieverLatitude)
+                  + ", "
+                  + String.valueOf(receiverLongitude)
+                  + " Phase: "
+                  + expectedPhase
+                  + " StatisticalSpread is null in validation data set");
+          expectedStatisticalSpread = Double.NaN;
+        }
+
+        double expectedObservability = Double.NaN;
+        try {
+          expectedObservability = (double) phaseObject.get("Observability");
+        } catch (NullPointerException e) {
+          System.out.println(
+              "Warning: Complex Request:"
+                  + " Point: "
+                  + String.valueOf(recieverLatitude)
+                  + ", "
+                  + String.valueOf(receiverLongitude)
+                  + " Phase: "
+                  + expectedPhase
+                  + " Observability is null in validation data set");
+          expectedObservability = Double.NaN;
+        }
+
+        double expectedAssociationWindow = Double.NaN;
+        try {
+          expectedAssociationWindow = (double) phaseObject.get("AssociationWindow");
+        } catch (NullPointerException e) {
+          System.out.println(
+              "Warning: Complex Request:"
+                  + " Point: "
+                  + String.valueOf(recieverLatitude)
+                  + ", "
+                  + String.valueOf(receiverLongitude)
+                  + " Phase: "
+                  + expectedPhase
+                  + " AssociationWindow is null in validation data set");
+          expectedAssociationWindow = Double.NaN;
+        }
+
+        String expectedTeleseismicPhaseGroup = phaseObject.get("TeleseismicPhaseGroup").toString();
+
+        String expectedAuxiliaryPhaseGroup = null;
+        try {
+          expectedAuxiliaryPhaseGroup = phaseObject.get("AuxiliaryPhaseGroup").toString();
+        } catch (NullPointerException e) {
+          // we expect this but toString doesn't like it
+          expectedAuxiliaryPhaseGroup = null;
+        }
+
+        boolean expectedLocationUseFlag = (boolean) phaseObject.get("LocationUseFlag");
+        boolean expectedAssociationWeightFlag = (boolean) phaseObject.get("AssociationWeightFlag");
+        boolean expectedDepthFlag = (boolean) phaseObject.get("DepthFlag");
+        boolean expectedRegionalFlag = (boolean) phaseObject.get("RegionalFlag");
+
+        // check the phase data against the tt data
+        TravelTimeData ttData = ttList.getPhase(l);
+        Assertions.assertEquals(expectedPhase, ttData.getPhaseCode(), "phase code:");
+        Assertions.assertEquals(expectedTravelTime, ttData.getTravelTime(), 0.001, "travel time:");
+        Assertions.assertEquals(
+            expectedDistanceDerivative,
+            ttData.getDistanceDerivitive(),
+            0.001,
+            "distance derivative:");
+        Assertions.assertEquals(
+            expectedDepthDerivative, ttData.getDepthDerivitive(), 0.0001, "depth derivative:");
+        Assertions.assertEquals(
+            expectedRayDerivative, ttData.getRayDerivative(), 0.0001, "ray parameter derivative:");
+        Assertions.assertEquals(
+            expectedStatisticalSpread, ttData.getStatisticalSpread(), 0.001, "statistical spread:");
+        Assertions.assertEquals(
+            expectedObservability, ttData.getObservability(), 0.001, "observability:");
+        Assertions.assertEquals(
+            expectedAssociationWindow, ttData.getAssocWindow(), 0.001, "association window:");
+        Assertions.assertEquals(
+            expectedTeleseismicPhaseGroup, ttData.getGroupPhaseCode(), "phase group:");
+        Assertions.assertEquals(
+            expectedAuxiliaryPhaseGroup,
+            ttData.getAuxiliaryGroupPhaseCode(),
+            "auxiliary phase group:");
+        Assertions.assertEquals(expectedRegionalFlag, ttData.getIsRegional(), "regional phase:");
+        Assertions.assertEquals(expectedDepthFlag, ttData.getIsDepthSensitive(), "depth phase :");
+        Assertions.assertEquals(
+            expectedLocationUseFlag, ttData.getLocationCanUse(), "location use:");
+        Assertions.assertEquals(
+            expectedAssociationWeightFlag, ttData.getAssocDownWeight(), "association weight:");
+
+        System.out.println("Done with phase " + expectedPhase);
       }
     }
   }
