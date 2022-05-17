@@ -314,7 +314,9 @@ public class SampleSlowness {
 
     findCaustic.setUp(waveType, deepestSampleIndex);
     try {
-      pCaustic = rootSolver.solve(TablesUtil.MAXEVAL, findCaustic, minRayParam, maxRayParam);
+      pCaustic =
+          rootSolver.solve(
+              TablesUtil.MAXROOTFINDINGITERATIONS, findCaustic, minRayParam, maxRayParam);
 
       if (TablesUtil.deBugLevel > 2) {
         System.out.format(
@@ -371,7 +373,7 @@ public class SampleSlowness {
         System.out.format("\txTarget dX: %8.6f " + "%10.4e\n", targetRange, dX);
 
       // Set the next range.
-      if (Math.abs(targetRange - xBot) > TablesUtil.XTOL) {
+      if (Math.abs(targetRange - xBot) > TablesUtil.SAMPLEINGDISTANCETOLERANCE) {
         // Bracket the range.
         sample1 = temporaryModel.get(iTmp - 1);
 
@@ -419,11 +421,15 @@ public class SampleSlowness {
       sample1 = tauModel.getLast(waveType);
 
       // Make sure our slowness sampling is OK.
-      if (Math.abs(sample1.getSlowness() - sample0.getSlowness()) > TablesUtil.DELPMAX) {
+      if (Math.abs(sample1.getSlowness() - sample0.getSlowness())
+          > TablesUtil.MAXSLOWNESSINCREMENT) {
         // Oops!  Fix the last sample.
         nSamp =
             Math.max(
-                (int) (Math.abs(pBot - sample0.getSlowness()) / TablesUtil.DELPMAX + 0.99d), 1);
+                (int)
+                    (Math.abs(pBot - sample0.getSlowness()) / TablesUtil.MAXSLOWNESSINCREMENT
+                        + 0.99d),
+                1);
         double targetRayParam = sample0.getSlowness() + (pBot - sample0.getSlowness()) / nSamp;
         tauInt.integrateDist(waveType, targetRayParam, deepestSampleIndex);
         sample1.update(tauInt.getBottomingRadius(), targetRayParam, tauInt.getSummaryIntDist());
@@ -445,9 +451,9 @@ public class SampleSlowness {
       }
 
       // Make sure our radius sampling is OK too.
-      if (Math.abs(sample1.getRadius() - lastRadius) > TablesUtil.DELRMAX) {
+      if (Math.abs(sample1.getRadius() - lastRadius) > TablesUtil.MAXRADIUSINCREMENT) {
         // Oops!  Fix the last sample.
-        double rTarget = sample0.getRadius() - TablesUtil.DELRMAX;
+        double rTarget = sample0.getRadius() - TablesUtil.MAXRADIUSINCREMENT;
         int iRadius = tauInt.getBottomIndex();
 
         while (rTarget > resampledModel.getRadius(iRadius)) {
@@ -490,7 +496,7 @@ public class SampleSlowness {
       }
 
       lastRadius = sample1.getRadius();
-    } while (Math.abs(targetRange - xBot) > TablesUtil.XTOL);
+    } while (Math.abs(targetRange - xBot) > TablesUtil.SAMPLEINGDISTANCETOLERANCE);
 
     if (TablesUtil.deBugLevel > 0) {
       System.out.format(
@@ -519,7 +525,8 @@ public class SampleSlowness {
       double targetRange,
       int deepestSampleIndex) {
     findRange.setUp(waveType, targetRange, deepestSampleIndex);
-    double pRange = rootSolver.solve(TablesUtil.MAXEVAL, findRange, minRayParam, maxRayParam);
+    double pRange =
+        rootSolver.solve(TablesUtil.MAXROOTFINDINGITERATIONS, findRange, minRayParam, maxRayParam);
 
     if (TablesUtil.deBugLevel > 2) {
       System.out.format(
@@ -759,7 +766,8 @@ public class SampleSlowness {
   private double getRadius(
       char waveType, int shellIndex, double minRadius, double maxRadius, double targetRayParam) {
     findRadius.setUp(waveType, shellIndex, targetRayParam);
-    double radius = rootSolver.solve(TablesUtil.MAXEVAL, findRadius, minRadius, maxRadius);
+    double radius =
+        rootSolver.solve(TablesUtil.MAXROOTFINDINGITERATIONS, findRadius, minRadius, maxRadius);
 
     if (TablesUtil.deBugLevel > 2) {
       System.out.format(

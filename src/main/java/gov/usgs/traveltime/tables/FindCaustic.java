@@ -53,7 +53,7 @@ public class FindCaustic implements UnivariateFunction {
     // normIntTau blows up at the top of shells.  Back off until we get
     // a finite value.
     while (Double.isNaN(normIntTau)) {
-      rayParameter -= TablesUtil.SLOWOFF;
+      rayParameter -= TablesUtil.SLOWNESSOFFSET;
       normIntTau = tauInt.integrateTauDist(waveType, rayParameter, modelLimitIndex);
     }
 

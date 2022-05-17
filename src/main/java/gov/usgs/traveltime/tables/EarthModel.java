@@ -321,7 +321,7 @@ public class EarthModel {
         // Figure how many samples we'll need.
         double r0 = r1;
         r1 = referenceShell.getTopSampleRadius();
-        int numSamples = (int) ((r1 - r0) / TablesUtil.RESAMPLE - 0.5d);
+        int numSamples = (int) ((r1 - r0) / TablesUtil.RESAMPLERADIUS - 0.5d);
         double dr = (r1 - r0) / (numSamples + 1);
 
         // Fill in the interpolated model.
@@ -509,17 +509,17 @@ public class EarthModel {
         double rDisc = shell.getTopSampleRadius();
 
         if (rDisc <= innerCoreRadius) {
-          shell.addName(ShellName.INNER_CORE, Double.NaN, TablesUtil.DELX[0]);
+          shell.addName(ShellName.INNER_CORE, Double.NaN, TablesUtil.TARGETTRAVELDISTANCES[0]);
         } else if (rDisc <= outerCoreRadius) {
-          shell.addName(ShellName.OUTER_CORE, Double.NaN, TablesUtil.DELX[1]);
+          shell.addName(ShellName.OUTER_CORE, Double.NaN, TablesUtil.TARGETTRAVELDISTANCES[1]);
         } else if (rDisc <= upperMantleRadius) {
-          shell.addName(ShellName.LOWER_MANTLE, Double.NaN, TablesUtil.DELX[2]);
+          shell.addName(ShellName.LOWER_MANTLE, Double.NaN, TablesUtil.TARGETTRAVELDISTANCES[2]);
         } else if (rDisc <= mohoRadius) {
-          shell.addName(ShellName.UPPER_MANTLE, Double.NaN, TablesUtil.DELX[3]);
+          shell.addName(ShellName.UPPER_MANTLE, Double.NaN, TablesUtil.TARGETTRAVELDISTANCES[3]);
         } else if (rDisc <= conradRadius) {
-          shell.addName(ShellName.LOWER_CRUST, Double.NaN, TablesUtil.DELX[4]);
+          shell.addName(ShellName.LOWER_CRUST, Double.NaN, TablesUtil.TARGETTRAVELDISTANCES[4]);
         } else {
-          shell.addName(ShellName.UPPER_CRUST, Double.NaN, TablesUtil.DELX[5]);
+          shell.addName(ShellName.UPPER_CRUST, Double.NaN, TablesUtil.TARGETTRAVELDISTANCES[5]);
         }
       }
     }
@@ -531,22 +531,28 @@ public class EarthModel {
         double rDisc = shell.getTopSampleRadius();
 
         if (rDisc == innerCoreRadius) {
-          shell.addName(ShellName.INNER_CORE_BOUNDARY, Double.NaN, TablesUtil.DELX[1]);
+          shell.addName(
+              ShellName.INNER_CORE_BOUNDARY, Double.NaN, TablesUtil.TARGETTRAVELDISTANCES[1]);
         } else if (rDisc == outerCoreRadius) {
-          shell.addName(ShellName.CORE_MANTLE_BOUNDARY, Double.NaN, TablesUtil.DELX[2]);
+          shell.addName(
+              ShellName.CORE_MANTLE_BOUNDARY, Double.NaN, TablesUtil.TARGETTRAVELDISTANCES[2]);
         } else if (rDisc == mohoRadius) {
-          shell.addName(ShellName.MOHO_DISCONTINUITY, Double.NaN, TablesUtil.DELX[4]);
+          shell.addName(
+              ShellName.MOHO_DISCONTINUITY, Double.NaN, TablesUtil.TARGETTRAVELDISTANCES[4]);
         } else if (rDisc == conradRadius) {
-          shell.addName(ShellName.CONRAD_DISCONTINUITY, surfaceRadius - rDisc, TablesUtil.DELX[5]);
+          shell.addName(
+              ShellName.CONRAD_DISCONTINUITY,
+              surfaceRadius - rDisc,
+              TablesUtil.TARGETTRAVELDISTANCES[5]);
         } else {
           if (rDisc < upperMantleRadius) {
-            shell.addName(null, surfaceRadius - rDisc, TablesUtil.DELX[2]);
+            shell.addName(null, surfaceRadius - rDisc, TablesUtil.TARGETTRAVELDISTANCES[2]);
           } else if (rDisc < mohoRadius) {
-            shell.addName(null, surfaceRadius - rDisc, TablesUtil.DELX[3]);
+            shell.addName(null, surfaceRadius - rDisc, TablesUtil.TARGETTRAVELDISTANCES[3]);
           } else if (rDisc < conradRadius) {
-            shell.addName(null, surfaceRadius - rDisc, TablesUtil.DELX[4]);
+            shell.addName(null, surfaceRadius - rDisc, TablesUtil.TARGETTRAVELDISTANCES[4]);
           } else {
-            shell.addName(null, surfaceRadius - rDisc, TablesUtil.DELX[5]);
+            shell.addName(null, surfaceRadius - rDisc, TablesUtil.TARGETTRAVELDISTANCES[5]);
           }
         }
       }
@@ -564,7 +570,7 @@ public class EarthModel {
       if (Math.abs(
               model.get(index).getIsotropicPVelocity()
                   - model.get(index - 1).getIsotropicPVelocity())
-          <= TablesUtil.VELOCITYTOL * model.get(index).getIsotropicPVelocity()) {
+          <= TablesUtil.VELOCITYTOLERANCE * model.get(index).getIsotropicPVelocity()) {
         model
             .get(index)
             .setIsotropicPVelocity(
@@ -577,7 +583,7 @@ public class EarthModel {
       if (Math.abs(
               model.get(index).getIsotropicSVelocity()
                   - model.get(index - 1).getIsotropicSVelocity())
-          <= TablesUtil.VELOCITYTOL * model.get(index).getIsotropicSVelocity()) {
+          <= TablesUtil.VELOCITYTOLERANCE * model.get(index).getIsotropicSVelocity()) {
         model
             .get(index)
             .setIsotropicSVelocity(

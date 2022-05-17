@@ -52,17 +52,18 @@ public class DecimateTravelTimeBranch {
     double[] pOld = piece.getProxyRayParameters();
     double[] xOld = piece.getProxyRanges();
     boolean[] upKeep =
-        decimator.slowDecimation(xOld, modelConversions.normalizeRadius(TablesUtil.DELXUP));
+        decimator.slowDecimation(
+            xOld, modelConversions.normalizeRadius(TablesUtil.TARGETUPGOINGSPACING));
 
     // Do some setup.
-    double pLim = TablesUtil.PLIM * pOld[pOld.length - 1];
+    double pLim = TablesUtil.RAYPARAMLIMITRATIO * pOld[pOld.length - 1];
     double[] pNew = new double[pOld.length];
     double[] xNew = new double[xOld.length];
 
     // Actually do the decimation.
     for (int j = 0; j < xOld.length; j++) {
       if (upKeep[j]) {
-        if (pOld[j] < pLim || pOld[j] - pNew[k] < TablesUtil.PTOL) {
+        if (pOld[j] < pLim || pOld[j] - pNew[k] < TablesUtil.RAYPARAMTOLERANCE) {
           // Most of the time, we just keep this sample.
           jLast = j;
           keep[j] = true;

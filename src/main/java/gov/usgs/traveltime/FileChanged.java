@@ -30,7 +30,7 @@ public class FileChanged {
     try {
       lastAggregatedFileUpdate = Files.getLastModifiedTime(Paths.get(aggregatedFile));
     } catch (IOException e) {
-      System.out.println("Serialized file " + aggregatedFile + " does not exist.");
+      // System.out.println("Serialized file " + aggregatedFile + " does not exist.");
       return true;
     }
 
