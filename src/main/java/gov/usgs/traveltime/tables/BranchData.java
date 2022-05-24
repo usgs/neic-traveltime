@@ -104,10 +104,10 @@ public class BranchData {
     this.numMantleTraversals = numMantleTraversals;
 
     if (shell != null) {
-      turnShellName = shell.name;
+      turnShellName = shell.getName();
       radiusTurningRange = new double[2];
-      radiusTurningRange[0] = shell.rBot;
-      radiusTurningRange[1] = shell.rTop;
+      radiusTurningRange[0] = shell.getBottomSampleRadius();
+      radiusTurningRange[1] = shell.getTopSampleRadius();
     } else {
       turnShellName = null;
       radiusTurningRange = null;

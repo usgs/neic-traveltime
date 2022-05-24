@@ -12,7 +12,7 @@ public class CriticalSlowness implements Comparable<CriticalSlowness> {
   private char slownessType;
 
   /** A ShellLoc containing the position of the critical slowness within the shell */
-  private ShellLoc location;
+  private ShellSlownessLocation location;
 
   /** An int containing the P-wave slowness shell index */
   private int pWaveSlownessIndex = -1;
@@ -31,7 +31,8 @@ public class CriticalSlowness implements Comparable<CriticalSlowness> {
    * @param location A ShellLoc containing the location within the Earth model shell
    * @param slowness A double containing the non-dimensional slowness value
    */
-  public CriticalSlowness(char slownessType, int iShell, ShellLoc location, double slowness) {
+  public CriticalSlowness(
+      char slownessType, int iShell, ShellSlownessLocation location, double slowness) {
     this.slownessType = slownessType;
     this.location = location;
     this.slowness = slowness;
@@ -108,9 +109,9 @@ public class CriticalSlowness implements Comparable<CriticalSlowness> {
       return -1;
     } else {
       // If the slownesses are the same look at the position.
-      if (this.location == ShellLoc.BOUNDARY) {
+      if (this.location == ShellSlownessLocation.BOUNDARY) {
         return +1;
-      } else if (this.location == ShellLoc.SHELL) {
+      } else if (this.location == ShellSlownessLocation.SHELL) {
         return -1;
       } else {
         return 0;

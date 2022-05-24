@@ -99,14 +99,13 @@ variables:
     - staging@ghsc/neic/algorithms/neic-traveltime
     #- tags@ghsc/neic/algorithms/neic-traveltime
 
-# NOTE: No production infrastructure yet
-#.production:
-#  except:
-#    - ^.*beta.*$
-#    - ^.*-rc.*$
-#  only:
-#    - tags@ghsc/neic/algorithms/neic-traveltime
-#    - production@ghsc/neic/algorithms/neic-traveltime
+.production:
+  except:
+    #- ^.*beta.*$
+    #- ^.*-rc.*$
+  only:
+    # - tags@ghsc/neic/algorithms/neic-traveltime
+    - production@ghsc/neic/algorithms/neic-traveltime
 #  when: manual
 
 ## --------------------------------------------------
@@ -117,7 +116,6 @@ Build Docker Image:
     - .build_docker_image
   variables:
     APP_NAME: neic-traveltime
-
 
 ## --------------------------------------------------
 # Deploy Stage
@@ -146,16 +144,16 @@ dvbld webttt Service:
   variables:
     APP_NAME: neic-traveltime
 
-# NOTE: No production infrastructure yet
-#Production01 Web Service:
-#  extends:
-#    - .deploy
-#    - .production
-#  tags:
-#    - deploy
-#    - production 
-#    - <prod server>
-#  variables:
-#    APP_NAME: neic-traveltime
+# Production deployment:
+mot1 webttt Service:
+  extends:
+    - .deploy
+    - .production
+  tags:
+    - deploy
+    - production 
+    - mot1
+  variables:
+    APP_NAME: neic-traveltime
 
 

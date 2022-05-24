@@ -1,8 +1,8 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.ModConvert;
+import gov.usgs.traveltime.ModelConversions;
 import gov.usgs.traveltime.Spline;
-import gov.usgs.traveltime.TtStatus;
+import gov.usgs.traveltime.TravelTimeStatus;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -14,51 +14,85 @@ import java.util.Scanner;
 import java.util.TreeSet;
 
 /**
- * Make the various desired travel-time branches by adding and subtracting bits and pieces of tau
- * and range in the major shells of the Earth (mantle, outer core, and inner core). Note that the
- * behavior of the up-going segment is coded, but not added in since it depends on source depth.
+ * MakeBranches is a class that makes the various desired travel-time branches by adding and
+ * subtracting bits and pieces of tau and range in the major shells of the Earth (mantle, outer
+ * core, and inner core). Note that the behavior of the up-going segment is coded, but not added in
+ * since it depends on source depth.
  *
  * @author Ray Buland
  */
 public class MakeBranches {
   /**
-   * This is awkward, but it turns out that the merged slownesses are ordered from the surface to
-   * the center while the tau-range integrals are ordered from the center to the surface.
-   * Unfortunately, the indices in the layers are for the merged slownesses and, of course, we now
-   * need them for the tau-range integrals. This offset connects the two.
+   * A double containing the slowness integral offest. This is awkward, but it turns out that the
+   * merged slownesses are ordered from the surface to the center while the tau-range integrals are
+   * ordered from the center to the surface. Unfortunately, the indices in the layers are for the
+   * merged slownesses and, of course, we now need them for the tau-range integrals. This offset
+   * connects the two.
    */
-  int slowOffset;
+  private int slownessIntegralOffset;
 
-  double[] p, tau, x;
-  double[][] basis;
-  ArrayList<String> phases = null;
-  ArrayList<BranchData> branches;
-  TauModel finModel;
-  ModConvert convert;
-  DecTTbranch decimate;
-  Spline spline;
+  /** A double array containing the non-dimensional ray parameters */
+  private double[] rayParameters;
+
+  /** A double array containing the non-dimensional tau values */
+  private double[] tauValues;
+
+  /** A double array containing the non-dimensional ray travel distances */
+  private double[] rayTravelDistances;
 
   /**
-   * Get the pieces we'll need in the following.
-   *
-   * @param finModel Final tau model of the Earth
-   * @param decimate Branch decimation class
+   * A two dimensional double array containing the non-dimensional interpolation basis coefficients
    */
-  public MakeBranches(TauModel finModel, DecTTbranch decimate) {
-    this.finModel = finModel;
-    convert = finModel.convert;
-    slowOffset = finModel.sPieces.p.length - 1;
-    this.decimate = decimate;
+  private double[][] basisCoefficients;
+
+  /** An ArrayList of strings containing the desired phases to make branches with */
+  private ArrayList<String> phaseList = null;
+
+  /** An ArrayList of branches containing the branches we've made */
+  private ArrayList<BranchData> branchList;
+
+  /** A TauModel object containing the final model */
+  private TauModel finalTTModel;
+
+  /** A ModelConversions object containing the model dependant conversions */
+  private ModelConversions modelConversions;
+
+  /** A DecimateTravelTimeBranch object containing the Branch decimation class */
+  private DecimateTravelTimeBranch branchDecimator;
+
+  /** A Spline object holding the spline interpolation routines */
+  private Spline spline;
+
+  /**
+   * Get the travel-time branches we have constructed.
+   *
+   * @return An array list of BranchData objects containing the Travel-time branch data
+   */
+  public ArrayList<BranchData> getBranchList() {
+    return branchList;
+  }
+
+  /**
+   * MakeBranches Constructor, set the pieces we'll need.
+   *
+   * @param finalTTModel A TauModel object containing the final model
+   * @param branchDecimator A DecimateTravelTimeBranch containing the Branch decimation class
+   */
+  public MakeBranches(TauModel finalTTModel, DecimateTravelTimeBranch branchDecimator) {
+    this.finalTTModel = finalTTModel;
+    modelConversions = finalTTModel.getModelConversions();
+    slownessIntegralOffset = finalTTModel.getIntPiecesS().getRayParameters().length - 1;
+    this.branchDecimator = branchDecimator;
     spline = new Spline();
   }
 
   /**
-   * Read in a list of desired phases.
+   * Function to read in a list of desired phases for the branches from a file.
    *
-   * @param phaseFile Name of the file of desired phases
-   * @return Travel-time status.
+   * @param phaseFile A string containing the path to the the file containing the desired phases
+   * @return A TravelTimeStatus object reporting the travel-time status.
    */
-  public TtStatus readPhases(String phaseFile) {
+  public TravelTimeStatus readPhases(String phaseFile) {
     BufferedInputStream inPhases = null;
     Scanner scan;
 
@@ -66,73 +100,87 @@ public class MakeBranches {
     try {
       inPhases = new BufferedInputStream(new FileInputStream(phaseFile));
     } catch (FileNotFoundException e) {
-      return TtStatus.BAD_PHASE_LIST;
+      return TravelTimeStatus.BAD_PHASE_LIST;
     }
 
     // Read the desired phases.
-    phases = new ArrayList<String>();
+    phaseList = new ArrayList<String>();
     scan = new Scanner(inPhases);
+
     while (scan.hasNext()) {
-      phases.add(scan.next());
+      phaseList.add(scan.next());
     }
     scan.close();
+
     try {
       inPhases.close();
     } catch (IOException e) {
-      return TtStatus.BAD_PHASE_LIST;
+      return TravelTimeStatus.BAD_PHASE_LIST;
     }
-    if (phases.size() == 0) return TtStatus.BAD_PHASE_LIST;
-    else {
+
+    if (phaseList.size() == 0) {
+      return TravelTimeStatus.BAD_PHASE_LIST;
+    } else {
       doBranches();
-      return TtStatus.SUCCESS;
+      return TravelTimeStatus.SUCCESS;
     }
   }
 
   /**
-   * Alternatively, we can take a phase list generated externally.
+   * Function to read in a list of desired phases for the branches from a list.
    *
-   * @param phases List of desired phases
-   * @return Travel-time status
+   * @param phaseList An arraylist of strings containing the desired phases
+   * @return A TravelTimeStatus object reporting the travel-time status.
    */
-  public TtStatus getPhases(ArrayList<String> phases) {
-    if (phases == null) return TtStatus.BAD_PHASE_LIST;
-    if (phases.size() == 0) return TtStatus.BAD_PHASE_LIST;
-    this.phases = phases;
+  public TravelTimeStatus getPhases(ArrayList<String> phaseList) {
+    if (phaseList == null) {
+      return TravelTimeStatus.BAD_PHASE_LIST;
+    }
+
+    if (phaseList.size() == 0) {
+      return TravelTimeStatus.BAD_PHASE_LIST;
+    }
+
+    this.phaseList = phaseList;
     doBranches();
-    return TtStatus.SUCCESS;
+
+    return TravelTimeStatus.SUCCESS;
   }
 
-  /** Use the phase code to figure out what sort of branch to set up. */
+  /** Function that uses the phase codes to figure out what sort of branchs to set up. */
   private void doBranches() {
-    String phCode; // Branch phase code
+    String phaseCode; // Branch phase code
     char[] code;
-    int begShell, endShell;
+    int beginShellIndex, endShellIndex;
 
-    branches = new ArrayList<BranchData>();
+    branchList = new ArrayList<BranchData>();
     if (TablesUtil.deBugLevel > 0) {
       System.out.println();
     }
 
-    for (int j = 0; j < phases.size(); j++) {
-      phCode = phases.get(j);
-      code = phCode.toCharArray();
+    for (int j = 0; j < phaseList.size(); j++) {
+      phaseCode = phaseList.get(j);
+      code = phaseCode.toCharArray();
+
       /** Direct branches (P and S). */
       if (code.length == 1) {
         if (code[0] == 'P' || code[0] == 'S') {
           // Add an up-going branch stub for the direct branches.
           upGoing(code[0]);
+
           // Direct branches ray parameters go from the surface to the center.
-          endShell = finModel.getShellIndex(code[0], ShellName.SURFACE);
+          endShellIndex = finalTTModel.getShellIndex(code[0], ShellName.SURFACE);
+
           refracted(
-              phCode,
+              phaseCode,
               wrapTypes(code[0], code[0], code[0]),
               wrapCounts(1, 1, 1),
-              endShell,
-              finModel.getShell(code[0], endShell).iTop);
+              endShellIndex,
+              finalTTModel.getShell(code[0], endShellIndex).getTopSampleIndex());
         } else {
-          System.out.println("\n***** Unknown phase code type (" + phCode + ") *****\n");
+          System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
         }
-        /** Surface reflected and converted phases. */
+        /** Surface reflected and converted phaseList. */
       } else if (code.length == 2) {
         /** Surface reflected phases (pP, sP, pS, and sS). */
         if (code[0] == 'p' || code[0] == 's') {
@@ -142,59 +190,63 @@ public class MakeBranches {
             if (code[0] == 'p' || code[1] == 'P') {
               // If any part of the phase is a P, it restricts the ray
               // parameter range.
-              endShell = finModel.getShellIndex('P', ShellName.SURFACE);
+              endShellIndex = finalTTModel.getShellIndex('P', ShellName.SURFACE);
+
               refracted(
-                  phCode,
+                  phaseCode,
                   wrapTypes(code[0], code[1], code[1]),
                   wrapCounts(1, 1, 1),
-                  endShell,
-                  finModel.getShell('P', endShell).iTop);
+                  endShellIndex,
+                  finalTTModel.getShell('P', endShellIndex).getTopSampleIndex());
             } else {
               // If the phase is all S, we use all ray parameters.
-              endShell = finModel.getShellIndex('S', ShellName.SURFACE);
+              endShellIndex = finalTTModel.getShellIndex('S', ShellName.SURFACE);
+
               refracted(
-                  phCode,
+                  phaseCode,
                   wrapTypes(code[0], code[1], code[1]),
                   wrapCounts(1, 1, 1),
-                  endShell,
-                  finModel.getShell('S', endShell).iTop);
+                  endShellIndex,
+                  finalTTModel.getShell('S', endShellIndex).getTopSampleIndex());
             }
           } else {
-            System.out.println("\n***** Unknown phase code type (" + phCode + ") *****\n");
+            System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
           }
           /** Surface converted phases (PP, SS, SP, and PS). */
         } else {
           if ((code[0] == 'P' || code[0] == 'S') && (code[1] == 'P' || code[1] == 'S')) {
             if (code[0] == code[1]) {
               // For PP and SS, use ray parameters from the surface to the center.
-              endShell = finModel.getShellIndex(code[0], ShellName.SURFACE);
+              endShellIndex = finalTTModel.getShellIndex(code[0], ShellName.SURFACE);
+
               refracted(
-                  phCode,
+                  phaseCode,
                   wrapTypes(code[0], code[0], code[1]),
                   wrapCounts(2, 2, 2),
-                  endShell,
-                  finModel.getShell(code[0], endShell).iTop);
+                  endShellIndex,
+                  finalTTModel.getShell(code[0], endShellIndex).getTopSampleIndex());
             } else {
               // For SP and PS, just use ray parameters from the surface to the
               // core.
-              begShell = finModel.getShellIndex('S', ShellName.MANTLE_BOTTOM);
-              endShell = finModel.getShellIndex('P', ShellName.SURFACE);
+              beginShellIndex = finalTTModel.getShellIndex('S', ShellName.MANTLE_BOTTOM);
+              endShellIndex = finalTTModel.getShellIndex('P', ShellName.SURFACE);
+
               converted(
-                  phCode,
+                  phaseCode,
                   wrapTypes(code[0], code[0], code[1]),
                   wrapCounts(2, 0, 0),
-                  begShell,
-                  endShell,
-                  finModel.getShell('S', begShell).iTop,
-                  finModel.getShell('P', endShell).iTop);
+                  beginShellIndex,
+                  endShellIndex,
+                  finalTTModel.getShell('S', beginShellIndex).getTopSampleIndex(),
+                  finalTTModel.getShell('P', endShellIndex).getTopSampleIndex());
             }
           } else {
-            System.out.println("\n***** Unknown phase code type (" + phCode + ") *****\n");
+            System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
           }
         }
         /** Outer core reflections (PcP, ScS, ScP, and PcS). */
-      } else if (phCode.contains("c")) {
-        if (phCode.length() == 3
+      } else if (phaseCode.contains("c")) {
+        if (phaseCode.length() == 3
             && (code[0] == 'P' || code[0] == 'S')
             && (code[2] == 'P' || code[2] == 'S')) {
           // These phases have ray parameters that go from the surface to the
@@ -202,28 +254,30 @@ public class MakeBranches {
           if (code[0] == 'P' || code[2] == 'P') {
             // If any part of the phase is a P, it restricts the ray
             // parameter range.
-            endShell = finModel.getShellIndex('P', ShellName.MANTLE_BOTTOM);
+            endShellIndex = finalTTModel.getShellIndex('P', ShellName.MANTLE_BOTTOM);
+
             reflected(
-                phCode,
+                phaseCode,
                 wrapTypes(code[0], code[0], code[2]),
                 wrapCounts(1, 0, 0),
-                endShell,
-                finModel.getShell('P', endShell).iTop);
+                endShellIndex,
+                finalTTModel.getShell('P', endShellIndex).getTopSampleIndex());
           } else {
             // If the phase is all S, we use all ray parameters.
-            endShell = finModel.getShellIndex('S', ShellName.MANTLE_BOTTOM);
+            endShellIndex = finalTTModel.getShellIndex('S', ShellName.MANTLE_BOTTOM);
+
             reflected(
-                phCode,
+                phaseCode,
                 wrapTypes(code[0], code[0], code[2]),
                 wrapCounts(1, 0, 0),
-                endShell,
-                finModel.getShell('S', endShell).iTop);
+                endShellIndex,
+                finalTTModel.getShell('S', endShellIndex).getTopSampleIndex());
           }
         } else {
-          System.out.println("\n***** Unknown phase code type (" + phCode + ") *****\n");
+          System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
         }
         /** Surface reflected and direct inner core reflections. */
-      } else if (phCode.contains("KiK")) {
+      } else if (phaseCode.contains("KiK")) {
         /**
          * Surface reflected inner core reflections (pPKiKP, sPKiKP, pSKiKS, sSKiKS, pSKiKP, sSKiKP,
          * pPKiKS, and sPKiKS).
@@ -231,112 +285,119 @@ public class MakeBranches {
         if (code[0] == 'p' || code[0] == 's') {
           // These phases are restricted to ray parameters that can reach
           // the inner core.
-          if (phCode.length() == 6
+          if (phaseCode.length() == 6
               && (code[1] == 'P' || code[1] == 'S')
               && (code[5] == 'P' || code[5] == 'S')) {
-            endShell = finModel.getShellIndex('P', ShellName.INNER_CORE_BOUNDARY);
+            endShellIndex = finalTTModel.getShellIndex('P', ShellName.INNER_CORE_BOUNDARY);
+
             reflected(
-                phCode,
+                phaseCode,
                 wrapTypes(code[0], code[1], code[5]),
                 wrapCounts(1, 1, 0),
-                endShell,
-                finModel.getShell('P', endShell).iTop);
+                endShellIndex,
+                finalTTModel.getShell('P', endShellIndex).getTopSampleIndex());
           } else {
-            System.out.println("\n***** Unknown phase code type (" + phCode + ") *****\n");
+            System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
           }
           /** Direct inner core reflections (PKiKP, SKiKS, SKiKP, and PKiKS). */
         } else {
           // These phases are restricted to ray parameters that can reach
           // the inner core.
-          if (phCode.length() == 5
+          if (phaseCode.length() == 5
               && (code[0] == 'P' || code[0] == 'S')
               && (code[4] == 'P' || code[4] == 'S')) {
-            endShell = finModel.getShellIndex('P', ShellName.INNER_CORE_BOUNDARY);
+            endShellIndex = finalTTModel.getShellIndex('P', ShellName.INNER_CORE_BOUNDARY);
+
             reflected(
-                phCode,
+                phaseCode,
                 wrapTypes(code[0], code[0], code[4]),
                 wrapCounts(1, 1, 0),
-                endShell,
-                finModel.getShell('P', endShell).iTop);
+                endShellIndex,
+                finalTTModel.getShell('P', endShellIndex).getTopSampleIndex());
           } else {
-            System.out.println("\n***** Unknown phase code type (" + phCode + ") *****\n");
+            System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
           }
         }
         /**
          * Reflections from the under side of the core-mantle boundary (PKKP, SKKS, SKKP, and PKKS).
          */
-      } else if (phCode.contains("KK")) {
+      } else if (phaseCode.contains("KK")) {
         // These phases have to reach the core, but the nature of the core-
         // mantle boundary complicates things.
-        if (phCode.length() == 4
+        if (phaseCode.length() == 4
             && (code[0] == 'P' || code[0] == 'S')
             && (code[3] == 'P' || code[3] == 'S')) {
           if (code[0] == 'P' || code[3] == 'P') {
             // If any part of the phase is a P, it restricts the ray
             // parameter range.
-            endShell = finModel.getShellIndex('P', ShellName.CORE_TOP);
+            endShellIndex = finalTTModel.getShellIndex('P', ShellName.CORE_TOP);
+
             refracted(
-                phCode,
+                phaseCode,
                 wrapTypes(code[0], code[0], code[3]),
                 wrapCounts(1, 2, 2),
-                endShell,
-                finModel.getShell('P', endShell).iTop);
+                endShellIndex,
+                finalTTModel.getShell('P', endShellIndex).getTopSampleIndex());
           } else {
             // If the phase is all S in the mantle, it still changes things.
-            endShell = finModel.getShellIndex('S', ShellName.CORE_TOP);
+            endShellIndex = finalTTModel.getShellIndex('S', ShellName.CORE_TOP);
+
             refracted(
-                phCode,
+                phaseCode,
                 wrapTypes(code[0], code[0], code[3]),
                 wrapCounts(1, 2, 2),
-                endShell,
-                finModel.getShell('S', endShell).iTop);
+                endShellIndex,
+                finalTTModel.getShell('S', endShellIndex).getTopSampleIndex());
           }
         } else {
-          System.out.println("\n***** Unknown phase code type (" + phCode + ") *****\n");
+          System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
         }
         /**
          * Core-mantle boundary conversions (SKP and PKS). Note that direct core phases (PKP and
          * SKS) are included with P and S.
          */
-      } else if (phCode.contains("K")) {
-        if (phCode.length() == 3
+      } else if (phaseCode.contains("K")) {
+        if (phaseCode.length() == 3
             && (code[0] == 'P' || code[0] == 'S')
             && (code[2] == 'P' || code[2] == 'S')) {
           // These phases have to reach the core.
-          endShell = finModel.getShellIndex('P', ShellName.CORE_TOP);
+          endShellIndex = finalTTModel.getShellIndex('P', ShellName.CORE_TOP);
+
           refracted(
-              phCode,
+              phaseCode,
               wrapTypes(code[0], code[0], code[2]),
               wrapCounts(1, 1, 1),
-              endShell,
-              finModel.getShell('P', endShell).iTop);
+              endShellIndex,
+              finalTTModel.getShell('P', endShellIndex).getTopSampleIndex());
         } else {
-          System.out.println("\n***** Unknown phase code type (" + phCode + ") *****\n");
+          System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
         }
         /** We have either a bad or unimplemented phase code. */
       } else {
-        System.out.println("\n***** Unknown phase code type (" + phCode + ") *****\n");
+        System.out.println("\n***** Unknown phase code type (" + phaseCode + ") *****\n");
       }
     }
   }
 
   /**
-   * Build a list of branch end ray parameter values. The final list will be sorted into ascending
-   * order and each value will be unique.
+   * Function to compute a list of branch end ray parameter values. The final list will be sorted
+   * into ascending order and each value will be unique.
    *
-   * @return List of branch end ray parameters.
+   * @return A TreeSet of double values containing the list of branch end ray parameters.
    */
   public TreeSet<Double> getBranchEnds() {
     TreeSet<Double> ends;
 
     ends = new TreeSet<Double>();
-    for (int j = 0; j < branches.size(); j++) {
-      ends.add(branches.get(j).getSlownessRange()[0]);
-      ends.add(branches.get(j).getSlownessRange()[1]);
+    for (int j = 0; j < branchList.size(); j++) {
+      ends.add(branchList.get(j).getSlownessRange()[0]);
+      ends.add(branchList.get(j).getSlownessRange()[1]);
     }
+
     if (TablesUtil.deBugLevel > 1) {
       System.out.println("\nBranch End Ray Parameters:");
       Iterator<Double> iter = ends.iterator();
+
       while (iter.hasNext()) {
         System.out.format("     %8.6f\n", iter.next());
       }
@@ -345,162 +406,172 @@ public class MakeBranches {
   }
 
   /**
-   * Get the travel-time branches we just constructed.
+   * Function to create a stub for an up-going branch.
    *
-   * @return Travel-time branch data
-   */
-  public ArrayList<BranchData> getBranches() {
-    return branches;
-  }
-
-  /**
-   * Create a stub for an up-going branch.
-   *
-   * @param upType Phase type ('P' or 'S')
+   * @param upType A character containing the phase type ('P' or 'S')
    */
   private void upGoing(char upType) {
-    branches.add(newBranch(upType));
+    branchList.add(newUpBranch(upType));
   }
 
   /**
-   * Create a refracted branch. Note that little p and s phases are included here even though they
-   * are surface reflections and perhaps even converted. It can also include compound phases such as
-   * PP and PKKP. It is assumed that all refracted phases will include ray parameters all the way to
-   * the center of the Earth (e.g., P includes PKP).
+   * Function to create a refracted branch. Note that little p and s phases are included here even
+   * though they are surface reflections and perhaps even converted. It can also include compound
+   * phases such as PP and PKKP. It is assumed that all refracted phases will include ray parameters
+   * all the way to the center of the Earth (e.g., P includes PKP).
    *
-   * @param phCode Phase code
-   * @param upType Type of up-going phase, if any
-   * @param downType Type of down-going phase
-   * @param retType Type of the phase coming back up
-   * @param mCount Number of mantle traversals
-   * @param ocCount Number of outer core traversals
-   * @param icCount Number of inner core traversals
-   * @param endShell Ending shell index
-   * @param endP Ending slowness index
+   * @param phaseCode A String containing the desired phase code
+   * @param rayTypes An array of char values containing the the ray types for the up-going,
+   *     down-going, and return paths
+   * @param shellTravCounts An array of double values holding the number of traversals for the
+   *     mantle, outer core, and inner core
+   * @param endShellIndex An integer containing the ending shell index
+   * @param endSlownessIndex An integer containing the ending slowness index
    */
   private void refracted(
-      String phCode, char[] typeSeg, double[] shellCounts, int endShell, int endP) {
-    int minBrnP = 0, maxBrnP;
-    double xTarget, xFactor;
-    BranchData branch;
-    ModelShell shell;
+      String phaseCode,
+      char[] rayTypes,
+      double[] shellTravCounts,
+      int endShellIndex,
+      int endSlownessIndex) {
 
     // Do some setup.
-    endP = slowOffset - endP;
-    xFactor = decFactor(shellCounts, false);
+    int minRayParamIndex = 0;
+    endSlownessIndex = slownessIntegralOffset - endSlownessIndex;
+    double decimationFactor = compDecimationFactor(shellTravCounts, false);
 
     // Create the branch.
-    for (int shIndex = 0; shIndex <= endShell; shIndex++) {
-      shell = finModel.getShell(typeSeg[1], shIndex);
+    for (int shIndex = 0; shIndex <= endShellIndex; shIndex++) {
+      ModelShell shell = finalTTModel.getShell(rayTypes[1], shIndex);
+
       // Figure the index of the maximum ray parameter for this branch.
-      maxBrnP = Math.min(slowOffset - shell.iTop, endP);
-      if (shell.getCode(typeSeg[1]).charAt(0) != 'r' && minBrnP < maxBrnP) {
+      int maxRayParamIndex =
+          Math.min(slownessIntegralOffset - shell.getTopSampleIndex(), endSlownessIndex);
+      if (shell.getTempCode(rayTypes[1]).charAt(0) != 'r' && minRayParamIndex < maxRayParamIndex) {
         // Initialize the branch.
-        branch = buildBranch(phCode, typeSeg, shellCounts, minBrnP, maxBrnP, shell);
+        BranchData branch =
+            buildBranch(
+                phaseCode, rayTypes, shellTravCounts, minRayParamIndex, maxRayParamIndex, shell);
+
         // Deal with low velocity zones at discontinuities.
-        fixLVZ(typeSeg, shellCounts, minBrnP);
+        fixLowVelZone(rayTypes, shellTravCounts, minRayParamIndex);
+
         // Do the decimation.
-        xTarget =
-            xFactor
+        double xTarget =
+            decimationFactor
                 * Math.max(
-                    finModel.getDelX(typeSeg[1], shIndex), finModel.getDelX(typeSeg[2], shIndex));
-        decimate.downGoingDec(branch, xTarget, minBrnP);
+                    finalTTModel.getRangeIncrementTarget(rayTypes[1], shIndex),
+                    finalTTModel.getRangeIncrementTarget(rayTypes[2], shIndex));
+        branchDecimator.downGoingDecimation(branch, xTarget, minRayParamIndex);
+
         // Create the interpolation basis functions.
-        spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());
+        spline.constuctBasisFunctions(branch.getRayParameters(), branch.getBasisCoefficients());
+
         // We need to name each sub-branch.
         branch.setPhaseCode(
-            makePhCode(
-                shellCounts, shell.getCode(typeSeg[1]), shell.getCode(typeSeg[2]), typeSeg[0]));
+            makephaseCode(
+                shellTravCounts,
+                shell.getTempCode(rayTypes[1]),
+                shell.getTempCode(rayTypes[2]),
+                rayTypes[0]));
+
         if (TablesUtil.deBugLevel > 0) {
           System.out.format(
               "     %2d %-8s %3d %3d %3.0f\n",
-              branches.size(), branch.getPhaseCode(), minBrnP, maxBrnP, convert.dimR(xTarget));
+              branchList.size(),
+              branch.getPhaseCode(),
+              minRayParamIndex,
+              maxRayParamIndex,
+              modelConversions.convertDimensionalRadius(xTarget));
         }
+
         // OK.  Add it to the branches list.
-        branches.add(branch);
+        branchList.add(branch);
       }
-      minBrnP = maxBrnP;
+
+      minRayParamIndex = maxRayParamIndex;
     }
   }
 
   /**
-   * Create a reflected branch. Note that little p and s phases are included here as well as
-   * conversions at the reflector (generally the outer or inner core).
+   * Ffnction to create a reflected branch. Note that little p and s phases are included here as
+   * well as conversions at the reflector (generally the outer or inner core).
    *
-   * @param phCode Phase code
-   * @param upType Type of up-going phase, if any
-   * @param downType Type of down-going phase
-   * @param retType Type of the phase coming back up
-   * @param mCount Number of mantle traversals
-   * @param ocCount Number of outer core traversals
-   * @param icCount Number of inner core traversals
-   * @param endShell Ending shell index
-   * @param endP Ending slowness index
+   * @param phaseCode A String containing the desired phase code
+   * @param rayTypes An array of char values containing the the ray types for the up-going,
+   *     down-going, and return paths
+   * @param shellTravCounts An array of double values holding the number of traversals for the
+   *     mantle, outer core, and inner core
+   * @param endShellIndex An integer containing the ending shell index
+   * @param endSlownessIndex An integer containing the ending slowness index
    */
   private void reflected(
-      String phCode, char[] typeSeg, double[] shellCounts, int endShell, int endP) {
-    double xTarget;
-    BranchData branch;
+      String phaseCode,
+      char[] rayTypes,
+      double[] shellTravCounts,
+      int endShellIndex,
+      int endSlownessIndex) {
 
     // Create the branch.
-    endP = slowOffset - endP;
-    branch = buildBranch(phCode, typeSeg, shellCounts, 0, endP, null);
+    endSlownessIndex = slownessIntegralOffset - endSlownessIndex;
+    BranchData branch =
+        buildBranch(phaseCode, rayTypes, shellTravCounts, 0, endSlownessIndex, null);
+
     // Decimate the branch.
-    xTarget =
-        decFactor(shellCounts, true)
+    double xTarget =
+        compDecimationFactor(shellTravCounts, true)
             * Math.max(
-                finModel.getNextDelX(typeSeg[1], endShell),
-                finModel.getNextDelX(typeSeg[2], endShell));
-    decimate.downGoingDec(branch, xTarget, 0);
+                finalTTModel.getNextRangeIncrementTarget(rayTypes[1], endShellIndex),
+                finalTTModel.getNextRangeIncrementTarget(rayTypes[2], endShellIndex));
+    branchDecimator.downGoingDecimation(branch, xTarget, 0);
+
     // Create the interpolation basis functions.
-    spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());
+    spline.constuctBasisFunctions(branch.getRayParameters(), branch.getBasisCoefficients());
     if (TablesUtil.deBugLevel > 0) {
       System.out.format(
           "     %2d %-8s %3d %3d %3.0f\n",
-          branches.size(), branch.getPhaseCode(), 0, endP, convert.dimR(xTarget));
+          branchList.size(),
+          branch.getPhaseCode(),
+          0,
+          endSlownessIndex,
+          modelConversions.convertDimensionalRadius(xTarget));
     }
+
     // Add it to the branch list.
-    branches.add(branch);
+    branchList.add(branch);
   }
 
   /**
-   * Create a surface converted branch. This is a special case and only includes two compound phase:
-   * a P or S down-going from the source to the surface and then converted to an S or P and down-
-   * going again to the surface. Because P'S' and S'P' aren't very useful phases, this case has only
-   * been tested for mantle phases.
+   * Function to create a surface converted branch. This is a special case and only includes two
+   * compound phase: a P or S down-going from the source to the surface and then converted to an S
+   * or P and down- going again to the surface. Because P'S' and S'P' aren't very useful phases,
+   * this case has only been tested for mantle phases.
    *
-   * @param phCode Phase code
-   * @param upType Type of up-going phase, if any
-   * @param downType Type of down-going phase
-   * @param retType Type of the phase coming back up
-   * @param mCount Number of mantle traversals
-   * @param ocCount Number of outer core traversals
-   * @param icCount Number of inner core traversals
-   * @param begShell Beginning shell index
-   * @param endShell Ending shell index
-   * @param begP Beginning slowness index
-   * @param endP Ending slowness index
+   * @param phaseCode A String containing the desired phase code
+   * @param rayTypes An array of char values containing the the ray types for the up-going,
+   *     down-going, and return paths
+   * @param shellTravCounts An array of double values holding the number of traversals for the
+   *     mantle, outer core, and inner core
+   * @param beginShellIndex An integer containing the beginning shell index
+   * @param endShellIndex An integer containing the ending shell index
+   * @param beginSlownessIndex An integer containing the beginning slowness index
+   * @param endSlownessIndex An integer containing the ending slowness index
    */
   private void converted(
-      String phCode,
-      char[] typeSeg,
-      double[] shellCounts,
-      int begShell,
-      int endShell,
-      int begP,
-      int endP) {
-    boolean useShell2 = false;
-    int minBrnP, maxBrnP1, maxBrnP2, maxBrnP, shIndex2;
-    double xTarget, xFactor;
-    BranchData branch;
-    ModelShell shell1, shell2;
-
+      String phaseCode,
+      char[] rayTypes,
+      double[] shellTravCounts,
+      int beginShellIndex,
+      int endShellIndex,
+      int beginSlownessIndex,
+      int endSlownessIndex) {
     // Do some setup.
-    begP = slowOffset - begP;
-    endP = slowOffset - endP;
-    minBrnP = begP;
-    shIndex2 = begShell;
-    xFactor = decFactor(shellCounts, false);
+    boolean useShell2 = false;
+    beginSlownessIndex = slownessIntegralOffset - beginSlownessIndex;
+    endSlownessIndex = slownessIntegralOffset - endSlownessIndex;
+    int minRayParamIndex = beginSlownessIndex;
+    int shIndex2 = beginShellIndex;
+    double decimationFactor = compDecimationFactor(shellTravCounts, false);
 
     /*
      * Create the branch.  This logic is really convoluted because the two possible
@@ -508,318 +579,395 @@ public class MakeBranches {
      * at the surface and followed by a complete down-going P (or S).  This results in
      * lots of the apparently possible phases being geometrically impossible.
      */
-    for (int shIndex1 = begShell; shIndex1 <= endShell; shIndex1++) {
-      shell1 = finModel.getShell(typeSeg[1], shIndex1);
+    for (int shIndex1 = beginShellIndex; shIndex1 <= endShellIndex; shIndex1++) {
+      ModelShell shell1 = finalTTModel.getShell(rayTypes[1], shIndex1);
+
       // Figure the index of the maximum ray parameter for the first ray type.
-      maxBrnP1 = Math.min(slowOffset - shell1.iTop, endP);
-      if (shell1.getCode(typeSeg[1]).charAt(0) != 'r' && minBrnP < maxBrnP1) {
+      int maxBrnP1 =
+          Math.min(slownessIntegralOffset - shell1.getTopSampleIndex(), endSlownessIndex);
+
+      if (shell1.getTempCode(rayTypes[1]).charAt(0) != 'r' && minRayParamIndex < maxBrnP1) {
         // Now find an index of the maximum ray parameter for the second ray
         // type that works.
         do {
-          shell2 = finModel.getShell(typeSeg[2], shIndex2);
-          maxBrnP2 = Math.min(slowOffset - shell2.iTop, endP);
-          if ((shell2.getCode(typeSeg[2]).charAt(0) != 'r' && minBrnP < maxBrnP2)
-              || shIndex2 == finModel.shellSize(typeSeg[2]) - 1) {
-            if (slowOffset - shell1.iTop <= slowOffset - shell2.iTop) {
+          ModelShell shell2 = finalTTModel.getShell(rayTypes[2], shIndex2);
+          int maxBrnP2 =
+              Math.min(slownessIntegralOffset - shell2.getTopSampleIndex(), endSlownessIndex);
+          int maxRayParamIndex;
+
+          if ((shell2.getTempCode(rayTypes[2]).charAt(0) != 'r' && minRayParamIndex < maxBrnP2)
+              || shIndex2 == finalTTModel.shellSize(rayTypes[2]) - 1) {
+            if (slownessIntegralOffset - shell1.getTopSampleIndex()
+                <= slownessIntegralOffset - shell2.getTopSampleIndex()) {
               useShell2 = false;
-              maxBrnP = maxBrnP1;
+              maxRayParamIndex = maxBrnP1;
+
               if (TablesUtil.deBugLevel > 1) {
                 System.out.format(
                     "nph: nph in j l code = %c %d %3d %3d\n",
-                    typeSeg[1], shIndex1, minBrnP, maxBrnP);
+                    rayTypes[1], shIndex1, minRayParamIndex, maxRayParamIndex);
               }
             } else {
               useShell2 = true;
-              maxBrnP = maxBrnP2;
+              maxRayParamIndex = maxBrnP2;
+
               if (TablesUtil.deBugLevel > 1) {
                 System.out.format(
                     "kph: kph ik j l code = %c %d %3d %3d\n",
-                    typeSeg[2], shIndex2, minBrnP, maxBrnP);
+                    rayTypes[2], shIndex2, minRayParamIndex, maxRayParamIndex);
               }
             }
 
             // Initialize the branch.
+            BranchData branch;
             if (!useShell2) {
-              branch = buildBranch(phCode, typeSeg, shellCounts, minBrnP, maxBrnP, shell1);
+              branch =
+                  buildBranch(
+                      phaseCode,
+                      rayTypes,
+                      shellTravCounts,
+                      minRayParamIndex,
+                      maxRayParamIndex,
+                      shell1);
             } else {
-              branch = buildBranch(phCode, typeSeg, shellCounts, minBrnP, maxBrnP, shell2);
+              branch =
+                  buildBranch(
+                      phaseCode,
+                      rayTypes,
+                      shellTravCounts,
+                      minRayParamIndex,
+                      maxRayParamIndex,
+                      shell2);
             }
+
             // Deal with low velocity zones at discontinuities.
-            fixLVZ(typeSeg, shellCounts, minBrnP);
+            fixLowVelZone(rayTypes, shellTravCounts, minRayParamIndex);
+
             // Do the decimation.
-            xTarget =
-                xFactor
+            double xTarget =
+                decimationFactor
                     * Math.max(
-                        finModel.getDelX(typeSeg[1], shIndex1),
-                        finModel.getDelX(typeSeg[2], shIndex2));
-            decimate.downGoingDec(branch, xTarget, minBrnP);
+                        finalTTModel.getRangeIncrementTarget(rayTypes[1], shIndex1),
+                        finalTTModel.getRangeIncrementTarget(rayTypes[2], shIndex2));
+            branchDecimator.downGoingDecimation(branch, xTarget, minRayParamIndex);
+
             // Create the interpolation basis functions.
-            spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());
+            spline.constuctBasisFunctions(branch.getRayParameters(), branch.getBasisCoefficients());
+
             // We need to name each sub-branch.
             branch.setPhaseCode(
-                makePhCode(
-                    shellCounts,
-                    shell1.getCode(typeSeg[1]),
-                    shell2.getCode(typeSeg[2]),
-                    typeSeg[0]));
+                makephaseCode(
+                    shellTravCounts,
+                    shell1.getTempCode(rayTypes[1]),
+                    shell2.getTempCode(rayTypes[2]),
+                    rayTypes[0]));
             if (TablesUtil.deBugLevel > 0) {
               if (TablesUtil.deBugLevel > 1) {
                 System.out.format("shells: %2d %2d\n", shIndex1, shIndex2);
               }
+
               System.out.format(
                   "     %2d %-8s %3d %3d %3.0f %5b\n",
-                  branches.size(),
+                  branchList.size(),
                   branch.getPhaseCode(),
-                  minBrnP,
-                  maxBrnP,
-                  convert.dimR(xTarget),
+                  minRayParamIndex,
+                  maxRayParamIndex,
+                  modelConversions.convertDimensionalRadius(xTarget),
                   useShell2);
             }
+
             // OK.  Add it to the branches list.
-            branches.add(branch);
+            branchList.add(branch);
           } else {
             useShell2 = true;
           }
+
           // Update the start of the next branch.
           if (!useShell2) {
             // We used the outer shell loop.
-            minBrnP = Math.max(minBrnP, maxBrnP1);
+            minRayParamIndex = Math.max(minRayParamIndex, maxBrnP1);
           } else {
             // We used the inner shell loop.
             shIndex2++;
-            minBrnP = Math.max(minBrnP, maxBrnP2);
+            minRayParamIndex = Math.max(minRayParamIndex, maxBrnP2);
           }
+
           // see if we're still in the inner shell loop.
-        } while (useShell2 && minBrnP < maxBrnP1);
+        } while (useShell2 && minRayParamIndex < maxBrnP1);
       } else {
-        minBrnP = Math.max(minBrnP, maxBrnP1);
+        minRayParamIndex = Math.max(minRayParamIndex, maxBrnP1);
       }
     }
   }
 
   /**
-   * For convenience, wrap the traversal counts for the mantle, outer core, and inner core into a
-   * double array.
+   * Convenience function that wraps the traversal counts for the mantle, outer core, and inner core
+   * into a double array.
    *
-   * @param mCount Number of mantle traversals
-   * @param ocCount Number of outer core traversals
-   * @param icCount Number of inner core traversals
-   * @return Traversal counts wrapped into a double array
+   * @param mCount An integer containing the number of mantle traversals
+   * @param ocCount An integer containing the number of outer core traversals
+   * @param icCount An integer containing the number of inner core traversals
+   * @return An array of doubles containing the traversal counts
    */
   private double[] wrapCounts(int mCount, int ocCount, int icCount) {
-    double[] shellCounts;
+    double[] shellTravCounts = new double[3];
 
-    shellCounts = new double[3];
-    shellCounts[0] = mCount;
-    shellCounts[1] = ocCount;
-    shellCounts[2] = icCount;
-    return shellCounts;
+    shellTravCounts[0] = mCount;
+    shellTravCounts[1] = ocCount;
+    shellTravCounts[2] = icCount;
+
+    return shellTravCounts;
   }
 
   /**
-   * For convenience, wrap the ray types for the up-going, down-going, and return paths.
+   * Convenience function that wraps the ray types for the up-going, down-going, and return paths
+   * into a single object.
    *
-   * @param upType Type of up-going phase, if any
-   * @param downType Type of down-going phase
-   * @param retType Type of the phase coming back up
-   * @return Ray path types wrapped into a char array
+   * @param upType A char containing the type of the up-going phase, if any
+   * @param downType A char containing the type of the of down-going phase
+   * @param retType A char containing the type of the of the phase coming back up
+   * @return An array of char varibles containing the ray path types
    */
   private char[] wrapTypes(char upType, char downType, char retType) {
-    char[] typeSeg;
+    char[] rayTypes = new char[3];
 
-    typeSeg = new char[3];
-    typeSeg[0] = upType;
-    typeSeg[1] = downType;
-    typeSeg[2] = retType;
-    return typeSeg;
+    rayTypes[0] = upType;
+    rayTypes[1] = downType;
+    rayTypes[2] = retType;
+
+    return rayTypes;
   }
 
   /**
-   * Create an up-going branch.
+   * Function to create an up-going branch.
    *
-   * @param upType Type of up-going phase
-   * @return Branch data
+   * @param upType A char containing the type of up-going phase
+   * @return A BranchData object containing the branch data
    */
-  private BranchData newBranch(char upType) {
-    BranchData branch;
-
+  private BranchData newUpBranch(char upType) {
     // Create the branch.
-    branch = new BranchData(upType);
+    BranchData branch = new BranchData(upType);
 
     // Set up the ray parameter arrays.
     if (upType == 'P') {
-      branch.setRayParameters(finModel.pPieces.proxyP);
+      branch.setRayParameters(finalTTModel.getIntPiecesP().getProxyRayParameters());
     } else {
-      branch.setRayParameters(finModel.sPieces.proxyP);
+      branch.setRayParameters(finalTTModel.getIntPiecesS().getProxyRayParameters());
     }
+
     branch.setBasisCoefficients(new double[5][branch.getRayParameters().length]);
-    spline.basisSet(branch.getRayParameters(), branch.getBasisCoefficients());
+    spline.constuctBasisFunctions(branch.getRayParameters(), branch.getBasisCoefficients());
     branch.update();
+
     if (TablesUtil.deBugLevel > 0) {
       System.out.format(
           "     %2d %s up     %3d %3d\n",
-          branches.size(), branch.getPhaseCode(), 0, branch.getRayParameters().length - 1);
+          branchList.size(), branch.getPhaseCode(), 0, branch.getRayParameters().length - 1);
     }
+
     return branch;
   }
 
   /**
-   * Create a down-going branch.
+   * Function to create a down-going branch.
    *
-   * @param phCode Phase code
-   * @param typeSeg Types of up-going phase, down-going phase, and phase coming back up
-   * @param countSeg Number of mantle traversals
-   * @param n Number of ray parameter samples
-   * @param shell Model shell where rays in this branch turn
-   * @return Branch data
+   * @param phaseCode A string containing the branch phase code
+   * @param rayTypes An array of char values containing the the ray types for the up-going,
+   *     down-going, and return paths
+   * @param numMantleTrav An integer holding the number of mantle traversals
+   * @param numRayParams An integer containing the number of ray parameter samples
+   * @param shell ModelShell object containing the model shell where rays in this branch turn
+   * @return A BranchData object containing the branch data
    */
-  private BranchData newBranch(
-      String phCode, char[] typeSeg, int countSeg, int n, ModelShell shell) {
-    BranchData branch;
+  private BranchData newDownBranch(
+      String phaseCode, char[] rayTypes, int numMantleTrav, int numRayParams, ModelShell shell) {
+    BranchData branch = new BranchData(phaseCode, rayTypes, numMantleTrav, shell);
 
-    branch = new BranchData(phCode, typeSeg, countSeg, shell);
     // Allocate arrays.
-    branch.setRayParameters(new double[n]);
-    branch.setTauValues(new double[n]);
-    branch.setRayTravelDistances(new double[n]);
-    branch.setBasisCoefficients(new double[5][n]);
+    branch.setRayParameters(new double[numRayParams]);
+    branch.setTauValues(new double[numRayParams]);
+    branch.setRayTravelDistances(new double[numRayParams]);
+    branch.setBasisCoefficients(new double[5][numRayParams]);
+
     // Make the branch data arrays local for convenience.
-    p = branch.getRayParameters();
-    tau = branch.getTauValues();
-    x = branch.getRayTravelDistances();
-    basis = branch.getBasisCoefficients();
+    rayParameters = branch.getRayParameters();
+    tauValues = branch.getTauValues();
+    rayTravelDistances = branch.getRayTravelDistances();
+    basisCoefficients = branch.getBasisCoefficients();
+
     // Initialize them.
-    Arrays.fill(tau, 0d);
-    Arrays.fill(x, 0d);
+    Arrays.fill(tauValues, 0d);
+    Arrays.fill(rayTravelDistances, 0d);
+
     return branch;
   }
 
   /**
-   * Create a down-going branch and populate the ray parameter, tau, and range arrays.
+   * Function to create a down-going branch and populate the ray parameter, tau, and range arrays.
    *
-   * @param phCode Phase code
-   * @param typeSeg Types of up-going phase, down-going phase, and phase coming back up
-   * @param shellCounts The number of traversals of the mantle, outer core, and inner core
-   * @param minBrnP Beginning ray parameter index
-   * @param maxBrnP Ending ray parameter index
-   * @param shell Model shell where rays in this branch turn
-   * @return Branch data
+   * @param phaseCode A string containing the branch phase code
+   * @param rayTypes An array of char values containing the the ray types for the up-going,
+   *     down-going, and return paths
+   * @param shellTravCounts An array of double values holding the number of traversals for the
+   *     mantle, outer core, and inner core
+   * @param minRayParamIndex An integer containing the beginning ray parameter index
+   * @param maxRayParamIndex An integer containing the ending ray parameter index
+   * @param shell ModelShell object containing the model shell where rays in this branch turn
+   * @return A BranchData object containing the branch data
    */
   private BranchData buildBranch(
-      String phCode,
-      char[] typeSeg,
-      double[] shellCounts,
-      int minBrnP,
-      int maxBrnP,
+      String phaseCode,
+      char[] rayTypes,
+      double[] shellTravCounts,
+      int minRayParamIndex,
+      int maxRayParamIndex,
       ModelShell shell) {
-    BranchData branch;
-
     // Initialize the branch.
-    branch = newBranch(phCode, typeSeg, (int) shellCounts[0], maxBrnP - minBrnP + 1, shell);
+    BranchData branch =
+        newDownBranch(
+            phaseCode,
+            rayTypes,
+            (int) shellTravCounts[0],
+            maxRayParamIndex - minRayParamIndex + 1,
+            shell);
+
     // Add up the branch data.
-    for (int i = minBrnP, k = 0; i <= maxBrnP; i++, k++) {
-      p[k] = finModel.getP(i);
-      for (int j = 0; j < shellCounts.length; j++) {
-        tau[k] +=
-            shellCounts[j]
-                * (finModel.getTauSpec(typeSeg[1], i, j) + finModel.getTauSpec(typeSeg[2], i, j));
-        x[k] +=
-            shellCounts[j]
-                * (finModel.getXspec(typeSeg[1], i, j) + finModel.getXspec(typeSeg[2], i, j));
+    for (int i = minRayParamIndex, k = 0; i <= maxRayParamIndex; i++, k++) {
+      rayParameters[k] = finalTTModel.getRayParameters(i);
+
+      for (int j = 0; j < shellTravCounts.length; j++) {
+        tauValues[k] +=
+            shellTravCounts[j]
+                * (finalTTModel.getSpecialTauIntegrals(rayTypes[1], i, j)
+                    + finalTTModel.getSpecialTauIntegrals(rayTypes[2], i, j));
+        rayTravelDistances[k] +=
+            shellTravCounts[j]
+                * (finalTTModel.getSpecialRangeIntegrals(rayTypes[1], i, j)
+                    + finalTTModel.getSpecialRangeIntegrals(rayTypes[2], i, j));
       }
     }
+
     return branch;
   }
 
   /**
-   * If this branch begins just under a low velocity zone (high slowness zone), we need to correct
-   * tau and range.
+   * Function to correct tau and range. If this branch begins just under a low velocity zone (high
+   * slowness zone)
    *
-   * @param typeSeg Types of up-going phase, down-going phase, and phase coming back up
-   * @param shellCounts The number of traversals of the mantle, outer core, and inner core
-   * @param minBrnP Beginning ray parameter index
+   * @param rayTypes An array of char values containing the the ray types for the up-going,
+   *     down-going, and return paths
+   * @param shellTravCounts An array of double values holding the number of traversals for the
+   *     mantle, outer core, and inner core
+   * @param minRayParamIndex An integer containing the beginning ray parameter index
    */
-  private void fixLVZ(char[] typeSeg, double[] shellCounts, int minBrnP) {
-    int lvzIndex;
+  private void fixLowVelZone(char[] rayTypes, double[] shellTravCounts, int minRayParamIndex) {
+    int lvzIndex = finalTTModel.getIndex(rayTypes[1], rayParameters[0]);
 
-    lvzIndex = finModel.getIndex(typeSeg[1], p[0]);
     if (lvzIndex >= 0) {
-      if (finModel.getLvz(typeSeg[1], lvzIndex)) {
+      if (finalTTModel.getLowVelocityZone(rayTypes[1], lvzIndex)) {
         // We have a low velocity zone on the down-going ray.
-        for (int j = 0; j < shellCounts.length; j++) {
-          tau[0] -= shellCounts[j] * finModel.getTauSpec(typeSeg[1], minBrnP, j);
-          x[0] -= shellCounts[j] * finModel.getXspec(typeSeg[1], minBrnP, j);
+        for (int j = 0; j < shellTravCounts.length; j++) {
+          tauValues[0] -=
+              shellTravCounts[j]
+                  * finalTTModel.getSpecialTauIntegrals(rayTypes[1], minRayParamIndex, j);
+          rayTravelDistances[0] -=
+              shellTravCounts[j]
+                  * finalTTModel.getSpecialRangeIntegrals(rayTypes[1], minRayParamIndex, j);
         }
-        tau[0] += shellCounts[0] * finModel.getTauInt(typeSeg[1], lvzIndex)[minBrnP];
-        x[0] += shellCounts[0] * finModel.getXInt(typeSeg[1], lvzIndex)[minBrnP];
+
+        tauValues[0] +=
+            shellTravCounts[0]
+                * finalTTModel.getTauIntegrals(rayTypes[1], lvzIndex)[minRayParamIndex];
+        rayTravelDistances[0] +=
+            shellTravCounts[0]
+                * finalTTModel.getRangeIntegrals(rayTypes[1], lvzIndex)[minRayParamIndex];
       }
     }
-    lvzIndex = finModel.getIndex(typeSeg[2], p[0]);
+
+    lvzIndex = finalTTModel.getIndex(rayTypes[2], rayParameters[0]);
+
     if (lvzIndex >= 0) {
-      if (finModel.getLvz(typeSeg[2], lvzIndex)) {
+      if (finalTTModel.getLowVelocityZone(rayTypes[2], lvzIndex)) {
         // We have a low velocity zone on the returning ray.
-        for (int j = 0; j < shellCounts.length; j++) {
-          tau[0] -= shellCounts[j] * finModel.getTauSpec(typeSeg[2], minBrnP, j);
-          x[0] -= shellCounts[j] * finModel.getXspec(typeSeg[2], minBrnP, j);
+        for (int j = 0; j < shellTravCounts.length; j++) {
+          tauValues[0] -=
+              shellTravCounts[j]
+                  * finalTTModel.getSpecialTauIntegrals(rayTypes[2], minRayParamIndex, j);
+          rayTravelDistances[0] -=
+              shellTravCounts[j]
+                  * finalTTModel.getSpecialRangeIntegrals(rayTypes[2], minRayParamIndex, j);
         }
-        tau[0] += shellCounts[0] * finModel.getTauInt(typeSeg[2], lvzIndex)[minBrnP];
-        x[0] += shellCounts[0] * finModel.getXInt(typeSeg[2], lvzIndex)[minBrnP];
+
+        tauValues[0] +=
+            shellTravCounts[0]
+                * finalTTModel.getTauIntegrals(rayTypes[2], lvzIndex)[minRayParamIndex];
+        rayTravelDistances[0] +=
+            shellTravCounts[0]
+                * finalTTModel.getRangeIntegrals(rayTypes[2], lvzIndex)[minRayParamIndex];
       }
     }
   }
 
   /**
-   * The decimation factor is partly based on the number of traversals of the major model shells
-   * except for reflected phases. Note that this is purely based on experience and guess work.
+   * Function to compute the decimation factor. The decimation factor is partly based on the number
+   * of traversals of the major model shells except for reflected phases. Note that this is purely
+   * based on experience and guess work.
    *
-   * @param shellCounts The number of traversals of the mantle, outer core, and inner core
-   * @param reflected True if this is a reflected phase.
-   * @return Decimation factor
+   * @param shellTravCounts An array of double values holding the number of traversals for the
+   *     mantle, outer core, and inner core
+   * @param reflected A boolean holding the reflected flag, true if this is a reflected phase.
+   * @return A double containing the decimation factor
    */
-  private double decFactor(double[] shellCounts, boolean reflected) {
-    double xFactor;
+  private double compDecimationFactor(double[] shellTravCounts, boolean reflected) {
+    double decimationFactor;
+
     if (!reflected) {
-      xFactor =
+      decimationFactor =
           Math.max(
-              0.75d * (double) Math.max(shellCounts[0], Math.max(shellCounts[1], shellCounts[2])),
+              0.75d
+                  * (double)
+                      Math.max(
+                          shellTravCounts[0], Math.max(shellTravCounts[1], shellTravCounts[2])),
               1d);
     } else {
-      if (shellCounts[1] > 0) {
-        xFactor = 1.5d;
+      if (shellTravCounts[1] > 0) {
+        decimationFactor = 1.5d;
       } else {
-        xFactor = 1d;
+        decimationFactor = 1d;
       }
     }
-    return xFactor;
+
+    return decimationFactor;
   }
 
   /**
-   * We have a phase code for each branch already, but since one tau-p logical branch (e.g., P) can
-   * generate lots of seismologically distinct sub-branches (e.g., Pg, Pb, Pn, P, PKP, and PKIKP),
-   * we need a way of generating the sub-branch names from the temporary phase codes associated with
-   * each model shell.
+   * Generate the phase codes for this branch. While we have a phase code for each branch already,
+   * but since one tau-p logical branch (e.g., P) can generate lots of seismologically distinct
+   * sub-branches (e.g., Pg, Pb, Pn, P, PKP, and PKIKP), we need a way of generating the sub-branch
+   * names from the temporary phase codes associated with each model shell.
    *
-   * @param shellCounts The number of traversals of the mantle, outer core, and inner core
-   * @param downCode The temporary phase code for the down-going ray
-   * @param retCode The temporary phase code for the returning ray
-   * @param upType The phase type of the initial ray (lower case for up-going, upper case for
-   *     down-going)
-   * @return Sub-branch phase code
+   * @param shellTravCounts An array of double values holding the number of traversals for the
+   *     mantle, outer core, and inner core
+   * @param downCode A string containing the the temporary phase code for the down-going ray
+   * @param retCode A string containing the temporary phase code for the returning ray
+   * @param upType A string containing the phase type of the initial ray (lower case for up-going,
+   *     upper case for down-going)
+   * @return A string containing the sub-branch phase code
    */
-  private String makePhCode(double[] shellCounts, String downCode, String retCode, char upType) {
-    String newCode;
-
+  private String makephaseCode(
+      double[] shellTravCounts, String downCode, String retCode, char upType) {
     // Set a default to work with.
-    newCode = downCode.substring(1, 2) + retCode.substring(2);
+    String newCode = downCode.substring(1, 2) + retCode.substring(2);
+
     // See what we really have.
-    if (shellCounts[0] < 2d) {
+    if (shellTravCounts[0] < 2d) {
       // The phase is direct in the mantle (e.g. P).
-      if (shellCounts[1] > 1d) {
+      if (shellTravCounts[1] > 1d) {
         // The phase is reflected from the under side of the core-mantle
         // boundary.  Set a new default.
         newCode =
             downCode.substring(1, 2)
-                + "KKKKKKKK".substring(0, (int) shellCounts[1] - 1)
+                + "KKKKKKKK".substring(0, (int) shellTravCounts[1] - 1)
                 + retCode.substring(2);
       }
     } else {
@@ -835,44 +983,49 @@ public class MakeBranches {
         }
       }
     }
+
     // See if we need to turn an "ab" branch into an "ac" branch.
     if (newCode.charAt(0) == 'S' && (newCode.contains("KSab") || newCode.contains("S'ab"))) {
       newCode = newCode.replace("ab", "ac");
     }
+
     // Add in little "p" or "s" if necessary.
     if (upType == 'p' || upType == 's') {
       newCode = upType + newCode;
     }
+
     return newCode;
   }
 
-  /** Print a list of the desired phases. */
+  /** Function to print a list of the desired phases. */
   public void printPhases() {
     System.out.println("\nPhases:");
-    for (int j = 0; j < phases.size(); j++) {
-      System.out.println("  " + phases.get(j));
+
+    for (int j = 0; j < phaseList.size(); j++) {
+      System.out.println("  " + phaseList.get(j));
     }
   }
 
-  /** Print a list of branch headers. */
+  /** Function to print a list of branch headers. */
   public void printBranches() {
     System.out.println("\n\tBranches");
-    for (int j = 0; j < branches.size(); j++) {
-      System.out.format("%3d %s\n", j, branches.get(j));
+
+    for (int j = 0; j < branchList.size(); j++) {
+      System.out.format("%3d %s\n", j, branchList.get(j));
     }
   }
 
   /**
-   * Print a list of branch headers. This option allows for more flexible printing.
+   * Function to print a list of branch headers. This option allows for more flexible printing.
    *
-   * @param full If true, print the branch data as well
-   * @param nice If true, convert range to degrees
+   * @param full A boolean flag, if true, print the branch data as well
+   * @param nice A boolean flag, if true, modelConversions range to degrees
    */
   public void printBranches(boolean full, boolean nice) {
     System.out.println("\n\tBranches");
 
-    for (int j = 0; j < branches.size(); j++) {
-      branches.get(j).printBranch(full, nice);
+    for (int j = 0; j < branchList.size(); j++) {
+      branchList.get(j).printBranch(full, nice);
     }
   }
 }

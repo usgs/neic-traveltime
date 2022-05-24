@@ -1,8 +1,8 @@
 package gov.usgs.traveltime.tables;
 
 /**
- * Providing names for Earth model shells is a convenience, but turns out to be very handy for
- * understanding the voluminous output.
+ * Enumeration providing names for Earth model shells is a convenience, but turns out to be very
+ * handy for understanding the voluminous output.
  *
  * @author Ray Buland
  */
@@ -14,6 +14,7 @@ public enum ShellName {
   INNER_CORE(1217d, "tPKPdf", "tSKSdf"),
   /** Default radius of the outer core in kilometers. */
   OUTER_CORE(3482d, "tPKPab", "tSKSab"),
+
   /**
    * Default radius of the lower mantle in kilometers (i.e., to the 410 kilometer discontinuity).
    */
@@ -22,6 +23,7 @@ public enum ShellName {
   UPPER_MANTLE(6336d, "tPn", "tSn"),
   /** Default radius of the lower crust in kilometers (i.e., to the Conrad discontinuity). */
   LOWER_CRUST(6351d, "tPb", "tSb"),
+
   /**
    * Default radius of the upper crust in kilometers (i.e., to the free surface). This is, of
    * course, the mean radius of the Earth.
@@ -52,45 +54,54 @@ public enum ShellName {
    */
   MANTLE_BOTTOM(3482d, "", "");
 
-  private final double defRadius;
-  private final String pPhase;
-  private final String sPhase;
+  /** A double containing the default radius of the top discontinuity of the shell in kilometers */
+  private final double defaultRadius;
+
+  /** A String containing the temporary P-wave phase code */
+  private final String tempPCode;
+
+  /** A String containing the temporary S-wave phase code */
+  private final String tempSCode;
 
   /**
-   * The constructor just sets up the default radius.
+   * The ShellName constructor sets up the default radius.
    *
-   * @param defRadius Default radius of the top discontinuity of the shell in kilometers
+   * @param defaultRadius A double containing the default radius of the top discontinuity of the
+   *     shell in kilometers
+   * @param tempPCode A String containing the temporary P-wave phase code
+   * @param tempSCode A String containing the temporary S-wave phase code
    */
-  ShellName(double defRadius, String pPhase, String sPhase) {
-    this.defRadius = defRadius;
-    this.pPhase = pPhase;
-    this.sPhase = sPhase;
+  ShellName(double defaultRadius, String tempPCode, String tempSCode) {
+    this.defaultRadius = defaultRadius;
+    this.tempPCode = tempPCode;
+    this.tempSCode = tempSCode;
   }
 
   /**
-   * Get the default radius.
+   * Function to get the default radius of the top discontinuity of the shell in kilometers
    *
-   * @return The default radius of the top discontinuity of the shell in kilometers
+   * @return A double containing thedefault radius of the top discontinuity of the shell in
+   *     kilometers
    */
-  public double defRadius() {
-    return defRadius;
+  public double getDefaultRadius() {
+    return defaultRadius;
   }
 
   /**
-   * Get the temporary P-wave phase code.
+   * Function to return the temporary P-wave phase code
    *
-   * @return Temporary P-wave phase code
+   * @return A String containing the temporary P-wave phase code
    */
-  public String tmpPcode() {
-    return pPhase;
+  public String getTempPCode() {
+    return tempPCode;
   }
 
   /**
-   * Get the temporary S-wave phase code.
+   * Function to return the temporary S-wave phase code
    *
-   * @return Temporary S-wave phase code
+   * @return A String containing the temporary S-wave phase code
    */
-  public String tmpScode() {
-    return sPhase;
+  public String getTempSCode() {
+    return tempSCode;
   }
 }
