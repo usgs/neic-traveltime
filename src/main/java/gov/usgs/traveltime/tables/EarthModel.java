@@ -1,8 +1,8 @@
 package gov.usgs.traveltime.tables;
 
-import gov.usgs.traveltime.ModConvert;
-import gov.usgs.traveltime.TauUtil;
-import gov.usgs.traveltime.TtStatus;
+import gov.usgs.traveltime.ModelConversions;
+import gov.usgs.traveltime.TauUtilities;
+import gov.usgs.traveltime.TravelTimeStatus;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -10,120 +10,235 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
- * Take care of everything related to one Earth model.
+ * The EarthModel class takes care of everything related to one Earth model.
  *
  * @author Ray Buland
  */
 public class EarthModel {
-  String earthModel; // Model name
-  double rInnerCore = ShellName.INNER_CORE.defRadius();
-  double rOuterCore = ShellName.OUTER_CORE.defRadius();
-  double rUpperMantle = ShellName.LOWER_MANTLE.defRadius();
-  double rMoho = ShellName.UPPER_MANTLE.defRadius();
-  double rConrad = ShellName.LOWER_CRUST.defRadius();
-  double rSurface = ShellName.UPPER_CRUST.defRadius();
-  ModelSample innerCore; // Model at the inner core boundary
-  ModelSample outerCore; // Model at the outer core boundary
-  ModelSample upperMantle; // Model at the upper mantle discontinuity
-  ModelSample moho; // Model at the Moho discontinuity
-  ModelSample conrad; // Model at the Conrad discontinuity
-  ModelSample surface; // Model at the free surface
-  ArrayList<ModelSample> model; // Model storage
-  ArrayList<ModelShell> shells; // Model shell parameters
-  ArrayList<CriticalSlowness> critical; // Critical slownesses
-  EarthModel refModel;
-  ModelInterp interp;
-  ModConvert convert;
+  /** A String holding the name of this earth model */
+  private String earthModelName;
+
+  /** A double containing the inner core boundary radius */
+  private double innerCoreRadius = ShellName.INNER_CORE.getDefaultRadius();
+
+  /** A double containing the outer core boundary radius */
+  private double outerCoreRadius = ShellName.OUTER_CORE.getDefaultRadius();
+
+  /** A double containing the upper mantle discontinuity radius */
+  private double upperMantleRadius = ShellName.LOWER_MANTLE.getDefaultRadius();
+
+  /** A double containing the radius of the Moho discontinuity */
+  private double mohoRadius = ShellName.UPPER_MANTLE.getDefaultRadius();
+
+  /** A double containing the radius of the Conrad discontinuity */
+  private double conradRadius = ShellName.LOWER_CRUST.getDefaultRadius();
+
+  /** A double containg the free surface radius */
+  private double surfaceRadius = ShellName.UPPER_CRUST.getDefaultRadius();
+
+  /** A ModelSample object containing the model at the inner core boundary */
+  private ModelSample innerCoreModel;
+
+  /** A ModelSample object containing the model at the outer core boundary */
+  private ModelSample outerCoreModel;
+
+  /** A ModelSample object containing the model at the upper mantle discontinuity */
+  private ModelSample upperMantleModel;
+
+  /** A ModelSample object containing the model at the Moho discontinuity */
+  private ModelSample mohoModel;
+
+  /** A ModelSample object containing the model at the Conrad discontinuity */
+  private ModelSample conradModel;
+
+  /** A ModelSample object containing the model at the free surfacety */
+  private ModelSample surfaceModel;
+
+  /** An array list of ModelSample objects containing the model */
+  private ArrayList<ModelSample> model;
+
+  /** An array list of ModelShell objects containing the model shell parameters */
+  private ArrayList<ModelShell> shells;
+
+  /** An array list of CriticalSlowness objects containing the model critical slownesses */
+  private ArrayList<CriticalSlowness> criticalSlownesses;
+
+  /** An EarthModel object containing the reference earth model information */
+  private EarthModel referenceModel;
+
+  /** A ModelInterpolation object used for interpolations */
+  private ModelInterpolation ModelInterpolationolations;
+
+  /** A ModelConversions object containing model dependent constants and conversions */
+  ModelConversions modelConversions;
 
   /**
-   * It doesn't take much to get started. In this version, we're going to read in a reference Earth
-   * model from a file.
+   * Function to return the name of this earth model.
    *
-   * @param earthModel Name of the Earth model
-   * @param isCubic True if cubic spline interpolation is to be used
+   * @return A String containing the name of this earth model.
    */
-  public EarthModel(String earthModel, boolean isCubic) {
-    this.earthModel = earthModel;
-    model = new ArrayList<ModelSample>();
-    shells = new ArrayList<ModelShell>();
-    interp = new ModelInterp(model, shells, isCubic);
+  public String getEarthModelName() {
+    return earthModelName;
   }
 
   /**
-   * In this version, we already have a reference Earth model and we're going to re-interpolate it.
+   * Function to return the inner core earth model.
    *
-   * @param refModel Reference Earth model information
-   * @param convert Model dependent constants
+   * @return A ModelSample containing the model at the inner core boundary.
    */
-  public EarthModel(EarthModel refModel, ModConvert convert) {
-    this.refModel = refModel;
-    this.convert = convert;
-    earthModel = refModel.earthModel;
-    model = new ArrayList<ModelSample>();
-    shells = new ArrayList<ModelShell>();
-    critical = new ArrayList<CriticalSlowness>();
+  public ModelSample getInnerCoreModel() {
+    return innerCoreModel;
   }
 
   /**
-   * Read the Earth model file, set up shells, refine internal boundaries, and initialize critical
-   * points.
+   * Function to return the outer core earth model.
    *
-   * @param modelFile Name of the Earth model file
-   * @return Travel-time status
+   * @return A ModelSample containing the model at the outer core boundary.
    */
-  public TtStatus readModel(String modelFile) {
-    String modelCheck;
-    int n, i = 0, last = 0;
+  public ModelSample getOuterCoreModel() {
+    return outerCoreModel;
+  }
+
+  /**
+   * Function to return the model
+   *
+   * @return An array list of ModelSample objects containing the model.
+   */
+  public ArrayList<ModelSample> getModel() {
+    return model;
+  }
+
+  /**
+   * Function to return the model shells compiled by the reference Earth model processing.
+   *
+   * @return An array list of ModelShell objects containing the model.
+   */
+  public ArrayList<ModelShell> getShells() {
+    return shells;
+  }
+
+  /**
+   * Getter for the list of critical slownesses compiled by the reference Earth model processing.
+   *
+   * @return An array list of CriticalSlowness objects containing the critical slownesses
+   */
+  public ArrayList<CriticalSlowness> getCriticalSlownesses() {
+    return criticalSlownesses;
+  }
+
+  /**
+   * Get the model dependent constants and conversions
+   *
+   * @return A ModelConversions object containing model dependent constants and conversions
+   */
+  public ModelConversions getModelConversions() {
+    return modelConversions;
+  }
+
+  /**
+   * Function to return the reference earth model
+   *
+   * @return An EarthModel object containing the reference earth model.
+   */
+  public EarthModel getReferenceModel() {
+    return referenceModel;
+  }
+
+  /**
+   * EarthModel constructor, in this version, we're going to read in a reference Earth model from a
+   * file.
+   *
+   * @param earthModelName A string containing the name of the Earth model
+   * @param isCubic A boolean flag, True if cubic spline interpolation is to be used
+   */
+  public EarthModel(String earthModelName, boolean isCubic) {
+    this.earthModelName = earthModelName;
+
+    model = new ArrayList<ModelSample>();
+    shells = new ArrayList<ModelShell>();
+    ModelInterpolationolations = new ModelInterpolation(model, shells, isCubic);
+  }
+
+  /**
+   * EarthModel constructor, in this version, we already have a reference Earth model and we're
+   * going to re-interpolate it.
+   *
+   * @param referenceModel An EarthModel file containing the reference Earth model information
+   * @param modelConversions A ModelConversions object containing the model dependent constants
+   */
+  public EarthModel(EarthModel referenceModel, ModelConversions modelConversions) {
+    this.referenceModel = referenceModel;
+    this.modelConversions = modelConversions;
+    this.earthModelName = referenceModel.getEarthModelName();
+
+    model = new ArrayList<ModelSample>();
+    shells = new ArrayList<ModelShell>();
+    criticalSlownesses = new ArrayList<CriticalSlowness>();
+  }
+
+  /**
+   * Function to read the Earth model file ffrom disk, set up shells, refine internal boundaries,
+   * and initialize critical points.
+   *
+   * @param modelFile A String containing the path to the Earth model file
+   * @return Return a TravelTimeStatus object containing the travel-time status
+   */
+  public TravelTimeStatus readModelFile(String modelFile) {
     /*
      * We have to read everything in, but we don't need density,
      * anisotropy, or attenuation for the travel-times.
      */
     @SuppressWarnings("unused")
     double r, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa, rLast = 0d;
-    BufferedInputStream inModel;
-    Scanner scan;
 
     // Open and read the phase groups file.
+    BufferedInputStream inModel;
     try {
       inModel = new BufferedInputStream(new FileInputStream(modelFile));
     } catch (FileNotFoundException e) {
-      return TtStatus.BAD_MODEL_READ;
+      return TravelTimeStatus.BAD_MODEL_READ;
     }
-    scan = new Scanner(inModel);
+
+    Scanner scan = new Scanner(inModel);
 
     // Read the header.
-    modelCheck = scan.next();
-    if (!modelCheck.equals(earthModel)) {
+    String modelCheck = scan.next();
+    if (!modelCheck.equals(earthModelName)) {
       System.out.println(
-          "\n***** Error: model name mismatch (earthModel:"
-              + earthModel
+          "\n***** Error: model name mismatch (earthModelName:"
+              + earthModelName
               + " != modelHeader:"
               + modelCheck
               + ") *****\n");
       scan.close();
-      return TtStatus.BAD_MODEL_FILE;
+      return TravelTimeStatus.BAD_MODEL_FILE;
     }
-    n = scan.nextInt();
+
+    int n = scan.nextInt();
     if (!scan.hasNextInt()) {
-      rSurface = scan.nextDouble();
-      rUpperMantle = scan.nextDouble();
-      rMoho = scan.nextDouble();
-      rConrad = scan.nextDouble();
+      surfaceRadius = scan.nextDouble();
+      upperMantleRadius = scan.nextDouble();
+      mohoRadius = scan.nextDouble();
+      conradRadius = scan.nextDouble();
     }
 
     // Read the model points.
+    int last = 0;
+    int i = 0;
     while (scan.hasNextInt()) {
       i = scan.nextInt();
       if (i != ++last) {
         System.out.format("\n***** Warning: sample %d found, %d " + "expected *****\n\n", last, i);
         last = i;
       }
+
       r = scan.nextDouble();
       if (r < rLast) {
         System.out.format("\n***** Error: radius %7.2f out of order " + "*****\n\n", r);
         scan.close();
-        return TtStatus.BAD_MODEL_FILE;
+        return TravelTimeStatus.BAD_MODEL_FILE;
       }
+
       rho = scan.nextDouble();
       vpv = scan.nextDouble();
       vph = scan.nextDouble();
@@ -133,275 +248,275 @@ public class EarthModel {
       qMu = scan.nextDouble();
       qKappa = scan.nextDouble();
       model.add(new ModelSample(r, vpv, vph, vsv, vsh, eta));
+
       // Trap discontinuities.
       if (r == rLast) {
         if (model.size() > 1) {
-          shells.get(shells.size() - 1).addEnd(model.size() - 2, r);
+          shells.get(shells.size() - 1).addTop(model.size() - 2, r);
           shells.add(new ModelShell(model.size() - 2, model.size() - 1, r));
-          bridgeVel(model.size() - 1);
+          bridgeVelocity(model.size() - 1);
         }
+
         shells.add(new ModelShell(model.size() - 1, r));
       }
+
       rLast = r;
     }
+
     // Done, finalize the outermost shell.
-    shells.get(shells.size() - 1).addEnd(model.size() - 1, rLast);
+    shells.get(shells.size() - 1).addTop(model.size() - 1, rLast);
+
     // Do some crude checks.
     if (i != n) {
       System.out.format("\n***** Warning: %d points found, %d " + "expected *****\n\n", n, i);
     }
-    if (rLast != rSurface) {
+
+    if (rLast != surfaceRadius) {
       System.out.format(
           "\n***** Warning: radius of the model is not the "
               + "same as the radius of the Earth (%7.2f != %7.2f)\n",
-          rLast, rSurface);
+          rLast, surfaceRadius);
     }
     // OK. We're good (probably).
     scan.close();
+
     // Set the S velocity to the P velocity in the inner core.
-    elimPKJKP();
+    eliminatePKJKP();
+
     // Interpolate velocity.
-    interp.interpVel();
+    ModelInterpolationolations.interpVel();
+
     // Find important internal boundaries.
     refineBoundaries();
+
     // Initialize the model specific conversion constants.
-    convert = new ModConvert(upperMantle.r, moho.r, conrad.r, surface.r, surface.vs);
+    modelConversions =
+        new ModelConversions(
+            upperMantleModel.getRadius(),
+            mohoModel.getRadius(),
+            conradModel.getRadius(),
+            surfaceModel.getRadius(),
+            surfaceModel.getIsotropicSVelocity());
+
     // Do the Earth flattening transformation.
-    flatten();
-    refModel = this;
-    return TtStatus.SUCCESS;
+    flattenModel();
+    referenceModel = this;
+    return TravelTimeStatus.SUCCESS;
   }
 
-  /** Interpolate the reference Earth model at a standard sampling. */
+  /** Function to interpolate the reference Earth model at a standard sampling. */
   public void interpolate() {
-    int nSamp;
-    double dr, r0, r1, r;
-    ModelShell refShell, newShell;
-
     // Loop over the reference Earth model shells.
-    r1 = 0d;
-    for (int i = 0; i < refModel.shells.size(); i++) {
-      refShell = refModel.shells.get(i);
+    double r1 = 0d;
+    for (int i = 0; i < referenceModel.shells.size(); i++) {
+      ModelShell referenceShell = referenceModel.shells.get(i);
+
       // Initialize the interpolated model shell.
-      if (!refShell.isDisc) {
-        newShell = new ModelShell(refShell, model.size());
-        model.add(new ModelSample(refModel.model.get(refShell.iBot)));
-        bridgeVel(model.size() - 1);
+      ModelShell newShell;
+      if (!referenceShell.getIsDiscontinuity()) {
+        newShell = new ModelShell(referenceShell, model.size());
+        model.add(new ModelSample(referenceModel.model.get(referenceShell.getBottomSampleIndex())));
+        bridgeVelocity(model.size() - 1);
+
         // Figure how many samples we'll need.
-        r0 = r1;
-        r1 = refShell.rTop;
-        nSamp = (int) ((r1 - r0) / TablesUtil.RESAMPLE - 0.5d);
-        dr = (r1 - r0) / (nSamp + 1);
+        double r0 = r1;
+        r1 = referenceShell.getTopSampleRadius();
+        int numSamples = (int) ((r1 - r0) / TablesUtil.RESAMPLE - 0.5d);
+        double dr = (r1 - r0) / (numSamples + 1);
+
         // Fill in the interpolated model.
-        for (int j = 1; j <= nSamp; j++) {
-          r = r0 + j * dr;
-          model.add(new ModelSample(r, refModel.getVel('P', i, r), refModel.getVel('S', i, r)));
+        for (int j = 1; j <= numSamples; j++) {
+          double r = r0 + j * dr;
+          model.add(
+              new ModelSample(
+                  r, referenceModel.getVelocity('P', i, r), referenceModel.getVelocity('S', i, r)));
         }
+
         // Add the top of the shell.
-        newShell.addEnd(model.size(), r1);
-        model.add(new ModelSample(refModel.model.get(refShell.iTop)));
+        newShell.addTop(model.size(), r1);
+        model.add(new ModelSample(referenceModel.model.get(referenceShell.getTopSampleIndex())));
       } else {
-        newShell = new ModelShell(refShell, model.size() - 1);
-        newShell.addEnd(model.size(), r1);
+        newShell = new ModelShell(referenceShell, model.size() - 1);
+        newShell.addTop(model.size(), r1);
       }
+
       shells.add(newShell);
     }
+
     // Apply the Earth flattening transformation.
-    flatten();
+    flattenModel();
+
     // Find critical slownesses (ends of travel-time branches).
-    findCritical();
+    findCriticalPoints();
   }
 
   /**
-   * Interpolate to find V(r).
+   * Function to interpolate the model to find velocity (V(r)).
    *
-   * @param type Wave type (P = compressional, S = shear)
-   * @param r Radius in kilometers
-   * @return Velocity in kilometers/second at radius r
+   * @param waveType A char containing the wave type ('P' = compressional, 'S' = shear)
+   * @param radius A double containing the radius in kilometers
+   * @return A double containing the velocity in kilometers/second at the given radius
    */
-  public double getVel(char type, double r) {
-    if (type == 'P') {
-      return interp.getVp(r);
+  public double getVelocity(char waveType, double radius) {
+    if (waveType == 'P') {
+      return ModelInterpolationolations.getCompressionalVelocity(radius);
     } else {
-      return interp.getVs(r);
+      return ModelInterpolationolations.getSheerVelocity(radius);
     }
   }
 
   /**
-   * Interpolate to find V(r) in a particular shell.
+   * Function to interpolate the model to find velocity (V(r)) in a particular shell.
    *
-   * @param type Wave type (P = compressional, S = shear)
-   * @param shell Shell number
-   * @param r Radius in kilometers
-   * @return Compressional velocity in kilometers/second at radius r
+   * @param waveType A char containing the wave type ('P' = compressional, 'S' = shear)
+   * @param shellIndex An integer containing the shell index number
+   * @param radius A double containing the radius in kilometers
+   * @return A double containing the compressional velocity in kilometers/second at the given radius
    */
-  public double getVel(char type, int shell, double r) {
-    if (type == 'P') {
-      return interp.getVp(shell, r);
+  public double getVelocity(char waveType, int shellIndex, double radius) {
+    if (waveType == 'P') {
+      return ModelInterpolationolations.getCompressionalVelocity(shellIndex, radius);
     } else {
-      return interp.getVs(shell, r);
+      return ModelInterpolationolations.getSheerVelocity(shellIndex, radius);
     }
   }
 
   /**
-   * Get the jth model depth.
+   * Function to get the model depth at a given index.
    *
-   * @param j Sample index
-   * @return Non-dimensional Earth flattened depth
+   * @param index An integer containing the sample index to use
+   * @return A double containing the non-dimensional Earth flattened depth
    */
-  public double getZ(int j) {
-    return model.get(j).z;
+  public double getDepth(int index) {
+    return model.get(index).getDepth();
   }
 
   /**
-   * Get the jth model radius.
+   * Function to get the model radius at a given index.
    *
-   * @param j Sample index
-   * @return Dimensional Earth radius in kilometers
+   * @param index An integer containing the sample index to use
+   * @return A double containing the dimensional Earth radius in kilometers
    */
-  public double getR(int j) {
-    return model.get(j).r;
+  public double getRadius(int index) {
+    return model.get(index).getRadius();
   }
 
   /**
-   * Get the jth model slowness.
+   * Function to get the model slowness at a given index.
    *
-   * @param type Wave type (P = compressional, S = shear)
-   * @param j Sample index
-   * @return Non-dimensional P-wave slowness
+   * @param waveType A char containing the wave type ('P' = compressional, 'S' = shear)
+   * @param index An integer containing the sample index to use
+   * @return A double containing the non-dimensional P-wave slowness
    */
-  public double getSlow(char type, int j) {
-    if (type == 'P') {
-      return model.get(j).slowP;
+  public double getSlowness(char waveType, int index) {
+    if (waveType == 'P') {
+      return model.get(index).getCompressionalWaveSlowness();
     } else {
-      return model.get(j).slowS;
+      return model.get(index).getShearWaveSlowness();
     }
   }
 
   /**
-   * Get the size of the model.
+   * Function to get the size of the model.
    *
-   * @return The number of samples in the Earth model.
+   * @return An integer containing the the number of samples in this Earth model.
    */
   public int size() {
     return model.size();
   }
 
   /**
-   * Getter for ModConvert.
-   *
-   * @return ModConvert
+   * Function to apply the Earth flattening transformation to the model and make all flattened
+   * parameters non-dimensional at the same time.
    */
-  public ModConvert getConvert() {
-    return convert;
-  }
-
-  /**
-   * Getter for the list of critical slownesses compiled by the reference Earth model processing.
-   *
-   * @return List of critical slownesses
-   */
-  public ArrayList<CriticalSlowness> getCritical() {
-    return critical;
-  }
-
-  /**
-   * Apply the Earth flattening transformation to the model and make all flattened parameters
-   * non-dimensional at the same time.
-   *
-   * @param convert Model sensitive conversion constants
-   */
-  private void flatten() {
+  private void flattenModel() {
     for (int j = 0; j < model.size(); j++) {
-      model.get(j).flatten(convert);
+      model.get(j).flatten(modelConversions);
     }
   }
 
   /**
-   * Eliminate the poorly observed PKJKP phase in the inner core by replacing the S velocity with
-   * the P velocity.
+   * Function to eliminate the poorly observed PKJKP phase in the inner core by replacing the S
+   * velocity with the P velocity.
    */
-  private void elimPKJKP() {
-    ModelShell shell;
-
-    shell = shells.get(0);
-    for (int j = shell.iBot; j <= shell.iTop; j++) {
-      model.get(j).elimPKJKP();
+  private void eliminatePKJKP() {
+    ModelShell shell = shells.get(0);
+    for (int j = shell.getBottomSampleIndex(); j <= shell.getTopSampleIndex(); j++) {
+      model.get(j).eliminatePKJKP();
     }
   }
 
   /**
-   * Match the key radii provided with model discontinuities. This is necessary to figure out the
+   * Function match the key radii with model discontinuities. This is necessary to figure out the
    * phase codes.
-   *
-   * @param rUpperMantle Preliminary radius of the upper mantle discontinuity in kilometers
-   * @param rMoho Preliminary radius of the Moho discontinuity in kilometers
-   * @param rConrad Preliminary radius of the Conrad discontinuity in kilometers
-   * @param rSurface Preliminary radius of the free surface in kilometers
    */
   private void refineBoundaries() {
-    double tempIC = TauUtil.DMAX,
-        tempOC = TauUtil.DMAX,
-        tempUM = TauUtil.DMAX,
-        tempM = TauUtil.DMAX,
-        tempC = TauUtil.DMAX,
-        tempFS = TauUtil.DMAX;
-    double rDisc;
-    int iTop;
-    ModelShell shell;
+    double tempIC = TauUtilities.MAXIMUMDOUBLE,
+        tempOC = TauUtilities.MAXIMUMDOUBLE,
+        tempUM = TauUtilities.MAXIMUMDOUBLE,
+        tempM = TauUtilities.MAXIMUMDOUBLE,
+        tempC = TauUtilities.MAXIMUMDOUBLE,
+        tempFS = TauUtilities.MAXIMUMDOUBLE;
 
     // Find the closest boundary to target boundaries.
     for (int j = 0; j < shells.size(); j++) {
-      rDisc = shells.get(j).rTop;
-      iTop = shells.get(j).iTop;
-      if (Math.abs(rDisc - rInnerCore) < Math.abs(tempIC - rInnerCore)) {
+      double rDisc = shells.get(j).getTopSampleRadius();
+      int iTop = shells.get(j).getTopSampleIndex();
+
+      if (Math.abs(rDisc - innerCoreRadius) < Math.abs(tempIC - innerCoreRadius)) {
         tempIC = rDisc;
-        innerCore = model.get(iTop);
+        innerCoreModel = model.get(iTop);
       }
-      if (Math.abs(rDisc - rOuterCore) < Math.abs(tempOC - rOuterCore)) {
+
+      if (Math.abs(rDisc - outerCoreRadius) < Math.abs(tempOC - outerCoreRadius)) {
         tempOC = rDisc;
-        outerCore = model.get(iTop);
+        outerCoreModel = model.get(iTop);
       }
-      if (Math.abs(rDisc - rUpperMantle) < Math.abs(tempUM - rUpperMantle)) {
+
+      if (Math.abs(rDisc - upperMantleRadius) < Math.abs(tempUM - upperMantleRadius)) {
         tempUM = rDisc;
-        upperMantle = model.get(iTop);
+        upperMantleModel = model.get(iTop);
       }
-      if (Math.abs(rDisc - rMoho) < Math.abs(tempM - rMoho)) {
+
+      if (Math.abs(rDisc - mohoRadius) < Math.abs(tempM - mohoRadius)) {
         tempM = rDisc;
-        moho = model.get(iTop);
+        mohoModel = model.get(iTop);
       }
-      if (Math.abs(rDisc - rConrad) < Math.abs(tempC - rConrad)) {
+
+      if (Math.abs(rDisc - conradRadius) < Math.abs(tempC - conradRadius)) {
         tempC = rDisc;
-        conrad = model.get(iTop);
+        conradModel = model.get(iTop);
       }
-      if (Math.abs(rDisc - rSurface) < Math.abs(tempFS - rSurface)) {
+
+      if (Math.abs(rDisc - surfaceRadius) < Math.abs(tempFS - surfaceRadius)) {
         tempFS = rDisc;
-        surface = model.get(iTop);
+        surfaceModel = model.get(iTop);
       }
     }
 
     // Set the radii.
-    rInnerCore = innerCore.r;
-    rOuterCore = outerCore.r;
-    rUpperMantle = upperMantle.r;
-    rMoho = moho.r;
-    rConrad = conrad.r;
-    rSurface = surface.r;
+    innerCoreRadius = innerCoreModel.getRadius();
+    outerCoreRadius = outerCoreModel.getRadius();
+    upperMantleRadius = upperMantleModel.getRadius();
+    mohoRadius = mohoModel.getRadius();
+    conradRadius = conradModel.getRadius();
+    surfaceRadius = surfaceModel.getRadius();
 
     // Go around again setting up the shells.
     for (int j = 0; j < shells.size(); j++) {
-      shell = shells.get(j);
-      if (!shell.isDisc) {
-        rDisc = shell.rTop;
-        if (rDisc <= rInnerCore) {
+      ModelShell shell = shells.get(j);
+      if (!shell.getIsDiscontinuity()) {
+        double rDisc = shell.getTopSampleRadius();
+
+        if (rDisc <= innerCoreRadius) {
           shell.addName(ShellName.INNER_CORE, Double.NaN, TablesUtil.DELX[0]);
-        } else if (rDisc <= rOuterCore) {
+        } else if (rDisc <= outerCoreRadius) {
           shell.addName(ShellName.OUTER_CORE, Double.NaN, TablesUtil.DELX[1]);
-        } else if (rDisc <= rUpperMantle) {
+        } else if (rDisc <= upperMantleRadius) {
           shell.addName(ShellName.LOWER_MANTLE, Double.NaN, TablesUtil.DELX[2]);
-        } else if (rDisc <= rMoho) {
+        } else if (rDisc <= mohoRadius) {
           shell.addName(ShellName.UPPER_MANTLE, Double.NaN, TablesUtil.DELX[3]);
-        } else if (rDisc <= rConrad) {
+        } else if (rDisc <= conradRadius) {
           shell.addName(ShellName.LOWER_CRUST, Double.NaN, TablesUtil.DELX[4]);
         } else {
           shell.addName(ShellName.UPPER_CRUST, Double.NaN, TablesUtil.DELX[5]);
@@ -411,26 +526,27 @@ public class EarthModel {
 
     // Go around yet again setting up the discontinuities.
     for (int j = 0; j < shells.size(); j++) {
-      shell = shells.get(j);
-      if (shell.isDisc) {
-        rDisc = shell.rTop;
-        if (rDisc == rInnerCore) {
+      ModelShell shell = shells.get(j);
+      if (shell.getIsDiscontinuity()) {
+        double rDisc = shell.getTopSampleRadius();
+
+        if (rDisc == innerCoreRadius) {
           shell.addName(ShellName.INNER_CORE_BOUNDARY, Double.NaN, TablesUtil.DELX[1]);
-        } else if (rDisc == rOuterCore) {
+        } else if (rDisc == outerCoreRadius) {
           shell.addName(ShellName.CORE_MANTLE_BOUNDARY, Double.NaN, TablesUtil.DELX[2]);
-        } else if (rDisc == rMoho) {
+        } else if (rDisc == mohoRadius) {
           shell.addName(ShellName.MOHO_DISCONTINUITY, Double.NaN, TablesUtil.DELX[4]);
-        } else if (rDisc == rConrad) {
-          shell.addName(ShellName.CONRAD_DISCONTINUITY, rSurface - rDisc, TablesUtil.DELX[5]);
+        } else if (rDisc == conradRadius) {
+          shell.addName(ShellName.CONRAD_DISCONTINUITY, surfaceRadius - rDisc, TablesUtil.DELX[5]);
         } else {
-          if (rDisc < rUpperMantle) {
-            shell.addName(null, rSurface - rDisc, TablesUtil.DELX[2]);
-          } else if (rDisc < rMoho) {
-            shell.addName(null, rSurface - rDisc, TablesUtil.DELX[3]);
-          } else if (rDisc < rConrad) {
-            shell.addName(null, rSurface - rDisc, TablesUtil.DELX[4]);
+          if (rDisc < upperMantleRadius) {
+            shell.addName(null, surfaceRadius - rDisc, TablesUtil.DELX[2]);
+          } else if (rDisc < mohoRadius) {
+            shell.addName(null, surfaceRadius - rDisc, TablesUtil.DELX[3]);
+          } else if (rDisc < conradRadius) {
+            shell.addName(null, surfaceRadius - rDisc, TablesUtil.DELX[4]);
           } else {
-            shell.addName(null, rSurface - rDisc, TablesUtil.DELX[5]);
+            shell.addName(null, surfaceRadius - rDisc, TablesUtil.DELX[5]);
           }
         }
       }
@@ -438,103 +554,151 @@ public class EarthModel {
   }
 
   /**
-   * If velocity is nearly continuous across shell boundaries, assume that it should be exactly
-   * continuous and make it so.
+   * Function to bridge shell velocities. If velocity is nearly continuous across shell boundaries,
+   * assume that it should be exactly continuous and make it so.
    *
-   * @param index Index of the model sample at the bottom of the new shell
+   * @param index An integer containing the index of the model sample at the bottom of the new shell
    */
-  private void bridgeVel(int index) {
+  private void bridgeVelocity(int index) {
     if (index > 0) {
-      if (Math.abs(model.get(index).vp - model.get(index - 1).vp)
-          <= TablesUtil.VELOCITYTOL * model.get(index).vp) {
-        model.get(index).vp = 0.5d * (model.get(index).vp + model.get(index - 1).vp);
-        model.get(index - 1).vp = model.get(index).vp;
+      if (Math.abs(
+              model.get(index).getIsotropicPVelocity()
+                  - model.get(index - 1).getIsotropicPVelocity())
+          <= TablesUtil.VELOCITYTOL * model.get(index).getIsotropicPVelocity()) {
+        model
+            .get(index)
+            .setIsotropicPVelocity(
+                0.5d
+                    * (model.get(index).getIsotropicPVelocity()
+                        + model.get(index - 1).getIsotropicPVelocity()));
+        model.get(index - 1).setIsotropicPVelocity(model.get(index).getIsotropicPVelocity());
       }
-      if (Math.abs(model.get(index).vs - model.get(index - 1).vs)
-          <= TablesUtil.VELOCITYTOL * model.get(index).vs) {
-        model.get(index).vs = 0.5d * (model.get(index).vs + model.get(index - 1).vs);
-        model.get(index - 1).vs = model.get(index).vs;
+
+      if (Math.abs(
+              model.get(index).getIsotropicSVelocity()
+                  - model.get(index - 1).getIsotropicSVelocity())
+          <= TablesUtil.VELOCITYTOL * model.get(index).getIsotropicSVelocity()) {
+        model
+            .get(index)
+            .setIsotropicSVelocity(
+                0.5d
+                    * (model.get(index).getIsotropicSVelocity()
+                        + model.get(index - 1).getIsotropicSVelocity()));
+        model.get(index - 1).setIsotropicSVelocity(model.get(index).getIsotropicSVelocity());
       }
     }
   }
 
   /**
-   * Collecting the critical points. A critical point is a slowness that must be sampled exactly
-   * because it will be the end of a branch for a surface focus event.
+   * Funtion to collect the critical points. A critical point is a slowness that must be sampled
+   * exactly because it will be the end of a branch for a surface focus event.
    */
-  private void findCritical() {
-    boolean inLVZ;
-    ModelSample sample, lastSample;
-    ModelShell shell = null;
-
+  private void findCriticalPoints() {
     // The slownesses above and below each discontinuity in the model
     // will be a branch end point.
+    ModelShell shell = null;
     for (int j = 0; j < shells.size(); j++) {
       shell = shells.get(j);
-      critical.add(
+      criticalSlownesses.add(
           new CriticalSlowness(
               'P',
               j,
-              (shell.isDisc ? ShellLoc.BOUNDARY : ShellLoc.SHELL),
-              model.get(shell.iBot).slowP));
-      if (model.get(shell.iBot).slowP != model.get(shell.iBot).slowS) {
-        critical.add(
+              (shell.getIsDiscontinuity()
+                  ? ShellSlownessLocation.BOUNDARY
+                  : ShellSlownessLocation.SHELL),
+              model.get(shell.getBottomSampleIndex()).getCompressionalWaveSlowness()));
+
+      if (model.get(shell.getBottomSampleIndex()).getCompressionalWaveSlowness()
+          != model.get(shell.getBottomSampleIndex()).getShearWaveSlowness()) {
+        criticalSlownesses.add(
             new CriticalSlowness(
                 'S',
                 j,
-                (shell.isDisc ? ShellLoc.BOUNDARY : ShellLoc.SHELL),
-                model.get(shell.iBot).slowS));
+                (shell.getIsDiscontinuity()
+                    ? ShellSlownessLocation.BOUNDARY
+                    : ShellSlownessLocation.SHELL),
+                model.get(shell.getBottomSampleIndex()).getShearWaveSlowness()));
       }
     }
-    critical.add(
-        new CriticalSlowness('P', shells.size() - 1, ShellLoc.SHELL, model.get(shell.iTop).slowP));
-    critical.add(
-        new CriticalSlowness('S', shells.size() - 1, ShellLoc.SHELL, model.get(shell.iTop).slowS));
+
+    criticalSlownesses.add(
+        new CriticalSlowness(
+            'P',
+            shells.size() - 1,
+            ShellSlownessLocation.SHELL,
+            model.get(shell.getTopSampleIndex()).getCompressionalWaveSlowness()));
+
+    criticalSlownesses.add(
+        new CriticalSlowness(
+            'S',
+            shells.size() - 1,
+            ShellSlownessLocation.SHELL,
+            model.get(shell.getTopSampleIndex()).getShearWaveSlowness()));
 
     /*
      * Now look for high slowness zones.  Note that this is not quite the
      * same as low velocity zones because of the definition of slowness in
      * the spherical earth.  First do the P-wave slowness.
      */
-    inLVZ = false;
+    boolean inLVZ = false;
     for (int i = 0; i < shells.size(); i++) {
       shell = shells.get(i);
-      sample = model.get(shell.iBot);
-      for (int j = shell.iBot + 1; j <= shell.iTop; j++) {
-        lastSample = sample;
+      ModelSample sample = model.get(shell.getBottomSampleIndex());
+
+      for (int j = shell.getBottomSampleIndex() + 1; j <= shell.getTopSampleIndex(); j++) {
+        ModelSample lastSample = sample;
         sample = model.get(j);
+
         if (!inLVZ) {
-          if (sample.slowP <= lastSample.slowP) {
+          if (sample.getCompressionalWaveSlowness() <= lastSample.getCompressionalWaveSlowness()) {
             inLVZ = true;
-            critical.add(new CriticalSlowness('P', i, ShellLoc.SHELL, lastSample.slowP));
-            shell.setLVZ();
+            criticalSlownesses.add(
+                new CriticalSlowness(
+                    'P',
+                    i,
+                    ShellSlownessLocation.SHELL,
+                    lastSample.getCompressionalWaveSlowness()));
+            shell.setHasLowVelocityZone(true);
           }
         } else {
-          if (sample.slowP >= lastSample.slowP) {
+          if (sample.getCompressionalWaveSlowness() >= lastSample.getCompressionalWaveSlowness()) {
             inLVZ = false;
-            critical.add(new CriticalSlowness('P', i, ShellLoc.SHELL, lastSample.slowP));
+            criticalSlownesses.add(
+                new CriticalSlowness(
+                    'P',
+                    i,
+                    ShellSlownessLocation.SHELL,
+                    lastSample.getCompressionalWaveSlowness()));
           }
         }
       }
     }
+
     // Now do the S-wave slowness.
     inLVZ = false;
+
     for (int i = 0; i < shells.size(); i++) {
       shell = shells.get(i);
-      sample = model.get(shell.iBot);
-      for (int j = shell.iBot + 1; j <= shell.iTop; j++) {
-        lastSample = sample;
+      ModelSample sample = model.get(shell.getBottomSampleIndex());
+
+      for (int j = shell.getBottomSampleIndex() + 1; j <= shell.getTopSampleIndex(); j++) {
+        ModelSample lastSample = sample;
         sample = model.get(j);
+
         if (!inLVZ) {
-          if (sample.slowS <= lastSample.slowS) {
+          if (sample.getShearWaveSlowness() <= lastSample.getShearWaveSlowness()) {
             inLVZ = true;
-            critical.add(new CriticalSlowness('S', i, ShellLoc.SHELL, lastSample.slowS));
-            shell.setLVZ();
+            criticalSlownesses.add(
+                new CriticalSlowness(
+                    'S', i, ShellSlownessLocation.SHELL, lastSample.getShearWaveSlowness()));
+            shell.setHasLowVelocityZone(true);
           }
         } else {
-          if (sample.slowS >= lastSample.slowS) {
+          if (sample.getShearWaveSlowness() >= lastSample.getShearWaveSlowness()) {
             inLVZ = false;
-            critical.add(new CriticalSlowness('S', i, ShellLoc.SHELL, lastSample.slowS));
+            criticalSlownesses.add(
+                new CriticalSlowness(
+                    'S', i, ShellSlownessLocation.SHELL, lastSample.getShearWaveSlowness()));
           }
         }
       }
@@ -542,41 +706,44 @@ public class EarthModel {
 
     // Add the missing shells.
     fixShells();
+
     // Sort the critical slownesses into order.
-    critical.sort(null);
+    criticalSlownesses.sort(null);
+
     // And remove duplicates.
-    for (int j = 1; j < critical.size(); j++) {
-      if (critical.get(j).isSame(critical.get(j - 1))) {
-        critical.remove(j);
+    for (int j = 1; j < criticalSlownesses.size(); j++) {
+      if (criticalSlownesses.get(j).isSame(criticalSlownesses.get(j - 1))) {
+        criticalSlownesses.remove(j);
         j--;
       }
     }
   }
 
   /**
-   * Add the shell indices for the model velocities for which the critical slownesses aren't
-   * actually critical. For example, if a critical slowness corresponds to the end of a P-wave
-   * branch, we will need to add the S-wave shell that the slowness falls into. At the same time fix
-   * any out of order critical points (typically due to low velocity zones).
+   * Function to add the shell indices for the model velocities for which the critical slownesses
+   * aren't actually critical. For example, if a critical slowness corresponds to the end of a
+   * P-wave branch, we will need to add the S-wave shell that the slowness falls into. At the same
+   * time fix any out of order critical points (typically due to low velocity zones).
    */
   private void fixShells() {
-    ModelShell shell;
-    CriticalSlowness crit;
+    for (int i = 0; i < criticalSlownesses.size(); i++) {
+      CriticalSlowness crit = criticalSlownesses.get(i);
 
-    for (int i = 0; i < critical.size(); i++) {
-      crit = critical.get(i);
       // Add or check/fix P slowness shells.
       for (int j = shells.size() - 1; j >= 0; j--) {
-        shell = shells.get(j);
-        if (crit.getSlowness() >= model.get(shell.iBot).slowP) {
+        ModelShell shell = shells.get(j);
+
+        if (crit.getSlowness()
+            >= model.get(shell.getBottomSampleIndex()).getCompressionalWaveSlowness()) {
           crit.setShellIndex('P', j);
           break;
         }
       }
       // Add or check/fix S slowness shells.
       for (int j = shells.size() - 1; j >= 0; j--) {
-        shell = shells.get(j);
-        if (crit.getSlowness() >= model.get(shell.iBot).slowS) {
+        ModelShell shell = shells.get(j);
+
+        if (crit.getSlowness() >= model.get(shell.getBottomSampleIndex()).getShearWaveSlowness()) {
           crit.setShellIndex('S', j);
           break;
         }
@@ -588,21 +755,22 @@ public class EarthModel {
   public void printModel() {
     System.out.format(
         "\n%s %d %7.2f %7.2f %7.2f %7.2f %7.2f %7.2f\n",
-        earthModel,
+        earthModelName,
         model.size(),
-        innerCore.r,
-        outerCore.r,
-        upperMantle.r,
-        moho.r,
-        conrad.r,
-        surface.r);
+        innerCoreModel.getRadius(),
+        outerCoreModel.getRadius(),
+        upperMantleModel.getRadius(),
+        mohoModel.getRadius(),
+        conradModel.getRadius(),
+        surfaceModel.getRadius());
+
     for (int j = 0; j < model.size(); j++) {
       System.out.format("\t%3d: %s\n", j, model.get(j).printSample(false, null));
     }
   }
 
   /**
-   * Print the model.
+   * Function to print the model to the screen.
    *
    * @param flat If true print the Earth flattened parameters
    * @param nice If true print dimensional depths
@@ -613,32 +781,33 @@ public class EarthModel {
       if (nice) {
         System.out.format(
             "\n%s %d %7.2f %7.2f %7.2f %7.2f %7.2f %7.2f\n",
-            refModel.earthModel,
+            referenceModel.getEarthModelName(),
             model.size(),
-            convert.realZ(refModel.surface.z),
-            convert.realZ(refModel.conrad.z),
-            convert.realZ(refModel.moho.z),
-            convert.realZ(refModel.upperMantle.z),
-            convert.realZ(refModel.outerCore.z),
-            convert.realZ(refModel.innerCore.z));
+            modelConversions.computeDimensionalDepth(referenceModel.surfaceModel.getDepth()),
+            modelConversions.computeDimensionalDepth(referenceModel.conradModel.getDepth()),
+            modelConversions.computeDimensionalDepth(referenceModel.mohoModel.getDepth()),
+            modelConversions.computeDimensionalDepth(referenceModel.upperMantleModel.getDepth()),
+            modelConversions.computeDimensionalDepth(referenceModel.outerCoreModel.getDepth()),
+            modelConversions.computeDimensionalDepth(referenceModel.innerCoreModel.getDepth()));
         System.out.println("\t        R         Z    slowP    slowS");
       } else {
         System.out.format(
             "\n%s %d %7.4f %7.4f %7.4f %7.4f %7.4f %7.4f\n",
-            refModel.earthModel,
+            referenceModel.getEarthModelName(),
             model.size(),
-            refModel.surface.z,
-            refModel.conrad.z,
-            refModel.moho.z,
-            refModel.upperMantle.z,
-            refModel.outerCore.z,
-            refModel.innerCore.z);
+            referenceModel.surfaceModel.getDepth(),
+            referenceModel.conradModel.getDepth(),
+            referenceModel.mohoModel.getDepth(),
+            referenceModel.upperMantleModel.getDepth(),
+            referenceModel.outerCoreModel.getDepth(),
+            referenceModel.innerCoreModel.getDepth());
         System.out.println("\t        R         Z    slowP    slowS");
       }
+
       int n = model.size() - 1;
       for (int j = n; j >= 0; j--) {
         if (nice) {
-          System.out.format("\t%3d: %s\n", n - j, model.get(j).printSample(true, convert));
+          System.out.format("\t%3d: %s\n", n - j, model.get(j).printSample(true, modelConversions));
         } else {
           System.out.format("\t%3d: %s\n", n - j, model.get(j).printSample(true, null));
         }
@@ -646,35 +815,38 @@ public class EarthModel {
     } else {
       System.out.format(
           "\n%s %d %7.2f %7.2f %7.2f %7.2f %7.2f %7.2f\n",
-          refModel.earthModel,
+          referenceModel.getEarthModelName(),
           model.size(),
-          refModel.innerCore.r,
-          refModel.outerCore.r,
-          refModel.upperMantle.r,
-          refModel.moho.r,
-          refModel.conrad.r,
-          refModel.surface.r);
+          referenceModel.innerCoreModel.getRadius(),
+          referenceModel.outerCoreModel.getRadius(),
+          referenceModel.upperMantleModel.getRadius(),
+          referenceModel.mohoModel.getRadius(),
+          referenceModel.conradModel.getRadius(),
+          referenceModel.surfaceModel.getRadius());
       System.out.println("                   R     Vp      Vs");
+
       for (int j = 0; j < model.size(); j++) {
         System.out.format("\t%3d: %s\n", j, model.get(j).printSample(false, null));
       }
     }
   }
 
-  /** Print the shell limits. */
+  /** Function to print the shell limits to the screen. */
   public void printShells() {
     System.out.println("\n\t\tShells:");
+
     for (int j = 0; j < shells.size(); j++) {
       System.out.format("%3d   %s\n", j, shells.get(j).toString());
     }
   }
 
-  /** Print the (potentially) critical points. */
-  public void printCritical() {
+  /** Function to print the (potentially) critical points. */
+  public void printCriticalPoints() {
     System.out.println("\n\t\t  Critical points:");
-    int n = critical.size() - 1;
+    int n = criticalSlownesses.size() - 1;
+
     for (int j = n; j >= 0; j--) {
-      System.out.format("\t  %3d %s\n", n - j, critical.get(j));
+      System.out.format("\t  %3d %s\n", n - j, criticalSlownesses.get(j));
     }
   }
 }
