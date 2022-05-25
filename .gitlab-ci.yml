@@ -1,9 +1,8 @@
 image: ${DEVOPS_REGISTRY}usgs/centos:latest
 
 stages:
-#  - test
+  - test
   - build
-#  - scan
   - deploy
 
 variables:
@@ -18,43 +17,11 @@ variables:
 ## --------------------------------------------------
 # Templates
 ## --------------------------------------------------
-
 .adjust_image_names:
   before_script:
     - IMAGE_NAME=${APP_NAME}:${CI_COMMIT_REF_SLUG}
-#    - IMAGE_NAME=${IMAGE_NAME/:development/:dev}
-#    - IMAGE_NAME=${IMAGE_NAME/:staging/:stage}
-#    - IMAGE_NAME=${IMAGE_NAME/:production/:prod}
     - INTERNAL_IMAGE_NAME=${ALGORITHMS_CI_REGISTRY_IMAGE}/${IMAGE_NAME}
     - STACK_NAME=${APP_NAME}
-
-.build_docker_image:
-  cache: {}
-  extends:
-    - .adjust_image_names
-  image: docker:19.03-git
-  only:
-    - development@ghsc/neic/algorithms/neic-traveltime
-    - staging@ghsc/neic/algorithms/neic-traveltime
-    - production@ghsc/neic/algorithms/neic-traveltime
-  script:
-    # Build the container
-    - docker build
-      --pull
-      --build-arg FROM_IMAGE=${FROM_IMAGE}
-      --build-arg GIT_BRANCH_NAME=${CI_COMMIT_REF_NAME}
-      --build-arg GIT_COMMIT_SHA=${CI_COMMIT_SHA}
-      --tag local/${IMAGE_NAME} .
-   
-    # Tag and Push image to algorithms registry
-    - docker tag local/${IMAGE_NAME} ${INTERNAL_IMAGE_NAME}
-    - docker push ${INTERNAL_IMAGE_NAME}
-    - docker image rm ${INTERNAL_IMAGE_NAME}
-  services:
-    - docker:19.03-dind
-  stage: build
-  tags:
-    - build
 
 .deploy:
   cache: {}
@@ -89,33 +56,75 @@ variables:
   tags:
     - deploy
 
-.development:
-  only:
-    - development@ghsc/neic/algorithms/neic-traveltime
-    #- tags@ghsc/neic/algorithms/neic-traveltime
-
-.staging:
-  only:
-    - staging@ghsc/neic/algorithms/neic-traveltime
-    #- tags@ghsc/neic/algorithms/neic-traveltime
-
-.production:
-  except:
-    #- ^.*beta.*$
-    #- ^.*-rc.*$
-  only:
-    # - tags@ghsc/neic/algorithms/neic-traveltime
-    - production@ghsc/neic/algorithms/neic-traveltime
-#  when: manual
-
 ## --------------------------------------------------
 # Build Stage
 ## --------------------------------------------------
 Build Docker Image:
+  cache: {}
   extends:
-    - .build_docker_image
+    - .adjust_image_names
+  image: ${DEVOPS_REGISTRY}docker:19.03-git
+  only:
+    - development@ghsc/neic/algorithms/neic-traveltime
+    - staging@ghsc/neic/algorithms/neic-traveltime
+    - production@ghsc/neic/algorithms/neic-traveltime
+  script:
+    # Build the container
+    - docker build
+      --pull
+      --build-arg FROM_IMAGE=${FROM_IMAGE}
+      --build-arg GIT_BRANCH_NAME=${CI_COMMIT_REF_NAME}
+      --build-arg GIT_COMMIT_SHA=${CI_COMMIT_SHA}
+      --tag local/${IMAGE_NAME} .
+   
+    ## trivy scan before push
+    - wget https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
+    - tar zxvf trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
+    # fail LOW,MEDIUM vulnerabilities that have a fix available
+    - ./trivy image --exit-code 1 --ignore-unfixed --severity LOW,MEDIUM "${LOCAL_IMAGE}";
+    # fail HIGH,CRITICAL vulnerabilities
+    - ./trivy image --exit-code 1 --severity HIGH,CRITICAL "${LOCAL_IMAGE}";
+
+    # Tag and Push image to algorithms registry
+    - docker tag local/${IMAGE_NAME} ${INTERNAL_IMAGE_NAME}
+    - docker push ${INTERNAL_IMAGE_NAME}
+    - docker image rm ${INTERNAL_IMAGE_NAME}
+  services:
+    - alias: docker
+      name: ${DEVOPS_REGISTRY}docker:19.03-dind
+  stage: build
+  tags:
+    - build
   variables:
     APP_NAME: neic-traveltime
+    DOCKER_DRIVER: overlay2
+    TRIVY_VERSION: "0.27.1"
+
+
+## --------------------------------------------------
+# Test Stage
+## --------------------------------------------------
+Java Test:
+  after_script:
+    # runs before cache is saved (copying from .travis.yml)
+    - rm -f  "${CI_PROJECT_DIR}/.gradle/caches/modules-2/modules-2.lock"
+    - rm -fr "${CI_PROJECT_DIR}/.gradle/caches/*/plugin-resolution/"
+  artifacts:
+    reports:
+      cobertura: build/reports/cobertura/cobertura.xml
+      junit: build/test-results/test/TEST-*.xml
+  cache:
+    paths:
+      - .gradle/caches
+      - .gradle/wrapper
+  image: ${DEVOPS_REGISTRY}usgs/java:11-jdk
+  script:
+    # run gradle and javadoc
+    - export GRADLE_USER_HOME="${CI_PROJECT_DIR}/.gradle"
+    - ./gradlew build javadoc
+  stage: test
+  tags:
+    - development
 
 ## --------------------------------------------------
 # Deploy Stage
@@ -124,36 +133,38 @@ Build Docker Image:
 dvbl2 webttt Service:
   extends:
     - .deploy
-    - .development
   tags:
     - deploy
     - development
     - dvbl2
   variables:
     APP_NAME: neic-traveltime
+  only:
+    - development@ghsc/neic/algorithms/neic-traveltime
 
 # Staging (test) deploy 
 dvbld webttt Service:
   extends:
     - .deploy
-    - .staging
   tags:
     - deploy
     - staging
     - dvbld
   variables:
     APP_NAME: neic-traveltime
+  only:
+    - staging@ghsc/neic/algorithms/neic-traveltime
 
 # Production deployment:
 mot1 webttt Service:
   extends:
     - .deploy
-    - .production
   tags:
     - deploy
     - production 
     - mot1
   variables:
     APP_NAME: neic-traveltime
-
+  only:
+    - production@ghsc/neic/algorithms/neic-traveltime
 

@@ -12,6 +12,10 @@ plugins {
     id "com.github.johnrengelman.shadow" version "7.1.2"
     // code coverage
     id "jacoco"
+    //
+    id "com.kageiit.jacobo" version "2.1.0"
+    // static code analysis
+    id "pmd"
     // git clone, etc.
     id "org.ajoberstar.grgit" version "2.3.0"
     // google java format
@@ -20,8 +24,8 @@ plugins {
     id "io.spring.dependency-management" version "1.0.11.RELEASE"
 }
 
-sourceCompatibility = '1.10'
-targetCompatibility = '1.10'
+sourceCompatibility = '1.11'
+targetCompatibility = '1.11'
 version = '0.9.0'
 
 repositories {
@@ -39,6 +43,8 @@ dependencyManagement {
 }
 
 dependencies {
+    codacy "com.codacy:codacy-coverage-reporter:4.0+"
+
     // micronaut
     annotationProcessor "io.micronaut:micronaut-inject-java"
     annotationProcessor "io.micronaut:micronaut-validation"
@@ -110,7 +116,7 @@ project.tasks.check.dependsOn(verifyGoogleJavaFormat)
 
 // coverage reports
 jacoco {
-  toolVersion "0.8.2"
+  toolVersion "0.8.7"
 }
 jacocoTestReport {
   reports {
@@ -128,6 +134,13 @@ jacocoTestReport {
     }
 }
 check.dependsOn jacocoTestReport
+
+pmd {
+  toolVersion = "6.29.0"
+  ruleSets = [
+    file("pmd-ruleset.xml")
+  ]
+}
 
 test {
   useJUnitPlatform()
@@ -184,3 +197,12 @@ javadoc {
     options.addBooleanOption('html5', true)
   }
 }
+
+// convert jacoco to cobertura
+import com.kageiit.jacobo.JacoboTask
+tasks.create("jacobo", JacoboTask, {
+    it.jacocoReport = file("${project.buildDir}/reports/jacoco/test/jacocoTestReport.xml")
+    it.coberturaReport = file("${project.buildDir}/reports/cobertura/cobertura.xml")
+    it.srcDirs = sourceSets.main.java.srcDirs
+}).dependsOn(jacocoTestReport)
+check.dependsOn jacobo
