@@ -70,14 +70,8 @@ Build Docker Image:
   extends:
     - .adjust_image_names
   image: ${CI_REGISTRY}/devops/images/usgs/docker:20
-  only:
-    - development@ghsc/neic/algorithms/neic-traveltime
-    - staging@ghsc/neic/algorithms/neic-traveltime
-    - production@ghsc/neic/algorithms/neic-traveltime
   script:
     - LOCAL_IMAGE="local/${IMAGE_NAME}"
-    # get our access
-    - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
     # Build the container
     - docker build
       --pull
@@ -117,8 +111,8 @@ Build Docker Image:
     APP_NAME: neic-traveltime
     DOCKER_DRIVER: overlay2
     TRIVY_VERSION: "0.27.1"
-    FROM_IMAGE: $CI_REGISTRY/devops/images/usgs/java:11
-    BUILD_IMAGE: $CI_REGISTRY/devops/images/usgs/java:11
+    FROM_IMAGE: ${DEVOPS_REGISTRY}usgs/java:11-jdk
+    BUILD_IMAGE: ${DEVOPS_REGISTRY}usgs/java:11-jdk
 
 
 ## --------------------------------------------------
