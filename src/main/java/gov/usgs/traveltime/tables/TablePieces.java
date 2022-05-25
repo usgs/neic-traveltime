@@ -87,22 +87,22 @@ public class TablePieces {
    *     inner core)
    * @return A double containing the tau value
    */
-  public double getTau(char type, int tauIndex, int shellIndex) {
+  public double getTau(char phaseType, int tauIndex, int shellIndex) {
     switch (shellIndex) {
       case 0:
-        if (type == 'P') {
+        if (phaseType == 'P') {
           return modelPiecesP.getMantleTauIntegrals()[tauIndex];
         } else {
           return modelPiecesS.getMantleTauIntegrals()[tauIndex];
         }
       case 1:
-        if (type == 'P') {
+        if (phaseType == 'P') {
           return modelPiecesP.getOuterCoreTauIntegrals()[tauIndex];
         } else {
           return modelPiecesS.getOuterCoreTauIntegrals()[tauIndex];
         }
       case 2:
-        if (type == 'P') {
+        if (phaseType == 'P') {
           return modelPiecesP.getInnerCoreTauIntegrals()[tauIndex];
         } else {
           return modelPiecesS.getInnerCoreTauIntegrals()[tauIndex];

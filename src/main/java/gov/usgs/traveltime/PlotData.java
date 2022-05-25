@@ -37,7 +37,7 @@ public class PlotData {
    *
    * @param depth A double containing the source depth in kilometers
    * @param phaseList An Array strings containing the phases to plot
-   * @param returnAllPhasesA A boolean flag, if false, only provide "useful" crustal phases
+   * @param returnAllPhases A A boolean flag, if false, only provide "useful" crustal phases
    * @param returnBackBranches A boolean flag, if false, suppress back branches
    * @param convertTectonic A boolean flag, if true, map Pb and Sb onto Pg and Sg
    * @param maximumDistance A double containing them maximum distance in degrees to generate

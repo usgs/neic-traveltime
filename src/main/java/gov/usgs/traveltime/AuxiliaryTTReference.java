@@ -400,7 +400,7 @@ public class AuxiliaryTTReference {
    *
    * @param phaseCode A String containing the phase code
    * @param auto A boolean flag, true if the pick was done automatically
-   * @returnA String cotnaining the phase group name
+   * @return A String cotnaining the phase group name
    */
   public String findGroup(String phaseCode, boolean auto) {
     isPrimaryGroup = true;

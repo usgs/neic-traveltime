@@ -248,7 +248,8 @@ public class AllBranchReference {
    * @param serializationFileName A string containing the path and name of the model serialization
    *     file
    * @param earthModelName A string containing the earth model name
-   * @param auxTTDataAn AuxiliaryTTReference object holding the model independent auxiliary data
+   * @param auxTTReference An AuxiliaryTTReference object holding the model independent auxiliary
+   *     data
    * @throws IOException If serialization read fails
    * @throws ClassNotFoundException Serialization object mismatch
    */

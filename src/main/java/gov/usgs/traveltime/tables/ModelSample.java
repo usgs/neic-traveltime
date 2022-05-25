@@ -120,7 +120,7 @@ public class ModelSample {
    *     kilometers/second
    * @param horizPolarizedSVelocity A double containing the horizontally polarized S velocity in
    *     kilometers/second
-   * @param eta A double containing the anisotropy parameter
+   * @param anisotropyParam A double containing the anisotropy parameter
    */
   public ModelSample(
       double radius,
