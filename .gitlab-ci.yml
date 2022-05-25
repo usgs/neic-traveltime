@@ -64,7 +64,7 @@ Build Docker Image:
   extends:
     - .adjust_image_names
   # image: ${DEVOPS_REGISTRY}docker:19.03-git
-  image: ${CI_REGISTRY}/devops/images/usgs/docker:20-git
+  image: ${CI_REGISTRY}/devops/images/usgs/docker:20
   only:
     - development@ghsc/neic/algorithms/neic-traveltime
     - staging@ghsc/neic/algorithms/neic-traveltime
