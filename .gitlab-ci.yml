@@ -63,7 +63,8 @@ Build Docker Image:
   cache: {}
   extends:
     - .adjust_image_names
-  image: ${DEVOPS_REGISTRY}docker:19.03-git
+  # image: ${DEVOPS_REGISTRY}docker:19.03-git
+  image: ${CI_REGISTRY}/devops/images/usgs/docker:20-git
   only:
     - development@ghsc/neic/algorithms/neic-traveltime
     - staging@ghsc/neic/algorithms/neic-traveltime
@@ -91,7 +92,8 @@ Build Docker Image:
     - docker image rm ${INTERNAL_IMAGE_NAME}
   services:
     - alias: docker
-      name: ${DEVOPS_REGISTRY}docker:19.03-dind
+      # name: ${DEVOPS_REGISTRY}docker:19.03-dind
+      name: ${CI_REGISTRY}/devops/images/usgs/docker:20-dind
   stage: build
   tags:
     - build
