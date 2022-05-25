@@ -69,13 +69,15 @@ Build Docker Image:
     - staging@ghsc/neic/algorithms/neic-traveltime
     - production@ghsc/neic/algorithms/neic-traveltime
   script:
+    - LOCAL_IMAGE="local/${IMAGE_NAME}"
     # Build the container
     - docker build
       --pull
       --build-arg FROM_IMAGE=${FROM_IMAGE}
       --build-arg GIT_BRANCH_NAME=${CI_COMMIT_REF_NAME}
       --build-arg GIT_COMMIT_SHA=${CI_COMMIT_SHA}
-      --tag local/${IMAGE_NAME} .
+      --tag "${LOCAL_IMAGE}" 
+      "."
    
     ## trivy scan before push
     - wget https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
