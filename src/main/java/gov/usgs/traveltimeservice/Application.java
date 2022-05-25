@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.info.Info;
     info =
         @Info(
             title = "USGS Travel Time webservice",
-            version = "0.2.1",
+            version = "0.9.0",
             description =
                 "Webservice used by the USGS NEIC to request seismic travel times and travel time plot information."))
 public class Application {

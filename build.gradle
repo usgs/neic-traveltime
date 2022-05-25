@@ -38,7 +38,7 @@ configurations {
 
 dependencyManagement {
     imports {
-        mavenBom "io.micronaut:micronaut-bom:3.2.3"
+        mavenBom "io.micronaut:micronaut-bom:3.4.0"
     }
 }
 
@@ -55,7 +55,7 @@ dependencies {
     implementation "io.micronaut:micronaut-http-client"
     implementation "io.micronaut:micronaut-http-server-netty"
     implementation "io.swagger.core.v3:swagger-annotations"
-    implementation "ch.qos.logback:logback-classic:1.2.3"
+    implementation "ch.qos.logback:logback-classic:1.2.9"
 
     // com.googlecode.json.simple
     implementation "com.googlecode.json-simple:json-simple:1.1.1"
