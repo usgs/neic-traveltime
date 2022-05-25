@@ -111,8 +111,8 @@ Build Docker Image:
     APP_NAME: neic-traveltime
     DOCKER_DRIVER: overlay2
     TRIVY_VERSION: "0.27.1"
-    FROM_IMAGE: ${DEVOPS_REGISTRY}usgs/java:11-jdk
-    BUILD_IMAGE: ${DEVOPS_REGISTRY}usgs/java:11-jdk
+    FROM_IMAGE: ${DEVOPS_REGISTRY}usgs/amazoncorretto:11
+    BUILD_IMAGE: ${DEVOPS_REGISTRY}usgs/amazoncorretto:11
 
 
 ## --------------------------------------------------
