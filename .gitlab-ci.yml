@@ -69,7 +69,6 @@ Build Docker Image:
   cache: {}
   extends:
     - .adjust_image_names
-  # image: ${DEVOPS_REGISTRY}docker:19.03-git
   image: ${CI_REGISTRY}/devops/images/usgs/docker:20
   only:
     - development@ghsc/neic/algorithms/neic-traveltime
@@ -77,6 +76,8 @@ Build Docker Image:
     - production@ghsc/neic/algorithms/neic-traveltime
   script:
     - LOCAL_IMAGE="local/${IMAGE_NAME}"
+    # get our access
+    - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
     # Build the container
     - docker build
       --pull
@@ -108,7 +109,6 @@ Build Docker Image:
 
   services:
     - alias: docker
-      # name: ${DEVOPS_REGISTRY}docker:19.03-dind
       name: ${CI_REGISTRY}/devops/images/usgs/docker:20-dind
   stage: build
   tags:
