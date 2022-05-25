@@ -38,7 +38,7 @@ configurations {
 
 dependencyManagement {
     imports {
-        mavenBom "io.micronaut:micronaut-bom:3.4.0"
+        mavenBom "io.micronaut:micronaut-bom:3.4.4"
     }
 }
 

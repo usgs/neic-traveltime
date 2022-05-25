@@ -12,6 +12,7 @@ variables:
   FROM_IMAGE: ${DEVOPS_REGISTRY}usgs/centos:7
   # environment variables
   APP_NAME: neic-traveltime
+  UPSTREAM_PATH: ghsc/neic/algorithms/neic-traveltime
 
 ## --------------------------------------------------
 # Templates
@@ -28,6 +29,12 @@ variables:
     - .adjust_image_names
   image: ${CODE_REGISTRY}/ghsc/hazdev/container-deploy:latest
   script:
+    # upstream check
+    - if [ "${CI_PROJECT_PATH}" != "${UPSTREAM_PATH}" ]; then
+      echo "Skipping deploy on non-upstream (${CI_PROJECT_PATH})";
+      exit 0;
+      fi
+
     - mkdir scripts
     # get configuration from the config repository
     - git clone ${ALGORITHMS_CONFIG_REPO_ADDRESS}/${APP_NAME}.git config
@@ -87,10 +94,17 @@ Build Docker Image:
     # fail HIGH,CRITICAL vulnerabilities
     - ./trivy image --exit-code 1 --severity HIGH,CRITICAL "${LOCAL_IMAGE}";
 
+    # upstream check
+    - if [ "${CI_PROJECT_PATH}" != "${UPSTREAM_PATH}" ]; then
+      echo "Skipping push on non-upstream (${CI_PROJECT_PATH})";
+      exit 0;
+      fi
+
     # Tag and Push image to algorithms registry
     - docker tag local/${IMAGE_NAME} ${INTERNAL_IMAGE_NAME}
     - docker push ${INTERNAL_IMAGE_NAME}
     - docker image rm ${INTERNAL_IMAGE_NAME}
+
   services:
     - alias: docker
       # name: ${DEVOPS_REGISTRY}docker:19.03-dind
