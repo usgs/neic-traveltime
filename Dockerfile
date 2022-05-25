@@ -16,7 +16,9 @@ RUN ./gradlew tasks
 
 # see .dockerignore for what is not COPYed
 COPY . /neic-traveltime
-RUN ./gradlew --no-daemon build -x test
+# don't run tests and checks since this is a deployment
+# container, we run these elsewhere in the pipeline
+RUN ./gradlew --no-daemon build -x test -x check
 
 # use consistent jar name
 RUN cp /neic-traveltime/build/libs/neic-traveltime-*-all.jar /neic-traveltime/build/neic-traveltime-service.jar
