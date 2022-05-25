@@ -133,7 +133,7 @@ jacocoTestReport {
         }))
     }
 }
-check.dependsOn jacocoTestReport
+project.tasks.check.dependsOn jacocoTestReport
 
 pmd {
   toolVersion = "6.29.0"
@@ -205,4 +205,4 @@ tasks.create("jacobo", JacoboTask, {
     it.coberturaReport = file("${project.buildDir}/reports/cobertura/cobertura.xml")
     it.srcDirs = sourceSets.main.java.srcDirs
 }).dependsOn(jacocoTestReport)
-check.dependsOn jacobo
+project.tasks.check.dependsOn jacobo
