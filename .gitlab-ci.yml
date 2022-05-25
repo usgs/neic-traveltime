@@ -6,7 +6,6 @@ stages:
   - deploy
 
 variables:
-  CI_REGISTRY: ${CODE_REGISTRY}
   ALGORITHMS_CI_REGISTRY_IMAGE: ${ALGORITHMS_REGISTRY_ADDRESS}
   # docker variables
   DOCKER_DRIVER: overlay2
@@ -27,7 +26,7 @@ variables:
   cache: {}
   extends:
     - .adjust_image_names
-  image: ${CI_REGISTRY}/ghsc/hazdev/container-deploy:latest
+  image: ${CODE_REGISTRY}/ghsc/hazdev/container-deploy:latest
   script:
     - mkdir scripts
     # get configuration from the config repository
