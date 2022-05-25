@@ -81,6 +81,7 @@ Build Docker Image:
     - docker build
       --pull
       --build-arg FROM_IMAGE=${FROM_IMAGE}
+      --build-arg BUILD_IMAGE=${BUILD_IMAGE}
       --build-arg GIT_BRANCH_NAME=${CI_COMMIT_REF_NAME}
       --build-arg GIT_COMMIT_SHA=${CI_COMMIT_SHA}
       --tag "${LOCAL_IMAGE}" 
