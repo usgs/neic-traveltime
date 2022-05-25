@@ -1,11 +1,8 @@
-ARG BUILD_IMAGE=usgs/centos:7
-ARG FROM_IMAGE=usgs/centos:7
+ARG BUILD_IMAGE=usgs/java:11
+ARG FROM_IMAGE=usgs/java:11
 
 # === Stage 1: Compile and Build java codebase ===
 FROM ${BUILD_IMAGE} as build
-
-# install java; which is used by gradle to find java
-RUN yum install -y java-11-openjdk-devel which
 
 # install gradle
 COPY ./gradlew /neic-traveltime/
@@ -25,9 +22,6 @@ RUN cp /neic-traveltime/build/libs/neic-traveltime-*-all.jar /neic-traveltime/bu
 
 # === Stage 2: Create image to serve java travel time service app ===
 FROM ${FROM_IMAGE}
-
-# install java
-RUN yum install -y java-11-openjdk-headless
 
 # copy shadow jar
 COPY --from=build /neic-traveltime/build/neic-traveltime-service.jar /neic-traveltime/
