@@ -97,6 +97,9 @@ Build Docker Image:
     - build
   variables:
     APP_NAME: neic-traveltime
+    DOCKER_DRIVER: overlay2
+    TRIVY_VERSION: "0.27.1"
+
 
 ## --------------------------------------------------
 # Test Stage
