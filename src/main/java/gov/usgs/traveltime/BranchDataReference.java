@@ -478,7 +478,7 @@ public class BranchDataReference implements Serializable {
    *
    * @param inputBranchData A BranchData object containing travel-time table generation branch data
    * @param branchIndex An integer containing the FORTRAN branch index
-   * @param extraPhaseListAn An ExtraPhases object holding the list of extra phases
+   * @param extraPhaseList An An ExtraPhases object holding the list of extra phases
    * @param auxTTReference An AuxiliaryTTReference object containing auxiliary data augmenting the
    *     basic travel-times.
    */

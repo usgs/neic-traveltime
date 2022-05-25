@@ -110,7 +110,7 @@ public class TravelTimeSession {
    *
    * @param earthModelName A String containing the earth model name
    * @param sourceDepth A double containing the desired source depth in kilometers
-   * @param phasesToUseAn array of Strings containing the list desired phases to use
+   * @param phasesToUse An array of Strings containing the list desired phases to use
    * @param sourceLatitude A double containing the source geographical latitude in degrees
    * @param sourceLongitude A double containing the source longitude in degrees
    * @param returnAllPhases A boolean flag, if true, provide all phases

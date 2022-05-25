@@ -94,7 +94,7 @@ public class GenerateTravelTimeValidationData {
    * Function to generate travel time validation data.
    *
    * @param modelPath A string containing the model path to use
-   * @param modelPath A string containing the serialization path to use
+   * @param serializedPath A string containing the serialization path to use
    * @throws Exception If the travel-time setup fails
    */
   public void generate(String modelPath, String serializedPath) throws Exception {
@@ -106,7 +106,7 @@ public class GenerateTravelTimeValidationData {
    * Function to generate simple session travel time validation data.
    *
    * @param modelPath A string containing the model path to use
-   * @param modelPath A string containing the serialization path to use
+   * @param serializedPath A string containing the serialization path to use
    * @throws Exception If the travel-time setup fails
    */
   public void generateSimple(String modelPath, String serializedPath) throws Exception {
@@ -210,7 +210,7 @@ public class GenerateTravelTimeValidationData {
    * Function to generate complex session travel time validation data.
    *
    * @param modelPath A string containing the model path to use
-   * @param modelPath A string containing the serialization path to use
+   * @param serializedPath A string containing the serialization path to use
    * @throws Exception If the travel-time setup fails
    */
   public void generateComplex(String modelPath, String serializedPath) throws Exception {

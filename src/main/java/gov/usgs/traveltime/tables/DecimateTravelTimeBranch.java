@@ -28,7 +28,7 @@ public class DecimateTravelTimeBranch {
    * Constructor function to instantiate the general decimation class.
    *
    * @param finalTTModel A TauModel containing the final model
-   * @param modelConversionsA ModelConversions object containing the model dependant conversions
+   * @param modelConversions A ModelConversions object containing the model dependant conversions
    */
   public DecimateTravelTimeBranch(TauModel finalTTModel, ModelConversions modelConversions) {
     this.finalTTModel = finalTTModel;

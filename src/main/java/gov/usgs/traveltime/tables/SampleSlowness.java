@@ -800,7 +800,7 @@ public class SampleSlowness {
   /**
    * Function to print the wave type specific shells for the depth model.
    *
-   * @param A char containing the velocity/slowness wave type (P = P-wave, S = S-wave)
+   * @param waveType A char containing the velocity/slowness wave type (P = P-wave, S = S-wave)
    */
   public void printShells(char waveType) {
     tauDepthModel.printDepthShells(waveType);

@@ -69,11 +69,11 @@ public class ModelShell {
   /**
    * Function to get the temporary phase code associated with this shell.
    *
-   * @param typeA char containing the desired wave type (P = compressional, S = shear)
+   * @param waveType A char containing the desired wave type (P = compressional, S = shear)
    * @return A string containing the temporary phase code
    */
-  public String getTempCode(char type) {
-    if (type == 'P') {
+  public String getTempCode(char waveType) {
+    if (waveType == 'P') {
       return tempPCode;
     } else {
       return tempSCode;

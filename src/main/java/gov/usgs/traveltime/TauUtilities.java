@@ -607,9 +607,12 @@ public class TauUtilities {
    *     getRecieverAzimuth function after this call.
    */
   public static double computeDistAzm(
-      double eqLat, double sourceLongitude, double recieverLatitude, double recieverLongitude) {
+      double sourceLatitude,
+      double sourceLongitude,
+      double recieverLatitude,
+      double recieverLongitude) {
     // Get the hypocenter geocentric co-latitude.
-    double coLatitude = computeGeocentricColatitude(eqLat);
+    double coLatitude = computeGeocentricColatitude(sourceLatitude);
 
     // Hypocenter sines and cosines.
     double eqSinLat = Math.sin(Math.toRadians(coLatitude));
