@@ -120,8 +120,11 @@ jacoco {
 }
 jacocoTestReport {
   reports {
-    html.enabled true
-    xml.enabled true
+    // Note I think these will need to be changed 
+    // to .required = true when/if we move to 
+    // gradle 8
+    html.enabled = true
+    xml.enabled = true
   }
 
   // exclude librarys
