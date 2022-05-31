@@ -125,7 +125,9 @@ Java Test:
     - rm -fr "${CI_PROJECT_DIR}/.gradle/caches/*/plugin-resolution/"
   artifacts:
     reports:
-      cobertura: build/reports/cobertura/cobertura.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: build/reports/cobertura/cobertura.xml
       junit: build/test-results/test/TEST-*.xml
   cache:
     paths:
