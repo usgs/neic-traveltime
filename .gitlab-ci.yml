@@ -4,12 +4,13 @@ stages:
   - test
   - build
   - deploy
+  - publish
 
 variables:
   ALGORITHMS_CI_REGISTRY_IMAGE: ${ALGORITHMS_REGISTRY_ADDRESS}
   # docker variables
   DOCKER_DRIVER: overlay2
-  FROM_IMAGE: ${DEVOPS_REGISTRY}usgs/centos:7
+  JAVA_IMAGE: ${DEVOPS_REGISTRY}usgs/java:11-jdk
   # environment variables
   APP_NAME: neic-traveltime
   UPSTREAM_PATH: ghsc/neic/algorithms/neic-traveltime
@@ -61,6 +62,13 @@ variables:
   stage: deploy
   tags:
     - deploy
+
+# rules to define which branches should trigger actions
+.publish-env: &publish-env
+  if: $CI_PROJECT_PATH == $UPSTREAM_PATH
+  variables:
+    ENVIRONMENT: publish
+
 
 ## --------------------------------------------------
 # Build Stage
@@ -120,7 +128,7 @@ Build Docker Image:
 ## --------------------------------------------------
 Java Test:
   after_script:
-    # runs before cache is saved (copying from .travis.yml)
+    # runs before cache is saved
     - rm -f  "${CI_PROJECT_DIR}/.gradle/caches/modules-2/modules-2.lock"
     - rm -fr "${CI_PROJECT_DIR}/.gradle/caches/*/plugin-resolution/"
   artifacts:
@@ -133,7 +141,7 @@ Java Test:
     paths:
       - .gradle/caches
       - .gradle/wrapper
-  image: ${DEVOPS_REGISTRY}usgs/java:11-jdk
+  image: ${JAVA_IMAGE}
   script:
     # run gradle and javadoc
     - export GRADLE_USER_HOME="${CI_PROJECT_DIR}/.gradle"
@@ -184,3 +192,26 @@ mot1 webttt Service:
   only:
     - production@ghsc/neic/algorithms/neic-traveltime
 
+## --------------------------------------------------
+# Publish stage
+## --------------------------------------------------
+Java Publish:
+  after_script:
+    # runs before cache is saved 
+    - rm -f  "${CI_PROJECT_DIR}/.gradle/caches/modules-2/modules-2.lock"
+    - rm -fr "${CI_PROJECT_DIR}/.gradle/caches/*/plugin-resolution/"
+  cache:
+    paths:
+      - .gradle/caches
+      - .gradle/wrapper
+  image: ${JAVA_IMAGE}
+  script:
+    # use gradle to publish to our maven repository
+    - export GRADLE_USER_HOME="${CI_PROJECT_DIR}/.gradle"
+    - ./gradlew publish
+  stage: publish
+  rules:
+      - <<: *publish-env
+        when: manual
+  tags:
+    - development
