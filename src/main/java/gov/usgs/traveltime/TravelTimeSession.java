@@ -291,19 +291,19 @@ public class TravelTimeSession {
           }
         }
 
-        branchDataReference.dumpHeaderData();
-        branchDataReference.dumpModelParams('P', true);
-        branchDataReference.dumpModelParams('S', true);
-        branchDataReference.dumpBranchData(true);
-        branchDataReference.dumpBranchData("pS", true);
-        branchDataReference.dumpUpGoingData('P');
-        branchDataReference.dumpUpGoingData('S');
+        // branchDataReference.dumpHeaderData();
+        // branchDataReference.dumpModelParams('P', true);
+        // branchDataReference.dumpModelParams('S', true);
+        // branchDataReference.dumpBranchData(true);
+        // branchDataReference.dumpBranchData("pS", true);
+        // branchDataReference.dumpUpGoingData('P');
+        // branchDataReference.dumpUpGoingData('S');
         modelDataList.put(earthModelName, branchDataReference);
       }
 
       // Set up the (depth dependent) volatile part.
       branchData = new AllBranchVolume(branchDataReference);
-      branchData.dumpHeaderData();
+      // branchData.dumpHeaderData();
       // branchData.dumpBranchInformation("PnPn", false, false, true);
     }
   }
