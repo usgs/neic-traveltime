@@ -22,6 +22,8 @@ plugins {
     id "com.github.sherter.google-java-format" version "0.9"
     // manage micronaut dependencies
     id "io.spring.dependency-management" version "1.0.11.RELEASE"
+    // support publishing to maven repositories
+    id 'maven-publish'
 }
 
 sourceCompatibility = '1.11'
@@ -30,6 +32,18 @@ version = '0.9.0'
 
 repositories {
   mavenCentral()
+
+//  maven {
+//        url "https://code.usgs.gov/groups/ghsc/neic/algorithms/-/packages"
+//        name "GitLab"
+//        credentials(HttpHeaderCredentials) {
+//            name = 'Job-Token'
+//            value = System.getenv("CI_JOB_TOKEN")
+//        }
+//        authentication {
+//            header(HttpHeaderAuthentication)
+//        }
+//    }
 }
 
 configurations {
@@ -209,3 +223,26 @@ tasks.create("jacobo", JacoboTask, {
     it.srcDirs = sourceSets.main.java.srcDirs
 }).dependsOn(jacocoTestReport)
 project.tasks.check.dependsOn jacobo
+
+// publish to our maven package repository
+// note this will only work from within the pipeline
+publishing {
+    publications {
+        library(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+          url "https://code.usgs.gov/groups/ghsc/neic/algorithms/-/packages"
+          name "GitLab"
+          credentials(HttpHeaderCredentials) {
+              name = 'Job-Token'
+              value = System.getenv("CI_JOB_TOKEN")
+          }
+          authentication {
+              header(HttpHeaderAuthentication)
+          }
+        }
+    }
+}
