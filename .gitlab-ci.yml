@@ -64,11 +64,15 @@ variables:
     - deploy
 
 # rules to define which branches should trigger actions
+.dev-env: &dev-env
+  if: $CI_PROJECT_PATH != $UPSTREAM_PATH
+  variables:
+    ENVIRONMENT: dev
+
 .publish-env: &publish-env
   if: $CI_PROJECT_PATH == $UPSTREAM_PATH
   variables:
     ENVIRONMENT: publish
-
 
 ## --------------------------------------------------
 # Build Stage
@@ -113,6 +117,11 @@ Build Docker Image:
     - alias: docker
       name: ${CI_REGISTRY}/devops/images/usgs/docker:20-dind
   stage: build
+  rules:
+    - <<: *dev-env
+      when: always
+    - <<: *publish-env
+      when: always      
   tags:
     - build
   variables:
@@ -145,8 +154,13 @@ Java Test:
   script:
     # run gradle and javadoc
     - export GRADLE_USER_HOME="${CI_PROJECT_DIR}/.gradle"
-    - ./gradlew build javadoc
+    - ./gradlew build javadoc zipModels
   stage: test
+  rules:
+    - <<: *dev-env
+      when: always
+    - <<: *publish-env
+      when: always    
   tags:
     - development
 
@@ -195,11 +209,15 @@ mot1 webttt Service:
 ## --------------------------------------------------
 # Publish stage
 ## --------------------------------------------------
-Repository Publish:
+Java Publish:
   after_script:
     # runs before cache is saved 
     - rm -f  "${CI_PROJECT_DIR}/.gradle/caches/modules-2/modules-2.lock"
     - rm -fr "${CI_PROJECT_DIR}/.gradle/caches/*/plugin-resolution/"
+  artifacts:
+    paths:
+      - build/libs/*all.jar
+      - build/distributions/Models.zip  
   cache:
     paths:
       - .gradle/caches
@@ -208,10 +226,12 @@ Repository Publish:
   script:
     # use gradle to publish to our maven repository
     - export GRADLE_USER_HOME="${CI_PROJECT_DIR}/.gradle"
-    - ./gradlew publish
+    - ./gradlew zipModels publish
   stage: publish
   rules:
-      - <<: *publish-env
-        when: manual
+    - <<: *dev-env
+      when: never
+    - <<: *publish-env
+      when: manual  
   tags:
-    - development
+    - build
